@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
+import { soundtrack } from "../src/soundtrack.js";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -45,8 +46,8 @@ try {
   await page.locator("#music-open").click();
   const dialog = page.locator("#music-dialog");
   await expect(dialog).toBeVisible();
-  await expect(page.locator("#music-status")).toContainText("Phase Index");
-  await expect(page.locator("#music-status")).toContainText("3 TRACKS");
+  await expect(page.locator("#music-status")).toContainText("BELMONDO");
+  await expect(page.locator("#music-status")).toContainText("12 TRACKS");
   await expect(page.locator("#music-default")).toBeVisible();
   await page.locator("#effects-volume").evaluate((element) => {
     element.value = "0.22";
@@ -71,21 +72,23 @@ try {
     () =>
       window.musicAudioElements.some(
         (audio) =>
-          audio.currentSrc.includes("phase-index.mp3") &&
+          audio.currentSrc.includes("/music/") &&
           !audio.paused &&
           audio.currentTime > 0.15,
       ),
     {},
     { timeout: 30000 },
   );
-  const audioInfo = await page.evaluate(async () => {
+  const initialSource = await page.evaluate(
+    () => window.musicAudioElements.at(-1).src,
+  );
+  const audioInfo = await page.evaluate(async (tracks) => {
     const audio = window.musicAudioElements.at(-1);
-    const tracks = ["phase-index", "glass-current", "ion-drift"];
     const decoded = [];
     for (const track of tracks) {
       const probe = new NativeAudio();
       probe.preload = "auto";
-      probe.src = `/music/${track}.mp3`;
+      probe.src = track.url;
       await new Promise((resolve, reject) => {
         probe.addEventListener("loadedmetadata", resolve, { once: true });
         probe.addEventListener(
@@ -109,10 +112,10 @@ try {
       currentTime: audio.currentTime,
       decoded,
     };
-  });
+  }, soundtrack);
   assert(
-    audioInfo.src.includes("phase-index.mp3"),
-    "Race start should play Phase Index",
+    audioInfo.src.includes("/music/"),
+    "Race start plays the default soundtrack",
   );
   assert(
     audioInfo.volume > 0 && audioInfo.volume <= 1,
@@ -169,43 +172,49 @@ try {
   await page.waitForFunction(
     () => window.musicAudioElements.at(-1)?.currentTime > 0.1,
   );
+  const playedSources = new Set([initialSource]);
+  for (let i = 1; i < soundtrack.length; i++) {
+    const previousSource = await page.evaluate(
+      () => window.musicAudioElements.at(-1).src,
+    );
+    if (i === 2) {
+      // Let the native ended event advance, rather than simulating it.
+      await page.waitForFunction(
+        () => window.musicAudioElements.at(-1).currentTime > 0.1,
+      );
+      await page.evaluate(() => {
+        const audio = window.musicAudioElements.at(-1);
+        audio.currentTime = audio.duration - 0.2;
+      });
+    } else {
+      await page.locator("#music-next").click();
+    }
+    await page.waitForFunction(
+      (previous) => {
+        const audio = window.musicAudioElements.at(-1);
+        return (
+          audio.src !== previous && !audio.paused && audio.currentTime > 0.1
+        );
+      },
+      previousSource,
+      { timeout: 15000 },
+    );
+    const currentSource = await page.evaluate(
+      () => window.musicAudioElements.at(-1).src,
+    );
+    assert(
+      !playedSources.has(currentSource),
+      "Each OST track appears once per bag",
+    );
+    playedSources.add(currentSource);
+  }
+  const lastSource = await page.evaluate(
+    () => window.musicAudioElements.at(-1).src,
+  );
   await page.locator("#music-next").click();
   await page.waitForFunction(
-    () =>
-      window.musicAudioElements
-        .at(-1)
-        ?.currentSrc.includes("glass-current.mp3") &&
-      !window.musicAudioElements.at(-1).paused,
-  );
-  await page.waitForFunction(
-    () =>
-      window.musicAudioElements.at(-1)?.readyState >= 1 &&
-      Number.isFinite(window.musicAudioElements.at(-1).duration),
-  );
-  await page.waitForFunction(
-    () => window.musicAudioElements.at(-1)?.currentTime > 0.1,
-  );
-  await page.evaluate(() => {
-    const audio = window.musicAudioElements.at(-1);
-    audio.currentTime = audio.duration - 0.2;
-  });
-  await page.waitForFunction(
-    () =>
-      window.musicAudioElements.at(-1)?.currentSrc.includes("ion-drift.mp3") &&
-      !window.musicAudioElements.at(-1).paused,
-    {},
-    { timeout: 15000 },
-  );
-  await page.waitForFunction(
-    () => window.musicAudioElements.at(-1)?.currentTime > 0.1,
-  );
-  await page.locator("#music-next").click();
-  await page.waitForFunction(
-    () =>
-      window.musicAudioElements
-        .at(-1)
-        ?.currentSrc.includes("phase-index.mp3") &&
-      !window.musicAudioElements.at(-1).paused,
+    (last) => window.musicAudioElements.at(-1).src !== last,
+    last,
   );
 
   // Local selection takes over the soundtrack; the BELMONDO OST button restores the defaults.
@@ -223,12 +232,10 @@ try {
   await page.locator("#music-default").click();
   await page.waitForFunction(
     () =>
-      window.musicAudioElements
-        .at(-1)
-        ?.currentSrc.includes("phase-index.mp3") &&
+      window.musicAudioElements.at(-1)?.currentSrc.includes("/music/") &&
       !window.musicAudioElements.at(-1).paused,
   );
-  await expect(page.locator("#music-status")).toContainText("3 TRACKS");
+  await expect(page.locator("#music-status")).toContainText("12 TRACKS");
 
   // Music slider does not alter effects volume or mute; effects mute does not pause music.
   await page.locator("#music-dialog .close").click();

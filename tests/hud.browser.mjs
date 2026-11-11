@@ -128,6 +128,11 @@ try {
         };
       });
       expect(state.fireText).toBe("FIRE");
+      await expect(page.locator("#weapon .weapon-action")).toHaveCount(0);
+      if (weapon) {
+        await expect(page.locator("#weapon")).toHaveText(weapon);
+        await expect(page.locator("#weapon")).toHaveAttribute("aria-label", `Fire ${weapon}`);
+      }
       if (touch) {
         const fire = page.locator("#touch-fire");
         await expect(fire).toBeVisible();

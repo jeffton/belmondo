@@ -122,7 +122,6 @@ export function buildTrackLighting(scene, track) {
     const lamp = new THREE.MeshBasicMaterial({ color: 0xd8eaff });
     const mastGeometry = new THREE.BoxGeometry(0.55, 1, 0.55);
     const headGeometry = new THREE.BoxGeometry(5.2, 0.7, 2.2);
-    const beamGeometry = new THREE.ConeGeometry(15, 17, 12, 1, true);
     const beamMaterial = new THREE.MeshBasicMaterial({
       color: 0x9ecbff,
       transparent: true,
@@ -156,13 +155,40 @@ export function buildTrackLighting(scene, track) {
         .copy(top)
         .add(new THREE.Vector3(0, 0, 1.16).applyQuaternion(head.quaternion));
       lens.quaternion.copy(head.quaternion);
-      // A restrained local shaft connects the visible luminaire to its deck pool.
-      // No screen-space fog layer or extra real-time lights/shadow maps.
+      // Each shaft's rim follows the illuminated road, not a tilted cone base.
+      // The actual exposed lens is the apex; every rim point lands on the pool.
+      const apex = lens.position
+        .clone()
+        .add(new THREE.Vector3(0, 0, 0.05).applyQuaternion(head.quaternion));
+      const rim = [];
+      for (let i = 0; i < 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        const section = track.frame(u * track.length + Math.sin(angle) * 30);
+        rim.push(
+          section.p
+            .clone()
+            .addScaledVector(
+              section.right,
+              Math.cos(angle) * section.width * 0.8,
+            )
+            .addScaledVector(section.up, 0.045),
+        );
+      }
+      const shaftPositions = [];
+      for (let i = 0; i < rim.length; i++) {
+        shaftPositions.push(
+          ...apex.toArray(),
+          ...rim[i].toArray(),
+          ...rim[(i + 1) % rim.length].toArray(),
+        );
+      }
+      const beamGeometry = new THREE.BufferGeometry();
+      beamGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(shaftPositions, 3),
+      );
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-      const axis = top.clone().sub(f.p).normalize();
-      beam.position.copy(top).add(f.p).multiplyScalar(0.5);
-      beam.scale.y = top.distanceTo(f.p) / 17;
-      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis);
+      beam.name = "projector-shaft";
       // A road-conforming pool has its own low radiance, so dark asphalt still
       // catches the projector. It cannot spill beyond the deck onto open water.
       const positions = [],

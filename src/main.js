@@ -2,7 +2,9 @@ import "./style.css";
 import { TRACKS, makeTrack, clamp, mod } from "./track.js";
 import { Race, CRAFT } from "./race.js";
 import { World } from "./world.js";
-import { AudioEngine, MusicPlayer } from "./audio.js";
+import { AudioEngine } from "./audio.js";
+import { MusicPlayer } from "./music.js";
+import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -22,12 +24,7 @@ const music = new MusicPlayer((state) => {
       : "NO LOCAL TRACKS LOADED");
 });
 music.volume = 0.65;
-const soundtrack = [
-  { name: "BELMONDO — Phase Index", url: "/music/phase-index.mp3" },
-  { name: "BELMONDO — Glass Current", url: "/music/glass-current.mp3" },
-  { name: "BELMONDO — Ion Drift", url: "/music/ion-drift.mp3" },
-];
-music.loadTracks(soundtrack);
+music.loadTracks(soundtrack, { shuffle: true });
 let musicEnabled = true;
 let world;
 try {
@@ -573,7 +570,7 @@ $("music-next").onclick = () => {
   music.next();
 };
 $("music-default").onclick = () => {
-  music.loadTracks(soundtrack);
+  music.loadTracks(soundtrack, { shuffle: true });
   musicEnabled = true;
   music.play();
 };

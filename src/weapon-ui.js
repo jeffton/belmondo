@@ -60,6 +60,6 @@ export function createWeaponHUD(desktop, touch, roster) {
     }
     desktop.style.setProperty("--weapon-color", item.color);
     desktop.setAttribute("aria-label", `Fire ${weapon}`);
-    desktop.innerHTML = `${icon(item.glyph)}<span class="weapon-copy"><b class="weapon-name">${weapon}</b><small class="weapon-action">FIRE</small></span>`;
+    desktop.innerHTML = `${icon(item.glyph)}<span class="weapon-copy"><b class="weapon-name">${weapon}</b></span>`;
   };
 }
