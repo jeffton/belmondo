@@ -478,10 +478,7 @@ function updateHUD(now) {
     }
   } else {
     $("race-message").className = "";
-    if (previousCount > 0) {
-      sound.effect("go");
-      showMessage(race.launch.success ? "LAUNCH BOOST" : "GO", 1.2);
-    }
+    if (previousCount > 0) sound.effect("go");
     previousCount = 0;
     if (now > messageUntil) $("race-message").textContent = "";
   }

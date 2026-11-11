@@ -331,7 +331,9 @@ try {
       });
       await context.close();
     }
-    console.log(`Launch final visuals: ${report.cases.map((c) => c.label).join("/")} production menu/countdown/pause/race and Archivo typography passed.`);
+    console.log(
+      `Launch final visuals: ${report.cases.map((c) => c.label).join("/")} production menu/countdown/pause/race and Archivo typography passed.`,
+    );
   } else {
     for (const spec of [
       { name: "keyboard-idle", device: "keyboard", success: false },
