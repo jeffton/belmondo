@@ -93,13 +93,12 @@ button:hover {
   font:
     italic 900 37px/1 "Barlow Condensed",
     sans-serif;
-  letter-spacing: -7px;
-  color: var(--orange);
-  transform: skew(-10deg);
-  margin-right: 12px;
+  letter-spacing: -3px;
+  color: var(--paper);
+  margin-right: 4px;
 }
 .brand-symbol span {
-  color: var(--paper);
+  color: var(--orange);
 }
 .edition {
   margin-left: auto;
@@ -117,20 +116,17 @@ button:hover {
   font-weight: 600;
   margin: 0 0 12px;
 }
-h1 {
+h1.wordmark {
+  width: fit-content;
+  max-width: 100%;
   font:
-    italic 900 clamp(70px, 8.2vw, 120px)/0.78 "Barlow Condensed",
+    italic 900 clamp(58px, 13.6vw, 108px)/0.9 "Barlow Condensed",
     Impact,
     sans-serif;
-  letter-spacing: -3px;
+  letter-spacing: -0.025em;
   margin: 24px 0 15px;
-}
-h1 span {
-  color: var(--orange);
-  letter-spacing: -8px;
-}
-h1 .period {
-  letter-spacing: -1px;
+  padding-right: 0.08em;
+  border-bottom: 4px solid var(--orange);
 }
 .tagline {
   font:
@@ -427,6 +423,7 @@ footer {
   top: 30%;
   color: var(--lime);
 }
+#view,
 #pause {
   position: absolute;
   top: 112px;
@@ -436,6 +433,16 @@ footer {
   width: 38px;
   height: 34px;
   font-size: 17px;
+}
+#view {
+  transform: translateX(-48px);
+  width: 58px;
+  font-size: 11px;
+  touch-action: manipulation;
+}
+#view[aria-pressed="true"] {
+  color: var(--lime);
+  border-color: currentColor;
 }
 .overlay {
   position: fixed;
@@ -693,7 +700,7 @@ body.touch #touch-controls {
   color: var(--ink);
 }
 body.touch .hud-bottom {
-  bottom: 140px;
+  bottom: 193px;
 }
 body.touch #map {
   display: none;
@@ -736,9 +743,6 @@ body.touch .shield {
     padding: 20px;
     width: 460px;
   }
-  h1 {
-    font-size: 82px;
-  }
   .tagline {
     margin-bottom: 20px;
   }
@@ -778,6 +782,7 @@ body.touch .shield {
     font-size: 8px;
     letter-spacing: 1px;
   }
+  #view,
   #pause {
     right: 20px;
     top: 92px;
@@ -834,16 +839,10 @@ body.touch .shield {
     font-size: 8px;
     margin: 0;
   }
-  h1 {
-    font-size: 59px;
-    line-height: 0.85;
+  h1.wordmark {
+    font-size: 72px;
     margin: 12px 0 8px;
-  }
-  h1 br {
-    display: none;
-  }
-  h1 span {
-    letter-spacing: -4px;
+    border-bottom-width: 3px;
   }
   .tagline {
     font-size: 13px;
@@ -905,7 +904,12 @@ body.touch .shield {
     font-size: 42px;
   }
   body.touch .velocity {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
     width: 95px;
+    text-align: center;
   }
   body.touch .shield {
     width: 95px;
@@ -918,6 +922,7 @@ body.touch .shield {
     top: 22%;
     font-size: 65px;
   }
+  #view,
   #pause {
     top: 78px;
     right: 23px;

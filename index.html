@@ -9,23 +9,23 @@
     <meta name="theme-color" content="#111c25" />
     <meta
       name="description"
-      content="NULL VECTOR — original anti-gravity combat racing. Eight pilots, split routes, coastal megastructures. Play in your browser."
+      content="BELMONDO — anti-gravity combat racing. Eight pilots, split routes and coastal megastructures. Play in your browser."
     />
-    <title>NULL // VECTOR — Anti-gravity racing</title>
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <title>BELMONDO — Anti-gravity racing</title>
+    <link rel="icon" href="/art/belmondo-icon.png" type="image/png" />
   </head>
   <body>
     <canvas id="game" aria-label="3D anti-gravity race"></canvas>
     <div class="scanlines" aria-hidden="true"></div>
     <main id="menu">
       <header class="masthead">
-        <span class="brand-symbol">N<span>V</span></span
+        <span class="brand-symbol" aria-hidden="true">B<span>/</span></span
         ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
         ><span class="edition">EST. 2146<br />SEASON / 01</span>
       </header>
       <div class="menu-body">
         <p class="eyebrow">ANTI-GRAVITY COMBAT RACING</p>
-        <h1>NULL<span>//</span><br />VECTOR<span class="period">.</span></h1>
+        <h1 class="wordmark">BELMONDO</h1>
         <p class="tagline">Coastal division / 2146</p>
         <div class="selection-label">
           <span>01 / CIRCUIT</span
@@ -103,12 +103,19 @@
           <div class="bar"><i id="speed-bar"></i></div>
         </div>
       </div>
+      <button id="view" aria-label="First-person view" aria-pressed="false">
+        VIEW
+      </button>
       <button id="pause" aria-label="Pause race">Ⅱ</button>
       <div id="touch-controls">
         <div id="steer-pad" aria-label="Drag to steer">
           <span>← STEER →</span><i></i>
         </div>
         <div class="touch-actions">
+          <div>
+            <button data-control="pitchUp">NOSE ↑</button
+            ><button data-control="pitchDown">NOSE ↓</button>
+          </div>
           <div>
             <button data-control="airLeft">L AIR</button
             ><button data-control="airRight">R AIR</button>
@@ -151,17 +158,20 @@
           <h3>DESKTOP</h3>
           <p>
             <kbd>↑ W</kbd> Thrust<br /><kbd>← → A D</kbd> Steer<br /><kbd
-              >Q E</kbd
+              >J L / Q E</kbd
             >
-            Left / right airbrake<br /><kbd>↓ S</kbd> Brake<br /><kbd
-              >Space</kbd
+            Left / right airbrake<br /><kbd>I / K</kbd> Nose down / up<br /><kbd
+              >↓ S</kbd
             >
-            Fire · <kbd>P Esc</kbd> Pause
+            Brake<br /><kbd>Space</kbd> Fire · <kbd>P Esc</kbd> Pause<br /><kbd
+              >V</kbd
+            >
+            Change view
           </p>
           <h3>GAMEPAD</h3>
           <p>
-            Left stick steer · A / R2 thrust<br />L1 / R1 airbrakes · X fire · B
-            brake<br />Start pause
+            Left stick steer · Right stick pitch<br />A / R2 thrust · L1 / R1
+            airbrakes<br />X fire · B brake<br />Y change view · Start pause
           </p>
         </div>
         <div>
@@ -169,7 +179,7 @@
           <p>
             Auto-thrust. Drag the left pad for proportional steering. Airbrake
             into sharp turns. Fire with the right thumb. Landscape gives the
-            best view.
+            best view. NOSE ↑/↓ controls pitch; VIEW switches cameras.
           </p>
           <h3>THE CIRCUIT</h3>
           <p>
@@ -238,18 +248,14 @@
       ><label class="check"
         ><input id="mute" type="checkbox" /> MUTE ENGINE / EFFECTS</label
       >
-      <p class="help-small">
-        Spotify’s developer policy excludes game integration. Use local audio
-        here; Spotify can play separately.
-      </p>
     </dialog>
     <dialog id="art-dialog">
       <button class="close" aria-label="Close design study">×</button>
       <p class="eyebrow">VISUAL DEVELOPMENT / OPENAI IMAGE</p>
-      <h2>NULL // VECTOR</h2>
+      <h2>BELMONDO</h2>
       <img
         id="concept"
-        alt="Original NULL VECTOR design study: Japanese waterfront architecture, white sculptural bridges, glass rails, neon signs and racing craft"
+        alt="Original BELMONDO design study: Japanese waterfront architecture, white sculptural bridges, glass rails, neon signs and racing craft"
       />
       <p class="help-small">
         Original art direction generated with OpenAI Image, translated into

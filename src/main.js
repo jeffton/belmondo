@@ -156,6 +156,11 @@ $("again").onclick = start;
 $("restart").onclick = start;
 $("quit").onclick = quit;
 $("result-quit").onclick = quit;
+function toggleView() {
+  world.setView(world.view === "chase" ? "first-person" : "chase");
+  $("view").setAttribute("aria-pressed", String(world.view === "first-person"));
+}
+$("view").onclick = toggleView;
 $("pause").onclick = () => setPaused(!paused);
 $("resume").onclick = () => setPaused(false);
 for (const [button, dialog] of [
@@ -206,6 +211,11 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   if (paused) return;
+  if (e.code === "KeyV") {
+    e.preventDefault();
+    toggleView();
+    return;
+  }
   keys.add(e.code);
   if (e.code === "Space") race.fire();
 });
@@ -256,35 +266,46 @@ for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     steerPointer = null;
     steerPad.querySelector("i").style.transform = "";
   });
+let lastControls = {};
 let padPause = false,
-  padFire = false;
+  padFire = false,
+  padView = false;
 function input() {
   const down = (...codes) => codes.some((c) => keys.has(c));
   let steer =
     (down("ArrowRight", "KeyD") ? 1 : 0) -
     (down("ArrowLeft", "KeyA") ? 1 : 0) +
     touchSteer;
-  let air =
-    (down("KeyE") || held.has("airRight") ? 1 : 0) -
-    (down("KeyQ") || held.has("airLeft") ? 1 : 0);
+  let airRight = down("KeyL", "KeyE") || held.has("airRight") ? 1 : 0;
+  let airLeft = down("KeyJ", "KeyQ") || held.has("airLeft") ? 1 : 0;
+  let pitch =
+    (down("KeyI") || held.has("pitchDown") ? 1 : 0) -
+    (down("KeyK") || held.has("pitchUp") ? 1 : 0);
   let throttle = touch || down("ArrowUp", "KeyW");
   let brake = down("ArrowDown", "KeyS") || held.has("brake");
   const pad = navigator.getGamepads?.()[0];
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) steer = pad.axes[0];
-    air += (pad.buttons[5]?.value || 0) - (pad.buttons[4]?.value || 0);
+    if (Math.abs(pad.axes[3]) > 0.12) pitch = -pad.axes[3];
+    airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
+    airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
     throttle =
       throttle || pad.buttons[0]?.pressed || pad.buttons[7]?.value > 0.1;
     brake = brake || pad.buttons[1]?.pressed;
     if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
     padFire = pad.buttons[2]?.pressed;
+    if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
+    padView = pad.buttons[3]?.pressed;
     if (pad.buttons[9]?.pressed && !padPause) setPaused(!paused);
     padPause = pad.buttons[9]?.pressed;
   }
   return {
     // The road's lateral axis points camera-left when looking forward.
     steer: -clamp(steer, -1, 1),
-    air: -clamp(air, -1, 1),
+    air: airLeft - airRight,
+    airLeft,
+    airRight,
+    pitch,
     throttle,
     brake,
   };
@@ -403,10 +424,19 @@ function animate(now) {
       r.s = demoDistance + 45 + r.id * 15;
       r.x = Math.sin(r.id) * 4;
     }
+    for (const r of race.racers) {
+      const f = track.frame(r.s, r.branch);
+      r.position.copy(f.p).addScaledVector(f.right, r.x);
+      r.position.y += 1.6;
+      r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      r.contactS = r.s;
+    }
     world.draw(race, dt, true);
   } else {
     const controls = input();
+    lastControls = controls;
     if (!paused && state === "race") {
+      const previousSpeed = race.player.speed;
       accumulator += dt;
       while (accumulator >= 1 / 120) {
         race.update(1 / 120, controls);
@@ -418,7 +448,12 @@ function animate(now) {
         sound.effect(event.kind, event.text);
       }
       race.events.length = 0;
-      sound.update(race.player.speed / 125, race.player.surge > 0, controls);
+      sound.update(race.player.speed / 175, race.player.boost, {
+        ...controls,
+        acceleration: dt > 0 ? (race.player.speed - previousSpeed) / dt : 0,
+        slip: race.player.vx,
+        grounded: race.player.grounded,
+      });
       hudTick += dt;
       if (hudTick > 0.05) {
         updateHUD(now);
@@ -521,6 +556,16 @@ window.nullVector = {
       position: race.position,
       speed: race.player.speed,
       lateralPosition: race.player.x,
+      yaw: race.player.yaw,
+      pitch: race.player.pitch,
+      view: world.view,
+      controls: { ...lastControls },
+      yawRate: race.player.yawRate,
+      roll: world.ships[0].rotation.z,
+      worldPosition: race.player.position.toArray(),
+      velocity: race.player.velocity.toArray(),
+      grounded: race.player.grounded,
+      boost: race.player.boost,
       screenOffset:
         world.ships[0].position.clone().project(world.camera).x -
         track.frame(race.player.s, race.player.branch).p.project(world.camera)

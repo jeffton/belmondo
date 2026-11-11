@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createAdvertising } from "./advertising.js";
 
 // Layered waterfront districts: shared, opaque materials and instanced details.
 // All placed architecture stays inside a 60 m square accepted by the terrain.
@@ -8,6 +9,7 @@ export function buildCity(scene, track, textures, environment) {
   const root = new THREE.Group();
   root.name = "waterfront-city";
   scene.add(root);
+  const advertising = createAdvertising(scene);
   const box = new THREE.BoxGeometry(1, 1, 1);
   const cylinder = new THREE.CylinderGeometry(1, 1, 1, 12);
   const taper = new THREE.CylinderGeometry(0.62, 1, 1, 12);
@@ -53,14 +55,14 @@ export function buildCity(scene, track, textures, environment) {
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
   const labels = [
-    "カイセキ / 08",
-    "MIZU",
-    "PORT / 06",
-    "KIRO",
-    "SORA",
-    "TRAM / 02",
-    "AOI",
-    "ヌル / 04",
+    "NEMU / 眠夢",
+    "ION PEAR",
+    "PHASE 03",
+    "MOTH / モス",
+    "NEMU / 眠夢",
+    "ION PEAR",
+    "PHASE 03",
+    "MOTH / モス",
   ];
   labels.forEach((label, i) => {
     ctx.fillStyle =
@@ -100,7 +102,7 @@ export function buildCity(scene, track, textures, environment) {
   const verticalCanvas = document.createElement("canvas");
   verticalCanvas.width = verticalCanvas.height = 256;
   const verticalContext = verticalCanvas.getContext("2d");
-  ["カイセキ", "ヌル", "電気", "海岸"].forEach((label, i) => {
+  ["眠夢", "イオン", "位相", "モス"].forEach((label, i) => {
     const x = i * 64;
     verticalContext.fillStyle = ["#122e43", "#3f1737", "#b33946", "#153945"][i];
     verticalContext.fillRect(x, 0, 64, 256);
@@ -338,6 +340,20 @@ export function buildCity(scene, track, textures, environment) {
           0.5,
         );
     }
+    if (index % 2 === 0) {
+      const side = roadPoint.x >= p.x ? 1 : -1;
+      const size = Math.min(17, height - 5, d - 4);
+      advertising.facade(
+        new THREE.Vector3(
+          p.x + side * (w / 2 + 0.4),
+          deck + height * 0.58,
+          p.z,
+        ),
+        (side * Math.PI) / 2,
+        size,
+        Math.floor(index / 2) % 4,
+      );
+    }
     put("ceramic", p.x, deck + height + 0.6, p.z, w + 2, 1.2, d + 2);
     put("metal", p.x + 6, deck + height + 2, p.z, 6, 2.8, 5);
     if (index % 3 === 0) {
@@ -514,6 +530,7 @@ export function buildCity(scene, track, textures, environment) {
       new THREE.MeshBasicMaterial({ map: verticalTexture }),
     ),
   );
+  advertising.finish();
   return {
     update(time) {
       for (const train of trains) {
