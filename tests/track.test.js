@@ -2,6 +2,28 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, TRACKS } from "../src/track.js";
 
+test("all courses expose wider main decks and keep both split routes clear", () => {
+  for (let index = 0; index < TRACKS.length; index++) {
+    const track = makeTrack(index),
+      { split } = track.config,
+      midpoint = ((split[0] + split[1]) / 2) * track.length,
+      main = track.frame(midpoint),
+      left = track.frame(midpoint, -1),
+      right = track.frame(midpoint, 1),
+      routeSeparation = left.p.distanceTo(right.p);
+
+    assert(main.width >= 18, `${track.config.name}: main deck is not wider`);
+    assert(
+      left.width >= 16 && right.width >= 16,
+      `${track.config.name}: split deck is too narrow`,
+    );
+    assert(
+      routeSeparation > left.width + right.width,
+      `${track.config.name}: widened split decks overlap`,
+    );
+  }
+});
+
 for (let index = 0; index < TRACKS.length; index++) {
   test(`${TRACKS[index].name}: broad bends and aligned ballistic landing`, () => {
     const track = makeTrack(index);

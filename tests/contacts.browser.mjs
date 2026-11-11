@@ -117,8 +117,9 @@ try {
     try {
       await setup(2);
       const s = track.length * 0.02;
-      place(race.player, s, 0, 120, 0.2);
-      place(race.racers[1], s, 7);
+      const outerStart = track.frame(s).width - 8;
+      place(race.player, s, outerStart - 7, 120, 0.2);
+      place(race.racers[1], s, outerStart);
       const before = race.racers.map(state);
       let wallFrames = 0,
         renderedPressureFrames = 0,
@@ -256,7 +257,7 @@ try {
   expect(pressure.airborne).toBe(0);
   expect(pressure.maxRenderError).toBe(0);
   expect(pressure.after[1].shield).toBeLessThan(99);
-  expect(pressure.after[1].x).toBeGreaterThan(10);
+  expect(pressure.after[1].x).toBeGreaterThan(pressure.before[1].x + 3);
   for (const item of report.fixture.cases.slice(1, 3)) {
     expect(item.lateralAfter[0]).toBeLessThan(15);
     expect(item.lateralAfter[1]).toBeGreaterThan(5);

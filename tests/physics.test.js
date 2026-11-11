@@ -40,7 +40,7 @@ function circuit({ gap = false, split = false } = {}) {
     },
   };
 }
-function straight() {
+function straight(width = 15) {
   return {
     length: 1_000_000,
     config: { split: [0.9, 0.95], jump: 0.99 },
@@ -50,7 +50,7 @@ function straight() {
       p: new THREE.Vector3(0, 30, s),
       tangent: new THREE.Vector3(0, 0, 1),
       right: new THREE.Vector3(1, 0, 0),
-      width: 15,
+      width,
       metric: 1,
       u: s / 1_000_000,
     }),
@@ -654,13 +654,14 @@ test("sustained side pressure converges across fixed timesteps and transfers mom
 });
 
 test("player side pressure pushes a rival into the real barrier without wall bypass or wing clipping", () => {
-  const race = setup(straight(), "race");
+  const width = 18;
+  const race = setup(straight(width), "race");
   race.racers = race.racers.slice(0, 2);
   const p = race.player,
     rival = race.racers[1],
     right = new THREE.Vector3(1, 0, 0);
-  p.position.set(0, 32.2, 0);
-  rival.position.set(7, 32.2, 0);
+  rival.position.set(width - hullExtent(rival, right) - 1.5, 32.2, 0);
+  p.position.set(rival.position.x - 7, 32.2, 0);
   p.contactS = p.s = rival.contactS = rival.s = 0;
   p.yaw = 0.2;
   p.velocity.set(Math.sin(0.2) * 120, 0, Math.cos(0.2) * 120);
@@ -672,7 +673,7 @@ test("player side pressure pushes a rival into the real barrier without wall byp
     for (const r of race.racers) {
       const edge = r.position.x + hullExtent(r, right);
       assert(
-        edge <= 15.02,
+        edge <= width + 0.02,
         "contacts and the static barrier must constrain the same physical hull",
       );
       assert(
@@ -701,17 +702,18 @@ test("player side pressure pushes a rival into the real barrier without wall byp
 });
 
 test("rotating a hull already alongside a barrier cannot disable wall response or hover", () => {
-  const race = new Race(straight(), 2, "trial");
+  const width = 19;
+  const race = new Race(straight(width), 2, "trial");
   race.countdown = 0;
   const p = race.player,
     right = new THREE.Vector3(1, 0, 0);
-  p.position.x = 11.9;
+  p.position.x = width - hullExtent(p, right) - 0.1;
   p.yawRate = 1.607;
   p.velocity.set(0, 0, 100);
   for (let step = 0; step < 20; step++) {
     race.update(1 / 120, { ...neutral, steer: 1, air: 1 });
     assert(
-      p.position.x + hullExtent(p, right) <= 15.02,
+      p.position.x + hullExtent(p, right) <= width + 0.02,
       "previous orientation establishes contact eligibility, current orientation establishes clearance",
     );
     assert(
