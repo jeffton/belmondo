@@ -214,7 +214,7 @@ try {
   await page.locator("#music-next").click();
   await page.waitForFunction(
     (last) => window.musicAudioElements.at(-1).src !== last,
-    last,
+    lastSource,
   );
 
   // Local selection takes over the soundtrack; the BELMONDO OST button restores the defaults.

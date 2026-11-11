@@ -16,7 +16,7 @@ Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equippe
 
 ## Sound
 
-The original three-track soundtrack starts with Phase Index. Glass Current and Ion Drift add syncopated breaks; the playlist loops. Music follows race pause/resume and has a separate volume from synthesized turbine, weapon and impact effects. Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
+The twelve-track original soundtrack plays shuffled bags without back-to-back repeats. Music follows race pause/resume and has a separate volume from synthesized turbine, weapon and impact effects. Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
 
 ## Development
 
