@@ -8,7 +8,7 @@ https://antigrav.roybot.se
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes (Q/E also work), I nose down / K nose up, S/↓ brake, Space fire, V camera, P/Esc pause.
 - **Gamepad:** left stick steer, right stick pitch, A/R2 thrust, L1/R1 airbrakes, X fire, B brake, Y camera, Start pause.
-- **Touch:** automatic thrust, proportional steering pad, nose up/down, separate airbrakes and brake/fire buttons. VIEW switches chase/first-person; landscape recommended.
+- **Touch:** automatic thrust, two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and brake/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
 
 Cyan pads boost; lime pads supply one weapon. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Three-lap records are stored locally per circuit/craft/mode.
 

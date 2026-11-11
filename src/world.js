@@ -590,7 +590,7 @@ export class World {
   }
   setupRacers(race, specs) {
     for (const ship of this.ships)
-      this.scene.remove(ship, ship.userData.shadow);
+      this.scene.remove(ship, ship.userData.shadow, ship.userData.shield);
     for (const particle of this.sparkData) particle.life = 0;
     this.cameraForward = null;
     this.cameraReady = false;
@@ -663,7 +663,10 @@ export class World {
         clamp(-r.yawRate * 0.45, -0.5, 0.5),
         "YXZ",
       );
-      ship.getObjectByName("shield").visible = r.protect > 0;
+      const shield = ship.userData.shield;
+      shield.position.copy(ship.position);
+      shield.quaternion.copy(ship.quaternion);
+      shield.visible = r.protect > 0;
       ship.userData.updateExhaust(r.speed, r.boost, this.time);
       const shadow = ship.userData.shadow;
       shadow.position.copy(r.position);

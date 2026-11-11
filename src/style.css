@@ -649,7 +649,7 @@ body.touch #touch-controls {
   pointer-events: auto;
   touch-action: none;
   width: 170px;
-  height: 100px;
+  height: 130px;
   border: 1px solid #b7cdd45c;
   background: #10212c66;
   position: relative;
@@ -661,6 +661,18 @@ body.touch #touch-controls {
   font-size: 10px;
   letter-spacing: 1px;
   color: #c6d7df;
+}
+#steer-pad .pitch-forward,
+#steer-pad .pitch-back {
+  position: absolute;
+  font-size: 9px;
+  opacity: 0.8;
+}
+#steer-pad .pitch-forward {
+  top: 9px;
+}
+#steer-pad .pitch-back {
+  bottom: 9px;
 }
 #steer-pad i {
   position: absolute;

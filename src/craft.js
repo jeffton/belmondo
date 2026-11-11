@@ -343,12 +343,17 @@ function buildResources() {
   });
   const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x9dffff });
   const glowGeometry = new THREE.PlaneGeometry(0.47, 0.19);
-  const shieldGeometry = new THREE.SphereGeometry(4.3, 12, 8);
-  const shieldMaterial = new THREE.MeshBasicMaterial({
+  const shieldGeometry = new THREE.SphereGeometry(1, 24, 12);
+  shieldGeometry.scale(4.3, 1.45, 5);
+  const shieldMaterial = new THREE.MeshPhongMaterial({
     color: 0x65f1ff,
-    wireframe: true,
+    emissive: 0x123943,
+    specular: 0xbaffff,
+    shininess: 90,
     transparent: true,
-    opacity: 0.22,
+    opacity: 0.12,
+    depthWrite: false,
+    side: THREE.DoubleSide,
   });
   const shadowGeometry = new THREE.CircleGeometry(3.7, 12);
   const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -411,7 +416,8 @@ export function createCraft(scene, color) {
   const shield = new THREE.Mesh(shared.shieldGeometry, shared.shieldMaterial);
   shield.name = "shield";
   shield.visible = false;
-  craft.add(shield);
+  scene.add(shield);
+  craft.userData.shield = shield;
   const shadow = new THREE.Mesh(shared.shadowGeometry, shared.shadowMaterial);
   shadow.rotation.x = -Math.PI / 2;
   scene.add(shadow, craft);

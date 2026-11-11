@@ -180,7 +180,7 @@ export function buildSplitMarkers(scene, track) {
 export function buildTrackAdvertising(scene, track, environment) {
   const advertising = createAdvertising(
     scene,
-    "/art/openai-image-2026-11-11T18-41-45-395Z-ig_09eb601f502e0184016af4b6ae9f3087d2b60bf3f34732ee5d.png",
+    "/art/belmondo-roadside-landscape-atlas.png",
     4,
     2,
   );
@@ -204,11 +204,12 @@ export function buildTrackAdvertising(scene, track, environment) {
       .addScaledVector(f.right, -side * 0.55)
       .setY(0)
       .normalize();
-    const center = f.p.clone().addScaledVector(f.right, side * (f.width + 7));
-    center.y += 14.5;
+    // Keep the angled landscape panels outside the driving surface.
+    const center = f.p.clone().addScaledVector(f.right, side * (f.width + 14));
+    center.y += 24.5;
     const yaw = Math.atan2(normal.x, normal.z);
-    const width = i % 3 === 0 ? 10 : 8;
-    const height = width * 1.5;
+    const width = i % 3 === 0 ? 24 : 20;
+    const height = width * (384 / 1024);
     advertising.facade(center, yaw, width, (i + offset) % 8, height);
     const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
     for (const [j, direction] of [-1, 1].entries()) {

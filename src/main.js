@@ -47,6 +47,7 @@ let demoDistance = 50,
 const keys = new Set(),
   held = new Set();
 let touchSteer = 0,
+  touchPitch = 0,
   steerPointer = null;
 const touch = matchMedia("(pointer: coarse)").matches;
 document.body.classList.toggle("touch", touch);
@@ -109,6 +110,7 @@ function clearInput() {
   keys.clear();
   held.clear();
   touchSteer = 0;
+  touchPitch = 0;
   steerPointer = null;
   for (const b of document.querySelectorAll(".pressed"))
     b.classList.remove("pressed");
@@ -203,8 +205,12 @@ for (const d of document.querySelectorAll("dialog"))
 $("weapon").onclick = () => {
   if (!paused) race.fire();
 };
-$("touch-fire").onclick = () => {
+$("touch-fire").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
   if (!paused) race.fire();
+});
+$("touch-fire").onclick = (e) => {
+  if (e.detail === 0 && !paused) race.fire();
 };
 window.addEventListener("keydown", (e) => {
   if (document.querySelector("dialog[open]")) return;
@@ -261,19 +267,27 @@ function moveSteer(e) {
     -1,
     1,
   );
+  touchPitch = clamp(
+    (rect.top + rect.height / 2 - e.clientY) / (rect.height * 0.4),
+    -1,
+    1,
+  );
   steerPad.querySelector("i").style.transform =
-    `translateX(${touchSteer * rect.width * 0.32}px)`;
+    `translate(${touchSteer * rect.width * 0.32}px, ${-touchPitch * rect.height * 0.32}px)`;
 }
 steerPad.addEventListener("pointerdown", (e) => {
   e.preventDefault();
+  if (steerPointer !== null) return;
   steerPointer = e.pointerId;
   steerPad.setPointerCapture(e.pointerId);
   moveSteer(e);
 });
 steerPad.addEventListener("pointermove", moveSteer);
 for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
-  steerPad.addEventListener(event, () => {
+  steerPad.addEventListener(event, (e) => {
+    if (e.pointerId !== steerPointer) return;
     touchSteer = 0;
+    touchPitch = 0;
     steerPointer = null;
     steerPad.querySelector("i").style.transform = "";
   });
@@ -289,9 +303,7 @@ function input() {
     touchSteer;
   let airRight = down("KeyL", "KeyE") || held.has("airRight") ? 1 : 0;
   let airLeft = down("KeyJ", "KeyQ") || held.has("airLeft") ? 1 : 0;
-  let pitch =
-    (down("KeyI") || held.has("pitchDown") ? 1 : 0) -
-    (down("KeyK") || held.has("pitchUp") ? 1 : 0);
+  let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
   let throttle = touch || down("ArrowUp", "KeyW");
   let brake = down("ArrowDown", "KeyS") || held.has("brake");
   const pad = navigator.getGamepads?.()[0];
@@ -316,7 +328,7 @@ function input() {
     air: airLeft - airRight,
     airLeft,
     airRight,
-    pitch,
+    pitch: clamp(pitch, -1, 1),
     throttle,
     brake,
   };

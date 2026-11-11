@@ -108,14 +108,15 @@
       </button>
       <button id="pause" aria-label="Pause race">Ⅱ</button>
       <div id="touch-controls">
-        <div id="steer-pad" aria-label="Drag to steer">
+        <div
+          id="steer-pad"
+          aria-label="Flight stick: left/right steer, push up nose down, pull down nose up"
+        >
+          <span class="pitch-forward">NOSE ↓</span>
           <span>← STEER →</span><i></i>
+          <span class="pitch-back">NOSE ↑</span>
         </div>
         <div class="touch-actions">
-          <div>
-            <button data-control="pitchUp">NOSE ↑</button
-            ><button data-control="pitchDown">NOSE ↓</button>
-          </div>
           <div>
             <button data-control="airLeft">L AIR</button
             ><button data-control="airRight">R AIR</button>
@@ -177,9 +178,9 @@
         <div>
           <h3>TOUCH</h3>
           <p>
-            Auto-thrust. Drag the left pad for proportional steering. Airbrake
-            into sharp turns. Fire with the right thumb. Landscape gives the
-            best view. NOSE ↑/↓ controls pitch; VIEW switches cameras.
+            Auto-thrust. Drag the left stick to steer; push up for nose down,
+            pull down for nose up. Airbrake into sharp turns. Fire with the
+            right thumb. Landscape gives the best view; VIEW switches cameras.
           </p>
           <h3>THE CIRCUIT</h3>
           <p>
