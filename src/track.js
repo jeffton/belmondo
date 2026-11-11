@@ -3,6 +3,8 @@ import * as THREE from "three";
 export const TRACKS = [
   {
     name: "KAISEKI COAST",
+    width: 12,
+    banking: true,
     subtitle: "01 / Coastal megastructure",
     color: 0x13d9e7,
     sky: 0x1e3859,
@@ -27,6 +29,7 @@ export const TRACKS = [
   },
   {
     name: "SOLAR ARRAY",
+    width: 16,
     subtitle: "02 / High desert transmission",
     color: 0xff853a,
     sky: 0x825c76,
@@ -51,6 +54,7 @@ export const TRACKS = [
   },
   {
     name: "NOCTILUCENT",
+    width: 16,
     subtitle: "03 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x101b35,
@@ -138,6 +142,14 @@ export function makeTrack(index) {
       .clone()
       .lerp(b.right, n % 1)
       .normalize();
+    if (config.banking) {
+      const before = frames[mod(Math.floor(n) - 4, count)].tangent,
+        after = frames[(Math.floor(n) + 4) % count].tangent;
+      const bend =
+        Math.atan2(before.z * after.x - before.x * after.z, before.dot(after)) /
+        ((8 * length) / count);
+      right.applyAxisAngle(tangent, clamp(-bend * 16, -0.28, 0.28));
+    }
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
     const split = u > start && u < end;
@@ -158,8 +170,8 @@ export function makeTrack(index) {
       u,
       width:
         split && branch !== 0
-          ? 16 - (16 - (branch === -1 ? 7 : 9)) * narrowing
-          : 16,
+          ? config.width - (config.width - (branch === -1 ? 7 : 9)) * narrowing
+          : config.width,
       metric: a.metric + (b.metric - a.metric) * (n % 1),
     };
   }

@@ -3,6 +3,7 @@ import { TRACKS, makeTrack, clamp, mod } from "./track.js";
 import { Race, CRAFT } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine, MusicPlayer } from "./audio.js";
+import { flagshipAssetsReady } from "./flagship.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
@@ -15,9 +16,10 @@ const music = new MusicPlayer((state) => {
       : "NO LOCAL TRACKS LOADED");
 });
 music.volume = 0.65;
+const flagshipAssets = await flagshipAssetsReady;
 let world;
 try {
-  world = new World($("game"));
+  world = new World($("game"), flagshipAssets);
 } catch (error) {
   $("fatal").hidden = false;
   $("fatal").textContent =

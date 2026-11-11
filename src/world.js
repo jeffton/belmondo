@@ -4,6 +4,7 @@ import { PAD_POSITIONS } from "./race.js";
 import { circuitTextures } from "./materials.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
+import { buildFlagship } from "./flagship.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
 const mat = (color, extra = {}) =>
@@ -65,7 +66,8 @@ function textTexture(text, bg = "#14202a", fg = "#e9ece6") {
 }
 
 export class World {
-  constructor(canvas) {
+  constructor(canvas, flagshipAssets) {
+    this.flagshipAssets = flagshipAssets;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -374,6 +376,14 @@ export class World {
         this.scene.add(new THREE.Mesh(quadGeometry(chunk), material));
     }
     this.city = buildCity(this.scene, track, textures, environment);
+    if (track.config.banking)
+      buildFlagship(
+        this.scene,
+        track,
+        textures,
+        environment,
+        this.flagshipAssets,
+      );
     const obj = new THREE.Object3D();
     const supportFrames = Array.from({ length: 60 }, (_, i) => {
       const u = i / 60;
@@ -446,7 +456,7 @@ export class World {
       }
     }
     const startFrame = track.frame(0);
-    for (let x = -16; x < 16; x += 2)
+    for (let x = -startFrame.width; x < startFrame.width; x += 2)
       for (let z = 0; z < 4; z += 2) {
         const tile = new THREE.Mesh(
           new THREE.BoxGeometry(2, 0.05, 2),
@@ -651,8 +661,13 @@ export class World {
     const focus = base.clone().addScaledVector(f.up, 2 + Math.max(0, player.h));
     const desired = focus
       .clone()
-      .addScaledVector(f.tangent, -15 - player.speed * 0.035)
-      .addScaledVector(UP, 7);
+      .addScaledVector(
+        f.tangent,
+        track.config.banking
+          ? -12 - player.speed * 0.02
+          : -15 - player.speed * 0.035,
+      )
+      .addScaledVector(UP, track.config.banking ? 4 : 7);
     const ahead = track
       .frame(player.s + 24, player.branch)
       .p.addScaledVector(f.right, player.x * 0.5)
@@ -670,14 +685,16 @@ export class World {
       this.cameraReady = true;
     } else this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
     this.camera.up
-      .set(
-        f.right.x * clamp(0.006 * player.vx, -0.07, 0.07),
-        1,
-        f.right.z * clamp(0.006 * player.vx, -0.07, 0.07),
-      )
+      .copy(UP)
+      .lerp(f.up, track.config.banking ? 0.35 : 0)
+      .addScaledVector(f.right, clamp(0.006 * player.vx, -0.07, 0.07))
       .normalize();
     this.camera.lookAt(ahead);
-    this.camera.fov = 68 + player.speed * 0.065 + (player.surge > 0 ? 4 : 0);
+    this.camera.fov = track.config.banking
+      ? (this.camera.aspect < 1 ? 72 : 52) +
+        Math.min(player.speed / 140, 1) * 4 +
+        (player.surge > 0 ? 2 : 0)
+      : 68 + player.speed * 0.065 + (player.surge > 0 ? 4 : 0);
     this.camera.updateProjectionMatrix();
     for (const r of race.racers) {
       const ship = this.ships[r.id];
