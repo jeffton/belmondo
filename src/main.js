@@ -392,7 +392,8 @@ function updateHUD(now) {
 }
 let hudTick = 0;
 function animate(now) {
-  const dt = Math.min((now - last) / 1000, 0.1);
+  const frameSeconds = (now - last) / 1000;
+  const dt = Math.min(frameSeconds, 0.1);
   last = now;
   if (state === "menu") {
     demoDistance += dt * 32;
@@ -437,9 +438,9 @@ function animate(now) {
   // Downshift expensive clean rendering only after sustained slow frame timing.
   if (state === "race" && !paused) {
     renderFrames++;
-    renderTime += dt;
-    if (renderFrames === 240) {
-      if (renderTime / 240 > 0.027 && world.quality === "clean") {
+    renderTime += frameSeconds;
+    if (renderTime >= 2.5) {
+      if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
         world.quality = "retro";
         world.resize();
       }

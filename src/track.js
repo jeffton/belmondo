@@ -19,7 +19,7 @@ export const TRACKS = [
       [170, 95, -460],
       [410, 65, -290],
       [380, 30, 60],
-      [200, 35, 160],
+      [0, 30, -150],
     ],
     split: [0.28, 0.43],
     jump: 0.66,
@@ -43,7 +43,7 @@ export const TRACKS = [
       [-130, 150, -550],
       [210, 95, -370],
       [380, 65, -100],
-      [280, 65, 130],
+      [0, 65, -150],
     ],
     split: [0.36, 0.51],
     jump: 0.72,
@@ -67,7 +67,7 @@ export const TRACKS = [
       [100, 135, -540],
       [360, 65, -270],
       [450, 40, 80],
-      [200, 45, 220],
+      [0, 45, -150],
     ],
     split: [0.23, 0.4],
     jump: 0.64,
@@ -106,7 +106,7 @@ export function makeTrack(index) {
       const p = f.p
         .clone()
         .addScaledVector(f.right, branch * (branch === 1 ? 44 : 23) * blend);
-      if (branch === 1) p.y += blend * 12;
+      if (branch === 1) p.y += THREE.MathUtils.smoothstep(blend, 0.25, 1) * 12;
       return p;
     });
     routes[branch] = points.map((p, i) => {
@@ -140,7 +140,13 @@ export function makeTrack(index) {
       .normalize();
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
-    const split = u > start + 0.01 && u < end - 0.01;
+    const split = u > start && u < end;
+    const phase = clamp((u - start) / (end - start), 0, 1);
+    const narrowing = THREE.MathUtils.smoothstep(
+      Math.sin(phase * Math.PI) ** 2,
+      0,
+      0.3,
+    );
     // The launch ramp is part of the physical road surface.
     const ramp = clamp((u - (config.jump - 0.018)) / 0.018, 0, 1);
     if (u >= config.jump - 0.018 && u < config.jump) p.y += ramp * 8;
@@ -150,7 +156,10 @@ export function makeTrack(index) {
       right,
       up,
       u,
-      width: split ? (branch === -1 ? 7 : 9) : 16,
+      width:
+        split && branch !== 0
+          ? 16 - (16 - (branch === -1 ? 7 : 9)) * narrowing
+          : 16,
       metric: a.metric + (b.metric - a.metric) * (n % 1),
     };
   }
