@@ -34,10 +34,14 @@ async function open(device, seedRecords = false) {
   });
   if (seedRecords)
     await context.addInitScript((mode) => {
-      const records = {"0-0-trial":0.1,"0-0-trial-c2-5laps":222.22,"0-0-trial-c3-5laps":333.33};
+      const records = {
+        "0-0-trial": 0.1,
+        "0-0-trial-c2-5laps": 222.22,
+        "0-0-trial-c3-5laps": 333.33,
+      };
       if (mode !== "drive") records["0-0-trial-c1-5laps"] = 111.11;
-      localStorage.setItem("nv-records",JSON.stringify(records));
-    },seedRecords);
+      localStorage.setItem("nv-records", JSON.stringify(records));
+    }, seedRecords);
   if (device === "controller")
     await context.addInitScript(() => {
       window.qaPad = { axes: [0, 0, 0, 0], buttons: [] };
@@ -80,7 +84,9 @@ async function open(device, seedRecords = false) {
   const page = await context.newPage();
   page.on("pageerror", (e) => report.errors.push(e.message));
   await page.goto(url);
-  report.scripts = await page.locator("script[src]").evaluateAll((scripts) => scripts.map((script) => script.src));
+  report.scripts = await page
+    .locator("script[src]")
+    .evaluateAll((scripts) => scripts.map((script) => script.src));
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
@@ -185,7 +191,11 @@ async function publicSmoke() {
   await context.close();
 }
 async function ui() {
-  for (const device of ["keyboard", "touch", "controller"].filter((device) => !process.env.INTEGRATED_DEVICES || process.env.INTEGRATED_DEVICES.split(",").includes(device))) {
+  for (const device of ["keyboard", "touch", "controller"].filter(
+    (device) =>
+      !process.env.INTEGRATED_DEVICES ||
+      process.env.INTEGRATED_DEVICES.split(",").includes(device),
+  )) {
     const { context, page } = await open(device, true);
     await page.evaluate(() => document.fonts.ready);
     const fonts = await page.evaluate(() => ({
@@ -209,7 +219,11 @@ async function ui() {
     ]);
     await expect(page.locator("#speed-class option")).toHaveCount(3);
     await page.locator("#mode").selectOption("trial");
-    for (const speedClass of [0, 1, 2].filter((speedClass) => !process.env.INTEGRATED_CLASSES || process.env.INTEGRATED_CLASSES.split(",").includes(String(speedClass)))) {
+    for (const speedClass of [0, 1, 2].filter(
+      (speedClass) =>
+        !process.env.INTEGRATED_CLASSES ||
+        process.env.INTEGRATED_CLASSES.split(",").includes(String(speedClass)),
+    )) {
       await chooseClass(page, speedClass, device);
       await expect(page.locator("#best")).toHaveText(
         [
@@ -414,11 +428,17 @@ async function drive() {
     held = new Set(),
     samples = [];
   const began = Date.now();
-  let t, capturedLap = 0;
+  let t,
+    capturedLap = 0;
   while (Date.now() - began < 420000) {
     t = await telemetry(page);
     if (t.state === "results") break;
-    if (t.lap > capturedLap) { capturedLap = t.lap; await page.screenshot({path:`test-artifacts/integrated-actual-lap${t.lap}.png`}); }
+    if (t.lap > capturedLap) {
+      capturedLap = t.lap;
+      await page.screenshot({
+        path: `test-artifacts/integrated-actual-lap${t.lap}.png`,
+      });
+    }
     const s = (t.lap - 1 + t.progress) * track.length;
     const plannedBranch = t.lap % 2 ? -1 : 1;
     const branch =
@@ -475,18 +495,23 @@ async function drive() {
   await page.screenshot({
     path: "test-artifacts/integrated-actual-five-lap-results.png",
   });
-  for (const [label, viewport] of [["landscape", {width:844,height:390}], ["portrait", {width:390,height:844}]]) {
+  for (const [label, viewport] of [
+    ["landscape", { width: 844, height: 390 }],
+    ["portrait", { width: 390, height: 844 }],
+  ]) {
     await page.setViewportSize(viewport);
     const panel = await page.locator("#results .panel").boundingBox();
     expect(panel.x).toBeGreaterThanOrEqual(0);
-    expect(panel.x+panel.width).toBeLessThanOrEqual(viewport.width);
+    expect(panel.x + panel.width).toBeLessThanOrEqual(viewport.width);
     expect(panel.y).toBeGreaterThanOrEqual(0);
-    expect(panel.y+panel.height).toBeLessThanOrEqual(viewport.height);
-    await page.screenshot({path:`test-artifacts/integrated-actual-five-lap-results-${label}-resize.png`});
+    expect(panel.y + panel.height).toBeLessThanOrEqual(viewport.height);
+    await page.screenshot({
+      path: `test-artifacts/integrated-actual-five-lap-results-${label}-resize.png`,
+    });
     await page.locator("#result-quit").scrollIntoViewIfNeeded();
     const quit = await page.locator("#result-quit").boundingBox();
     expect(quit.y).toBeGreaterThanOrEqual(0);
-    expect(quit.y+quit.height).toBeLessThanOrEqual(viewport.height);
+    expect(quit.y + quit.height).toBeLessThanOrEqual(viewport.height);
   }
   const records = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("nv-records")),
