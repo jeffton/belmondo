@@ -1,50 +1,45 @@
 import * as THREE from "three";
+import { createAdvertising } from "./advertising.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
-const loader = new THREE.TextureLoader();
-export const flagshipAssetsReady = Promise.all([
-  loader.loadAsync("/art/waterfront-facade.png"),
-  loader.loadAsync("/art/null-vector-mark.png"),
-]).then(([frontage, mark]) => {
+
+export function loadFlagshipAssets() {
+  const loader = new THREE.TextureLoader();
+  const frontage = loader.load(
+    "/art/openai-image-2026-11-11T17-36-07-009Z-ig_04f2669c5602f968016af4a757ff0487d2acc6752b83e2b65f.png",
+  );
+  const mark = loader.load("/art/belmondo-mark.png");
   for (const map of [frontage, mark]) {
     map.colorSpace = THREE.SRGBColorSpace;
     map.magFilter = THREE.NearestFilter;
   }
   return { frontage, mark };
-});
+}
 
-// Kaiseki is composed as distinct pieces of waterfront infrastructure, not an
-// even scattering of props. Profiles describe purpose-built, continuous skins.
+// An occupied waterfront in six acts. Architecture is authored in road frames;
+// its geometry is collected into material/spatial batches, never per-shop meshes.
 export function buildFlagship(scene, track, textures, environment, assets) {
   const group = new THREE.Group();
   group.name = "kaiseki-waterfront";
   scene.add(group);
-  const ceramic = new THREE.MeshLambertMaterial({
-    color: 0xe6e7db,
-    map: textures.concrete,
-    flatShading: true,
-    side: THREE.DoubleSide,
-  });
-  const underside = new THREE.MeshLambertMaterial({
-    color: 0x384b65,
-    map: textures.paint,
-    flatShading: true,
-  });
-  const metal = new THREE.MeshLambertMaterial({
-    color: 0x36526a,
-    flatShading: true,
-  });
-  const glass = new THREE.MeshLambertMaterial({
-    color: 0x244d69,
-    flatShading: true,
-    side: THREE.DoubleSide,
-  });
-  const warm = new THREE.MeshBasicMaterial({ color: 0xe4b682 });
-  const cyan = new THREE.MeshBasicMaterial({ color: 0x38cecb });
-  const red = new THREE.MeshLambertMaterial({
-    color: 0xa63b3e,
-    flatShading: true,
-  });
+  const advertising = createAdvertising(group);
+  let tenant = 0;
+  const surface = (color, map) =>
+    new THREE.MeshLambertMaterial({
+      color,
+      map,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    });
+  const ceramic = surface(0xe4e8dd, textures.concrete);
+  const dark = surface(0x223a50, textures.paint);
+  const metal = surface(0x587080);
+  const glass = surface(0x285771);
+  const vermilion = surface(0xb8424c, textures.paint);
+  const light = (color) => new THREE.MeshBasicMaterial({ color });
+  const cyan = light(0x53eee5);
+  const warm = light(0xffce8b);
+  const foliage = surface(0x536b49);
   const frontage = new THREE.MeshBasicMaterial({
     map: assets.frontage,
     side: THREE.DoubleSide,
@@ -53,344 +48,565 @@ export function buildFlagship(scene, track, textures, environment, assets) {
     map: assets.mark,
     side: THREE.DoubleSide,
   });
-  const cube = new THREE.BoxGeometry(1, 1, 1),
-    batches = new Map(),
-    dummy = new THREE.Object3D();
+  const sheets = new Map();
+  const beams = new Map();
+  const transform = new THREE.Object3D();
+  const cube = new THREE.BoxGeometry(1, 1, 1);
+  const quadUV = [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ];
+
+  function roomUV(index, upper = false) {
+    const u = (index % 4) / 4;
+    const v = index < 4 ? 0.5 : 0;
+    return [
+      [u + 0.002, v + (upper ? 0.12 : 0.002)],
+      [u + 0.248, v + (upper ? 0.12 : 0.002)],
+      [u + 0.248, v + (upper ? 0.38 : 0.498)],
+      [u + 0.002, v + (upper ? 0.38 : 0.498)],
+    ];
+  }
   function frame(u, branch = 0) {
-    const f = track.frame(u * track.length, branch);
-    f.right.y = 0;
-    f.right.normalize();
-    return f;
+    return track.frame(u * track.length, branch);
   }
   function point(f, x, y, z = 0) {
+    // Architecture stays vertical even where the race deck climbs.
+    const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
     return f.p
       .clone()
       .addScaledVector(f.right, x)
       .addScaledVector(UP, y)
-      .addScaledVector(f.tangent, z);
+      .addScaledVector(forward, z);
+  }
+  function bucket(collection, material, p) {
+    if (!collection.has(material)) collection.set(material, new Map());
+    const chunks = collection.get(material);
+    const key = `${Math.floor(p.x / 256)}:${Math.floor(p.z / 256)}`;
+    if (!chunks.has(key)) chunks.set(key, []);
+    return chunks.get(key);
   }
   function beam(material, a, b, width, depth = width) {
-    if (!batches.has(material)) batches.set(material, []);
     const delta = b.clone().sub(a);
-    dummy.position.copy(a).lerp(b, 0.5);
-    dummy.quaternion.setFromUnitVectors(UP, delta.clone().normalize());
-    dummy.scale.set(width, delta.length(), depth);
-    dummy.updateMatrix();
-    batches.get(material).push(dummy.matrix.clone());
+    transform.position.copy(a).lerp(b, 0.5);
+    transform.quaternion.setFromUnitVectors(UP, delta.clone().normalize());
+    transform.scale.set(width, delta.length(), depth);
+    transform.updateMatrix();
+    bucket(beams, material, transform.position).push(transform.matrix.clone());
   }
-  function sheet(
-    points,
-    material,
-    uv = [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-    ],
-    shade = 1,
-  ) {
-    const g = new THREE.BufferGeometry(),
-      positions = [],
-      coords = [],
-      colors = [];
-    for (const i of [0, 2, 1, 0, 3, 2]) {
-      positions.push(...points[i].toArray());
-      coords.push(...uv[i]);
-      colors.push(shade, shade, shade);
-    }
-    g.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    g.setAttribute("uv", new THREE.Float32BufferAttribute(coords, 2));
-    g.computeVertexNormals();
-    group.add(new THREE.Mesh(g, material));
+  function sheet(points, material, uv = quadUV) {
+    const center = points
+      .reduce((p, v) => p.add(v), new THREE.Vector3())
+      .multiplyScalar(0.25);
+    bucket(sheets, material, center).push({ points, uv });
   }
-  function sweep(start, end, profile, material, branch = 0) {
-    const steps = Math.ceil(((end - start) * track.length) / 9),
-      verts = [],
-      uv = [];
-    for (let i = 0; i < steps; i++) {
-      const a = frame(start + ((end - start) * i) / steps, branch),
-        b = frame(start + ((end - start) * (i + 1)) / steps, branch);
-      const local = (f, [x, y]) =>
-        y === -50
-          ? new THREE.Vector3(
-              f.p.x + f.right.x * x,
-              environment.heightAt(
-                f.p.x + f.right.x * x,
-                f.p.z + f.right.z * x,
-              ) - 3,
-              f.p.z + f.right.z * x,
-            )
-          : point(f, x, y);
-      for (let j = 0; j < profile.length - 1; j++) {
-        const p = [
-          local(a, profile[j]),
-          local(b, profile[j]),
-          local(b, profile[j + 1]),
-          local(a, profile[j + 1]),
-        ];
-        for (const index of [0, 2, 1, 0, 3, 2]) {
-          verts.push(...p[index].toArray());
-          uv.push(
-            ...[
-              [i / 2, j / 2],
-              [(i + 1) / 2, j / 2],
-              [(i + 1) / 2, (j + 1) / 2],
-              [i / 2, (j + 1) / 2],
-            ][index],
-          );
-        }
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
-    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-    g.computeVertexNormals();
-    group.add(new THREE.Mesh(g, material));
-  }
-  function waterfront(start, end, branch = 0, side = 1) {
-    const w = track.config.width;
-    sweep(
-      start,
-      end,
+  function panel(f, x, bottom, top, a, b, material, uv = quadUV) {
+    sheet(
       [
-        [w + 34, -50],
-        [w + 34, 21],
-        [w + 14, 21],
-        [w + 14, 13],
-        [w + 2, 10.5],
-        [w + 2, 9.7],
-        [w + 7, 9.7],
-        [w + 7, -5],
-        [w + 4, -5],
-        [w + 4, -50],
-      ].map(([x, y]) => [x * side, y]),
-      ceramic,
-      branch,
+        point(f, x, bottom, a),
+        point(f, x, bottom, b),
+        point(f, x, top, b),
+        point(f, x, top, a),
+      ],
+      material,
+      uv,
     );
-    sweep(
-      start,
-      end,
+  }
+  function slab(f, near, far, y, a, b, material) {
+    sheet(
       [
-        [w + 7, -4.7],
-        [w + 7, -3.8],
-        [w + 22, -3.8],
-      ].map(([x, y]) => [x * side, y]),
-      underside,
-      branch,
+        point(f, near, y, a),
+        point(f, far, y, a),
+        point(f, far, y, b),
+        point(f, near, y, b),
+      ],
+      material,
     );
-    const bays = Math.floor(((end - start) * track.length) / 14);
+  }
+  function pier(f, x, z, top, size = 1.5) {
+    const p = point(f, x, top, z);
+    const foot = new THREE.Vector3(
+      p.x,
+      environment.heightAt(p.x, p.z) - 2,
+      p.z,
+    );
+    beam(ceramic, foot, p, size, size * 1.3);
+  }
+  function sign(f, side, x, y, z, size, branded = false) {
+    if (branded) {
+      panel(f, side * x, y, y + size, z - size * 0.5, z + size * 0.5, mark);
+    } else {
+      advertising.facade(
+        point(f, side * (x - 0.2), y + size / 2, z),
+        Math.atan2(-side * f.right.x, -side * f.right.z),
+        size,
+        tenant++ % 4,
+      );
+    }
+    beam(
+      cyan,
+      point(f, side * (x - 0.12), y - 0.25, z - size * 0.5),
+      point(f, side * (x - 0.12), y + size + 0.25, z - size * 0.5),
+      0.18,
+      0.24,
+    );
+  }
+
+  // Continuous folded podiums follow both real edges of a bay, including branch
+  // narrowing. The facade has deep shop recesses and occupied upper terraces.
+  function district(start, end, branch, side, variant = 0) {
+    const bays = Math.ceil(((end - start) * track.length) / 25);
     for (let i = 0; i < bays; i++) {
-      const u = start + ((end - start) * (i + 0.5)) / bays,
-        f = frame(u, branch),
-        half = (((end - start) * track.length) / bays) * 0.46;
-      f.right.multiplyScalar(side);
+      const a = frame(start + ((end - start) * i) / bays, branch);
+      const b = frame(start + ((end - start) * (i + 1)) / bays, branch);
+      const u = start + ((end - start) * (i + 0.5)) / bays;
+      const f = frame(u, branch);
+      const w = f.width;
+      const half = a.p.distanceTo(b.p) * 0.45;
+      const tall = 22 + ((i + variant * 2) % 4) * 6;
+      const profile = [
+        [5, -5],
+        [5, 9],
+        [3.5, 10],
+        [3.5, 11],
+        [13, 11],
+        [13, tall - 5],
+        [18, tall],
+        [34, tall],
+        [34, -5],
+      ];
+      for (let j = 0; j < profile.length - 1; j++) {
+        // These two elevations are genuinely open shop/balcony bays. An
+        // opaque skin here would bury the recessed facade and glazing.
+        if (j === 0 || j === 4) continue;
+        const [x1, y1] = profile[j];
+        const [x2, y2] = profile[j + 1];
+        sheet(
+          [
+            point(a, side * (a.width + x1), y1),
+            point(b, side * (b.width + x1), y1),
+            point(b, side * (b.width + x2), y2),
+            point(a, side * (a.width + x2), y2),
+          ],
+          ceramic,
+        );
+      }
       sheet(
         [
-          point(f, w + 6.8, 0, -half),
-          point(f, w + 6.8, 0, half),
-          point(f, w + 6.8, 8, half),
-          point(f, w + 6.8, 8, -half),
+          point(a, side * (a.width + 5), -5),
+          point(b, side * (b.width + 5), -5),
+          point(b, side * (b.width + 5), 0),
+          point(a, side * (a.width + 5), 0),
         ],
-        frontage,
+        dark,
+      );
+      // Foundations are a visible inhabited viaduct, not floating building shells.
+      if (i % 3 === 0) {
+        for (const z of [-half, half]) {
+          pier(f, side * (w + 9), z, -4, 2);
+          pier(f, side * (w + 30), z, -4, 2.8);
+        }
+      }
+      slab(f, side * (w + 5), side * (w + 34), -5, -half, half, dark);
+      panel(f, side * (w + 6.5), 0, 8.7, -half, half, dark);
+      // Only the interior glazing is sampled from the image. Physical jambs,
+      // recessed rooms and folded awnings supply the facade's actual depth.
+      for (let shop = 0; shop < 3; shop++) {
+        const span = (half * 2) / 3;
+        const z = -half + (shop + 0.5) * span;
+        const left = z - span / 2 + 0.45;
+        const right = z + span / 2 - 0.45;
+        panel(
+          f,
+          side * (w + 6.15),
+          0.7,
+          6.15,
+          left,
+          right,
+          frontage,
+          roomUV((i * 3 + shop + variant * 5) % 8),
+        );
+        for (const edge of [left - 0.22, right + 0.22])
+          beam(
+            ceramic,
+            point(f, side * (w + 5.1), 0, edge),
+            point(f, side * (w + 5.1), 8.8, edge),
+            0.45,
+            0.7,
+          );
+        sheet(
+          [
+            point(f, side * (w + 3.8), 6.3, left - 0.2),
+            point(f, side * (w + 3.8), 6.3, right + 0.2),
+            point(f, side * (w + 6.4), 6.9, right + 0.2),
+            point(f, side * (w + 6.4), 6.9, left - 0.2),
+          ],
+          (i + shop + variant) % 3 === 0 ? vermilion : metal,
+        );
+        beam(
+          warm,
+          point(f, side * (w + 4.4), 6.15, left),
+          point(f, side * (w + 4.4), 6.15, right),
+          0.08,
+          0.12,
+        );
+      }
+      for (const z of [-half, 0, half]) {
+        beam(
+          metal,
+          point(f, side * (w + 4.8), -4, z),
+          point(f, side * (w + 4.8), 9.6, z),
+          0.45,
+          0.55,
+        );
+      }
+      // Broad asymmetrical awnings read at speed; neon is architectural trim.
+      const neon = i % 3 === 0 ? warm : cyan;
+      beam(
+        neon,
+        point(f, side * (w + 3.35), 10, -half * 0.62),
+        point(f, side * (w + 3.35), 10, half * 0.62),
+        0.18,
+        0.3,
+      );
+      for (let y = 14; y < tall - 5; y += 5) {
+        slab(
+          f,
+          side * (w + 10),
+          side * (w + 17),
+          y - 1.5,
+          -half,
+          half,
+          ceramic,
+        );
+        panel(
+          f,
+          side * (w + 13.15),
+          y - 1.1,
+          y + 1.7,
+          -half + 1,
+          half - 1,
+          glass,
+        );
+        beam(
+          metal,
+          point(f, side * (w + 10), y, -half),
+          point(f, side * (w + 10), y, half),
+          0.18,
+          0.2,
+        );
+        for (const z of [-half, 0, half]) {
+          beam(
+            metal,
+            point(f, side * (w + 10), y - 1.4, z),
+            point(f, side * (w + 10), y, z),
+            0.15,
+          );
+        }
+        // Warm window recesses, projecting planters and service pipes make the
+        // gallery inhabited in silhouette as well as in the interior atlas.
+        if ((i + Math.floor(y)) % 2 === 0) {
+          panel(
+            f,
+            side * (w + 13.05),
+            y - 0.8,
+            y + 1.4,
+            -half + 1.2,
+            -half * 0.4,
+            frontage,
+            roomUV((i + Math.floor(y) + variant) % 8, true),
+          );
+          beam(
+            ceramic,
+            point(f, side * (w + 10.5), y - 1.2, half * 0.3),
+            point(f, side * (w + 10.5), y - 1.2, half * 0.8),
+            0.7,
+            1.2,
+          );
+          for (const z of [half * 0.35, half * 0.6, half * 0.8]) {
+            sheet(
+              [
+                point(f, side * (w + 9.8), y - 0.9, z - 0.7),
+                point(f, side * (w + 9.5), y + 0.4, z),
+                point(f, side * (w + 9.8), y - 0.9, z + 0.8),
+                point(f, side * (w + 10.2), y - 2.4, z),
+              ],
+              foliage,
+            );
+          }
+        }
+        if ((i + Math.floor(y)) % 3 === 0)
+          beam(
+            warm,
+            point(f, side * (w + 12.9), y + 1.6, -half + 1),
+            point(f, side * (w + 12.9), y + 1.6, 0),
+            0.13,
+            0.2,
+          );
+      }
+      beam(
+        metal,
+        point(f, side * (w + 4.5), -3, half - 1.6),
+        point(f, side * (w + 4.5), 8.5, half - 1.6),
+        0.3,
+        0.4,
       );
       beam(
         metal,
-        point(f, w + 6.6, -4, -half),
-        point(f, w + 6.6, 9.6, -half),
-        0.38,
-        0.45,
+        point(f, side * (w + 4.5), 8.5, half - 1.6),
+        point(f, side * (w + 7), 9.2, half - 1.6),
+        0.3,
+        0.4,
+      );
+      if (i % 3 === 1) sign(f, side, w + 4.65, 11.8, -half + 4, 4.6);
+      if (i % 7 === 0) sign(f, side, w + 12.8, tall - 8, 0, 5.5, true);
+      // Roof services and sloping vent fins break the parapet silhouette.
+      for (let j = 0; j < 3; j++) {
+        const z = -half * 0.65 + j * half * 0.65;
+        beam(
+          metal,
+          point(f, side * (w + 23), tall + 0.5, z),
+          point(f, side * (w + 29), tall + 3.2, z),
+          1.5,
+          2.4,
+        );
+      }
+      if (i % 4 === 2) {
+        beam(
+          vermilion,
+          point(f, side * (w + 29), tall, 0),
+          point(f, side * (w + 29), tall + 12, 0),
+          1.3,
+          2,
+        );
+        beam(
+          cyan,
+          point(f, side * (w + 28), tall + 4, 0),
+          point(f, side * (w + 28), tall + 10, 0),
+          0.22,
+          0.3,
+        );
+      }
+    }
+  }
+
+  // 01: opposed shopping galleries, then an open-sided transit interchange.
+  district(0.008, 0.102, 0, 1);
+  district(0.023, 0.088, 0, -1, 1);
+  for (let u = 0.113; u < 0.187; u += 0.006) {
+    const f = frame(u);
+    const w = f.width;
+    for (const side of [-1, 1]) {
+      pier(f, side * (w + 6), 0, 17, 1.7);
+      beam(
+        vermilion,
+        point(f, side * (w + 6), 17),
+        point(f, side * (w - 3), 22),
+        0.8,
+        1.6,
+      );
+      beam(
+        ceramic,
+        point(f, side * (w + 7), 23),
+        point(f, side * 1.5, 20.5),
+        1,
+        4,
       );
       beam(
         cyan,
-        point(f, w + 2, 9.4, -half),
-        point(f, w + 2, 9.4, half),
-        0.1,
-        0.14,
-      );
-      beam(
-        metal,
-        point(f, w + 7.2, 9, -half),
-        point(f, w + 7.2, 9, half),
-        0.15,
+        point(f, side * (w + 5), 16),
+        point(f, side * (w + 5), 20),
+        0.22,
         0.3,
       );
-      if (i % 3 === 0)
-        sheet(
-          [
-            point(f, w + 6.5, 8.5, -5.5),
-            point(f, w + 6.5, 8.5, 5.5),
-            point(f, w + 6.5, 9.8, 5.5),
-            point(f, w + 6.5, 9.8, -5.5),
-          ],
-          mark,
-        );
-      // Occupied upper terraces have real balcony depth, rather than window grids.
-      for (const y of [13.5, 18]) {
-        beam(
-          metal,
-          point(f, w + 13, y, -half),
-          point(f, w + 13, y, half),
-          0.13,
-          0.2,
-        );
-        beam(
-          ceramic,
-          point(f, w + 15, y - 1.3, -half),
-          point(f, w + 15, y - 1.3, half),
-          0.6,
-          4,
-        );
-        for (const z of [-half, half])
-          beam(
-            metal,
-            point(f, w + 13, y - 1.2, z),
-            point(f, w + 13, y, z),
-            0.12,
-            0.12,
-          );
-        sheet(
-          [
-            point(f, w + 14, y - 1.1, -half),
-            point(f, w + 14, y - 1.1, half),
-            point(f, w + 14, y + 1.2, half),
-            point(f, w + 14, y + 1.2, -half),
-          ],
-          glass,
-        );
-      }
+      slab(f, side * (w + 5), side * (w + 25), 15, -11, 11, dark);
     }
+    beam(metal, point(f, -w - 6, 21), point(f, w + 6, 21), 0.5, 0.8);
   }
-  // 01: intimate frontage → covered interchange → open harbor reveal.
-  waterfront(0.008, 0.105);
-  // The return route approaches the occupied terraces from a different height.
-  waterfront(0.785, 0.865);
-  for (let u = 0.115; u < 0.185; u += 0.0045) {
-    const f = frame(u),
-      w = f.width;
-    beam(underside, point(f, -w, 13.7), point(f, w, 13.7), 0.65, 1);
-    beam(cyan, point(f, -w + 1, 13.2), point(f, w - 1, 13.2), 0.12, 0.18);
-    for (const side of [-1, 1])
-      beam(
-        metal,
-        point(f, side * (w - 0.4), 8),
-        point(f, side * (w - 1), 13.7),
-        0.22,
-        0.4,
-      );
-  }
-  // 02: a single identifiable ferry-terminal roof, anchored to a pile-supported quay.
-  const terminal = frame(0.226),
-    origin = point(terminal, terminal.width + 56, -terminal.p.y + 1);
-  const terminalPoint = ([x, y, z]) =>
-    origin
-      .clone()
-      .addScaledVector(terminal.right, x)
-      .addScaledVector(UP, y)
-      .addScaledVector(terminal.tangent, z);
-  const roof = [];
-  for (let z = -54; z <= 54; z += 6) {
-    const arch = Math.sin(((z + 54) / 108) * Math.PI);
-    roof.push({ z, y: 16 + arch * 22 });
-  }
-  for (let i = 0; i < roof.length - 1; i++) {
-    const a = roof[i],
-      b = roof[i + 1];
+
+  // 02: a scalloped ferry hall, gangways and mooring structures share one quay.
+  const terminal = frame(0.232);
+  const baseY = terminal.p.y - 7;
+  const terminalPoint = (x, y, z) => {
+    const p = point(terminal, terminal.width + 57 + x, 0, z);
+    p.y = baseY + y;
+    return p;
+  };
+  const roofY = (z) => 15 + 18 * (1 - Math.abs(z) / 72);
+  for (let z = -72; z < 72; z += 8) {
+    const y = roofY(z),
+      next = roofY(z + 8);
     sheet(
       [
-        terminalPoint([-25, a.y, a.z]),
-        terminalPoint([25, a.y - 5, a.z]),
-        terminalPoint([25, b.y - 5, b.z]),
-        terminalPoint([-25, b.y, b.z]),
+        terminalPoint(-27, y, z),
+        terminalPoint(0, y + 5, z),
+        terminalPoint(0, next + 5, z + 8),
+        terminalPoint(-27, next, z + 8),
       ],
       ceramic,
     );
     sheet(
       [
-        terminalPoint([-25, 3, a.z]),
-        terminalPoint([-25, 3, b.z]),
-        terminalPoint([-25, b.y, b.z]),
-        terminalPoint([-25, a.y, a.z]),
+        terminalPoint(0, y + 5, z),
+        terminalPoint(29, y - 6, z),
+        terminalPoint(29, next - 6, z + 8),
+        terminalPoint(0, next + 5, z + 8),
+      ],
+      ceramic,
+    );
+    beam(
+      vermilion,
+      terminalPoint(-27, y - 1, z),
+      terminalPoint(0, y + 4, z),
+      0.5,
+      0.7,
+    );
+    sheet(
+      [
+        terminalPoint(-27, 1, z),
+        terminalPoint(-27, 1, z + 8),
+        terminalPoint(-27, next, z + 8),
+        terminalPoint(-27, y, z),
       ],
       glass,
     );
     beam(
-      red,
-      terminalPoint([-26, a.y + 0.4, a.z]),
-      terminalPoint([-26, b.y + 0.4, b.z]),
-      0.35,
+      vermilion,
+      terminalPoint(-27.5, y, z),
+      terminalPoint(-27.5, next, z + 8),
+      0.5,
+      0.7,
+    );
+    beam(
+      metal,
+      terminalPoint(-27.3, 0, z),
+      terminalPoint(-27.3, y, z),
+      0.4,
       0.5,
     );
-    if (i % 2 === 0) {
-      beam(
-        metal,
-        terminalPoint([-25, 2, a.z]),
-        terminalPoint([-25, a.y, a.z]),
-        0.4,
-        0.6,
-      );
+    if (z % 16 === 0)
       beam(
         warm,
-        terminalPoint([-24.8, 4, a.z]),
-        terminalPoint([-24.8, a.y - 2, a.z]),
-        0.1,
-        0.2,
+        terminalPoint(-27.7, 4, z),
+        terminalPoint(-27.7, y - 2, z),
+        0.18,
+        0.25,
       );
-    }
   }
-  for (const x of [-27, 27])
-    for (const z of [-50, -25, 0, 25, 50]) {
-      const p = terminalPoint([x, 0, z]);
+  sheet(
+    [
+      terminalPoint(-33, 0, -78),
+      terminalPoint(37, 0, -78),
+      terminalPoint(37, 0, 78),
+      terminalPoint(-33, 0, 78),
+    ],
+    dark,
+  );
+  for (const z of [-70, -35, 0, 35, 70]) {
+    for (const x of [-31, 34, 66]) {
+      const p = terminalPoint(x, -1, z);
       beam(
         ceramic,
         new THREE.Vector3(p.x, environment.heightAt(p.x, p.z) - 3, p.z),
-        p.clone().addScaledVector(UP, 2),
-        2.5,
-        3,
+        p,
+        2.8,
+        3.5,
       );
     }
+    if (z !== 0) {
+      sheet(
+        [
+          terminalPoint(29, 0, z - 3),
+          terminalPoint(74, -1.5, z - 3),
+          terminalPoint(74, -1.5, z + 3),
+          terminalPoint(29, 0, z + 3),
+        ],
+        ceramic,
+      );
+      beam(metal, terminalPoint(71, -12, z), terminalPoint(71, 8, z), 1.4, 1.8);
+      beam(warm, terminalPoint(71, 7, z), terminalPoint(71, 9, z), 1.5, 2);
+    }
+  }
   sheet(
     [
-      terminalPoint([-30, 2, -58]),
-      terminalPoint([30, 2, -58]),
-      terminalPoint([30, 2, 58]),
-      terminalPoint([-30, 2, 58]),
-    ],
-    underside,
-  );
-  sheet(
-    [
-      terminalPoint([-25, 10, -48]),
-      terminalPoint([-25, 10, -17]),
-      terminalPoint([-25, 14, -17]),
-      terminalPoint([-25, 14, -48]),
+      terminalPoint(-27.8, 8, -44),
+      terminalPoint(-27.8, 8, -18),
+      terminalPoint(-27.8, 16, -18),
+      terminalPoint(-27.8, 16, -44),
     ],
     mark,
   );
-  // 03: the split is framed by asymmetrical terrace walls, not duplicated scenery.
-  waterfront(0.31, 0.385, -1, -1);
-  // 04: the landing has a visible portal silhouette and structural destination.
-  const landing = frame(0.682),
-    w = landing.width;
+
+  // 03: low inner-branch workshops contrast with tall outer-branch apartments.
+  // Only the outside of each branch is occupied: the median remains navigable.
+  district(0.298, 0.422, -1, -1, 2);
+  district(0.316, 0.411, 1, 1, 3);
+
+  // 04: returning to the inhabited city gives the launch a recognisable approach.
+  district(0.555, 0.665, 0, -1, 3);
+  district(0.685, 0.756, 0, 1, 1);
+
+  // 05: the entire straight jump corridor is left open. A paired broken-arch
+  // landmark sits at the CURRENT landing, well outside even a pitched-up flight.
+  const landing = frame(track.config.jump + 0.075);
   for (const side of [-1, 1]) {
-    const foot = point(landing, side * (w + 7), -50);
-    foot.y = environment.heightAt(foot.x, foot.z) - 2;
-    const high = point(landing, side * (w + 8), 23),
-      tip = point(landing, side * (w + 3), 29);
-    beam(ceramic, foot, high, 3.5, 6);
-    beam(ceramic, high, tip, 2.5, 6);
+    const x = side * (landing.width + 12);
+    pier(landing, x, 0, 24, 3.5);
+    beam(
+      ceramic,
+      point(landing, x, 24),
+      point(landing, side * (landing.width + 6), 34),
+      3,
+      5,
+    );
+    beam(
+      vermilion,
+      point(landing, x, 24),
+      point(landing, side * (landing.width + 5), 33),
+      0.9,
+      5.3,
+    );
     beam(
       cyan,
-      point(landing, side * (w + 5), 5),
-      point(landing, side * (w + 5), 22),
-      0.13,
-      0.2,
+      point(landing, side * (landing.width + 9.5), 5),
+      point(landing, side * (landing.width + 9.5), 24),
+      0.3,
+      0.4,
     );
   }
-  for (const [material, matrices] of batches) {
-    const mesh = new THREE.InstancedMesh(cube, material, matrices.length);
-    matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
-    mesh.computeBoundingSphere();
-    group.add(mesh);
+  district(0.925, 0.983, 0, -1, 1);
+
+  for (const [material, chunks] of sheets) {
+    for (const faces of chunks.values()) {
+      const positions = [],
+        uv = [];
+      for (const face of faces) {
+        for (const i of [0, 2, 1, 0, 3, 2]) {
+          positions.push(...face.points[i].toArray());
+          uv.push(...face.uv[i]);
+        }
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3),
+      );
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      geometry.computeVertexNormals();
+      geometry.computeBoundingSphere();
+      group.add(new THREE.Mesh(geometry, material));
+    }
   }
+  for (const [material, chunks] of beams) {
+    for (const matrices of chunks.values()) {
+      const mesh = new THREE.InstancedMesh(cube, material, matrices.length);
+      matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+      mesh.computeBoundingSphere();
+      group.add(mesh);
+    }
+  }
+  advertising.finish();
   return { group };
 }

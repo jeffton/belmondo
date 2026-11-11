@@ -6,6 +6,7 @@ import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
 import { buildSplitMarkers } from "./advertising.js";
 import { createCraft } from "./craft.js";
+import { buildFlagship, loadFlagshipAssets } from "./flagship.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
 const mat = (color, extra = {}) =>
@@ -51,6 +52,8 @@ function quadGeometry(quads) {
 
 export class World {
   constructor(canvas) {
+    this.flagshipAssets = loadFlagshipAssets();
+    this.assetTextures = new Set(Object.values(this.flagshipAssets));
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -106,7 +109,9 @@ export class World {
         if (g !== boxGeo) g.dispose();
       });
       materials.forEach((m) => m.dispose());
-      textures.forEach((t) => t.dispose());
+      textures.forEach((t) => {
+        if (!this.assetTextures.has(t)) t.dispose();
+      });
     }
     this.scene = new THREE.Scene();
     this.track = track;
@@ -114,6 +119,8 @@ export class World {
     this.effects = [];
     this.cameraReady = false;
     const cfg = track.config;
+    const flagship = cfg.name === "KAISEKI COAST";
+    const fogColor = flagship ? 0x788391 : cfg.fog;
     const textures = circuitTextures(
       "#" + new THREE.Color(cfg.color).getHexString(),
     );
@@ -127,15 +134,32 @@ export class World {
       0,
       "#" + new THREE.Color(cfg.sky).multiplyScalar(0.65).getHexString(),
     );
-    gradient.addColorStop(0.65, "#" + new THREE.Color(cfg.fog).getHexString());
-    gradient.addColorStop(1, "#" + new THREE.Color(cfg.fog).getHexString());
+    gradient.addColorStop(
+      0.65,
+      flagship ? "#666a85" : "#" + new THREE.Color(cfg.fog).getHexString(),
+    );
+    gradient.addColorStop(
+      0.88,
+      flagship ? "#a3939d" : "#" + new THREE.Color(cfg.fog).getHexString(),
+    );
+    gradient.addColorStop(1, "#" + new THREE.Color(fogColor).getHexString());
     skyContext.fillStyle = gradient;
     skyContext.fillRect(0, 0, 4, 256);
     this.scene.background = new THREE.CanvasTexture(skyCanvas);
     this.scene.background.colorSpace = THREE.SRGBColorSpace;
-    this.scene.fog = new THREE.Fog(cfg.fog, 180, 1100);
-    this.scene.add(new THREE.HemisphereLight(0xb9d6ff, 0x253451, 1.8));
-    const sun = new THREE.DirectionalLight(0xffd4bc, 2.1);
+    this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
+    this.scene.add(
+      new THREE.HemisphereLight(
+        flagship ? 0xb9ccf4 : 0xb9d6ff,
+        flagship ? 0x29283d : 0x253451,
+        flagship ? 1.15 : 1.8,
+      ),
+    );
+    if (flagship) this.scene.add(new THREE.AmbientLight(0xb0c5de, 0.3));
+    const sun = new THREE.DirectionalLight(
+      flagship ? 0xffc3a4 : 0xffd4bc,
+      flagship ? 1.4 : 2.1,
+    );
     sun.position.set(-300, 500, 150);
     this.scene.add(sun);
     const fill = new THREE.DirectionalLight(0x53d9ff, 0.6);
@@ -285,10 +309,10 @@ export class World {
                   -side * 0.025,
                 ),
             );
-            p2[0].addScaledVector(a.up, 0.75);
-            p2[1].addScaledVector(b.up, 0.75);
-            p2[2].addScaledVector(b.up, -0.45);
-            p2[3].addScaledVector(a.up, -0.45);
+            p2[0].addScaledVector(a.up, flagship ? 1.4 : 0.75);
+            p2[1].addScaledVector(b.up, flagship ? 1.4 : 0.75);
+            p2[2].addScaledVector(b.up, flagship ? -0.2 : -0.45);
+            p2[3].addScaledVector(a.up, flagship ? -0.2 : -0.45);
             quads.push({
               p: p2,
               color: branch === 1 ? 0xe55da5 : cfg.color,
@@ -297,7 +321,7 @@ export class World {
           }
         }
         // Repeating overhead ribs and tunnel skin create near-field motion cues.
-        if (u > cfg.tunnel[0] && u < cfg.tunnel[1]) {
+        if (!flagship && u > cfg.tunnel[0] && u < cfg.tunnel[1]) {
           addStrip(
             a,
             b,
@@ -344,17 +368,26 @@ export class World {
               depthWrite: false,
               side: THREE.DoubleSide,
             })
-          : kind === "light"
-            ? new THREE.MeshBasicMaterial({
+          : flagship && kind === "road"
+            ? new THREE.MeshPhongMaterial({
                 vertexColors: true,
-                side: THREE.DoubleSide,
-              })
-            : new THREE.MeshLambertMaterial({
-                vertexColors: true,
-                map: textures[kind],
+                map: textures.road,
+                specular: 0x56516c,
+                shininess: 38,
                 side: THREE.DoubleSide,
                 flatShading: true,
-              });
+              })
+            : kind === "light"
+              ? new THREE.MeshBasicMaterial({
+                  vertexColors: true,
+                  side: THREE.DoubleSide,
+                })
+              : new THREE.MeshLambertMaterial({
+                  vertexColors: true,
+                  map: textures[kind],
+                  side: THREE.DoubleSide,
+                  flatShading: true,
+                });
       const chunks = new Map();
       for (const q of quads.filter((q) => q.kind === kind)) {
         const key = `${Math.floor(q.p[0].x / 256)}:${Math.floor(q.p[0].z / 256)}`;
@@ -365,6 +398,14 @@ export class World {
         this.scene.add(new THREE.Mesh(quadGeometry(chunk), material));
     }
     this.city = buildCity(this.scene, track, textures, environment);
+    if (flagship)
+      buildFlagship(
+        this.scene,
+        track,
+        textures,
+        environment,
+        this.flagshipAssets,
+      );
     const obj = new THREE.Object3D();
     const supportFrames = Array.from({ length: 60 }, (_, i) => {
       const u = i / 60;
@@ -437,7 +478,7 @@ export class World {
       }
     }
     const startFrame = track.frame(0);
-    for (let x = -16; x < 16; x += 2)
+    for (let x = -startFrame.width; x < startFrame.width; x += 2)
       for (let z = 0; z < 4; z += 2) {
         const tile = new THREE.Mesh(
           new THREE.BoxGeometry(2, 0.05, 2),
@@ -455,47 +496,49 @@ export class World {
         this.scene.add(tile);
       }
     buildSplitMarkers(this.scene, track);
-    const ribMaterial = mat(0xf5eee1, { map: textures.paint });
-    const ribLight = basic(cfg.color);
-    for (let i = 0; i < 6; i++) {
-      const u = 0.025 + i * 0.16;
-      for (const branch of u > cfg.split[0] && u < cfg.split[1]
-        ? [-1, 1]
-        : [0]) {
-        const f = track.frame(u * track.length, branch),
-          w = f.width + 4;
-        const points = [
-          [-w, -2],
-          [-w + 1, 10],
-          [0, 21],
-          [w - 1, 10],
-          [w, -2],
-        ].map(([x, y]) =>
-          f.p.clone().addScaledVector(f.right, x).addScaledVector(f.up, y),
-        );
-        const path = new THREE.CatmullRomCurve3(points);
-        this.scene.add(
-          new THREE.Mesh(
-            new THREE.TubeGeometry(path, 20, 0.8, 4, false),
+    if (!flagship) {
+      const ribMaterial = mat(0xf5eee1, { map: textures.paint });
+      const ribLight = basic(cfg.color);
+      for (let i = 0; i < 6; i++) {
+        const u = 0.025 + i * 0.16;
+        for (const branch of u > cfg.split[0] && u < cfg.split[1]
+          ? [-1, 1]
+          : [0]) {
+          const f = track.frame(u * track.length, branch),
+            w = f.width + 4;
+          const points = [
+            [-w, -2],
+            [-w + 1, 10],
+            [0, 21],
+            [w - 1, 10],
+            [w, -2],
+          ].map(([x, y]) =>
+            f.p.clone().addScaledVector(f.right, x).addScaledVector(f.up, y),
+          );
+          const path = new THREE.CatmullRomCurve3(points);
+          this.scene.add(
+            new THREE.Mesh(
+              new THREE.TubeGeometry(path, 20, 0.8, 4, false),
+              ribMaterial,
+            ),
+          );
+          const lightPath = new THREE.CatmullRomCurve3(
+            points.map((p) => p.clone().addScaledVector(f.tangent, -0.9)),
+          );
+          this.scene.add(
+            new THREE.Mesh(
+              new THREE.TubeGeometry(lightPath, 20, 0.13, 4, false),
+              ribLight,
+            ),
+          );
+          const footing = new THREE.Mesh(
+            new THREE.BoxGeometry(w * 2 + 2, 1.2, 3),
             ribMaterial,
-          ),
-        );
-        const lightPath = new THREE.CatmullRomCurve3(
-          points.map((p) => p.clone().addScaledVector(f.tangent, -0.9)),
-        );
-        this.scene.add(
-          new THREE.Mesh(
-            new THREE.TubeGeometry(lightPath, 20, 0.13, 4, false),
-            ribLight,
-          ),
-        );
-        const footing = new THREE.Mesh(
-          new THREE.BoxGeometry(w * 2 + 2, 1.2, 3),
-          ribMaterial,
-        );
-        footing.position.copy(f.p).addScaledVector(f.up, -2.5);
-        footing.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
-        this.scene.add(footing);
+          );
+          footing.position.copy(f.p).addScaledVector(f.up, -2.5);
+          footing.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
+          this.scene.add(footing);
+        }
       }
     }
     this.effectMat = basic(0xff9730);
@@ -525,6 +568,9 @@ export class World {
     return createCraft(this.scene, color);
   }
   setupRacers(race, specs) {
+    for (const ship of this.ships)
+      this.scene.remove(ship, ship.userData.shadow);
+    for (const particle of this.sparkData) particle.life = 0;
     this.cameraForward = null;
     this.cameraReady = false;
     this.ships = race.racers.map((r) => this.makeShip(specs[r.craft].color));

@@ -398,15 +398,17 @@ export function buildCity(scene, track, textures, environment) {
         );
     }
   }
-  // Close districts alternate with open water / landscape; no solid wall of boxes.
-  for (let i = 0; i < 210; i++) {
-    const f = track.frame(((i * 0.61803398875) % 1) * track.length);
-    const side = i % 2 ? 1 : -1;
-    const candidate = f.p
-      .clone()
-      .addScaledVector(f.right, side * (94 + random() * 180));
-    const p = anchor(candidate);
-    if (p) district(p, f.p.y, i, f.p);
+  // Kaiseki's occupied roadside is authored in flagship.js; only its skyline remains here.
+  if (track.config.name !== "KAISEKI COAST") {
+    for (let i = 0; i < 210; i++) {
+      const f = track.frame(((i * 0.61803398875) % 1) * track.length);
+      const side = i % 2 ? 1 : -1;
+      const candidate = f.p
+        .clone()
+        .addScaledVector(f.right, side * (94 + random() * 180));
+      const p = anchor(candidate);
+      if (p) district(p, f.p.y, i, f.p);
+    }
   }
   const trains = [];
   const trainMaterial = materials.ceramic;

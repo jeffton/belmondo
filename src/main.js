@@ -120,7 +120,6 @@ async function start() {
   sound.setMuted($("mute").checked);
   sound.setPaused(false);
   race = new Race(track, selectedCraft, $("mode").value);
-  world.build(track);
   world.setupRacers(race, CRAFT);
   world.cameraReady = false;
   last = performance.now();
