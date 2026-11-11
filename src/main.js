@@ -4,6 +4,7 @@ import { Race, CRAFT } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine, MusicPlayer } from "./audio.js";
 
+await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
 const sound = new AudioEngine();
 const music = new MusicPlayer((state) => {
@@ -107,10 +108,14 @@ function clearInput() {
   $("steer-pad").querySelector("i").style.transform = "";
 }
 async function start() {
+  const audioStart = sound.start();
+  sound.setMuted($("mute").checked);
+  sound.setPaused(false);
   race = new Race(track, selectedCraft, $("mode").value);
   world.build(track);
   world.setupRacers(race, CRAFT);
   world.cameraReady = false;
+  last = performance.now();
   state = "race";
   paused = false;
   accumulator = 0;
@@ -123,8 +128,7 @@ async function start() {
   $("hud").hidden = false;
   $("hud-track").textContent = TRACKS[selectedTrack].name;
   try {
-    sound.setMuted($("mute").checked);
-    await sound.start();
+    await audioStart;
   } catch (error) {
     showMessage(`AUDIO: ${error.message}`, 3);
   }
@@ -134,9 +138,7 @@ function setPaused(value) {
   paused = value;
   clearInput();
   $("pause-panel").hidden = !paused;
-  if (paused) {
-    sound.setMuted(true);
-  } else sound.setMuted($("mute").checked);
+  sound.setPaused(paused);
 }
 function quit() {
   state = "menu";
@@ -146,7 +148,7 @@ function quit() {
   $("hud").hidden = true;
   $("pause-panel").hidden = true;
   $("results").hidden = true;
-  sound.setMuted(true);
+  sound.setPaused(true);
   world.cameraReady = false;
 }
 $("start").onclick = start;
@@ -165,7 +167,7 @@ for (const [button, dialog] of [
   $(button).onclick = () => {
     if (dialog === "art-dialog")
       $("concept").src =
-        "/art/openai-image-2026-11-11T13-01-07-719Z-ig_03467063375380bc016af466da2b5487d28a0caa8027e16fe6.png";
+        "/art/openai-image-2026-11-11T14-07-30-783Z-ig_04b9a94398de6a94016af4763e4cec87d2b31fcfefd192931f.png";
     $(dialog).showModal();
   };
 for (const b of document.querySelectorAll("dialog .close"))
@@ -280,8 +282,9 @@ function input() {
     padPause = pad.buttons[9]?.pressed;
   }
   return {
-    steer: clamp(steer, -1, 1),
-    air: clamp(air, -1, 1),
+    // The road's lateral axis points camera-left when looking forward.
+    steer: -clamp(steer, -1, 1),
+    air: -clamp(air, -1, 1),
     throttle,
     brake,
   };
@@ -325,7 +328,7 @@ function drawMap() {
 }
 function showResults() {
   state = "results";
-  sound.setMuted(true);
+  sound.stopEngine();
   $("results").hidden = false;
   const key = `${selectedTrack}-${selectedCraft}-${race.mode}`;
   const isRecord = !records[key] || race.time < records[key];
@@ -375,17 +378,14 @@ function updateHUD(now) {
   if (race.countdown > 0) {
     const count = Math.ceil(race.countdown);
     $("race-message").className = "countdown";
-    $("race-message").textContent = count === 4 ? "GRID READY" : count;
+    $("race-message").textContent = count > 3 ? "" : count;
     if (count !== previousCount) {
       sound.effect("countdown");
       previousCount = count;
     }
   } else {
     $("race-message").className = "";
-    if (previousCount !== 0) {
-      showMessage("GO", 1);
-      previousCount = 0;
-    }
+    previousCount = 0;
     if (now > messageUntil) $("race-message").textContent = "";
   }
   drawMap();
@@ -393,7 +393,7 @@ function updateHUD(now) {
 let hudTick = 0;
 function animate(now) {
   const frameSeconds = (now - last) / 1000;
-  const dt = Math.min(frameSeconds, 0.1);
+  const dt = frameSeconds;
   last = now;
   if (state === "menu") {
     demoDistance += dt * 32;
@@ -415,17 +415,10 @@ function animate(now) {
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
           world.burst(race.player);
-        showMessage(event.text, event.kind === "route" ? 2 : 1.3);
-        sound.effect(
-          ["pickup", "fire", "hit"].includes(event.kind)
-            ? event.kind
-            : event.kind === "scrape"
-              ? "hit"
-              : "pickup",
-        );
+        sound.effect(event.kind, event.text);
       }
       race.events.length = 0;
-      sound.update(race.player.speed / 125, race.player.surge > 0);
+      sound.update(race.player.speed / 125, race.player.surge > 0, controls);
       hudTick += dt;
       if (hudTick > 0.05) {
         updateHUD(now);
@@ -464,8 +457,9 @@ $("music-play").onclick = () =>
   music.audio.paused ? music.play() : music.pause();
 $("music-next").onclick = () => music.next();
 $("volume").oninput = (e) => (music.volume = Number(e.target.value));
-$("mute").onchange = (e) =>
-  sound.setMuted(e.target.checked || paused || state !== "race");
+$("effects-volume").oninput = (e) => sound.setVolume(Number(e.target.value));
+sound.setVolume(0.8);
+$("mute").onchange = (e) => sound.setMuted(e.target.checked);
 let dragDepth = 0;
 window.addEventListener("dragenter", (e) => {
   if (e.dataTransfer.types.includes("Files")) {
@@ -526,6 +520,11 @@ window.nullVector = {
       time: race.time,
       position: race.position,
       speed: race.player.speed,
+      lateralPosition: race.player.x,
+      screenOffset:
+        world.ships[0].position.clone().project(world.camera).x -
+        track.frame(race.player.s, race.player.branch).p.project(world.camera)
+          .x,
       progress: mod(race.player.s, track.length) / track.length,
       lap: race.player.lap,
       branch: race.player.branch,

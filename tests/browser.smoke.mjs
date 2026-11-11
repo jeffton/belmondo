@@ -30,6 +30,7 @@ try {
   await page.locator("#tracks button").nth(2).click();
   await expect(page.locator("#circuit-name")).toHaveText("NOCTILUCENT");
   await page.locator("#tracks button").first().click();
+  await page.locator("#quality").selectOption("retro");
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.2,
@@ -111,6 +112,7 @@ try {
   m.on("pageerror", (e) => errors.push(e.message));
   await m.goto(url);
   await m.waitForFunction(() => window.nullVector?.telemetry.state === "menu");
+  await m.locator("#quality").selectOption("retro");
   await m.locator("#start").click();
   await m.waitForFunction(
     () => window.nullVector.telemetry.speed > 40,

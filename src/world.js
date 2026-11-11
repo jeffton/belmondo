@@ -3,6 +3,7 @@ import { mod, clamp } from "./track.js";
 import { PAD_POSITIONS } from "./race.js";
 import { circuitTextures } from "./materials.js";
 import { buildEnvironment } from "./environment.js";
+import { buildCity } from "./city.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
 const mat = (color, extra = {}) =>
@@ -142,10 +143,13 @@ export class World {
     this.scene.background = new THREE.CanvasTexture(skyCanvas);
     this.scene.background.colorSpace = THREE.SRGBColorSpace;
     this.scene.fog = new THREE.Fog(cfg.fog, 180, 1100);
-    this.scene.add(new THREE.HemisphereLight(0xe4f6ff, 0x394358, 2.1));
-    const sun = new THREE.DirectionalLight(0xffe8cf, 2.2);
+    this.scene.add(new THREE.HemisphereLight(0xb9d6ff, 0x253451, 1.8));
+    const sun = new THREE.DirectionalLight(0xffd4bc, 2.1);
     sun.position.set(-300, 500, 150);
     this.scene.add(sun);
+    const fill = new THREE.DirectionalLight(0x53d9ff, 0.6);
+    fill.position.set(400, 80, -300);
+    this.scene.add(fill);
     const sea = new THREE.Mesh(
       new THREE.PlaneGeometry(12000, 12000, 1, 1),
       mat(cfg.sea, { map: textures.water }),
@@ -213,24 +217,29 @@ export class World {
         addStrip(a, b, -w, w, 0, i % 5 === 0 ? 0xabb3ac : colors.road, "road");
         addStrip(a, b, -w, w, -2, 0x8f9c96, "concrete");
         if (!shared || branch === -1)
-          addStrip(
-            a,
-            b,
-            -w,
-            -w + 0.5,
-            0.06,
-            i % 8 < 4 ? colors.white : colors.orange,
-          );
+          addStrip(a, b, -w, -w + 1.1, 0.06, 0xef4d43);
         if (!shared || branch === 1)
-          addStrip(
-            a,
-            b,
-            w - 0.5,
-            w,
-            0.06,
-            i % 8 < 4 ? colors.white : colors.orange,
-          );
-        if (i % 7 < 3) addStrip(a, b, -0.13, 0.13, 0.04, 0x82939a);
+          addStrip(a, b, w - 0.5, w, 0.06, colors.white);
+        if (i % 7 < 3) addStrip(a, b, -0.13, 0.13, 0.04, 0xb4c3cf);
+        if (i % 28 === 0) {
+          const point = ([x, z]) =>
+            a.p
+              .clone()
+              .addScaledVector(a.right, x)
+              .addScaledVector(a.tangent, z)
+              .addScaledVector(a.up, 0.1);
+          for (const side of [-1, 1])
+            quads.push({
+              p: [
+                [0, 5],
+                [side * 3, 0],
+                [side * 3, -1.5],
+                [0, 3.5],
+              ].map(point),
+              color: 0xe8f2ee,
+              kind: "light",
+            });
+        }
         for (const side of [-1, 1]) {
           if (shared && side === -branch) continue;
           const edgeA = a.width * side,
@@ -267,8 +276,8 @@ export class World {
           ];
           quads.push({
             p,
-            color: i % 10 < 8 ? 0xe0dfcd : 0xa8b3ae,
-            kind: "concrete",
+            color: i % 12 === 0 ? 0xf4eee2 : 0x3c8d9e,
+            kind: i % 12 === 0 ? "concrete" : "glass",
             uv: [
               [(a.u * track.length) / 8, 0],
               [(b.u * track.length) / 8, 0],
@@ -292,7 +301,7 @@ export class World {
             quads.push({
               p: p2,
               color: branch === 1 ? 0xe55da5 : cfg.color,
-              kind: "paint",
+              kind: "light",
             });
           }
         }
@@ -334,79 +343,38 @@ export class World {
         }
       }
     }
-    for (const kind of ["road", "concrete", "paint"])
-      this.scene.add(
-        new THREE.Mesh(
-          quadGeometry(quads.filter((q) => q.kind === kind)),
-          new THREE.MeshLambertMaterial({
-            vertexColors: true,
-            map: textures[kind],
-            side: THREE.DoubleSide,
-            flatShading: true,
-          }),
-        ),
-      );
-    // Instanced waterfront towers: original concrete city, not a backdrop image.
-    const cityMat = mat(0xc6cfcb, { map: textures.facade });
-    const towers = new THREE.InstancedMesh(boxGeo, cityMat, 160);
-    const foundations = new THREE.InstancedMesh(
-      boxGeo,
-      mat(0xd6d5bd, { map: textures.concrete }),
-      160,
-    );
-    const windows = new THREE.InstancedMesh(boxGeo, basic(cfg.color), 320);
-    const obj = new THREE.Object3D();
-    let seed = 719;
-    const random = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < 160; i++) {
-      const f = track.frame(random() * track.length);
-      const side = i % 2 ? 1 : -1;
-      let p = f.p
-        .clone()
-        .addScaledVector(f.right, side * (100 + random() * 320));
-      p = environment.buildingPosition(p);
-      const h = 30 + random() * 145,
-        width = 15 + random() * 35,
-        depth = 18 + random() * 36;
-      const ground =
-        Math.min(
-          ...[-width / 2, width / 2].flatMap((dx) =>
-            [-depth / 2, depth / 2].map((dz) =>
-              environment.heightAt(p.x + dx, p.z + dz),
-            ),
-          ),
-        ) - 1;
-      const slabHeight = p.y - ground + 0.6;
-      obj.position.set(p.x, ground + slabHeight / 2, p.z);
-      obj.rotation.set(0, 0, 0);
-      obj.scale.set(width + 4, slabHeight, depth + 4);
-      obj.updateMatrix();
-      foundations.setMatrixAt(i, obj.matrix);
-      const base = p.y + 0.6;
-      obj.position.set(p.x, base + h / 2, p.z);
-      obj.rotation.set(0, 0, 0);
-      obj.scale.set(width, h, depth);
-      obj.updateMatrix();
-      towers.setMatrixAt(i, obj.matrix);
-      towers.setColorAt(
-        i,
-        new THREE.Color().setHSL(0.56, 0.04, 0.58 + random() * 0.22),
-      );
-      for (let j = 0; j < 2; j++) {
-        obj.position.set(
-          p.x + (j ? 1 : -1) * width * 0.24,
-          base + h * 0.68,
-          p.z - depth / 2 - 0.08,
-        );
-        obj.scale.set(0.8, h * 0.24, 0.12);
-        obj.updateMatrix();
-        windows.setMatrixAt(i * 2 + j, obj.matrix);
+    for (const kind of ["road", "concrete", "paint", "glass", "light"]) {
+      const material =
+        kind === "glass"
+          ? new THREE.MeshBasicMaterial({
+              vertexColors: true,
+              transparent: true,
+              opacity: 0.48,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+            })
+          : kind === "light"
+            ? new THREE.MeshBasicMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide,
+              })
+            : new THREE.MeshLambertMaterial({
+                vertexColors: true,
+                map: textures[kind],
+                side: THREE.DoubleSide,
+                flatShading: true,
+              });
+      const chunks = new Map();
+      for (const q of quads.filter((q) => q.kind === kind)) {
+        const key = `${Math.floor(q.p[0].x / 256)}:${Math.floor(q.p[0].z / 256)}`;
+        if (!chunks.has(key)) chunks.set(key, []);
+        chunks.get(key).push(q);
       }
+      for (const chunk of chunks.values())
+        this.scene.add(new THREE.Mesh(quadGeometry(chunk), material));
     }
-    this.scene.add(towers, windows, foundations);
+    this.city = buildCity(this.scene, track, textures, environment);
+    const obj = new THREE.Object3D();
     const supportFrames = Array.from({ length: 60 }, (_, i) => {
       const u = i / 60;
       return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0]).map(
@@ -415,19 +383,46 @@ export class World {
     }).flat();
     const supports = new THREE.InstancedMesh(
       boxGeo,
-      mat(0xc3c6b9, { map: textures.concrete }),
-      supportFrames.length,
+      mat(0xf4eee1, { map: textures.concrete }),
+      supportFrames.length * 3,
     );
-    supportFrames.forEach((f, i) => {
-      const bottom = environment.heightAt(f.p.x, f.p.z) - 3,
-        top = f.p.y - 2;
-      obj.position.set(f.p.x, (top + bottom) / 2, f.p.z);
-      obj.scale.set(8, top - bottom, 8);
-      obj.rotation.set(0, 0, 0);
+    const trusses = new THREE.InstancedMesh(
+      boxGeo,
+      mat(0xed4d49),
+      supportFrames.length * 2,
+    );
+    const beam = (mesh, index, start, end, width, depth) => {
+      const direction = end.clone().sub(start);
+      obj.position.copy(start).lerp(end, 0.5);
+      obj.quaternion.setFromUnitVectors(UP, direction.clone().normalize());
+      obj.scale.set(width, direction.length(), depth);
       obj.updateMatrix();
-      supports.setMatrixAt(i, obj.matrix);
+      mesh.setMatrixAt(index, obj.matrix);
+    };
+    supportFrames.forEach((f, i) => {
+      const bottom = environment.heightAt(f.p.x, f.p.z) - 3;
+      const foot = new THREE.Vector3(f.p.x, bottom, f.p.z),
+        fork = f.p
+          .clone()
+          .addScaledVector(UP, -Math.min(13, (f.p.y - bottom) * 0.35));
+      beam(supports, i * 3, foot, fork, 4.6, 4.6);
+      for (const [j, side] of [-1, 1].entries()) {
+        const edge = f.p
+          .clone()
+          .addScaledVector(f.right, side * f.width * 0.72)
+          .addScaledVector(f.up, -2.2);
+        beam(supports, i * 3 + j + 1, fork, edge, 3, 4.2);
+        beam(
+          trusses,
+          i * 2 + j,
+          fork.clone().addScaledVector(UP, 3),
+          edge,
+          1.1,
+          1.5,
+        );
+      }
     });
-    this.scene.add(supports);
+    this.scene.add(supports, trusses);
     for (const [i, u] of PAD_POSITIONS.entries()) {
       for (const branch of u > cfg.split[0] && u < cfg.split[1]
         ? [-1, 1]
@@ -448,7 +443,6 @@ export class World {
           ),
         );
         this.scene.add(pad);
-        if (i % 3 !== 0) this.sign(u - 0.012, "[+] ARMS", "#c5f52a", branch);
       }
     }
     const startFrame = track.frame(0);
@@ -469,32 +463,48 @@ export class World {
         );
         this.scene.add(tile);
       }
-    this.sign(0.007, "NULL // VECTOR", "#e8ece4");
-    this.sign(cfg.split[0] - 0.024, "← COAST / SKY →", "#e8ece4");
-    this.sign(cfg.jump - 0.032, ">>> FLIGHT", "#ff641f");
-    this.sign(cfg.tunnel[0] - 0.013, "SECTOR / 02", "#e8ece4");
-    this.sign(0.97, "START / FINISH", "#e8ece4");
-    for (let i = 0; i < 12; i++) {
-      const u = 0.02 + i * 0.08;
+    this.sign(cfg.split[0] - 0.024, "← SKY / COAST →", "#62fff0");
+    const ribMaterial = mat(0xf5eee1, { map: textures.paint });
+    const ribLight = basic(cfg.color);
+    for (let i = 0; i < 6; i++) {
+      const u = 0.025 + i * 0.16;
       for (const branch of u > cfg.split[0] && u < cfg.split[1]
         ? [-1, 1]
         : [0]) {
-        const f = track.frame(u * track.length, branch);
-        const g = new THREE.Group();
-        const archMat = mat(i % 2 ? 0xd6d7cb : 0xb0beb6, {
-          map: textures.concrete,
-        });
-        for (const side of [-1, 1]) {
-          const p = new THREE.Mesh(new THREE.BoxGeometry(3, 32, 5), archMat);
-          p.position.set(side * 23, 12, 0);
-          g.add(p);
-        }
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(49, 4, 5), archMat);
-        beam.position.y = 28;
-        g.add(beam);
-        g.position.copy(f.p);
-        g.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
-        this.scene.add(g);
+        const f = track.frame(u * track.length, branch),
+          w = f.width + 4;
+        const points = [
+          [-w, -2],
+          [-w + 1, 10],
+          [0, 21],
+          [w - 1, 10],
+          [w, -2],
+        ].map(([x, y]) =>
+          f.p.clone().addScaledVector(f.right, x).addScaledVector(f.up, y),
+        );
+        const path = new THREE.CatmullRomCurve3(points);
+        this.scene.add(
+          new THREE.Mesh(
+            new THREE.TubeGeometry(path, 20, 0.8, 4, false),
+            ribMaterial,
+          ),
+        );
+        const lightPath = new THREE.CatmullRomCurve3(
+          points.map((p) => p.clone().addScaledVector(f.tangent, -0.9)),
+        );
+        this.scene.add(
+          new THREE.Mesh(
+            new THREE.TubeGeometry(lightPath, 20, 0.13, 4, false),
+            ribLight,
+          ),
+        );
+        const footing = new THREE.Mesh(
+          new THREE.BoxGeometry(w * 2 + 2, 1.2, 3),
+          ribMaterial,
+        );
+        footing.position.copy(f.p).addScaledVector(f.up, -2.5);
+        footing.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
+        this.scene.add(footing);
       }
     }
     this.effectMat = basic(0xff9730);
@@ -553,7 +563,7 @@ export class World {
     );
     shape.setIndex([0, 1, 3, 0, 3, 2, 1, 2, 3, 0, 4, 1, 0, 2, 4, 1, 4, 2]);
     shape.computeVertexNormals();
-    group.add(new THREE.Mesh(shape, hullMat));
+    group.add(new THREE.Mesh(shape, white));
     for (const side of [-1, 1]) {
       const wing = new THREE.Mesh(
         new THREE.BoxGeometry(1.3, 0.65, 4.5),
@@ -633,6 +643,7 @@ export class World {
   }
   draw(race, dt, demo = false) {
     this.time += dt;
+    this.city.update(this.time);
     const player = race.player,
       track = this.track;
     const f = track.frame(player.s, player.branch);

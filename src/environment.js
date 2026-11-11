@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 const SEA_LEVEL = -16;
 const EXTENT = 1600;
-const CELLS = 128;
+const CELLS = 64;
 const STEP = (EXTENT * 2) / CELLS;
 
 const smooth = (a, b, x) => {
@@ -225,7 +225,7 @@ export function buildEnvironment(scene, track, textures) {
     }
   }
   const clearOfRoad = (x, z) =>
-    roadSamples.every((p) => Math.hypot(x - p.x, z - p.z) > 90);
+    roadSamples.every((p) => Math.hypot(x - p.x, z - p.z) > 76);
 
   /** Returns a NEW Vector3 at the foundation ground height; does not modify p. */
   function buildingPosition(p) {
