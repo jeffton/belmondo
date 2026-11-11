@@ -1,8 +1,9 @@
-@import url("/fonts/fonts.css");
 @import url("/fonts/noto-sans-jp.css");
 @import url("/fonts/interface.css");
 :root {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--interface);
+  font-variant-numeric: tabular-nums;
+  font-synthesis: none;
   color: #ebeee6;
   background: #17232d;
   font-size: 12px;
@@ -10,8 +11,8 @@
   --lime: #d4f53c;
   --ink: #111e27;
   --paper: #e8ebe1;
-  --interface: "Chakra Petch", sans-serif;
-  --telemetry: "IBM Plex Mono", monospace;
+  --interface: "Archivo", sans-serif;
+  --telemetry: var(--interface);
 }
 * {
   box-sizing: border-box;
@@ -93,9 +94,8 @@ button:hover {
   border-bottom: 1px solid #e9eee333;
 }
 .brand-symbol {
-  font:
-    italic 900 37px/1 "Barlow Condensed",
-    sans-serif;
+  font: italic 900 37px/1 var(--interface);
+  font-stretch: 62%;
   letter-spacing: -3px;
   color: var(--paper);
   margin-right: 4px;
@@ -122,20 +122,17 @@ button:hover {
 h1.wordmark {
   width: fit-content;
   max-width: 100%;
-  font:
-    italic 900 clamp(58px, 13.6vw, 108px)/0.9 "Barlow Condensed",
-    Impact,
-    sans-serif;
+  font: italic 900 clamp(64px, 20vw, 108px)/0.9 var(--interface);
+  font-stretch: 62%;
   letter-spacing: -0.025em;
   margin: 24px 0 15px;
   padding-right: 0.08em;
   border-bottom: 4px solid var(--orange);
 }
 .tagline {
-  font:
-    500 18px "Barlow Condensed",
-    sans-serif;
-  letter-spacing: 3px;
+  font: 600 16px/1.3 var(--interface);
+  font-stretch: 85%;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: #b9c8cd;
   margin: 20px 0 28px;
@@ -143,7 +140,8 @@ h1.wordmark {
 .selection-label {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.8px;
   margin: 20px 0 8px;
   color: #8fa7b1;
@@ -179,16 +177,16 @@ h1.wordmark {
   background: var(--orange);
 }
 .choice b {
-  font:
-    800 17px/0.95 "Barlow Condensed",
-    sans-serif;
+  font: 800 17px/1 var(--interface);
+  font-stretch: 80%;
   display: block;
 }
 .choice small {
   display: block;
-  font-size: 8px;
+  font-size: 10px;
+  line-height: 1.25;
   margin-top: 6px;
-  opacity: 0.65;
+  opacity: 0.85;
 }
 .crafts .choice {
   display: flex;
@@ -208,8 +206,9 @@ h1.wordmark {
   justify-content: space-between;
   gap: 12px;
   margin-top: 18px;
-  font-size: 9px;
-  color: #91a8b1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b3c5cd;
 }
 .mode-row label {
   display: flex;
@@ -261,7 +260,8 @@ select {
   background: #172a35;
   color: var(--paper);
   border: 1px solid #66818c66;
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   padding: 7px 4px;
 }
 .start {
@@ -272,10 +272,9 @@ select {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  font:
-    italic 900 28px "Barlow Condensed",
-    sans-serif;
-  letter-spacing: 1px;
+  font: 800 24px/1.2 var(--interface);
+  font-stretch: 85%;
+  letter-spacing: 0.4px;
   margin-top: 20px;
 }
 .start span {
@@ -290,9 +289,10 @@ select {
   gap: 12px;
 }
 .menu-links button {
-  padding: 7px 0;
+  padding: 9px 0;
   background: none;
-  font-size: 8px;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 1px;
   border-bottom: 1px solid #a8c1cb55;
 }
@@ -317,7 +317,8 @@ footer {
 }
 .world-caption strong {
   display: block;
-  font: italic 800 40px "Barlow Condensed";
+  font: italic 800 40px var(--interface);
+  font-stretch: 75%;
   letter-spacing: 1px;
   margin: 8px 0;
 }
@@ -362,8 +363,9 @@ footer {
 }
 .hud-top strong {
   display: block;
-  font: 700 60px/1 var(--interface);
-  letter-spacing: -4px;
+  font: 800 60px/1 var(--interface);
+  font-stretch: 85%;
+  letter-spacing: -2px;
 }
 .hud-top strong small {
   font-size: 24px;
@@ -384,12 +386,45 @@ footer {
 .hud-track > span {
   display: block;
   font: 600 22px/1.2 var(--interface);
-  letter-spacing: -0.6px;
+  font-stretch: 85%;
+  letter-spacing: -0.4px;
   margin-top: 8px;
 }
 .lap {
+  position: relative;
   justify-self: end;
   text-align: right;
+}
+.lap-times {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 140px;
+  margin-top: 6px;
+  padding: 4px 6px;
+  background: #0c1a24d9;
+  border-right: 2px solid #e8ebe166;
+}
+.lap-time {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 17px;
+  font-size: 11px;
+  line-height: 17px;
+  letter-spacing: 0;
+  white-space: nowrap;
+  color: #c5d5db;
+}
+.lap-time.current {
+  color: var(--paper);
+}
+.lap-time > :last-child {
+  font: 600 11px/17px var(--telemetry);
+  font-stretch: 85%;
+  letter-spacing: 0;
+  color: inherit;
 }
 .hud-bottom {
   position: absolute;
@@ -455,15 +490,14 @@ footer {
 }
 .weapon-name {
   display: block;
-  font: 700 20px/1 var(--interface);
-  letter-spacing: -0.6px;
+  font: 800 20px/1 var(--interface);
+  font-stretch: 80%;
+  letter-spacing: -0.3px;
   color: var(--weapon-color);
 }
 .weapon-action {
   display: block;
-  font:
-    9px/1 "IBM Plex Mono",
-    monospace;
+  font: 600 10px/1 var(--interface);
   letter-spacing: 1px;
   color: var(--paper);
 }
@@ -476,16 +510,62 @@ footer {
   width: 170px;
 }
 .velocity strong {
-  font: 700 68px/1 var(--interface);
-  letter-spacing: -4px;
+  font: 800 68px/1 var(--interface);
+  font-stretch: 85%;
+  letter-spacing: -2px;
 }
 .velocity > span {
   display: block;
   font-size: 11px;
   letter-spacing: 1.2px;
 }
-.velocity .bar i {
+.speed-instrument,
+.thrust {
+  margin-top: 9px;
+  text-align: left;
+}
+.instrument-label {
+  display: block;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.8px;
+}
+.instrument-bar {
+  position: relative;
+  height: 12px;
+  margin-top: 4px;
+  background: #07141cf2;
+  border: 1px solid #d4e4ecaa;
+}
+#speed-bar {
   background: var(--orange);
+}
+#thrust-bar {
+  width: 0;
+  background: #66edee;
+}
+.launch-band {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 65%;
+  width: 15%;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #fff;
+  background: repeating-linear-gradient(90deg, #fff8 0 2px, #07141c66 2px 5px);
+}
+.launch-status {
+  display: none;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+  color: #fff;
+}
+.thrust.launch .launch-band,
+.thrust.launch .launch-status {
+  display: block;
 }
 #race-message {
   position: absolute;
@@ -505,7 +585,7 @@ footer {
 #view,
 #pause {
   position: absolute;
-  top: 112px;
+  top: 194px;
   right: 35px;
   background: #162a35aa;
   border: 1px solid #b0c8d266;
@@ -529,6 +609,7 @@ footer {
   inset: 0;
   z-index: 5;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   background: #0e1c26bb;
   overflow-y: auto;
@@ -552,7 +633,8 @@ footer {
   backdrop-filter: none;
 }
 .panel {
-  width: 430px;
+  width: min(430px, 100%);
+  min-width: 0;
   max-width: 100%;
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
@@ -580,20 +662,23 @@ footer {
   margin: 18px 0 24px;
   padding-bottom: 18px;
   border-bottom: 1px solid #69838d88;
-  font: 700 48px/1 var(--interface);
-  letter-spacing: -2px;
+  font: 900 48px/1 var(--interface);
+  font-stretch: 75%;
+  letter-spacing: -1.5px;
 }
 .panel .start {
   margin-top: 14px;
   padding: 14px 16px;
-  font: 700 23px/1.2 var(--interface);
-  letter-spacing: 0;
+  font: 800 23px/1.2 var(--interface);
+  font-stretch: 85%;
+  letter-spacing: 0.4px;
 }
 .panel .line-button {
   margin-top: 8px;
   padding: 12px 16px;
   text-align: left;
   font: 600 16px/1.2 var(--interface);
+  font-stretch: 90%;
   letter-spacing: 0.2px;
 }
 .panel .help-small {
@@ -601,19 +686,21 @@ footer {
   color: #afc2ca;
 }
 h2 {
-  font: italic 900 46px/0.9 "Barlow Condensed";
+  font: 900 46px/1 var(--interface);
+  font-stretch: 75%;
   letter-spacing: -0.5px;
   margin: 20px 0 26px;
 }
 .line-button {
   display: block;
+  font-weight: 600;
   text-align: center;
   background: transparent;
   color: var(--paper);
   border: 1px solid #71919d77;
   padding: 12px;
-  font-size: 10px;
-  letter-spacing: 1px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
   width: 100%;
   margin-top: 10px;
 }
@@ -749,11 +836,12 @@ kbd {
   flex-direction: column;
   background: #172935f5;
   border: 3px dashed var(--lime);
-  font: italic 900 55px "Barlow Condensed";
+  font: 900 55px var(--interface);
+  font-stretch: 75%;
   pointer-events: none;
 }
 #drop-zone span {
-  font: 11px "IBM Plex Mono";
+  font: 600 11px var(--interface);
   letter-spacing: 2px;
   margin-top: 15px;
 }
@@ -872,7 +960,7 @@ body.touch .velocity strong {
   font-size: 50px;
 }
 body.touch .velocity {
-  width: 120px;
+  width: 160px;
 }
 body.touch .shield {
   width: 120px;
@@ -924,7 +1012,7 @@ body.touch .shield {
   }
   .hud-top strong {
     font-size: 46px;
-    letter-spacing: -3px;
+    letter-spacing: -1.5px;
   }
   .hud-track > b {
     font-size: 10px;
@@ -946,7 +1034,7 @@ body.touch .shield {
   #view,
   #pause {
     right: 20px;
-    top: 92px;
+    top: 182px;
   }
   #race-message {
     font-size: 32px;
@@ -971,7 +1059,7 @@ body.touch .shield {
     gap: 8px;
   }
   .menu-links button {
-    font-size: 7px;
+    font-size: 10px;
   }
   .choice b {
     font-size: 15px;
@@ -1000,9 +1088,39 @@ body.touch .shield {
   .weapon-name {
     font-size: 18px;
   }
+  .lap-times {
+    width: 104px;
+    padding: 4px;
+  }
+  .lap-time {
+    font-size: 10px;
+  }
+  .lap-time > :last-child {
+    font-size: 10px;
+    letter-spacing: -0.6px;
+  }
   #view,
   #pause {
-    top: 130px;
+    top: 174px;
+  }
+}
+@media (max-width: 480px) and (orientation: portrait) {
+  .lap-times {
+    position: fixed;
+    top: 132px;
+    right: 20px;
+  }
+  #view,
+  #pause {
+    top: 138px;
+    right: auto;
+  }
+  #view {
+    left: 20px;
+    transform: none;
+  }
+  #pause {
+    left: 88px;
   }
 }
 @media (max-height: 550px) and (orientation: landscape) {
@@ -1041,7 +1159,7 @@ body.touch .shield {
     font-size: 15px;
   }
   .choice small {
-    font-size: 7px;
+    font-size: 9px;
     margin-top: 3px;
   }
   .craft-icon {
@@ -1060,7 +1178,7 @@ body.touch .shield {
     margin-top: 5px;
   }
   .menu-links button {
-    font-size: 7px;
+    font-size: 10px;
   }
   footer {
     padding: 8px 25px;
@@ -1090,7 +1208,7 @@ body.touch .shield {
     left: 50%;
     bottom: 22px;
     transform: translateX(-50%);
-    width: 95px;
+    width: 180px;
     text-align: center;
   }
   body.touch .shield {
@@ -1106,7 +1224,7 @@ body.touch .shield {
   }
   #view,
   #pause {
-    top: 78px;
+    top: 156px;
     right: 23px;
   }
   #map {

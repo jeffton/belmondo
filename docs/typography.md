@@ -1,14 +1,18 @@
-# Interface typography
+# BELMONDO typography
 
-BELMONDO uses angular Chakra Petch lettering for race instruments and every pause-menu entry. Tabular numerals keep position, lap, timer and speed stable. IBM Plex Mono carries small technical instructions; Barlow Condensed remains the BELMONDO wordmark. Weapon identity uses a named pictogram and color, not color alone.
+Archivo is the single Latin type family across the wordmark, main menu, pause menu, race HUD, controls and central screens. Its variable width and weight axes provide one coherent hierarchy:
 
-## Font assets and licenses
+- **Identity:** extra-condensed black italic, with a vermilion rule.
+- **Headlines:** condensed black, upright.
+- **Instruments and actions:** compact semibold/bold; tabular numerals stabilize times and speeds.
+- **Reading text:** normal-width regular; small labels retain contrast and spacing.
 
-All fonts are served locally. No runtime font service is contacted.
+The reference is the disciplined graphic hierarchy of [The Designers Republic’s PS1 racing work](https://www.thedesignersrepublic.com/project/wipeout), not copied logos or imitation sci-fi lettering. Archivo’s [headline origins](https://fonts.google.com/specimen/Archivo) and broad width range support both race graphics and readable interface text. [Saira](https://www.omnibus-type.com/fonts/saira/) was also considered for its industrial range; Archivo provides a more neutral grotesk base for the original identity.
 
-- **Chakra Petch SemiBold (600) and Bold (700):** unmodified `ChakraPetch-SemiBold.ttf` and `ChakraPetch-Bold.ttf` from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/chakrapetch), downloaded 11 November 2026. Local filenames: `public/fonts/chakra-petch-600.ttf` and `chakra-petch-700.ttf`. Copyright 2018 The Chakra Petch Project Authors. SIL Open Font License 1.1, included as [`chakrapetch-OFL.txt`](../public/fonts/chakrapetch-OFL.txt). [Original project](https://github.com/cadsondemak/Chakra-Petch).
-- **Barlow Condensed:** [Google Fonts source](https://github.com/google/fonts/tree/main/ofl/barlowcondensed); included license: [`barlowcondensed-OFL.txt`](../public/fonts/barlowcondensed-OFL.txt).
-- **IBM Plex Mono:** [Google Fonts source](https://github.com/google/fonts/tree/main/ofl/ibmplexmono); included license: [`ibmplexmono-OFL.txt`](../public/fonts/ibmplexmono-OFL.txt).
-- **Noto Sans JP:** [Google Fonts source](https://github.com/google/fonts/tree/main/ofl/notosansjp); included license: [`notosansjp-OFL.txt`](../public/fonts/notosansjp-OFL.txt).
+## Local font assets
 
-Chakra Petch is a licensed typeface, not a recreation of a WipEout font. The HUD composition, inventory glyphs and BELMONDO identity are original.
+The interface makes no runtime request to a font service.
+
+**Archivo:** unmodified variable upright and italic TTFs from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/archivo), downloaded 11 November 2026. Original filenames: `Archivo[wdth,wght].ttf` and `Archivo-Italic[wdth,wght].ttf`. Local filenames: `public/fonts/archivo-variable.ttf` and `archivo-italic-variable.ttf`. Weight range 100–900; width range 62–125%. Copyright 2020 The Archivo Project Authors. SIL Open Font License 1.1, included as [`archivo-OFL.txt`](../public/fonts/archivo-OFL.txt). [Original project](https://github.com/Omnibus-Type/Archivo); [designer’s specimen](https://www.omnibus-type.com/fonts/archivo/).
+
+Noto Sans JP supplies Japanese glyphs for environmental artwork, with its included [`OFL license`](../public/fonts/notosansjp-OFL.txt) and [source](https://github.com/google/fonts/tree/main/ofl/notosansjp). Existing Barlow, IBM Plex and Chakra Petch files retain their bundled licenses; they are not loaded by the interface stylesheet.

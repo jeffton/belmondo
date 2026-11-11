@@ -55,7 +55,8 @@ const keys = new Set(),
   held = new Set();
 let touchSteer = 0,
   touchPitch = 0,
-  steerPointer = null;
+  steerPointer = null,
+  touchLaunchArmed = false;
 const touch = matchMedia("(pointer: coarse)").matches;
 document.body.classList.toggle("touch", touch);
 const records = JSON.parse(localStorage.getItem("nv-records") || "{}");
@@ -126,6 +127,7 @@ function clearInput() {
   touchSteer = 0;
   touchPitch = 0;
   steerPointer = null;
+  touchLaunchArmed = false;
   for (const b of document.querySelectorAll(".pressed"))
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
@@ -276,6 +278,10 @@ for (const b of document.querySelectorAll("[data-control]")) {
   });
   for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     b.addEventListener(event, () => {
+      if (b.dataset.control === "brake" && race?.countdown > 0) {
+        if (event === "pointerup" && held.has("brake")) touchLaunchArmed = true;
+        else if (event === "pointercancel") touchLaunchArmed = false;
+      }
       held.delete(b.dataset.control);
       b.classList.remove("pressed");
     });
@@ -326,7 +332,8 @@ function input() {
   let airRight = down("KeyL", "KeyE") || held.has("airRight") ? 1 : 0;
   let airLeft = down("KeyJ", "KeyQ") || held.has("airLeft") ? 1 : 0;
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
-  let throttle = touch || down("ArrowUp", "KeyW");
+  let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
+  let throttle = touch || down("ArrowUp", "KeyW") ? 1 : 0;
   let brake = down("ArrowDown", "KeyS") || held.has("brake");
   const pad = navigator.getGamepads?.()[0];
   if (pad) {
@@ -334,8 +341,9 @@ function input() {
     if (Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
     airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
     airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
-    throttle =
-      throttle || pad.buttons[0]?.pressed || pad.buttons[7]?.value > 0.1;
+    const padThrust = pad.buttons[0]?.pressed ? 1 : pad.buttons[7]?.value || 0;
+    throttle = Math.max(throttle, padThrust > 0.1 ? padThrust : 0);
+    launchIntent ||= padThrust > 0.1;
     brake = brake || pad.buttons[1]?.pressed;
     if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
     padFire = pad.buttons[2]?.pressed;
@@ -356,7 +364,8 @@ function input() {
     airLeft,
     airRight,
     pitch: clamp(pitch, -1, 1),
-    throttle,
+    throttle: race?.countdown > 0 ? (brake ? 0 : throttle) : Boolean(throttle),
+    launchIntent,
     brake,
   };
 }
@@ -439,21 +448,40 @@ function updateHUD(now) {
   $("lap").innerHTML = `${Math.min(3, p.lap)}<small>/3</small>`;
   $("timer").textContent = formatTime(race.time);
   $("speed").textContent = String(Math.round(p.speed * 3.6)).padStart(3, "0");
-  $("speed-bar").style.width = `${(p.speed / 155) * 100}%`;
+  $("speed-bar").style.width = `${Math.min(100, (p.speed / 175) * 100)}%`;
+  const launching = race.countdown > 0;
+  $("thrust-system").classList.toggle("launch", launching);
+  $("thrust-bar").style.width =
+    `${(launching ? race.launch.level : Number(lastControls.throttle || 0)) * 100}%`;
+  $("launch-status").textContent =
+    touch && !touchLaunchArmed ? "BRAKE → RELEASE" : "65–80% AT GO";
+  const timingRows = race.laps.map(
+    (time, i) =>
+      `<div class="lap-time"><span>LAP ${i + 1}</span><b>${formatTime(time)}</b></div>`,
+  );
+  if (!race.finished)
+    timingRows.unshift(
+      `<div class="lap-time current"><span>CURRENT</span><b>${formatTime(race.time - race.lapStart)}</b></div>`,
+    );
+  $("lap-times").innerHTML = timingRows.join("");
   $("shield-num").textContent = Math.ceil(p.shield);
   $("shield-bar").style.width = `${p.shield}%`;
   $("shield-bar").style.background = p.shield < 25 ? "#ff642a" : "#d4f53c";
   updateWeaponHUD(p.weapon);
   if (race.countdown > 0) {
     const count = Math.ceil(race.countdown);
-    $("race-message").className = "countdown";
-    $("race-message").textContent = count > 3 ? "" : count;
-    if (count !== previousCount) {
-      sound.effect("countdown");
+    $("race-message").className = "";
+    $("race-message").textContent = "";
+    if (count <= 3 && count !== previousCount) {
+      sound.effect("countdown", count);
       previousCount = count;
     }
   } else {
     $("race-message").className = "";
+    if (previousCount > 0) {
+      sound.effect("go");
+      showMessage(race.launch.success ? "LAUNCH BOOST" : "GO", 1.2);
+    }
     previousCount = 0;
     if (now > messageUntil) $("race-message").textContent = "";
   }
@@ -633,6 +661,10 @@ window.nullVector = {
           .x,
       progress: mod(race.player.s, track.length) / track.length,
       lap: race.player.lap,
+      countdown: race.countdown,
+      launch: { ...race.launch },
+      lapTimes: [...race.laps],
+      currentLapTime: race.time - race.lapStart,
       branch: race.player.branch,
       height: race.player.h,
       shield: race.player.shield,

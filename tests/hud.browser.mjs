@@ -84,6 +84,7 @@ try {
         const selectors = [
           "#position",
           "#lap",
+          "#lap-times",
           "#hud-track",
           "#timer",
           "#view",

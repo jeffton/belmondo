@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
 import { buildTrackPads } from "./track-pads.js";
+import { buildStartGantry } from "./start-gantry.js";
 import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
 import { buildTrackLighting } from "./track-lighting.js";
@@ -461,6 +462,7 @@ export class World {
     });
     this.scene.add(supports, trusses);
     buildTrackPads(this.scene, track, textures);
+    this.startGantry = buildStartGantry(this.scene, track);
     const startFrame = track.frame(0);
     for (let x = -startFrame.width; x < startFrame.width; x += 2)
       for (let z = 0; z < 4; z += 2) {
@@ -579,6 +581,7 @@ export class World {
   draw(race, dt, demo = false) {
     this.time += dt;
     this.city.update(this.time);
+    this.startGantry.update(race, demo);
     const player = race.player,
       track = this.track;
     const f = track.frame(player.s, player.branch);

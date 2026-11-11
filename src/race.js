@@ -3,6 +3,7 @@ import { clamp, mod, roadBounds } from "./track.js";
 import { projectRoad } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
 import { getTrackPickups, crossesPickup } from "./pickups.js";
+import { Launch } from "./launch.js";
 
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const HOVER = 2.2;
@@ -49,6 +50,7 @@ export class Race {
     this.mode = mode;
     this.time = 0;
     this.countdown = 3.2;
+    this.launch = new Launch();
     this.finished = false;
     this.events = [];
     this.shots = [];
@@ -204,8 +206,14 @@ export class Race {
   update(dt, input) {
     if (this.finished) return;
     if (this.countdown > 0) {
-      this.countdown -= dt;
-      return;
+      const countdownStep = Math.min(dt, this.countdown);
+      this.launch.update(countdownStep, input.throttle, input.launchIntent);
+      this.countdown = Math.max(0, this.countdown - countdownStep);
+      if (this.countdown > 0) return;
+      this.launch.resolve();
+      if (this.launch.success) this.player.surge = 1.8;
+      dt -= countdownStep;
+      if (dt <= 0) return;
     }
     this.time += dt;
     const { track } = this;

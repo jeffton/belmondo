@@ -14,7 +14,7 @@
     <title>BELMONDO — Anti-gravity racing</title>
     <link
       rel="preload"
-      href="/fonts/chakra-petch-700.ttf"
+      href="/fonts/archivo-variable.ttf"
       as="font"
       type="font/ttf"
       crossorigin
@@ -88,6 +88,11 @@
         <div class="lap">
           <span class="hud-label">LAP</span
           ><strong id="lap">1<small>/3</small></strong>
+          <div id="lap-times" class="lap-times" aria-label="Lap times">
+            <div class="lap-time current">
+              <span>CURRENT</span><b>00:00.00</b>
+            </div>
+          </div>
         </div>
       </div>
       <div id="race-message" role="status"></div>
@@ -104,7 +109,18 @@
         </div>
         <div class="velocity">
           <strong id="speed">000</strong><span>KM/H</span>
-          <div class="bar"><i id="speed-bar"></i></div>
+          <div class="speed-instrument">
+            <span class="instrument-label">SPEED</span>
+            <div class="bar instrument-bar"><i id="speed-bar"></i></div>
+          </div>
+          <div id="thrust-system" class="thrust">
+            <span class="instrument-label">THRUST</span>
+            <div class="bar instrument-bar thrust-meter">
+              <i id="thrust-bar"></i>
+              <span class="launch-band" aria-hidden="true"></span>
+            </div>
+            <span id="launch-status" class="launch-status">65–80% AT GO</span>
+          </div>
         </div>
       </div>
       <button id="view" aria-label="First-person view" aria-pressed="false">
@@ -186,7 +202,9 @@
           <p>
             Auto-thrust. Drag the left stick to steer; push up for nose down,
             pull down for nose up. Airbrake into sharp turns. Fire with the
-            right thumb. Landscape gives the best view; VIEW switches cameras.
+            right thumb. At the start, hold BRAKE to lower thrust; release to
+            build it. Aim for the marked 65–80% band at GO. Landscape gives the
+            best view; VIEW switches cameras.
           </p>
           <h3>THE CIRCUIT</h3>
           <p>
@@ -196,6 +214,12 @@
           </p>
         </div>
       </div>
+      <h3>LAUNCH</h3>
+      <p>
+        Build thrust with W / ↑ or A / R2 and reach 65–80% at GO for a launch
+        boost. Touch pilots must hold and release BRAKE to time the launch;
+        automatic thrust alone does not earn it.
+      </p>
       <div id="weapon-roster" class="arsenal"></div>
       <p class="help-small">
         Three laps. Eight pilots. No rubber-banding. Time attack disables

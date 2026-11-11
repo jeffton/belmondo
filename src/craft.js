@@ -21,13 +21,14 @@ class Skin {
     this.colors = [];
   }
   face(points, tile, uvs, color = WHITE, outward) {
-    let order = [0, 1, 2, 0, 2, 3];
+    let order = points.length === 3 ? [0, 1, 2] : [0, 1, 2, 0, 2, 3];
     if (outward) {
       const a = new THREE.Vector3(...points[0]);
       const normal = new THREE.Vector3(...points[1])
         .sub(a)
         .cross(new THREE.Vector3(...points[2]).sub(a));
-      if (normal.dot(outward) < 0) order = [0, 2, 1, 0, 3, 2];
+      if (normal.dot(outward) < 0)
+        order = points.length === 3 ? [0, 2, 1] : [0, 2, 1, 0, 3, 2];
     }
     for (const i of order) {
       this.positions.push(...points[i]);
@@ -149,14 +150,40 @@ function buildResources() {
     flatShading: true,
   });
   const core = new Skin();
-  loft(core, [
+  // One continuous monocoque wedge: shoulders, engines and prow share a hull.
+  // No separate outrigger noses or open watercraft-like structure.
+  const hullSections = [
     [5.65, 0, -0.1, 0.035, 0.025, -0.06],
-    [3.5, 0, -0.04, 0.32, 0.1, -0.17],
-    [1.6, 0, 0, 0.6, 0.18, -0.25],
-    [-0.3, 0, 0, 0.78, 0.26, -0.3],
-    [-1.9, 0, -0.04, 0.74, 0.23, -0.31],
-    [-3.05, 0, -0.02, 0.52, 0.16, -0.24],
-  ]);
+    [3.5, 0, -0.04, 0.68, 0.1, -0.17],
+    [1.6, 0, 0, 1.58, 0.18, -0.25],
+    [-0.3, 0, 0, 2.63, 0.26, -0.3],
+    [-1.9, 0, -0.04, 3.05, 0.31, -0.33],
+    [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+  ];
+  loft(core, hullSections, 0, WHITE, "front");
+  // Real rear apertures preserve sightlines into the original recessed engines.
+  const rear = ring(hullSections.at(-1));
+  const outline = rear.map(([x, y]) => new THREE.Vector2(x, y));
+  const holes = [-1, 1].map((side) =>
+    ring([-3.18, side * 2.55, -0.08, 0.33, 0.16, -0.2]).map(
+      ([x, y]) => new THREE.Vector2(x, y),
+    ),
+  );
+  const rearPoints = [outline, ...holes].flat();
+  for (const triangle of THREE.ShapeUtils.triangulateShape(outline, holes)) {
+    const points = triangle.map((index) => [
+      rearPoints[index].x,
+      rearPoints[index].y,
+      -3.18,
+    ]);
+    core.face(
+      points,
+      3,
+      points.map(([x, y]) => [x / 6.04 + 0.5, y + 0.5]),
+      WHITE,
+      new THREE.Vector3(0, 0, -1),
+    );
+  }
   // A narrow exposed keel, rather than a second bulky hull.
   loft(
     core,
@@ -172,93 +199,24 @@ function buildResources() {
   const accent = new Skin();
   const mechanical = new Skin();
   for (const side of [-1, 1]) {
-    // Two structural spars leave open air between the spine and engine pods.
-    // The negative space is part of the silhouette, not a painted-on recess.
-    for (const [rootZ, tipZ, chord] of [
-      [1.1, 0.05, 0.26],
-      [-1.65, -2.05, 0.36],
-    ]) {
-      const top = [
-        [side * 0.55, -0.08, rootZ],
-        [side * 2.72, -0.16, tipZ],
-        [side * 2.72, -0.16, tipZ - chord],
-        [side * 0.55, -0.08, rootZ - chord],
-      ];
-      const bottom = top.map(([x, y, z]) => [x, y - 0.09, z]);
-      const uv = [
-        [0, 0],
-        [1, 0],
-        [1, 1],
-        [0, 1],
-      ];
-      core.face(top, 6, uv, SLATE, new THREE.Vector3(0, 1, 0));
-      core.face(bottom, 2, uv, SLATE, new THREE.Vector3(0, -1, 0));
-      const foilCenter = new THREE.Vector3();
-      for (const point of top) foilCenter.add(new THREE.Vector3(...point));
-      foilCenter.multiplyScalar(0.25);
-      for (let i = 0; i < 4; i++) {
-        const k = (i + 1) % 4;
-        const outward = new THREE.Vector3(...top[i])
-          .add(new THREE.Vector3(...top[k]))
-          .multiplyScalar(0.5)
-          .sub(foilCenter);
-        outward.y = 0;
-        core.face(
-          [top[i], bottom[i], bottom[k], top[k]],
-          5,
-          uv,
-          SLATE,
-          outward,
-        );
-      }
-    }
     const uv = [
       [0, 0],
       [1, 0],
       [1, 1],
       [0, 1],
     ];
-    const podSections = [
-      [3.35, side * 1.94, -0.15, 0.045, 0.04, -0.08],
-      [1.45, side * 2.17, -0.1, 0.27, 0.15, -0.18],
-      [-0.45, side * 2.43, -0.04, 0.39, 0.23, -0.28],
-      [-2.5, side * 2.59, -0.06, 0.43, 0.26, -0.3],
-      [-3.25, side * 2.55, -0.08, 0.49, 0.28, -0.33],
-    ];
-    loft(accent, podSections, 1, WHITE, "front");
-    // Untinted ceramic racing stripe follows the actual chamfered pod roof.
-    for (let i = 0; i < podSections.length - 1; i++) {
-      const points = [podSections[i], podSections[i + 1]].flatMap(
-        ([z, x, y, w, height], end) =>
-          (end ? [1, -1] : [-1, 1]).map((edge) => [
-            x + edge * w * 0.17,
-            y + height + 0.008,
+    // Painted load-bearing shoulder panels follow the same continuous hull.
+    for (let i = 0; i < hullSections.length - 1; i++) {
+      const points = [hullSections[i], hullSections[i + 1]].flatMap(
+        ([z, , y, width, top], end) =>
+          (end ? [0.61, 0.29] : [0.29, 0.61]).map((across) => [
+            side * width * across,
+            y + top + 0.008,
             z,
           ]),
       );
-      core.face(
-        points,
-        0,
-        [
-          [0.2, 0.04],
-          [0.32, 0.04],
-          [0.32, 0.65],
-          [0.2, 0.65],
-        ],
-        WHITE,
-        new THREE.Vector3(0, 1, 0),
-      );
+      accent.face(points, 1, uv, WHITE, new THREE.Vector3(0, 1, 0));
     }
-    // Angled rear stabilizer: a thin machined blade, not an upright block.
-    loft(
-      core,
-      [
-        [-0.9, side * 2.38, 0.12, 0.025, 0.04, -0.07],
-        [-2.05, side * 2.59, 0.16, 0.035, 0.52, -0.08],
-        [-2.85, side * 2.72, 0.13, 0.025, 0.39, -0.06],
-      ],
-      0,
-    );
     // Unpainted thrust rings sit proud of the tapered composite pods.
     for (const z of [-2.66, -2.96]) {
       loft(
@@ -300,14 +258,14 @@ function buildResources() {
       WHITE,
       new THREE.Vector3(0, 0, -1),
     );
-    // Small forward-facing intake visibly sinks into the shoulder.
-    const x = side * 2.31;
+    // Flush cooling slots belong to the integrated shoulders, not side pods.
+    const x = side * 1.17;
     mechanical.face(
       [
-        [x - 0.13, 0.064, 0.9],
-        [x + 0.13, 0.064, 0.9],
-        [x + 0.17, 0.22, -0.7],
-        [x - 0.17, 0.22, -0.7],
+        [x - 0.13, 0.212, 0.9],
+        [x + 0.13, 0.212, 0.9],
+        [x + 0.17, 0.267, -0.7],
+        [x - 0.17, 0.267, -0.7],
       ],
       7,
       uv,

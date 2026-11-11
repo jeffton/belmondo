@@ -236,27 +236,35 @@ export function circuitTextures(accent) {
       panel(3, 13, "#111e2c");
       panel(9, 11, secondary);
       panel(12, 10, boost ? "#127e91" : "#841b60");
-      // Bright rails are paired, rather than the generic on-road arrow language.
+      // Paired cyan rails confine the directional motif to the induction pad.
       ctx.fillStyle = signal;
       for (const x of [15, 231]) ctx.fillRect(x, 22, 10, 83);
       ctx.fillStyle = ice;
       for (const x of [17, 233]) ctx.fillRect(x, 25, 3, 76);
       if (boost) {
-        // Transverse induction coils read as a cyan acceleration field at distance.
-        for (const y of [20, 31, 42]) {
+        // Three broad induction chevrons point forward (+local Z maps down
+        // this canvas through the pad mesh UVs). Never painted on bare road.
+        for (const y of [17, 45, 73]) {
           ctx.fillStyle = secondary;
-          ctx.fillRect(34, y, 188, 8);
+          ctx.fillRect(32, y, 192, 26);
           ctx.fillStyle = signal;
-          ctx.fillRect(37, y, 182, 6);
-          ctx.fillStyle = ice;
-          ctx.fillRect(53, y, 150, 1);
+          ctx.beginPath();
+          ctx.moveTo(37, y);
+          ctx.lineTo(128, y + 12);
+          ctx.lineTo(219, y);
+          ctx.lineTo(219, y + 12);
+          ctx.lineTo(128, y + 25);
+          ctx.lineTo(37, y + 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = ice;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(45, y + 10);
+          ctx.lineTo(128, y + 22);
+          ctx.lineTo(211, y + 10);
+          ctx.stroke();
         }
-        ctx.fillStyle = "#104250";
-        ctx.fillRect(32, 56, 192, 43);
-        ctx.fillStyle = ice;
-        ctx.font = "900 39px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("BOOST", 128, 91);
         ctx.fillStyle = signal;
         for (const x of [37, 82, 127, 172]) ctx.fillRect(x, 105, 35, 6);
       } else {
@@ -302,7 +310,7 @@ export function circuitTextures(accent) {
         ctx.textAlign = "center";
         ctx.fillText("WEAPON", 128, 104);
       }
-      // Edge-only wear keeps the field and its lettering intact.
+      // Edge-only wear keeps the induction symbol and socket lettering intact.
       ctx.fillStyle = "#9299a0";
       for (let i = 0; i < 65; i++) {
         const x = 25 + random() * 205;

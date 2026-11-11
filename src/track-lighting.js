@@ -8,7 +8,7 @@ export function buildTrackLighting(scene, track) {
   const desert = track.config.name === "SOLAR ARRAY";
   const direction = new THREE.Vector3(
     ...(night
-      ? [-0.4, 0.55, -0.7]
+      ? [-0.4, 0.12, -0.7]
       : desert
         ? [0.75, 0.18, -0.6]
         : [-0.8, 0.16, 0.55]),
@@ -48,22 +48,42 @@ export function buildTrackLighting(scene, track) {
   glowMap.colorSpace = THREE.SRGBColorSpace;
   const celestial = new THREE.Group();
   celestial.name = night ? "moon" : "low-sun";
+  // A readable low-horizon sun, with an amber lower limb and soft hot centre.
+  // It remains a depth-tested world object, not an exposure wash over the HUD.
+  const sunRadius = 34;
+  let sunMap = null;
+  if (!night) {
+    const surface = document.createElement("canvas");
+    surface.width = 128;
+    surface.height = 128;
+    const paint = surface.getContext("2d");
+    const atmosphere = paint.createLinearGradient(0, 0, 0, 128);
+    atmosphere.addColorStop(0, "#fff1c5");
+    atmosphere.addColorStop(0.45, "#ffdc8c");
+    atmosphere.addColorStop(1, "#ed8549");
+    paint.fillStyle = atmosphere;
+    paint.fillRect(0, 0, 128, 128);
+    sunMap = new THREE.CanvasTexture(surface);
+    sunMap.colorSpace = THREE.SRGBColorSpace;
+  }
   const disc = new THREE.Mesh(
-    new THREE.SphereGeometry(night ? 15 : 10, 12, 8),
+    new THREE.SphereGeometry(night ? 24 : sunRadius, 32, 16),
     new THREE.MeshBasicMaterial({
-      color: night ? 0xc5d8ef : 0xffe1b4,
+      color: night ? 0xc5d8ef : 0xffffff,
+      map: sunMap,
       fog: false,
+      toneMapped: false,
     }),
   );
   celestial.add(disc);
   if (night) {
     // Low-poly maria, not a uniform white lamp in the sky.
     const maria = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(11, 1),
+      new THREE.IcosahedronGeometry(17.6, 1),
       new THREE.MeshBasicMaterial({ color: 0x90a6c3, fog: false }),
     );
     maria.scale.set(0.6, 0.8, 0.7);
-    maria.position.set(5, 0, 9);
+    maria.position.set(8, 0, 14.4);
     celestial.add(maria);
   }
   const halo = new THREE.Sprite(
@@ -71,13 +91,13 @@ export function buildTrackLighting(scene, track) {
       map: glowMap,
       color: night ? 0xadcfff : 0xffba80,
       transparent: true,
-      opacity: night ? 0.14 : 0.4,
+      opacity: night ? 0.14 : 0.32,
       depthWrite: false,
       fog: false,
       blending: THREE.AdditiveBlending,
     }),
   );
-  halo.scale.setScalar(night ? 100 : 150);
+  halo.scale.setScalar(night ? 140 : 245);
   celestial.add(halo);
   let flare;
   if (!night) {
@@ -85,9 +105,9 @@ export function buildTrackLighting(scene, track) {
     // It vanishes behind track architecture and never follows the screen centre.
     flare = new Lensflare();
     // Put the source just in front of its own sun disc; scenery still occludes it.
-    flare.position.copy(direction).multiplyScalar(-12);
+    flare.position.copy(direction).multiplyScalar(-(sunRadius + 3));
     flare.addElement(
-      new LensflareElement(glowMap, 100, 0, new THREE.Color(0xffd2ab)),
+      new LensflareElement(glowMap, 115, 0, new THREE.Color(0xffd2ab)),
     );
     flare.addElement(
       new LensflareElement(glowMap, 25, 0.35, new THREE.Color(0xb9c5ff)),
@@ -101,7 +121,23 @@ export function buildTrackLighting(scene, track) {
     const housing = new THREE.MeshLambertMaterial({ color: 0x3b485b });
     const lamp = new THREE.MeshBasicMaterial({ color: 0xd8eaff });
     const mastGeometry = new THREE.BoxGeometry(0.55, 1, 0.55);
-    const headGeometry = new THREE.BoxGeometry(3, 0.5, 1.7);
+    const headGeometry = new THREE.BoxGeometry(5.2, 0.7, 2.2);
+    const beamGeometry = new THREE.ConeGeometry(15, 17, 12, 1, true);
+    const beamMaterial = new THREE.MeshBasicMaterial({
+      color: 0x9ecbff,
+      transparent: true,
+      opacity: 0.055,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const poolMaterial = new THREE.MeshBasicMaterial({
+      map: glowMap,
+      color: 0x96bfff,
+      transparent: true,
+      opacity: 0.18,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
     for (const u of [0.045, 0.16, 0.255, 0.49, 0.59, 0.735, 0.93]) {
       const f = track.frame(u * track.length);
       const side = u < 0.5 ? -1 : 1;
@@ -115,10 +151,50 @@ export function buildTrackLighting(scene, track) {
       head.position.copy(top);
       head.lookAt(f.p);
       const lens = new THREE.Mesh(headGeometry, lamp);
-      lens.scale.set(0.8, 0.1, 0.8);
-      lens.position.copy(top).addScaledVector(f.up, -0.3);
+      lens.scale.set(0.84, 0.72, 0.045);
+      lens.position
+        .copy(top)
+        .add(new THREE.Vector3(0, 0, 1.16).applyQuaternion(head.quaternion));
       lens.quaternion.copy(head.quaternion);
-      scene.add(mast, head, lens);
+      // A restrained local shaft connects the visible luminaire to its deck pool.
+      // No screen-space fog layer or extra real-time lights/shadow maps.
+      const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+      const axis = top.clone().sub(f.p).normalize();
+      beam.position.copy(top).add(f.p).multiplyScalar(0.5);
+      beam.scale.y = top.distanceTo(f.p) / 17;
+      beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis);
+      // A road-conforming pool has its own low radiance, so dark asphalt still
+      // catches the projector. It cannot spill beyond the deck onto open water.
+      const positions = [],
+        uvs = [],
+        indices = [];
+      for (let row = 0; row <= 8; row++) {
+        const section = track.frame(u * track.length + (row / 8 - 0.5) * 74);
+        for (let column = 0; column <= 4; column++) {
+          const point = section.p
+            .clone()
+            .addScaledVector(
+              section.right,
+              (column / 4 - 0.5) * section.width * 1.88,
+            )
+            .addScaledVector(section.up, 0.045);
+          positions.push(...point.toArray());
+          uvs.push(column / 4, row / 8);
+          if (row < 8 && column < 4) {
+            const a = row * 5 + column;
+            indices.push(a, a + 5, a + 1, a + 1, a + 5, a + 6);
+          }
+        }
+      }
+      const poolGeometry = new THREE.BufferGeometry();
+      poolGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3),
+      );
+      poolGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+      poolGeometry.setIndex(indices);
+      const lightPool = new THREE.Mesh(poolGeometry, poolMaterial);
+      scene.add(mast, head, lens, beam, lightPool);
       pools.push({ p: f.p, right: f.right, tangent: f.tangent });
     }
   }
@@ -134,7 +210,7 @@ export function buildTrackLighting(scene, track) {
         strength = Math.max(strength, Math.max(0, 1 - radius) ** 2);
       }
       return new THREE.Color(color)
-        .multiplyScalar(0.75 + strength * 0.85)
+        .multiplyScalar(0.7 + strength * 1.3)
         .getHex();
     },
     update(camera) {
