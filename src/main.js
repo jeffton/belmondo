@@ -15,6 +15,13 @@ const music = new MusicPlayer((state) => {
       : "NO LOCAL TRACKS LOADED");
 });
 music.volume = 0.65;
+const soundtrack = [
+  { name: "BELMONDO — Phase Index", url: "/music/phase-index.mp3" },
+  { name: "BELMONDO — Glass Current", url: "/music/glass-current.mp3" },
+  { name: "BELMONDO — Ion Drift", url: "/music/ion-drift.mp3" },
+];
+music.loadTracks(soundtrack);
+let musicEnabled = true;
 let world;
 try {
   world = new World($("game"));
@@ -109,6 +116,7 @@ function clearInput() {
 }
 async function start() {
   const audioStart = sound.start();
+  const musicStart = musicEnabled ? music.play() : Promise.resolve();
   sound.setMuted($("mute").checked);
   sound.setPaused(false);
   race = new Race(track, selectedCraft, $("mode").value);
@@ -128,7 +136,7 @@ async function start() {
   $("hud").hidden = false;
   $("hud-track").textContent = TRACKS[selectedTrack].name;
   try {
-    await audioStart;
+    await Promise.all([audioStart, musicStart]);
   } catch (error) {
     showMessage(`AUDIO: ${error.message}`, 3);
   }
@@ -139,6 +147,8 @@ function setPaused(value) {
   clearInput();
   $("pause-panel").hidden = !paused;
   sound.setPaused(paused);
+  if (paused) music.pause();
+  else if (musicEnabled) music.play();
 }
 function quit() {
   state = "menu";
@@ -149,6 +159,7 @@ function quit() {
   $("pause-panel").hidden = true;
   $("results").hidden = true;
   sound.setPaused(true);
+  music.pause();
   world.cameraReady = false;
 }
 $("start").onclick = start;
@@ -222,6 +233,7 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => keys.delete(e.code));
 window.addEventListener("blur", () => {
   if (state === "race") setPaused(true);
+  music.pause();
   clearInput();
 });
 document.addEventListener("visibilitychange", () => {
@@ -483,14 +495,26 @@ requestAnimationFrame(animate);
 async function loadFiles(files) {
   await music.loadFiles(files);
   if (files.length) {
+    musicEnabled = true;
     await music.play();
   }
 }
 $("folder").onchange = (e) => loadFiles(e.target.files);
 $("files").onchange = (e) => loadFiles(e.target.files);
-$("music-play").onclick = () =>
-  music.audio.paused ? music.play() : music.pause();
-$("music-next").onclick = () => music.next();
+$("music-play").onclick = () => {
+  musicEnabled = music.audio.paused;
+  if (musicEnabled) music.play();
+  else music.pause();
+};
+$("music-next").onclick = () => {
+  musicEnabled = true;
+  music.next();
+};
+$("music-default").onclick = () => {
+  music.loadTracks(soundtrack);
+  musicEnabled = true;
+  music.play();
+};
 $("volume").oninput = (e) => (music.volume = Number(e.target.value));
 $("effects-volume").oninput = (e) => sound.setVolume(Number(e.target.value));
 sound.setVolume(0.8);

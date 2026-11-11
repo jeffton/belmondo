@@ -14,7 +14,7 @@ Cyan pads boost; lime pads supply one weapon. Chevrons mark split approaches. Ch
 
 ## Sound
 
-Hover/turbine, airbrakes, boost, weapons, impacts and countdown are synthesized in Web Audio. Effects have an independent volume control and mute; pause and blur silence the racing bus. Choose audio files/folders or drop a folder to use local music; it stays on-device. Playlist playback loops. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
+The original three-track soundtrack starts with Phase Index. Glass Current and Ion Drift add syncopated breaks; the playlist loops. Music follows race pause/resume and has a separate volume from synthesized turbine, weapon and impact effects. Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
 
 ## Development
 
@@ -25,6 +25,7 @@ npm test
 npm run test:browser
 npm run test:steering
 npm run test:audio
+npm run test:music
 npm run build
 ```
 
@@ -44,6 +45,6 @@ OpenAI Image design boards are in `public/art/`; **Design study** opens the Japa
 
 ## Verification
 
-`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps on all three production circuits. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
+`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps on all three production circuits. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `test:music` checks native MP3 playback, playlist advancement, local-file replacement, transport lifecycle and independent volume controls. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
 
 Headless software rendering validates functionality, not physical-phone GPU performance or subjective driving feel. Gamepad mappings are implemented but require a physical controller for hardware verification.

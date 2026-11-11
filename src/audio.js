@@ -431,18 +431,25 @@ export class MusicPlayer {
   }
 
   async loadFiles(files) {
+    const tracks = Array.from(files)
+      .filter(
+        (file) =>
+          file.type.startsWith("audio/") ||
+          /\.(mp3|m4a|aac|ogg|opus|wav|flac|webm)$/i.test(file.name),
+      )
+      .map((file) => ({ name: file.name, url: URL.createObjectURL(file) }));
+    this.loadTracks(tracks);
+    this.urls = tracks.map((track) => track.url);
+  }
+
+  loadTracks(tracks) {
     this.playRequest++;
     this.pause();
     this.audio.removeAttribute("src");
     this.audio.load();
     this.urls.forEach(URL.revokeObjectURL);
     this.urls = [];
-    this.files = Array.from(files).filter(
-      (file) =>
-        file.type.startsWith("audio/") ||
-        /\.(mp3|m4a|aac|ogg|opus|wav|flac|webm)$/i.test(file.name),
-    );
-    this.urls = this.files.map((file) => URL.createObjectURL(file));
+    this.files = tracks;
     this.index = 0;
     this.error = this.files.length
       ? null
@@ -496,7 +503,7 @@ export class MusicPlayer {
 
   #selectCurrent() {
     if (!this.current) return;
-    this.audio.src = this.urls[this.index];
+    this.audio.src = this.current.url;
     this.audio.volume = this._volume;
   }
 
