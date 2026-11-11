@@ -1,503 +1,353 @@
 import * as THREE from "three";
-import { createAdvertising } from "./advertising.js";
 
-// Layered waterfront districts: shared, opaque materials and instanced details.
-// All placed architecture stays inside a 60 m square accepted by the terrain.
+// Authored districts, not a scatter of interchangeable apartment towers. Each
+// cluster has a clear footprint outside every route, including the flight lane.
 export function buildCity(scene, track, textures, environment) {
-  const desert = track.config.name === "SOLAR ARRAY";
-  const night = track.config.name === "NOCTILUCENT";
   const root = new THREE.Group();
   root.name = "waterfront-city";
   scene.add(root);
-  const advertising = createAdvertising(scene);
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const cylinder = new THREE.CylinderGeometry(1, 1, 1, 12);
-  const taper = new THREE.CylinderGeometry(0.62, 1, 1, 12);
-  const ring = new THREE.TorusGeometry(1, 0.025, 4, 48);
-  const lambert = (color, map = null) =>
+  const desert = track.config.name === "SOLAR ARRAY";
+  const harbor = track.config.name === "NOCTILUCENT";
+  const surface = (color, map = null) =>
     new THREE.MeshLambertMaterial({ color, map, flatShading: true });
   const materials = {
-    ceramic: lambert(desert ? 0xf1dcc0 : 0xe9e5dc, textures.paint),
-    shell: lambert(desert ? 0xc3a48c : 0x96bec8, textures.paint),
-    facade: lambert(0xd4dedb, textures.facade),
-    foundation: lambert(desert ? 0xab8c73 : 0x8a9caa, textures.concrete),
-    glass: lambert(night ? 0x153b60 : 0x245870),
-    metal: lambert(0x354858),
-    red: lambert(0xd45151),
-    plants: lambert(desert ? 0x6e8972 : 0x45765c),
-    warm: new THREE.MeshBasicMaterial({ color: night ? 0xf6b76b : 0xe1ac70 }),
-    cyan: new THREE.MeshBasicMaterial({ color: 0x25bccc }),
-    pink: new THREE.MeshBasicMaterial({ color: 0xd2549b }),
+    concrete: surface(desert ? 0xaf8062 : 0xa5aaa5, textures.concrete),
+    dark: surface(0x263b49, textures.paint),
+    metal: surface(desert ? 0xb65d40 : 0x527c8b, textures.paint),
+    glass: surface(harbor ? 0x264b6a : 0x36798c, textures.facade),
+    cream: surface(0xe1d8bd, textures.paint),
+    rock: surface(desert ? 0xb47f65 : 0x697665, textures.concrete),
+    green: surface(0x4c7459),
+    cargo: surface(harbor ? 0xb24b64 : 0x366b79, textures.paint),
+    light: new THREE.MeshBasicMaterial({ color: desert ? 0xffc67a : 0x68d9d6 }),
+  };
+  const geometries = {
+    box: new THREE.BoxGeometry(1, 1, 1),
+    cylinder: new THREE.CylinderGeometry(0.5, 0.5, 1, 10),
+    rock: new THREE.DodecahedronGeometry(0.5, 0),
+    cone: new THREE.ConeGeometry(0.5, 1, 7),
   };
   const batches = new Map();
   const transform = new THREE.Object3D();
-  const put = (material, x, y, z, w, h, d, geometry = box, yaw = 0) => {
-    const key = `${material}:${geometry.id}:${Math.floor(x / 256)}:${Math.floor(z / 256)}`;
-    if (!batches.has(key))
-      batches.set(key, {
-        geometry,
-        material: materials[material],
-        matrices: [],
-      });
-    transform.position.set(x, y, z);
-    transform.rotation.set(0, yaw, 0);
-    transform.scale.set(w, h, d);
-    transform.updateMatrix();
-    batches.get(key).matrices.push(transform.matrix.clone());
-  };
-  let seed = 81219;
-  const random = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
-  const labels = [
-    "NEMU / 眠夢",
-    "ION PEAR",
-    "PHASE 03",
-    "MOTH / モス",
-    "NEMU / 眠夢",
-    "ION PEAR",
-    "PHASE 03",
-    "MOTH / モス",
-  ];
-  labels.forEach((label, i) => {
-    ctx.fillStyle =
-      i % 3 === 0 ? "#ca427b" : i % 3 === 1 ? "#177a8b" : "#1e3045";
-    ctx.fillRect(0, i * 32, 512, 32);
-    ctx.fillStyle = "#f6e7cf";
-    ctx.font = '700 24px "Noto Sans JP", monospace';
-    ctx.fillText(label, 18, i * 32 + 25);
-    ctx.fillRect(420, i * 32 + 6, 7, 20);
-    ctx.fillRect(438, i * 32 + 6, 40, 5);
-  });
-  const signTexture = new THREE.CanvasTexture(canvas);
-  signTexture.colorSpace = THREE.SRGBColorSpace;
-  signTexture.magFilter = THREE.NearestFilter;
-  const signVertices = [],
-    signUV = [];
-  function sign(x, y, z, w, h, index, side) {
-    const corners = [
-      [x - w / 2, y - h / 2, z],
-      [x + w / 2, y - h / 2, z],
-      [x + w / 2, y + h / 2, z],
-      [x - w / 2, y + h / 2, z],
-    ];
-    const bottom = 1 - (index + 1) / 8,
-      top = 1 - index / 8;
-    const uv = [
-      [0, bottom],
-      [1, bottom],
-      [1, top],
-      [0, top],
-    ];
-    for (const i of side > 0 ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2]) {
-      signVertices.push(...corners[i]);
-      signUV.push(side > 0 ? uv[i][0] : 1 - uv[i][0], uv[i][1]);
-    }
-  }
-  const verticalCanvas = document.createElement("canvas");
-  verticalCanvas.width = verticalCanvas.height = 256;
-  const verticalContext = verticalCanvas.getContext("2d");
-  ["眠夢", "イオン", "位相", "モス"].forEach((label, i) => {
-    const x = i * 64;
-    verticalContext.fillStyle = ["#122e43", "#3f1737", "#b33946", "#153945"][i];
-    verticalContext.fillRect(x, 0, 64, 256);
-    verticalContext.strokeStyle = ["#3ae0e0", "#f06fb9", "#fff0ce", "#5ce3d0"][
-      i
-    ];
-    verticalContext.lineWidth = 3;
-    verticalContext.strokeRect(x + 4, 4, 56, 248);
-    verticalContext.fillStyle = verticalContext.strokeStyle;
-    verticalContext.font = '700 43px "Noto Sans JP", monospace';
-    verticalContext.textAlign = "center";
-    [...label].forEach((glyph, j) => {
-      const spacing = 210 / label.length;
-      verticalContext.fillText(glyph, x + 32, 33 + spacing * (j + 0.75));
-    });
-    verticalContext.fillRect(x + 22, 231, 20, 5);
-  });
-  const verticalTexture = new THREE.CanvasTexture(verticalCanvas);
-  verticalTexture.colorSpace = THREE.SRGBColorSpace;
-  verticalTexture.magFilter = THREE.NearestFilter;
-  const verticalVertices = [],
-    verticalUV = [];
-  function verticalSign(x, y, z, index, side, axis) {
-    const halfWidth = 2.7,
-      halfHeight = 13;
-    const corners = [
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-      [-1, 1],
-    ];
-    const uv = [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-    ];
-    for (const i of side > 0 ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2]) {
-      const [u, v] = corners[i];
-      verticalVertices.push(
-        x + (axis ? 0 : u * halfWidth),
-        y + v * halfHeight,
-        z - (axis ? u * halfWidth : 0),
-      );
-      verticalUV.push(
-        (index + (side > 0 ? uv[i][0] : 1 - uv[i][0])) / 4,
-        uv[i][1],
-      );
-    }
-    put(
-      "metal",
-      x - (axis ? side * 0.5 : 0),
-      y,
-      z - (axis ? 0 : side * 0.5),
-      axis ? 0.8 : 5.7,
-      26.4,
-      axis ? 5.7 : 0.8,
+  const road = [];
+  for (let i = 0; i < 900; i++)
+    for (const branch of [-1, 0, 1])
+      road.push(track.frame((i / 900) * track.length, branch).p);
+  const clearance = (p) =>
+    Math.sqrt(
+      Math.min(...road.map((q) => (p.x - q.x) ** 2 + (p.z - q.z) ** 2)),
     );
-    const reach = axis ? 1.6 : 4;
-    for (const dy of [-11, 11])
-      put(
-        "metal",
-        x - (axis ? (side * reach) / 2 : 0),
-        y + dy,
-        z - (axis ? 0 : (side * reach) / 2),
-        axis ? reach : 0.6,
-        0.6,
-        axis ? 0.6 : reach,
-      );
-  }
-  const occupied = [];
-  function anchor(candidate) {
-    const p = environment.buildingPosition(candidate);
-    if (occupied.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < 67))
-      return null;
-    occupied.push(p);
-    return p;
-  }
-  function footing(p, w, d) {
-    const bottom =
-      Math.min(
-        ...[-w / 2, w / 2].flatMap((x) =>
-          [-d / 2, d / 2].map((z) => environment.heightAt(p.x + x, p.z + z)),
-        ),
-      ) - 4;
-    put("foundation", p.x, (bottom + p.y) / 2, p.z, w, p.y - bottom, d);
-  }
-  function district(p, roadY, index, roadPoint) {
-    const w = 25 + random() * 17,
-      d = 23 + random() * 15;
-    const deck = Math.max(p.y + 12, roadY - 9 + random() * 18);
-    footing(p, w + 8, d + 8);
-    // The raised waterfront podium is occupied commercial space, not a solid plinth.
-    put("glass", p.x, (p.y + deck) / 2, p.z, w, deck - p.y, d);
-    const podiumFloors = Math.ceil((deck - p.y) / 7);
-    const storeyHeight = (deck - p.y) / podiumFloors;
-    for (let level = 0; level < podiumFloors; level++) {
-      const lower = p.y + level * storeyHeight;
-      const upper = lower + storeyHeight;
-      const y = (lower + upper) / 2;
-      put("ceramic", p.x, lower, p.z, w + 2, 0.85, d + 2);
-      for (const side of [-1, 1]) {
-        // Bright interiors are deeply inset behind vertical ceramic mullions.
-        put(
-          (level + index) % 3 ? "glass" : "warm",
-          p.x,
-          y,
-          p.z + side * (d / 2 + 0.08),
-          w - 1,
-          upper - lower - 1.3,
-          0.25,
-        );
-        put(
-          (level + index) % 3 ? "warm" : "glass",
-          p.x + side * (w / 2 + 0.08),
-          y,
-          p.z,
-          0.25,
-          upper - lower - 1.3,
-          d - 1,
-        );
-      }
-    }
-    // Continuous mullions avoid one instance per storey while retaining depth.
-    for (const side of [-1, 1])
-      for (const bay of [-0.45, -0.15, 0.15, 0.45]) {
-        put(
-          "shell",
-          p.x + w * bay,
-          (p.y + deck) / 2,
-          p.z + side * (d / 2 + 0.5),
-          0.7,
-          deck - p.y,
-          1.1,
-        );
-        put(
-          "shell",
-          p.x + side * (w / 2 + 0.5),
-          (p.y + deck) / 2,
-          p.z + d * bay,
-          1.1,
-          deck - p.y,
-          0.7,
-        );
-      }
-    put("ceramic", p.x, deck, p.z, w + 5, 2, d + 5);
-    const floors = 3 + Math.floor(random() * 5);
-    const height = floors * 7;
-    put(
-      index % 3 ? "facade" : "shell",
-      p.x,
-      deck + height / 2,
-      p.z,
-      w,
-      height,
-      d,
-    );
-    for (const side of [-1, 1]) {
-      const front = p.z + side * (d / 2 + 0.2);
-      // Recessed warm shop glazing, projecting awnings and inhabited balconies.
-      for (let bay = -1; bay <= 1; bay++) {
-        const x = p.x + bay * w * 0.29;
-        put("warm", x, deck + 3, front, w * 0.25, 4.4, 0.3);
-        put("metal", x, deck + 3, front + side * 0.25, 0.4, 4.6, 0.4);
-        put(
-          index % 2 ? "red" : "shell",
-          x,
-          deck + 5.9,
-          front + side * 1.8,
-          w * 0.27,
-          0.7,
-          4,
-        );
-        for (let floor = 1; floor < floors; floor++) {
-          const y = deck + floor * 7;
-          put("ceramic", x, y, front + side * 1.3, w * 0.27, 0.7, 3.6);
-          put("metal", x, y + 2, front + side * 2.8, w * 0.26, 0.25, 0.3);
-          for (const dx of [-1, 1])
-            put(
-              "metal",
-              x + dx * w * 0.12,
-              y + 1.1,
-              front + side * 2.8,
-              0.22,
-              2,
-              0.22,
-            );
-          if ((floor + bay + index) % 3 === 0) {
-            put("plants", x, y + 0.9, front + side * 2, 3, 1.2, 1.3);
+
+  function cluster(u, side, offset, kind, index) {
+    const frame = track.frame(u * track.length);
+    let p = frame.p.clone().addScaledVector(frame.right, side * offset);
+    if (kind === "ferry") {
+      // Ships use an actual water footprint, not an elevated concrete pedestal.
+      // Search the nearby waterfront without changing terrain or race geometry.
+      let berth = null;
+      for (const distance of [offset, 220, 300, 390, 480]) {
+        for (const bank of [side, -side]) {
+          const candidate = frame.p
+            .clone()
+            .addScaledVector(frame.right, bank * distance);
+          if (clearance(candidate) < 108) continue;
+          if (
+            [-45, 0, 45].every((x) =>
+              [-45, 0, 45].every(
+                (z) =>
+                  environment.heightAt(candidate.x + x, candidate.z + z) < -18,
+              ),
+            )
+          ) {
+            berth = candidate;
+            break;
           }
         }
+        if (berth) break;
       }
-      // Condenser boxes and actual circular fan faces interrupt the facade grid.
-      for (let floor = 1; floor < floors; floor += 2) {
-        put(
-          "ceramic",
-          p.x + w * 0.39,
-          deck + floor * 7 + 3,
-          front + side * 0.9,
-          3,
-          2,
-          1.5,
-        );
-        const fan = new THREE.Mesh(
-          new THREE.CircleGeometry(0.68, 8),
-          materials.metal,
-        );
-        fan.position.set(
-          p.x + w * 0.39,
-          deck + floor * 7 + 3,
-          front + side * 1.68,
-        );
-        fan.rotation.y = side < 0 ? Math.PI : 0;
-        // Fan discs are baked into the shared detail batch below.
-        fan.updateMatrix();
-        const key = `fan:${Math.floor(fan.position.x / 256)}:${Math.floor(fan.position.z / 256)}`;
-        if (!batches.has(key))
-          batches.set(key, {
-            geometry: fan.geometry,
-            material: materials.metal,
-            matrices: [],
-          });
-        else fan.geometry.dispose();
-        batches.get(key).matrices.push(fan.matrix.clone());
-      }
-      sign(p.x, deck + 8.2, front + side * 3.1, w * 0.75, 2.1, index % 8, side);
-      if (index % 4 === 0)
-        put(
-          index % 8 ? "cyan" : "pink",
-          p.x - w * 0.42,
-          deck + height * 0.6,
-          front + side,
-          0.6,
-          height * 0.55,
-          0.5,
-        );
+      if (!berth) return;
+      p = berth;
     }
-    if (index % 2 === 0) {
-      const side = roadPoint.x >= p.x ? 1 : -1;
-      const size = Math.min(17, height - 5, d - 4);
-      advertising.facade(
-        new THREE.Vector3(
-          p.x + side * (w / 2 + 0.4),
-          deck + height * 0.58,
-          p.z,
-        ),
-        (side * Math.PI) / 2,
-        size,
-        Math.floor(index / 2) % 4,
-      );
-    }
-    put("ceramic", p.x, deck + height + 0.6, p.z, w + 2, 1.2, d + 2);
-    put("metal", p.x + 6, deck + height + 2, p.z, 6, 2.8, 5);
-    if (index % 3 === 0) {
-      // Road-height projecting tenant signs, attached to two facade orientations.
-      const signY = Math.min(deck + height - 14, Math.max(p.y + 14, roadY + 9));
-      const tenant = Math.floor(index / 3) % 4;
-      const sideZ = roadPoint.z >= p.z ? 1 : -1;
-      const sideX = roadPoint.x >= p.x ? 1 : -1;
-      verticalSign(
-        p.x - w * 0.3,
-        signY,
-        p.z + sideZ * (d / 2 + 4),
-        tenant,
-        sideZ,
-        false,
-      );
-      verticalSign(
-        p.x + sideX * (w / 2 + 1.6),
-        signY,
-        p.z + d * 0.2,
-        (tenant + 1) % 4,
-        sideX,
-        true,
-      );
-    }
-    if (index % 3 === 0) {
-      // A slender glazed upper volume steps back from the lively podium.
-      const h = 50 + random() * 95;
-      const y = deck + height;
-      put("glass", p.x, y + h / 2, p.z, w * 0.65, h, d * 0.66);
-      for (let f = 0; f <= 5; f++)
-        put("ceramic", p.x, y + (f * h) / 5, p.z, w * 0.7, 1, d * 0.71);
-      for (const dx of [-1, 1])
-        put(
-          "ceramic",
-          p.x + dx * w * 0.27,
-          y + h / 2,
-          p.z,
-          1.4,
-          h + 4,
-          d * 0.73,
-        );
-    }
-  }
-  // Kaiseki's occupied roadside is authored in flagship.js; only its skyline remains here.
-  if (track.config.name !== "KAISEKI COAST") {
-    for (let i = 0; i < 210; i++) {
-      const f = track.frame(((i * 0.61803398875) % 1) * track.length);
-      const side = i % 2 ? 1 : -1;
-      const candidate = f.p
-        .clone()
-        .addScaledVector(f.right, side * (94 + random() * 180));
-      const p = anchor(candidate);
-      if (p) district(p, f.p.y, i, f.p);
-    }
-  }
-  const trains = [];
-  const trainMaterial = materials.ceramic;
-  for (let i = 0; i < 4; i++) {
-    const f = track.frame((0.08 + i * 0.24) * track.length);
-    const p = anchor(
-      f.p.clone().addScaledVector(f.right, (i % 2 ? -1 : 1) * 420),
+    // 62 m radius contains the complete cluster; the remainder is the race
+    // corridor plus a generous outside shoulder, independent of road height.
+    if (clearance(p) < 108) return;
+    const ground = Math.max(
+      ...[-48, 0, 48].flatMap((x) =>
+        [-48, 0, 48].map((z) => environment.heightAt(p.x + x, p.z + z)),
+      ),
     );
-    if (!p) continue;
-    footing(p, 58, 58);
-    const base = Math.max(p.y + 18, f.p.y + 8);
-    const h = (desert ? 130 : 180) + i * 22;
-    // Sculptural ceramic sails wrapping a faceted blue-glass core.
-    put("glass", p.x, base + h / 2, p.z, 17, h, 17, taper);
-    for (const side of [-1, 1]) {
+    const deck = kind === "ferry" ? -19 : Math.max(ground + 3, frame.p.y - 14);
+    const yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+    const forward = new THREE.Vector3(
+      frame.tangent.x,
+      0,
+      frame.tangent.z,
+    ).normalize();
+    const local = (x, y, z) =>
+      p
+        .clone()
+        .addScaledVector(frame.right, x)
+        .addScaledVector(forward, z)
+        .setY(y);
+    function put(material, x, y, z, w, h, d, geometry = "box", tilt = 0) {
+      const point = local(x, y, z);
+      const key = `${material}:${geometry}:${Math.floor(point.x / 256)}:${Math.floor(point.z / 256)}`;
+      if (!batches.has(key))
+        batches.set(key, {
+          material: materials[material],
+          geometry: geometries[geometry],
+          matrices: [],
+        });
+      transform.position.copy(point);
+      transform.rotation.set(tilt, yaw, 0);
+      transform.scale.set(w, h, d);
+      transform.updateMatrix();
+      batches.get(key).matrices.push(transform.matrix.clone());
+    }
+    function support(x, z, top, width = 3) {
+      const point = local(x, 0, z);
+      const bottom = environment.heightAt(point.x, point.z) - 3;
+      put("concrete", x, (bottom + top) / 2, z, width, top - bottom, width);
+    }
+    function podium() {
+      put("concrete", 0, deck - 2, 0, 78, 4, 78);
+      for (const x of [-33, 0, 33])
+        for (const z of [-33, 33]) support(x, z, deck - 3, 4);
+      put("dark", 0, deck + 0.2, 0, 74, 0.4, 74);
+    }
+    function crane(x, z, height, reach) {
+      support(x, z, deck + height, 3);
+      for (const dx of [-7, 7]) {
+        support(x + dx, z, deck + height - 4, 1.5);
+        put("metal", x + dx, deck + height / 2, z, 2, height, 2);
+      }
+      put("metal", x, deck + height, z + reach / 2 - 8, 5, 4, reach + 16);
+      put("cream", x, deck + height - 4, z - 10, 9, 7, 10);
+      put("dark", x, deck + height - 4, z - 15.1, 7, 3, 0.4);
       put(
-        "ceramic",
-        p.x + side * 15,
-        base + h * 0.46,
-        p.z,
-        7,
-        h * 0.93,
-        17,
-        taper,
-      );
-      put(
-        "shell",
-        p.x + side * 11,
-        base + h * 0.81,
-        p.z,
-        3,
-        h * 0.4,
-        14,
-        taper,
-      );
-      put(
-        i % 2 ? "pink" : "cyan",
-        p.x + side * 15,
-        base + h * 0.48,
-        p.z - 14,
+        "metal",
+        x,
+        deck + height / 2 + 4,
+        z + reach - 8,
         0.6,
-        h * 0.72,
+        height - 8,
         0.6,
       );
+      put("cargo", x, deck + 10, z + reach - 8, 12, 5, 5);
     }
-    put("foundation", p.x, (p.y + base) / 2, p.z, 52, base - p.y, 52);
-    put("ceramic", p.x, base, p.z, 27, 5, 27, cylinder);
-    for (let level = 0; level < 5; level++) {
-      const y = base + 18 + level * 27;
-      put("ceramic", p.x, y, p.z, 20 - level, 2, 20 - level, cylinder);
+    if (kind === "cliff") {
+      // Broad faceted masses form a canyon wall, with a readable sediment shelf.
+      for (let j = 0; j < 4; j++) {
+        const h = 65 + ((index + j) % 3) * 25;
+        const x = (j % 2 ? 1 : -1) * 17;
+        const z = -30 + j * 20;
+        put("rock", x, ground + h * 0.32, z, 55, h, 48, "rock");
+        put("concrete", x, ground + h * 0.62, z, 30, 3, 30);
+      }
+    } else if (kind === "terrace") {
+      podium();
+      for (let j = 0; j < 4; j++) {
+        const y = deck + j * 7;
+        put("concrete", j * 9 - 12, y, 0, 58 - j * 7, 3, 68 - j * 9);
+        put("green", j * 9 - 12, y + 1.8, 0, 56 - j * 7, 0.8, 66 - j * 9);
+        for (const z of [-20 + j * 3, 18 - j * 3]) {
+          put("dark", j * 9 - 12, y + 5, z, 1.2, 7, 1.2);
+          put("green", j * 9 - 12, y + 9, z, 12, 11, 12, "rock");
+        }
+      }
+      put("cream", 20, deck + 33, 0, 25, 8, 28);
+      put("dark", 20, deck + 38, 0, 34, 2, 36);
+    } else if (kind === "ferry") {
+      // An adjacent pile-supported wharf leaves water visible around the hull.
+      put("concrete", 33, -10, 0, 9, 3, 76);
+      for (const z of [-30, 0, 30]) support(33, z, -11, 2);
+      put("cream", 22, -8.5, -7, 16, 1, 4);
+      // A stepped hull, passenger decks and raked bow read as a vessel at speed.
+      put("dark", 0, deck + 4, 0, 25, 8, 70);
+      put("cream", 0, deck + 9, 0, 27, 3, 67);
+      put("cream", 0, deck + 15, -7, 22, 10, 42);
+      put("glass", 0, deck + 17, -7, 22.5, 4, 39);
+      put("cream", 0, deck + 22, -10, 24, 2, 36);
+      put("cargo", -5, deck + 27, -17, 5, 10, 8);
+      put("metal", 6, deck + 32, -12, 0.7, 22, 0.7);
+      for (const x of [-25, 25]) support(x, 24, deck + 13, 2);
+    } else if (kind === "transit") {
+      podium();
+      for (const x of [-25, 25]) {
+        for (const z of [-28, 0, 28]) support(x, z, deck + 23, 2);
+        put("cream", x, deck + 24, 0, 16, 3, 72);
+        put("light", x - 7, deck + 22, 0, 0.5, 0.5, 65);
+      }
+      put("metal", 0, deck + 8, 0, 10, 1, 77);
+      put("cream", 0, deck + 12, -5, 8, 7, 48);
+      put("glass", 0, deck + 13, -5, 8.4, 3, 43);
+      put("cargo", 0, deck + 10, -5, 8.5, 0.6, 44);
+      put("glass", 0, deck + 32, 23, 65, 13, 12);
+      put("cream", 0, deck + 40, 23, 69, 3, 15);
+    } else if (kind === "solar") {
+      podium();
+      for (let j = 0; j < 5; j++)
+        for (let k = 0; k < 4; k++) {
+          const x = -29 + j * 14,
+            z = -24 + k * 16;
+          support(x, z, deck + 7, 1);
+          put("glass", x, deck + 8, z, 12, 1, 13, "box", -0.3);
+          put("metal", x, deck + 8.8, z, 0.3, 0.4, 13, "box", -0.3);
+        }
+      put("cream", 22, deck + 24, 0, 12, 46, 12);
+      put("light", 22, deck + 49, 0, 16, 4, 16);
+    } else if (kind === "refinery") {
+      podium();
+      for (const x of [-22, 12])
+        for (const z of [-22, 12]) {
+          put("cream", x, deck + 15, z, 24, 30, 24, "cylinder");
+          put("metal", x, deck + 31, z, 25, 2, 25, "cylinder");
+          put("cargo", x, deck + 17, z, 24.4, 3, 24.4, "cylinder");
+        }
+      for (const z of [-22, 12]) {
+        support(31, z, deck + 64, 3);
+        put("metal", 31, deck + 53, z, 7, 30, 7, "cylinder");
+        put("light", 31, deck + 68, z, 4, 1, 4, "cylinder");
+      }
+      put("metal", 0, deck + 36, 0, 65, 2, 3);
+    } else if (kind === "gantry") {
+      podium();
+      for (const z of [-26, 26]) {
+        for (const x of [-25, 25]) {
+          support(x, z, deck + 48, 3);
+          put("metal", x, deck + 27, z, 4, 44, 4);
+        }
+        put("metal", 0, deck + 49, z, 58, 6, 6);
+        put("light", 0, deck + 45, z, 44, 0.5, 0.5);
+      }
+      put("cream", 0, deck + 52, 0, 12, 7, 65);
+      put("dark", 0, deck + 56, 0, 4, 2, 64);
+      for (const x of [-17, 17]) put("cargo", x, deck + 9, 0, 22, 17, 46);
+    } else if (kind === "harbor-gateway") {
+      // One tall loading interchange marks the first harbor approach. Its
+      // opening faces the racing camera, but the entire gantry is on the quay.
+      podium();
+      for (const x of [-25, 25]) {
+        for (const z of [-25, 25]) {
+          support(x, z, deck + 86, 4);
+          put("metal", x, deck + 44, z, 5, 84, 5);
+          put("cargo", x, deck + 30, z, 5.4, 8, 5.4);
+          put("light", x - 2.7, deck + 63, z, 0.5, 35, 0.5);
+        }
+        put("cream", x, deck + 88, 0, 10, 8, 64);
+        put("metal", x, deck + 44, 0, 3, 3, 55);
+      }
+      for (const z of [-25, 25]) {
+        put("cargo", 0, deck + 84, z, 64, 8, 8);
+        put("cream", 0, deck + 92, z, 68, 3, 12);
+        for (const x of [-24, -12, 0, 12, 24])
+          put("light", x, deck + 84, z - 4.1, 4, 1.2, 0.3);
+      }
+      put("cream", -13, deck + 79, -29, 16, 10, 13);
+      put("glass", -13, deck + 80, -35.6, 13, 5, 0.3);
+      put("metal", 5, deck + 90, 0, 9, 7, 62);
+      for (const x of [-1, 11])
+        for (const z of [-14, 14]) put("metal", x, deck + 57, z, 0.5, 54, 0.5);
+      put("cargo", 5, deck + 27, 0, 18, 12, 36);
+      for (const z of [-14, -7, 0, 7, 14])
+        put("cream", 5, deck + 27, z, 18.3, 11.5, 0.3);
+      // A low loading shed and rail apron connect the landmark to daily freight.
+      put("dark", -7, deck + 9, 29, 33, 18, 14);
+      put("cream", -7, deck + 19, 29, 39, 2, 18);
+      for (const x of [-31, 31]) put("metal", x, deck + 0.6, 0, 0.6, 0.3, 74);
+    } else if (kind === "freight") {
+      podium();
+      crane(-23, -6, 57, 34);
+      for (let j = 0; j < 3; j++)
+        for (let k = 0; k <= j % 2; k++) {
+          const x = 4 + j * 11;
+          put(
+            (j + index) % 2 ? "cargo" : "cream",
+            x,
+            deck + 4 + k * 8,
+            0,
+            10,
+            8,
+            47,
+          );
+          for (const z of [-20, -10, 0, 10, 20])
+            put("metal", x, deck + 4 + k * 8, z, 10.3, 7.5, 0.3);
+        }
+    } else if (kind === "city") {
+      podium();
+      for (let j = 0; j < 3; j++) {
+        const h = 35 + ((j + index) % 3) * 26;
+        const x = -24 + j * 24;
+        put("glass", x, deck + h / 2, j % 2 ? 15 : -10, 18, h, 28);
+        for (let y = 5; y < h; y += 11)
+          put("cream", x, deck + y, j % 2 ? 15 : -10, 20, 1.2, 30);
+        put("metal", x, deck + h + 5, j % 2 ? 15 : -10, 7, 10, 10);
+      }
     }
-    // Sky-transit loop stays inside the same cleared 58 m landmark footprint.
-    const railY = base + 21;
-    const rail = new THREE.Mesh(ring, materials.shell);
-    rail.rotation.x = Math.PI / 2;
-    rail.position.set(p.x, railY, p.z);
-    rail.scale.setScalar(26);
-    root.add(rail);
-    for (let j = 0; j < 8; j++) {
-      const a = (j * Math.PI) / 4,
-        x = p.x + Math.cos(a) * 26,
-        z = p.z + Math.sin(a) * 26;
-      const ground = environment.heightAt(x, z) - 3;
-      put("ceramic", x, (ground + railY) / 2, z, 1.4, railY - ground, 1.4);
-    }
-    for (let car = 0; car < 3; car++) {
-      const group = new THREE.Group();
-      const body = new THREE.Mesh(box, trainMaterial);
-      body.scale.set(3.2, 3, 6.4);
-      group.add(body);
-      const glazing = new THREE.Mesh(box, materials.glass);
-      glazing.scale.set(3.3, 1.1, 5.3);
-      glazing.position.y = 0.45;
-      group.add(glazing);
-      const stripe = new THREE.Mesh(box, materials.cyan);
-      stripe.scale.set(3.35, 0.22, 5.8);
-      stripe.position.y = -0.65;
-      group.add(stripe);
-      root.add(group);
-      trains.push({
-        group,
-        x: p.x,
-        z: p.z,
-        y: railY + 2.4,
-        phase: i + car * 0.29,
-      });
-    }
-    sign(p.x, base + 6, p.z + 27, 22, 4, 5, 1);
   }
+
+  // Each lap moves through contrasting activities and silhouettes. Pairs at
+  // different depths give the view a middle ground instead of a skyline wall.
+  const acts = desert
+    ? [
+        "cliff",
+        "solar",
+        "gantry",
+        "cliff",
+        "refinery",
+        "solar",
+        "cliff",
+        "gantry",
+      ]
+    : harbor
+      ? [
+          "freight",
+          "refinery",
+          "ferry",
+          "city",
+          "gantry",
+          "freight",
+          "refinery",
+          "city",
+        ]
+      : [
+          "city",
+          "transit",
+          "ferry",
+          "terrace",
+          "ferry",
+          "terrace",
+          "transit",
+          "city",
+        ];
+  acts.forEach((kind, i) => {
+    const u = (i + 0.35) / acts.length;
+    cluster(u, i % 2 ? -1 : 1, 145, kind, i);
+    if (!(harbor && i === 0))
+      cluster(
+        u + 0.034,
+        i % 2 ? 1 : -1,
+        175,
+        acts[(i + 3) % acts.length],
+        i + 8,
+      );
+    cluster(
+      u + 0.075,
+      i % 2 ? -1 : 1,
+      230,
+      acts[(i + 1) % acts.length],
+      i + 24,
+    );
+    cluster(
+      u + 0.015,
+      i % 2 ? -1 : 1,
+      305,
+      desert ? "cliff" : harbor ? "freight" : "terrace",
+      i + 16,
+    );
+  });
+  if (harbor) cluster(0.085, 1, 135, "harbor-gateway", 32);
+  let count = 0;
   for (const batch of batches.values()) {
     const mesh = new THREE.InstancedMesh(
       batch.geometry,
@@ -507,43 +357,8 @@ export function buildCity(scene, track, textures, environment) {
     batch.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
     mesh.computeBoundingSphere();
     root.add(mesh);
+    count += batch.matrices.length;
   }
-  const signs = new THREE.BufferGeometry();
-  signs.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(signVertices, 3),
-  );
-  signs.setAttribute("uv", new THREE.Float32BufferAttribute(signUV, 2));
-  root.add(
-    new THREE.Mesh(signs, new THREE.MeshBasicMaterial({ map: signTexture })),
-  );
-  const verticalSigns = new THREE.BufferGeometry();
-  verticalSigns.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(verticalVertices, 3),
-  );
-  verticalSigns.setAttribute(
-    "uv",
-    new THREE.Float32BufferAttribute(verticalUV, 2),
-  );
-  root.add(
-    new THREE.Mesh(
-      verticalSigns,
-      new THREE.MeshBasicMaterial({ map: verticalTexture }),
-    ),
-  );
-  advertising.finish();
-  return {
-    update(time) {
-      for (const train of trains) {
-        const angle = time * 0.24 + train.phase;
-        train.group.position.set(
-          train.x + Math.cos(angle) * 26,
-          train.y,
-          train.z + Math.sin(angle) * 26,
-        );
-        train.group.rotation.y = -angle;
-      }
-    },
-  };
+  root.userData.sceneryInstances = count;
+  return { update() {} };
 }

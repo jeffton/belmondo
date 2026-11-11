@@ -335,6 +335,135 @@ test("projection excludes phantom central split road and keeps the chosen branch
   assert(Math.abs(locked.x) > 50);
 });
 
+test("joined production forks and merges have no hidden branch-edge wall", () => {
+  for (let index = 0; index < 3; index++) {
+    const track = makeTrack(index);
+    const [start, end] = track.config.split;
+    for (const phase of [0.2, 0.8]) {
+      for (const branch of [-1, 1]) {
+        const race = setup(track),
+          p = race.player;
+        const s = (start + (end - start) * phase) * track.length;
+        const f = track.frame(s, branch);
+        const inward = -branch;
+        p.yaw = Math.atan2(f.right.x * inward, f.right.z * inward);
+        const x = inward * (f.width - hullExtent(p, f.right) - 0.3);
+        p.position.copy(f.p).addScaledVector(f.right, x);
+        p.position.y += 2.2;
+        p.velocity.copy(f.right).multiplyScalar(inward * 65);
+        p.s = p.contactS = s;
+        p.branch = branch;
+        p.gate = Math.floor((s / track.length) * 32) + 1;
+        assert(track.bounds(s, branch).connected);
+        for (let step = 0; step < 20; step++) {
+          race.update(1 / 120, { ...neutral, throttle: false });
+          assert(
+            !p.wallTouched,
+            `open seam is not a wall: ${index}/${phase}/${branch}`,
+          );
+          assert(
+            p.grounded,
+            "crossing the open seam stays on its continuous deck",
+          );
+        }
+        assert.equal(p.shield, 100);
+        assert(
+          p.position.clone().sub(f.p).dot(f.right) * inward > f.width + 2,
+          "the body crossed the old independent branch collision boundary",
+        );
+      }
+    }
+  }
+});
+
+test("a forward drive into the separating splitter tip hits a real barrier", () => {
+  for (let index = 0; index < 3; index++) {
+    const track = makeTrack(index),
+      [start, end] = track.config.split;
+    let separation = start * track.length;
+    while (
+      track.bounds(separation + 0.2, -1).connected ||
+      separation < start * track.length + 1
+    )
+      separation += 0.2;
+    for (const branch of [-1, 1]) {
+      const race = setup(track),
+        p = race.player;
+      const s = separation - 3;
+      const left = track.frame(s, -1),
+        right = track.frame(s, 1);
+      const f = track.frame(s);
+      p.position.copy(left.p).lerp(right.p, 0.5);
+      p.position.y += 2.2;
+      p.velocity.copy(f.tangent).multiplyScalar(160);
+      p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      p.contactS = p.s = s;
+      p.branch = branch;
+      p.gate = Math.floor((s / track.length) * 32) + 1;
+      let contact = false;
+      for (let step = 0; step < 20; step++) {
+        race.update(1 / 120, { ...neutral, throttle: false });
+        contact ||= p.wallTouched;
+      }
+      assert(contact, `splitter nose must collide: ${index}/${branch}`);
+      assert(p.shield < 100);
+      assert(
+        p.grounded,
+        "tip contact deflects onto a deck rather than passing through the divider",
+      );
+    }
+  }
+});
+
+test("route selection follows the connected fork, but separated routes retain their walls", () => {
+  for (let index = 0; index < 3; index++) {
+    const track = makeTrack(index),
+      [start, end] = track.config.split;
+    for (const phase of [0.2, 0.8]) {
+      const s = (start + (end - start) * phase) * track.length;
+      for (const branch of [-1, 1]) {
+        const f = track.frame(s, -branch);
+        const position = f.p.clone();
+        position.y += 2.2;
+        const road = projectRoad(track, position, s, branch);
+        assert.equal(
+          road.branch,
+          -branch,
+          "the branch is not locked across an open deck",
+        );
+      }
+    }
+    const s = (start + (end - start) * 0.5) * track.length;
+    for (const branch of [-1, 1]) {
+      const f = track.frame(s, branch),
+        bounds = track.bounds(s, branch);
+      assert(!bounds.connected);
+      const other = track.frame(s, -branch).p.clone();
+      other.y += 2.2;
+      assert.equal(projectRoad(track, other, s, branch).branch, branch);
+      for (const side of [-1, 1]) {
+        const race = setup(track),
+          p = race.player;
+        p.yaw = Math.atan2(f.right.x * side, f.right.z * side);
+        p.position
+          .copy(f.p)
+          .addScaledVector(
+            f.right,
+            side * (f.width - hullExtent(p, f.right) - 0.1),
+          );
+        p.position.y += 2.2;
+        p.velocity.copy(f.right).multiplyScalar(side * 50);
+        p.s = p.contactS = s;
+        p.branch = branch;
+        p.gate = Math.floor((s / track.length) * 32) + 1;
+        race.update(1 / 120, { ...neutral, throttle: false });
+        assert(p.wallTouched, "real inner and outer barriers still collide");
+        assert(p.shield < 100);
+      }
+    }
+  }
+});
+
 test("nearby unrelated road cannot teleport projection or award a cut lap", () => {
   const race = setup();
   const p = race.player;

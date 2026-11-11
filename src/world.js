@@ -4,7 +4,7 @@ import { PAD_POSITIONS } from "./race.js";
 import { circuitTextures } from "./materials.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
-import { buildSplitMarkers } from "./advertising.js";
+import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
 import { createCraft } from "./craft.js";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.js";
 
@@ -175,6 +175,17 @@ export class World {
     this.scene.add(sea);
     const environment = buildEnvironment(this.scene, track, textures);
     const quads = [];
+    const roadPoint = (frame, x, y) => {
+      const inner =
+        frame.seam &&
+        ((frame.branch === -1 && x === frame.clipMax) ||
+          (frame.branch === 1 && x === frame.clipMin));
+      return (
+        inner
+          ? frame.seam.clone()
+          : frame.p.clone().addScaledVector(frame.right, x)
+      ).addScaledVector(frame.up, y);
+    };
     const addStrip = (a, b, left, right, y, color, kind = "paint") => {
       const edgeAt = (frame, value) =>
         Math.abs(value) > a.width - 0.6
@@ -186,10 +197,10 @@ export class World {
         rightB = clamp(edgeAt(b, right), b.clipMin, b.clipMax);
       if (leftA === rightA && leftB === rightB) return;
       const points = [
-        a.p.clone().addScaledVector(a.right, leftA).addScaledVector(a.up, y),
-        a.p.clone().addScaledVector(a.right, rightA).addScaledVector(a.up, y),
-        b.p.clone().addScaledVector(b.right, rightB).addScaledVector(b.up, y),
-        b.p.clone().addScaledVector(b.right, leftB).addScaledVector(b.up, y),
+        roadPoint(a, leftA, y),
+        roadPoint(a, rightA, y),
+        roadPoint(b, rightB, y),
+        roadPoint(b, leftB, y),
       ];
       const v0 = (a.u * track.length) / 32,
         v1 = ((b.u < a.u ? b.u + 1 : b.u) * track.length) / 32;
@@ -198,37 +209,56 @@ export class World {
         color,
         kind,
         uv: [
-          [left / 32, v0],
-          [right / 32, v0],
-          [right / 32, v1],
-          [left / 32, v1],
+          [leftA / 32, v0],
+          [rightA / 32, v0],
+          [rightB / 32, v1],
+          [leftB / 32, v1],
         ],
       });
     };
     const steps = 900;
-    for (let i = 0; i < steps; i++) {
-      const u = i / steps;
+    const stations = [
+      ...new Set([
+        ...Array.from({ length: steps + 1 }, (_, i) => i / steps),
+        ...cfg.split,
+      ]),
+    ].sort((a, b) => a - b);
+    const connectedAt = (u) => {
+      const f = track.frame(u * track.length, -1);
+      return track.bounds(f.u * track.length, -1).connected;
+    };
+    const transitions = [];
+    for (let i = 0; i < stations.length - 1; i++) {
+      let left = stations[i],
+        right = stations[i + 1];
+      if (left < cfg.split[0] || right > cfg.split[1]) continue;
+      const leftConnected = connectedAt(left);
+      if (leftConnected === connectedAt(right)) continue;
+      // Both road halves must end at the same physical fork tip. Interpolating
+      // directly from a joined station to a separated one opens an early hole.
+      while (true) {
+        const middle = (left + right) / 2;
+        if (middle === left || middle === right) break;
+        if (connectedAt(middle) === leftConnected) left = middle;
+        else right = middle;
+      }
+      transitions.push(leftConnected ? left : right);
+    }
+    stations.push(...transitions);
+    stations.sort((a, b) => a - b);
+    for (let i = 0; i < stations.length - 1; i++) {
+      const u = stations[i];
       const split = u >= cfg.split[0] && u < cfg.split[1];
       if (track.gap(u)) continue;
       for (const branch of split ? [-1, 1] : [0]) {
-        const a = track.frame((i / steps) * track.length, branch),
-          b = track.frame(((i + 1) / steps) * track.length, branch),
+        const a = track.frame(u * track.length, branch),
+          b = track.frame(stations[i + 1] * track.length, branch),
           w = a.width;
         for (const f of [a, b]) {
-          f.clipMin = -f.width;
-          f.clipMax = f.width;
-          if (split) {
-            const other = track.frame(f.u * track.length, -branch);
-            const middle = other.p.clone().sub(f.p).dot(f.right) / 2;
-            if (branch === -1) f.clipMax = Math.min(f.width, middle);
-            else f.clipMin = Math.max(-f.width, middle);
-          }
+          Object.assign(f, track.bounds(f.u * track.length, branch));
+          f.branch = branch;
         }
-        const shared =
-          split &&
-          (branch === -1
-            ? a.clipMax < a.width || b.clipMax < b.width
-            : a.clipMin > -a.width || b.clipMin > -b.width);
+        const shared = split && a.connected && b.connected;
         addStrip(a, b, -w, w, 0, i % 5 === 0 ? 0xabb3ac : colors.road, "road");
         addStrip(a, b, -w, w, -2, 0x8f9c96, "concrete");
         if (!shared || branch === -1)
@@ -257,42 +287,32 @@ export class World {
         }
         for (const side of [-1, 1]) {
           if (shared && side === -branch) continue;
-          const edgeA = a.width * side,
-            edgeB = b.width * side;
-          const lowerA = a.p
-            .clone()
-            .addScaledVector(a.right, edgeA)
-            .addScaledVector(a.up, -2);
-          const lowerB = b.p
-            .clone()
-            .addScaledVector(b.right, edgeB)
-            .addScaledVector(b.up, -2);
+          const edgeA = clamp(a.width * side, a.clipMin, a.clipMax),
+            edgeB = clamp(b.width * side, b.clipMin, b.clipMax);
+          const lowerA = roadPoint(a, edgeA, -2);
+          const lowerB = roadPoint(b, edgeB, -2);
+          const nose = split && side === -branch && u < cfg.split[0] + 0.07;
           quads.push({
-            p: [
-              lowerA,
-              lowerB,
-              b.p.clone().addScaledVector(b.right, edgeB),
-              a.p.clone().addScaledVector(a.right, edgeA),
-            ],
+            p: [lowerA, lowerB, roadPoint(b, edgeB, 0), roadPoint(a, edgeA, 0)],
             color: 0xbac0b0,
             kind: "concrete",
           });
           const p = [
-            a.p.clone().addScaledVector(a.right, edgeA),
-            b.p.clone().addScaledVector(b.right, edgeB),
-            b.p
-              .clone()
-              .addScaledVector(b.right, edgeB)
-              .addScaledVector(b.up, 1.7),
-            a.p
-              .clone()
-              .addScaledVector(a.right, edgeA)
-              .addScaledVector(a.up, 1.7),
+            roadPoint(a, edgeA, 0),
+            roadPoint(b, edgeB, 0),
+            roadPoint(b, edgeB, 1.7),
+            roadPoint(a, edgeA, 1.7),
           ];
           quads.push({
             p,
-            color: i % 12 === 0 ? 0xf4eee2 : 0x3c8d9e,
-            kind: i % 12 === 0 ? "concrete" : "glass",
+            color: nose
+              ? i % 2
+                ? 0xf2f3df
+                : 0xff693c
+              : i % 12 === 0
+                ? 0xf4eee2
+                : 0x3c8d9e,
+            kind: nose || i % 12 === 0 ? "concrete" : "glass",
             uv: [
               [(a.u * track.length) / 8, 0],
               [(b.u * track.length) / 8, 0],
@@ -496,6 +516,7 @@ export class World {
         this.scene.add(tile);
       }
     buildSplitMarkers(this.scene, track);
+    buildTrackAdvertising(this.scene, track, environment);
     if (!flagship) {
       const ribMaterial = mat(0xf5eee1, { map: textures.paint });
       const ribLight = basic(cfg.color);
@@ -605,8 +626,8 @@ export class World {
     this.cameraForward.lerp(forward, 1 - Math.exp(-dt * 5)).normalize();
     const desired = focus
       .clone()
-      .addScaledVector(this.cameraForward, -11 - player.speed * 0.018)
-      .addScaledVector(UP, 4.2);
+      .addScaledVector(this.cameraForward, -10.5 - player.speed * 0.006)
+      .addScaledVector(UP, 3.8);
     const ahead = focus.clone().addScaledVector(this.cameraForward, 28);
     if (demo) {
       desired
@@ -619,7 +640,11 @@ export class World {
     if (!this.cameraReady) {
       this.camera.position.copy(desired);
       this.cameraReady = true;
-    } else this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
+    } else {
+      this.camera.position.add(focus.clone().sub(this.cameraFocus));
+      this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
+    }
+    this.cameraFocus = focus;
     this.camera.up.copy(UP);
     this.camera.lookAt(ahead);
     const fov = 68 + player.speed * 0.085 + player.boost * 5;

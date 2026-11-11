@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { clamp, mod } from "./track.js";
+import { clamp, mod, roadBounds } from "./track.js";
 import { projectRoad } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
 
@@ -301,12 +301,28 @@ export class Race {
         projectRoad(track, r.position, r.contactS, r.branch),
       ]),
     );
+    const crossesSplitter = (r, road) => {
+      if (road.connected || !road.branch) return false;
+      const previous = roadBounds(track, r.contactS, road.branch);
+      if (!previous.connected) return false;
+      const f = track.frame(r.contactS, road.branch);
+      const x = previousPositions.get(r).clone().sub(f.p).dot(f.right);
+      const extent = hullExtent({ yaw: previousYaw.get(r) }, f.right);
+      return (
+        x >= previous.wallMin + extent - 0.05 &&
+        x <= previous.wallMax - extent + 0.05
+      );
+    };
     const constrainWall = (r) => {
       r.contactMoved = true;
       const road = roads.get(r);
-      const half = road.width - hullExtent(r, road.right);
-      const previousHalf =
-        road.width - hullExtent({ yaw: previousYaw.get(r) }, road.right);
+      const extent = hullExtent(r, road.right);
+      const min = road.wallMin + extent,
+        max = road.wallMax - extent;
+      const previousExtent = hullExtent(
+        { yaw: previousYaw.get(r) },
+        road.right,
+      );
       const x = r.position.clone().sub(road.point).dot(road.right);
       const oldX = previousPositions
         .get(r)
@@ -318,16 +334,19 @@ export class Race {
         track.gap(mod(road.s, track.length) / track.length) ||
         height <= -3 ||
         height >= 4 ||
-        Math.abs(oldX) > previousHalf + 0.05 ||
-        Math.abs(x) <= half
+        (!crossesSplitter(r, road) &&
+          (oldX < road.wallMin + previousExtent - 0.05 ||
+            oldX > road.wallMax - previousExtent + 0.05)) ||
+        (x >= min && x <= max)
       )
         return;
-      const sign = Math.sign(x);
-      r.position.addScaledVector(road.right, sign * (half - Math.abs(x)));
+      const sign = x < min ? -1 : 1;
+      r.position.addScaledVector(road.right, clamp(x, min, max) - x);
       const outward = r.velocity.dot(road.right) * sign;
       if (outward > 0)
         r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
       r.wallTouched = true;
+      r.wallSide = sign;
     };
     // Resolve static barriers before hover contact as well as between pair iterations.
     for (const r of this.racers) {
@@ -355,13 +374,16 @@ export class Race {
       const [splitStart, splitEnd] = track.config.split;
       if (u > splitStart && u < splitEnd) r.branch = road.branch;
       else r.branch = 0;
+      const splitterEntry = crossesSplitter(r, road);
       r.contactS = road.s;
       r.x = road.x;
       r.vx = r.velocity.dot(road.right);
       const gap = track.gap(u);
       const height = r.position.y - road.point.y - HOVER;
-      const half = road.width - hullExtent(r, road.right);
-      const onDeck = Math.abs(road.x) <= half + 0.05;
+      const extent = hullExtent(r, road.right);
+      const min = road.wallMin + extent,
+        max = road.wallMax - extent;
+      const onDeck = road.x >= min - 0.05 && road.x <= max + 0.05;
       const wasGrounded = r.grounded;
       r.grounded = !gap && onDeck && height < 1.2 && height > -3;
       if (wasGrounded && !r.grounded && onDeck) r.flight = true;
@@ -421,8 +443,10 @@ export class Race {
         );
       }
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.
-      const previousHalf =
-        road.width - hullExtent({ yaw: previousYaw.get(r) }, road.right);
+      const previousExtent = hullExtent(
+        { yaw: previousYaw.get(r) },
+        road.right,
+      );
       const previousX =
         road.x -
         (r.position.x - previous.x) * road.right.x -
@@ -430,16 +454,18 @@ export class Race {
       if (
         r.wallTouched ||
         (!gap &&
-          Math.abs(road.x) > half &&
-          Math.abs(previousX) <= previousHalf + 0.05 &&
+          (road.x < min || road.x > max) &&
+          (splitterEntry ||
+            (previousX >= road.wallMin + previousExtent - 0.05 &&
+              previousX <= road.wallMax - previousExtent + 0.05)) &&
           height > -3 &&
           height < 4)
       ) {
-        const sign = Math.sign(road.x);
-        if (Math.abs(road.x) > half)
+        const sign = r.wallTouched ? r.wallSide : road.x < min ? -1 : 1;
+        if (road.x < min || road.x > max)
           r.position.addScaledVector(
             road.right,
-            sign * (half - Math.abs(road.x)),
+            clamp(road.x, min, max) - road.x,
           );
         const outward = r.velocity.dot(road.right) * sign;
         if (outward > 0)

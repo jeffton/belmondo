@@ -55,3 +55,45 @@ for (let index = 0; index < TRACKS.length; index++) {
     }
   });
 }
+
+test("joined fork halves have a level seam and expose common visual/physical bounds", () => {
+  for (let index = 0; index < 3; index++) {
+    const track = makeTrack(index),
+      [start, end] = track.config.split;
+    for (const u of [start, end]) {
+      for (const branch of [-1, 1]) {
+        const bounds = track.bounds(u * track.length, branch);
+        assert(bounds.connected, "exact split endpoints join the unsplit road");
+        assert(
+          bounds.seam.distanceTo(track.bounds(u * track.length, -branch).seam) <
+            1e-8,
+        );
+      }
+    }
+    for (let i = 1; i < 100; i++) {
+      const s = (start + ((end - start) * i) / 100) * track.length;
+      const left = track.frame(s, -1),
+        right = track.frame(s, 1);
+      const a = track.bounds(s, -1),
+        b = track.bounds(s, 1);
+      if (a.connected || b.connected) {
+        assert.equal(a.connected, b.connected);
+        assert(
+          Math.abs(left.p.y - right.p.y) < 1e-8,
+          "the joined seam must not become a vertical step before separation",
+        );
+        assert(a.clipMax < a.wallMax && b.clipMin > b.wallMin);
+        assert(
+          a.seam.distanceTo(b.seam) < 1e-8,
+          "unequal-width rendered halves share the exact same seam vertex",
+        );
+        assert(a.clipMax <= left.width && b.clipMin >= -right.width);
+      } else {
+        assert.equal(a.clipMax, left.width);
+        assert.equal(b.clipMin, -right.width);
+        assert.equal(a.seam, null);
+        assert.equal(b.seam, null);
+      }
+    }
+  }
+});

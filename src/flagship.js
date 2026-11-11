@@ -165,7 +165,10 @@ export function buildFlagship(scene, track, textures, environment, assets) {
       const f = frame(u, branch);
       const w = f.width;
       const half = a.p.distanceTo(b.p) * 0.45;
-      const tall = 22 + ((i + variant * 2) % 4) * 6;
+      const workshop = variant === 2;
+      const tall = workshop
+        ? 15 + (i % 2) * 3
+        : 22 + ((i + variant * 2) % 4) * 6;
       const profile = [
         [5, -5],
         [5, 9],
@@ -271,7 +274,9 @@ export function buildFlagship(scene, track, textures, environment, assets) {
         0.18,
         0.3,
       );
-      for (let y = 14; y < tall - 5; y += 5) {
+      // Upper galleries are occasional inhabited details, not a continuous
+      // identical balcony belt around the lap. Workshops have low sawtooth roofs.
+      for (let y = 14; !workshop && i % 3 !== 1 && y < tall - 5; y += 5) {
         slab(
           f,
           side * (w + 10),
@@ -362,8 +367,22 @@ export function buildFlagship(scene, track, textures, environment, assets) {
       );
       if (i % 3 === 1) sign(f, side, w + 4.65, 11.8, -half + 4, 4.6);
       if (i % 7 === 0) sign(f, side, w + 12.8, tall - 8, 0, 5.5, true);
+      if (workshop) {
+        for (const z of [-half * 0.65, 0, half * 0.65]) {
+          sheet(
+            [
+              point(f, side * (w + 18), tall, z - 3),
+              point(f, side * (w + 29), tall + 5, z - 3),
+              point(f, side * (w + 29), tall + 5, z + 3),
+              point(f, side * (w + 18), tall, z + 3),
+            ],
+            metal,
+          );
+          panel(f, side * (w + 29), tall, tall + 5, z - 3, z + 3, glass);
+        }
+      }
       // Roof services and sloping vent fins break the parapet silhouette.
-      for (let j = 0; j < 3; j++) {
+      for (let j = 0; j < (workshop ? 0 : 3); j++) {
         const z = -half * 0.65 + j * half * 0.65;
         beam(
           metal,
@@ -541,12 +560,12 @@ export function buildFlagship(scene, track, textures, environment, assets) {
 
   // 03: low inner-branch workshops contrast with tall outer-branch apartments.
   // Only the outside of each branch is occupied: the median remains navigable.
-  district(0.298, 0.422, -1, -1, 2);
-  district(0.316, 0.411, 1, 1, 3);
+  district(0.306, 0.365, -1, -1, 2);
+  district(0.355, 0.411, 1, 1, 3);
 
   // 04: returning to the inhabited city gives the launch a recognisable approach.
-  district(0.555, 0.665, 0, -1, 3);
-  district(0.685, 0.756, 0, 1, 1);
+  district(0.555, 0.604, 0, -1, 3);
+  district(0.704, 0.745, 0, 1, 2);
 
   // 05: the entire straight jump corridor is left open. A paired broken-arch
   // landmark sits at the CURRENT landing, well outside even a pitched-up flight.

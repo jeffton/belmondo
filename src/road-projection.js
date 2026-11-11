@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { clamp, mod } from "./track.js";
+import { clamp, mod, roadBounds } from "./track.js";
 
 // Search only the connected neighbourhood, never a spatially nearby remote turn.
 export function projectRoad(track, position, anchor, branch) {
@@ -18,8 +18,15 @@ export function projectRoad(track, position, anchor, branch) {
     );
     // Never construct a sloping contact segment across the vertical lip into empty space.
     const sampleEnd = Math.abs(next - launch) < 1e-7 ? next - 1e-6 : next;
+    if (sampleEnd <= s) {
+      s = next;
+      continue;
+    }
     const u = mod((s + next) / 2, track.length) / track.length;
-    const branches = u > start && u < end ? (branch ? [branch] : [-1, 1]) : [0];
+    const connected =
+      branch && roadBounds(track, (s + next) / 2, branch).connected;
+    const branches =
+      u > start && u < end ? (branch && !connected ? [branch] : [-1, 1]) : [0];
     for (const route of branches) {
       const a = track.frame(s, route),
         b = track.frame(sampleEnd, route);
@@ -33,14 +40,18 @@ export function projectRoad(track, position, anchor, branch) {
       );
       const point = a.p.clone().lerp(b.p, t);
       const distance =
-        (position.x - point.x) ** 2 + (position.z - point.z) ** 2;
+        (position.x - point.x) ** 2 +
+        (position.z - point.z) ** 2 +
+        (route ? (position.y - point.y - 2.2) ** 2 : 0);
       if (best && distance >= best.distance) continue;
       const tangent = b.p.clone().sub(a.p).normalize();
       const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
       const lateral =
         (position.x - point.x) * right.x + (position.z - point.z) * right.z;
+      const contactS = s + t * (sampleEnd - s);
       best = {
-        s: s + t * (sampleEnd - s),
+        ...roadBounds(track, contactS, route),
+        s: contactS,
         point,
         tangent,
         right,

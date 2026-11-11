@@ -110,7 +110,9 @@ export function makeTrack(index) {
       const p = f.p
         .clone()
         .addScaledVector(f.right, branch * (branch === 1 ? 44 : 23) * blend);
-      if (branch === 1) p.y += THREE.MathUtils.smoothstep(blend, 0.25, 1) * 12;
+      // The fork is one level deck until its two carriageways separate.
+      // Raising one half earlier creates a vertical step along the open seam.
+      if (branch === 1) p.y += THREE.MathUtils.smoothstep(blend, 0.6, 1) * 12;
       return p;
     });
     routes[branch] = points.map((p, i) => {
@@ -177,5 +179,49 @@ export function makeTrack(index) {
       b = frame(s + 6, branch).tangent;
     return Math.atan2(a.z * b.x - a.x * b.z, a.dot(b)) / 12;
   }
-  return { config, length, frame, gap, curvature };
+  const track = { config, length, frame, gap, curvature };
+  track.bounds = (s, branch = 0) => roadBounds(track, s, branch);
+  return track;
+}
+
+export function roadBounds(track, s, branch = 0) {
+  const f = track.frame(s, branch);
+  const result = {
+    clipMin: -f.width,
+    clipMax: f.width,
+    wallMin: -f.width,
+    wallMax: f.width,
+    connected: false,
+    seam: null,
+  };
+  // Include authored endpoints despite modulo/division roundoff at exact mesh stations.
+  const epsilon = Number.EPSILON * 4;
+  if (
+    !branch ||
+    f.u < track.config.split[0] - epsilon ||
+    f.u > track.config.split[1] + epsilon
+  )
+    return result;
+  const other = track.frame(s, -branch);
+  const left = branch === -1 ? f : other;
+  const right = branch === 1 ? f : other;
+  const leftInner = left.p.clone().addScaledVector(left.right, left.width);
+  const rightInner = right.p.clone().addScaledVector(right.right, -right.width);
+  const axis = track.frame(s, 0).right;
+  result.connected = leftInner.clone().sub(rightInner).dot(axis) >= 0;
+  if (!result.connected) return result;
+  // One shared world-space vertex prevents cracks between nonparallel halves.
+  // The seam lies in the actual overlap, including unequal branch widths.
+  result.seam = leftInner.add(rightInner).multiplyScalar(0.5);
+  const seamX = result.seam.clone().sub(f.p).dot(f.right);
+  const offset = other.p.clone().sub(f.p).dot(f.right);
+  const projectedWidth = other.width * other.right.dot(f.right);
+  if (branch === -1) {
+    result.clipMax = Math.min(f.width, seamX);
+    result.wallMax = offset + projectedWidth;
+  } else {
+    result.clipMin = Math.max(-f.width, seamX);
+    result.wallMin = offset - projectedWidth;
+  }
+  return result;
 }

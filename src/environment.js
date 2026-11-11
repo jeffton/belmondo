@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
 const SEA_LEVEL = -16;
-const EXTENT = 1600;
-const CELLS = 64;
+const EXTENT = 2300;
+const CELLS = 80;
 const STEP = (EXTENT * 2) / CELLS;
 
 const smooth = (a, b, x) => {
@@ -12,6 +12,10 @@ const smooth = (a, b, x) => {
 
 /** Static scenery only; all local infrastructure stays beneath the racing deck. */
 export function buildEnvironment(scene, track, textures) {
+  const terrainRoad = [];
+  for (let i = 0; i < 420; i++)
+    for (const branch of [-1, 0, 1])
+      terrainRoad.push(track.frame((i / 420) * track.length, branch));
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
   const group = new THREE.Group();
@@ -29,15 +33,16 @@ export function buildEnvironment(scene, track, textures) {
   const transform = new THREE.Object3D();
 
   function box(mat, x, y, z, w, h, d, rotation = 0) {
-    if (!batches.has(mat)) batches.set(mat, []);
+    const key = `${mat.id}:${Math.floor(x / 256)}:${Math.floor(z / 256)}`;
+    if (!batches.has(key)) batches.set(key, { mat, matrices: [] });
     transform.position.set(x, y, z);
     transform.scale.set(w, h, d);
     transform.rotation.set(0, rotation, 0);
     transform.updateMatrix();
-    batches.get(mat).push(transform.matrix.clone());
+    batches.get(key).matrices.push(transform.matrix.clone());
   }
 
-  function terrainHeight(x, z) {
+  function baseTerrainHeight(x, z) {
     const distance = Math.hypot(x * 0.92, z);
     const outer = smooth(740, 1330, distance);
     if (desert) {
@@ -67,6 +72,35 @@ export function buildEnvironment(scene, track, textures) {
     return -25 + inland * (36 + 3 * Math.sin(z * 0.013)) + headland;
   }
 
+  function terrainHeight(x, z) {
+    let nearest = terrainRoad[0];
+    let distanceSquared = Infinity;
+    for (const f of terrainRoad) {
+      const d = (x - f.p.x) ** 2 + (z - f.p.z) ** 2;
+      if (d < distanceSquared) {
+        nearest = f;
+        distanceSquared = d;
+      }
+    }
+    const distance = Math.sqrt(distanceSquared);
+    const side =
+      (x - nearest.p.x) * nearest.right.x + (z - nearest.p.z) * nearest.right.z;
+    let height = baseTerrainHeight(x, z);
+    // Road-height landforms make the view inhabited at racing altitude. The
+    // shoulder stays low and wide; no hill can enter the deck or flight lane.
+    if (desert) {
+      const ridge =
+        smooth(95, 230, distance) * (1 - smooth(380, 650, distance));
+      height += ridge * (60 + 38 * Math.sin(z * 0.007 + x * 0.004) ** 2);
+    } else if (!harbor && side > 0) {
+      const island =
+        smooth(90, 180, distance) * (1 - smooth(280, 480, distance));
+      height = Math.max(height, -24 + island * (nearest.p.y + 48));
+    }
+    const shoulder = smooth(75, 140, distance);
+    return Math.min(height, nearest.p.y - 18 + shoulder * 1000);
+  }
+
   // A continuous heightfield gives the low view, raised track and skyline a shared ground.
   const geometry = new THREE.PlaneGeometry(
     EXTENT * 2,
@@ -87,7 +121,7 @@ export function buildEnvironment(scene, track, textures) {
     if (desert) tint.setHSL(0.095, 0.24, 0.48 + h * 0.0006 + variation);
     else if (harbor) tint.setHSL(0.58, 0.12, 0.25 + variation);
     else if (h < -3) tint.setHSL(0.12, 0.15, 0.53 + variation);
-    else tint.setHSL(0.19, 0.13, 0.39 + h * 0.0007 + variation);
+    else tint.setHSL(0.25, 0.27, 0.33 + h * 0.0007 + variation);
     colors.push(tint.r, tint.g, tint.b);
   }
   // Ground UVs use physical metres, not a stretched texture over the whole island.
@@ -97,12 +131,24 @@ export function buildEnvironment(scene, track, textures) {
   }
   geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
+  // Ground is mineral grit, not the panel seams used on manufactured concrete.
+  const pixels = new Uint8Array(64 * 64 * 4);
+  let grain = 3917;
+  for (let i = 0; i < pixels.length; i += 4) {
+    grain = (grain * 16807) % 2147483647;
+    const value = 180 + (grain % 65);
+    pixels.set([value, value, value, 255], i);
+  }
+  const groundMap = new THREE.DataTexture(pixels, 64, 64);
+  groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
+  groundMap.magFilter = THREE.NearestFilter;
+  groundMap.needsUpdate = true;
   group.add(
     new THREE.Mesh(
       geometry,
       new THREE.MeshLambertMaterial({
         vertexColors: true,
-        map: textures.concrete,
+        map: groundMap,
         flatShading: true,
       }),
     ),
@@ -211,7 +257,7 @@ export function buildEnvironment(scene, track, textures) {
     box(concrete, -555, -11, 395, 210, 14, 22);
   }
 
-  for (const [mat, matrices] of batches) {
+  for (const { mat, matrices } of batches.values()) {
     const mesh = new THREE.InstancedMesh(boxGeometry, mat, matrices.length);
     matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
     mesh.computeBoundingSphere();
