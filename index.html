@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#111c25" />
+    <meta
+      name="description"
+      content="NULL VECTOR — original anti-gravity combat racing. Eight pilots, split routes, coastal megastructures. Play in your browser."
+    />
+    <title>NULL // VECTOR — Anti-gravity racing</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <canvas id="game" aria-label="3D anti-gravity race"></canvas>
+    <div class="scanlines" aria-hidden="true"></div>
+    <main id="menu">
+      <header class="masthead">
+        <span class="brand-symbol">N<span>V</span></span
+        ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
+        ><span class="edition">EST. 2146<br />SEASON / 01</span>
+      </header>
+      <div class="menu-body">
+        <p class="eyebrow">ANTI-GRAVITY COMBAT RACING</p>
+        <h1>NULL<span>//</span><br />VECTOR<span class="period">.</span></h1>
+        <p class="tagline">Coastal division / 2146</p>
+        <div class="selection-label">
+          <span>01 / CIRCUIT</span
+          ><span id="track-count">3 SECTORS · 3 LAPS</span>
+        </div>
+        <div id="tracks" class="choices"></div>
+        <div class="selection-label">
+          <span>02 / PILOT SYSTEM</span><span id="craft-note"></span>
+        </div>
+        <div id="crafts" class="choices crafts"></div>
+        <div class="mode-row">
+          <label
+            >FORMAT
+            <select id="mode">
+              <option value="race">COMBAT / 8 PILOTS</option>
+              <option value="trial">TIME ATTACK / SOLO</option>
+            </select></label
+          ><label
+            >RENDER
+            <select id="quality">
+              <option value="clean">CLEAN</option>
+              <option value="retro">LOW-RES</option>
+            </select></label
+          >
+        </div>
+        <button id="start" class="start">ENTER THE GRID <span>↗</span></button>
+        <div class="menu-links">
+          <button id="help-open">PILOT BRIEFING</button
+          ><button id="music-open">SOUND SYSTEM</button
+          ><button id="art-open">DESIGN STUDY ↗</button>
+        </div>
+      </div>
+      <footer>
+        <span>KEYBOARD / GAMEPAD / TOUCH</span
+        ><span id="best">LOCAL RECORD / —</span>
+      </footer>
+      <div class="world-caption">
+        <span class="live-dot"></span> LIVE CIRCUIT FEED
+        <strong id="circuit-name">KAISEKI COAST</strong
+        ><small>35° N / 139° E — RECLAIMED ZONE</small>
+      </div>
+    </main>
+    <div id="hud" hidden>
+      <div class="hud-top">
+        <div>
+          <span class="hud-label">POSITION</span
+          ><strong id="position">8<small>/8</small></strong>
+        </div>
+        <div class="hud-track">
+          <b id="hud-track">KAISEKI COAST</b><span id="timer">00:00.00</span>
+        </div>
+        <div class="lap">
+          <span class="hud-label">LAP</span
+          ><strong id="lap">1<small>/3</small></strong>
+        </div>
+      </div>
+      <div id="race-message" role="status"></div>
+      <div class="hud-bottom">
+        <div class="shield">
+          <span class="hud-label">SHIELD <b id="shield-num">100</b>%</span>
+          <div class="bar"><i id="shield-bar"></i></div>
+          <canvas
+            id="map"
+            width="180"
+            height="120"
+            aria-label="Circuit map"
+          ></canvas>
+        </div>
+        <div class="weapon">
+          <span class="hud-label">WEAPON SYSTEM</span
+          ><button id="weapon">— <small>SPACE / FIRE</small></button>
+        </div>
+        <div class="velocity">
+          <strong id="speed">000</strong><span>KM/H</span>
+          <div class="bar"><i id="speed-bar"></i></div>
+        </div>
+      </div>
+      <button id="pause" aria-label="Pause race">Ⅱ</button>
+      <div id="touch-controls">
+        <div id="steer-pad" aria-label="Drag to steer">
+          <span>← STEER →</span><i></i>
+        </div>
+        <div class="touch-actions">
+          <div>
+            <button data-control="airLeft">L AIR</button
+            ><button data-control="airRight">R AIR</button>
+          </div>
+          <div>
+            <button data-control="brake">BRAKE</button
+            ><button id="touch-fire">FIRE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <section id="pause-panel" class="overlay" hidden>
+      <div class="panel">
+        <p class="eyebrow">TELEMETRY / SUSPENDED</p>
+        <h2>PAUSED</h2>
+        <button id="resume" class="start">RESUME ↗</button
+        ><button id="restart" class="line-button">RESTART RACE</button
+        ><button id="pause-music" class="line-button">SOUND SYSTEM</button
+        ><button id="quit" class="line-button">RETURN TO PADDOCK</button>
+        <p class="help-small">
+          P / ESC to resume · Tab out pauses automatically.
+        </p>
+      </div>
+    </section>
+    <section id="results" class="overlay" hidden>
+      <div class="panel">
+        <p class="eyebrow">CLASSIFIED / RACE REPORT</p>
+        <h2 id="result-title">FINISH.</h2>
+        <div id="result-data"></div>
+        <button id="again" class="start">RACE AGAIN ↗</button
+        ><button id="result-quit" class="line-button">RETURN TO PADDOCK</button>
+      </div>
+    </section>
+    <dialog id="help-dialog">
+      <button class="close" aria-label="Close briefing">×</button>
+      <p class="eyebrow">PILOT / FIELD MANUAL</p>
+      <h2>PILOT CONTROLS</h2>
+      <div class="brief-grid">
+        <div>
+          <h3>DESKTOP</h3>
+          <p>
+            <kbd>↑ W</kbd> Thrust<br /><kbd>← → A D</kbd> Steer<br /><kbd
+              >Q E</kbd
+            >
+            Left / right airbrake<br /><kbd>↓ S</kbd> Brake<br /><kbd
+              >Space</kbd
+            >
+            Fire · <kbd>P Esc</kbd> Pause
+          </p>
+          <h3>GAMEPAD</h3>
+          <p>
+            Left stick steer · A / R2 thrust<br />L1 / R1 airbrakes · X fire · B
+            brake<br />Start pause
+          </p>
+        </div>
+        <div>
+          <h3>TOUCH</h3>
+          <p>
+            Auto-thrust. Drag the left pad for proportional steering. Airbrake
+            into sharp turns. Fire with the right thumb. Landscape gives the
+            best view.
+          </p>
+          <h3>THE CIRCUIT</h3>
+          <p>
+            Orange pads boost. Lime pads arm one weapon. Pick a lane before the
+            split. Keep your speed over the jump. Wall contact scrubs velocity.
+          </p>
+        </div>
+      </div>
+      <div class="arsenal">
+        <b>SEEKER</b><span>Homing missile / 220 m lock</span><b>PULSE</b
+        ><span>Short-range forward shockwave</span><b>MINE</b
+        ><span>Persistent rear proximity charge</span><b>SHIELD</b
+        ><span>5 s protection + shield repair</span><b>SURGE</b
+        ><span>2.4 s overdrive</span>
+      </div>
+      <p class="help-small">
+        Three laps. Eight pilots. No rubber-banding. Time attack disables
+        weapons. Records stay in this browser.
+      </p>
+    </dialog>
+    <dialog id="music-dialog">
+      <button class="close" aria-label="Close sound system">×</button>
+      <p class="eyebrow">AUDIO / LOCAL TRANSMISSION</p>
+      <h2>LOCAL MUSIC</h2>
+      <p>
+        Drop an MP3 folder anywhere, or choose your tracks. Files stay on your
+        device.
+      </p>
+      <div class="file-buttons">
+        <label class="line-button"
+          >CHOOSE FOLDER<input
+            id="folder"
+            type="file"
+            webkitdirectory
+            multiple
+            accept="audio/*,.mp3" /></label
+        ><label class="line-button"
+          >CHOOSE TRACKS<input
+            id="files"
+            type="file"
+            multiple
+            accept="audio/*,.mp3"
+        /></label>
+      </div>
+      <p id="music-status" role="status">NO LOCAL TRACKS LOADED</p>
+      <div class="music-transport">
+        <button id="music-play">PLAY / PAUSE</button
+        ><button id="music-next">NEXT →</button>
+      </div>
+      <label class="volume-label"
+        >MUSIC VOLUME<input
+          id="volume"
+          type="range"
+          min="0"
+          max="1"
+          step=".01"
+          value=".65" /></label
+      ><label class="check"
+        ><input id="mute" type="checkbox" /> MUTE ENGINE / EFFECTS</label
+      >
+      <p class="help-small">
+        Spotify’s developer policy excludes game integration. Use local audio
+        here; Spotify can play separately.
+      </p>
+    </dialog>
+    <dialog id="art-dialog">
+      <button class="close" aria-label="Close design study">×</button>
+      <p class="eyebrow">VISUAL DEVELOPMENT / OPENAI IMAGE</p>
+      <h2>NULL // VECTOR</h2>
+      <img
+        id="concept"
+        alt="Original NULL VECTOR concept sheet: low-poly ships, coastal circuit, split routes, jump, concrete megastructures and racing HUD"
+      />
+      <p class="help-small">
+        Original art direction generated with OpenAI Image, translated into
+        procedural 3D geometry. This is a design study, not a gameplay
+        screenshot.
+      </p>
+    </dialog>
+    <div id="drop-zone" hidden>
+      DROP AUDIO FILES<span>LOCAL AUDIO / NOTHING UPLOADED</span>
+    </div>
+    <div id="fatal" hidden role="alert"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
