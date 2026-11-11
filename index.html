@@ -12,6 +12,13 @@
       content="BELMONDO — anti-gravity combat racing. Eight pilots, split routes and coastal megastructures. Play in your browser."
     />
     <title>BELMONDO — Anti-gravity racing</title>
+    <link
+      rel="preload"
+      href="/fonts/chakra-petch-700.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link rel="icon" href="/art/belmondo-icon.png" type="image/png" />
   </head>
   <body>
@@ -43,19 +50,17 @@
               <option value="race">COMBAT / 8 PILOTS</option>
               <option value="trial">TIME ATTACK / SOLO</option>
             </select></label
-          ><label
-            >RENDER
-            <select id="quality">
-              <option value="clean">CLEAN</option>
-              <option value="retro">LOW-RES</option>
-            </select></label
-          >
+          ><label class="render-toggle"
+            >LOW-RES
+            <input id="quality" type="checkbox" role="switch" />
+            <span class="switch-track" aria-hidden="true"></span
+          ></label>
         </div>
-        <button id="start" class="start">ENTER THE GRID <span>↗</span></button>
+        <button id="start" class="start">ENTER THE GRID</button>
         <div class="menu-links">
           <button id="help-open">PILOT BRIEFING</button
           ><button id="music-open">SOUND SYSTEM</button
-          ><button id="art-open">DESIGN STUDY ↗</button>
+          ><button id="art-open">DESIGN STUDY</button>
         </div>
       </div>
       <footer>
@@ -76,6 +81,9 @@
         </div>
         <div class="hud-track">
           <b id="hud-track">KAISEKI COAST</b><span id="timer">00:00.00</span>
+          <div class="weapon" hidden>
+            <button id="weapon" type="button"></button>
+          </div>
         </div>
         <div class="lap">
           <span class="hud-label">LAP</span
@@ -93,14 +101,6 @@
             height="120"
             aria-label="Circuit map"
           ></canvas>
-        </div>
-        <div class="weapon">
-          <span class="hud-label">EQUIPPED</span>
-          <button
-            id="weapon"
-            type="button"
-            aria-label="Fire: no weapon equipped"
-          ></button>
         </div>
         <div class="velocity">
           <strong id="speed">000</strong><span>KM/H</span>
@@ -127,22 +127,18 @@
           </div>
           <div>
             <button data-control="brake">BRAKE</button
-            ><button
-              id="touch-fire"
-              type="button"
-              aria-label="Fire: no weapon equipped"
-            >
+            ><button id="touch-fire" type="button" aria-label="Fire weapon">
               FIRE
             </button>
           </div>
         </div>
       </div>
     </div>
-    <section id="pause-panel" class="overlay" hidden>
+    <dialog id="pause-panel" class="overlay" aria-labelledby="pause-title">
       <div class="panel">
-        <p class="eyebrow">TELEMETRY / SUSPENDED</p>
-        <h2>PAUSED</h2>
-        <button id="resume" class="start">RESUME ↗</button
+        <p class="eyebrow">RACE CONTROL</p>
+        <h2 id="pause-title">PAUSED</h2>
+        <button id="resume" class="start" autofocus>RESUME</button
         ><button id="restart" class="line-button">RESTART RACE</button
         ><button id="pause-music" class="line-button">SOUND SYSTEM</button
         ><button id="quit" class="line-button">RETURN TO PADDOCK</button>
@@ -150,13 +146,13 @@
           P / ESC to resume · Tab out pauses automatically.
         </p>
       </div>
-    </section>
+    </dialog>
     <section id="results" class="overlay" hidden>
       <div class="panel">
         <p class="eyebrow">CLASSIFIED / RACE REPORT</p>
         <h2 id="result-title">FINISH.</h2>
         <div id="result-data"></div>
-        <button id="again" class="start">RACE AGAIN ↗</button
+        <button id="again" class="start">RACE AGAIN</button
         ><button id="result-quit" class="line-button">RETURN TO PADDOCK</button>
       </div>
     </section>

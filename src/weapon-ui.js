@@ -36,9 +36,6 @@ function icon(glyph) {
   return `<svg class="weapon-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="currentColor">${glyph}</svg>`;
 }
 
-const emptyGlyph =
-  '<path d="M17 7H7v10M31 7h10v10M7 31v10h10M41 31v10H31M20 24h8" fill="none" stroke="currentColor" stroke-width="2"/>';
-
 export function createWeaponHUD(desktop, touch, roster) {
   for (const [name, item] of Object.entries(WEAPON_UI)) {
     const heading = document.createElement("b");
@@ -48,22 +45,21 @@ export function createWeaponHUD(desktop, touch, roster) {
     description.textContent = item.description;
     roster.append(heading, description);
   }
+  touch.textContent = "FIRE";
+  touch.setAttribute("aria-label", "Fire weapon");
   let current = Symbol("uninitialized");
   return (weapon) => {
     if (weapon === current) return;
     current = weapon;
     const item = weapon ? WEAPON_UI[weapon] : null;
-    for (const [button, action] of [
-      [desktop, "SPACE / FIRE"],
-      [touch, "FIRE"],
-    ]) {
-      button.classList.toggle("loaded", !!item);
-      button.style.setProperty("--weapon-color", item ? item.color : "#a9bec8");
-      button.setAttribute(
-        "aria-label",
-        item ? `Fire ${weapon}` : "Fire: no weapon equipped",
-      );
-      button.innerHTML = `${icon(item ? item.glyph : emptyGlyph)}<span class="weapon-copy"><b class="weapon-name">${item ? weapon : "EMPTY"}</b><small class="weapon-action">${action}</small></span>`;
+    desktop.parentElement.hidden = !item;
+    if (!item) {
+      desktop.replaceChildren();
+      desktop.removeAttribute("aria-label");
+      return;
     }
+    desktop.style.setProperty("--weapon-color", item.color);
+    desktop.setAttribute("aria-label", `Fire ${weapon}`);
+    desktop.innerHTML = `${icon(item.glyph)}<span class="weapon-copy"><b class="weapon-name">${weapon}</b><small class="weapon-action">FIRE</small></span>`;
   };
 }

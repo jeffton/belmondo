@@ -1,4 +1,4 @@
-"""Bake the hero craft's UV atlas. Requires Pillow and generate-belmondo-mark.py output."""
+"""Bake the unbranded composite/metal racing craft atlas. Requires Pillow."""
 from pathlib import Path
 from random import Random
 from PIL import Image, ImageDraw, ImageFont
@@ -12,8 +12,8 @@ small = ImageFont.truetype("/usr/share/fonts/liberation/LiberationSans-Regular.t
 for index in range(8):
     tile = Image.new("RGB", (256, 256))
     pixels = tile.load()
-    base = [(222, 226, 219), (222, 226, 219), (65, 76, 84), (23, 34, 43),
-            (15, 35, 48), (113, 125, 131), (220, 226, 217), (40, 51, 61)][index]
+    base = [(139, 149, 149), (204, 212, 205), (49, 59, 65), (23, 29, 33),
+            (12, 23, 28), (108, 116, 118), (47, 57, 61), (40, 51, 61)][index]
     for y in range(256):
         for x in range(256):
             edge = min(x, 255-x)
@@ -32,13 +32,17 @@ for index in range(8):
             for y in (64, 164, 224):
                 d.rectangle((x, y, x+2, y+2), fill="#4c5d66")
         if index == 0:
-            # Same self-hosted typographic identity as the start screen.
-            mark = Image.open(ROOT / "belmondo-mark.png").convert("RGB")
-            mark.thumbnail((196, 26), Image.Resampling.LANCZOS)
-            d.rectangle((25, 185, 231, 222), fill="#111b25")
-            tile.paste(mark, ((256-mark.width)//2, 191))
-            d.text((93, 232), "B / 07", fill="#35434b", font=small)
-            d.polygon([(115, 8), (141, 8), (141, 86), (128, 99), (115, 86)], fill="#f04a35")
+            # Bare structural laminate, a small race number and service hatches.
+            for y in range(0, 256, 4):
+                for x in range(30, 226, 4):
+                    d.line((x, y, x+2, y+2), fill="#758488", width=1)
+            d.polygon([(105, 8), (151, 8), (142, 96), (114, 112)], fill="#dddeda")
+            d.polygon([(115, 8), (141, 8), (137, 62), (119, 72)], fill="#cb472f")
+            d.rectangle((81, 184, 175, 226), fill="#283238", outline="#bcc2ba", width=2)
+            d.text((119, 196), "07", fill="#e2e6dc", font=font)
+            for x in (88, 166):
+                for y in (190, 219):
+                    d.ellipse((x, y, x+3, y+3), fill="#a1aaab")
         elif index == 1:
             d.polygon([(90, 0), (180, 0), (156, 256), (66, 256)], fill="#fafaf0")
             d.polygon([(90, 0), (98, 0), (74, 256), (66, 256)], fill="#293842")
@@ -46,9 +50,14 @@ for index in range(8):
             for y in range(207, 231, 5):
                 d.rectangle((179, y, 226, y+2), fill="#3c4a51")
         else:
-            d.text((57, 117), "BELMONDO", fill="#293e48", font=font)
-            for y in range(174, 230, 7):
-                d.rectangle((45, y, 211, y+3), fill="#283a44")
+            # Unpainted carbon spars: coarse diagonal weave and bolted endplates.
+            for y in range(0, 256, 8):
+                for x in range(24, 232, 8):
+                    d.line((x, y, x+4, y+4), fill="#6a7779", width=2)
+            for y in (24, 224):
+                d.rectangle((20, y, 236, y+10), fill="#8c9695")
+                for x in (32, 224):
+                    d.ellipse((x, y+3, x+4, y+7), fill="#263238")
     elif index in (2, 3, 7):
         for y in range(10, 252, 17):
             d.line((12, y, 244, y), fill="#0e1b25", width=3)

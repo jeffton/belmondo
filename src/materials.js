@@ -216,7 +216,7 @@ export function circuitTextures(accent) {
       // A readable silhouette first; service detail stays inside the dark frame.
       const ice = boost ? "#b4ffff" : "#ffe2a5";
       const signal = boost ? "#23dae8" : "#ffb34a";
-      const secondary = boost ? "#125568" : "#d74a9b";
+      const secondary = boost ? "#125568" : "#ff398d";
       noise(26, 9);
       const panel = (inset, cut, fill) => {
         ctx.fillStyle = fill;
@@ -235,7 +235,7 @@ export function circuitTextures(accent) {
       panel(0, 14, "#74808b");
       panel(3, 13, "#111e2c");
       panel(9, 11, secondary);
-      panel(12, 10, "#152936");
+      panel(12, 10, boost ? "#127e91" : "#841b60");
       // Bright rails are paired, rather than the generic on-road arrow language.
       ctx.fillStyle = signal;
       for (const x of [15, 231]) ctx.fillRect(x, 22, 10, 83);
@@ -247,11 +247,11 @@ export function circuitTextures(accent) {
           ctx.fillStyle = secondary;
           ctx.fillRect(34, y, 188, 8);
           ctx.fillStyle = signal;
-          ctx.fillRect(43, y, 170, 3);
+          ctx.fillRect(37, y, 182, 6);
           ctx.fillStyle = ice;
           ctx.fillRect(53, y, 150, 1);
         }
-        ctx.fillStyle = "#0a1522";
+        ctx.fillStyle = "#104250";
         ctx.fillRect(32, 56, 192, 43);
         ctx.fillStyle = ice;
         ctx.font = "900 39px sans-serif";

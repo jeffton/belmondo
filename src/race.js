@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { clamp, mod, roadBounds } from "./track.js";
 import { projectRoad } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
+import { getTrackPickups, crossesPickup } from "./pickups.js";
 
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const HOVER = 2.2;
@@ -40,11 +41,11 @@ export const CRAFT = [
   },
 ];
 export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
-export const PAD_POSITIONS = [0.065, 0.21, 0.46, 0.58, 0.79, 0.91];
 
 export class Race {
   constructor(track, craft = 0, mode = "race") {
     this.track = track;
+    this.pickups = getTrackPickups(track);
     this.mode = mode;
     this.time = 0;
     this.countdown = 3.2;
@@ -71,7 +72,7 @@ export class Race {
       boost: 0,
       stun: 0,
       weapon: null,
-      pad: -1,
+      collectedPickups: new Set(),
       lap: 1,
       aiFire: 4 + i,
     }));
@@ -129,6 +130,7 @@ export class Race {
     r.grounded = true;
     r.flight = false;
     r.boost = r.surge = 0;
+    r.recoveredThisStep = true;
   }
   fire(r = this.player) {
     if (!r.weapon || this.countdown > 0 || this.finished) return;
@@ -208,9 +210,11 @@ export class Race {
     this.time += dt;
     const { track } = this;
     const previousPositions = new Map(
-      this.racers.map((r) => [r, r.position.clone()]),
+      this.racers.map((r) => {
+        r.recoveredThisStep = false;
+        return [r, r.position.clone()];
+      }),
     );
-    const previousProgress = new Map(this.racers.map((r) => [r, r.s]));
     const previousYaw = new Map(this.racers.map((r) => [r, r.yaw]));
     for (const r of this.racers) {
       r.wallTouched = r.contactMoved = false;
@@ -366,7 +370,6 @@ export class Race {
     });
     for (const r of this.racers) {
       const previous = previousPositions.get(r);
-      const oldS = previousProgress.get(r);
       const ai = r.id !== 0;
       const road = r.contactMoved
         ? projectRoad(track, r.position, r.contactS, r.branch)
@@ -495,28 +498,26 @@ export class Race {
         (r.grounded
           ? -Math.asin(road.tangent.y)
           : -Math.atan2(r.velocity.y, r.speed)) + r.pitchTrim;
-      const crossed = PAD_POSITIONS.findIndex(
-        (p) =>
-          oldS < (Math.floor(r.s / track.length) + p) * track.length &&
-          r.s >= (Math.floor(r.s / track.length) + p) * track.length,
-      );
-      if (
-        r.grounded &&
-        crossed >= 0 &&
-        r.pad !== Math.floor(r.s / track.length) * 10 + crossed &&
-        Math.abs(r.x) < 7
-      ) {
-        r.pad = Math.floor(r.s / track.length) * 10 + crossed;
-        if (crossed % 3 === 0) {
-          r.surge = 1.15;
-          if (!ai) this.emit("boost", "BOOST");
-        } else if (!r.weapon && this.mode !== "trial") {
-          r.weapon =
-            WEAPONS[
-              (Math.floor(this.time * 13) + r.id + crossed) % WEAPONS.length
-            ];
-          if (!ai) this.emit("pickup", r.weapon);
-        } else r.shield = Math.min(100, r.shield + 8);
+      if (r.grounded && !r.recoveredThisStep) {
+        for (const [index, pad] of this.pickups.entries()) {
+          const key = `${r.lap}:${pad.id}`;
+          if (
+            r.collectedPickups.has(key) ||
+            !crossesPickup(track, pad, previous, r.position, r.branch)
+          )
+            continue;
+          r.collectedPickups.add(key);
+          if (pad.type === "boost") {
+            r.surge = 1.15;
+            if (!ai) this.emit("boost", "BOOST");
+          } else if (!r.weapon && this.mode !== "trial") {
+            r.weapon =
+              WEAPONS[
+                (Math.floor(this.time * 13) + r.id + index) % WEAPONS.length
+              ];
+            if (!ai) this.emit("pickup", r.weapon);
+          } else r.shield = Math.min(100, r.shield + 8);
+        }
       }
       r.shield = clamp(r.shield, 0, 100);
     }

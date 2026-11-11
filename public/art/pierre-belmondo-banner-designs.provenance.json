@@ -1,0 +1,11 @@
+{
+  "file": "pierre-belmondo-banner-designs.png",
+  "source": "OpenAI image generation via Codex subscription",
+  "imageId": "ig_01be9df6ed2dce11016af4d8a14afc87d2a6ed5225db8c0c32",
+  "requestedImageModel": "gpt-image-2.5-flare",
+  "generatedAt": "2026-11-11T21:06:04Z",
+  "action": "edit",
+  "reference": "belmondo-roadside-landscape-atlas.png",
+  "prompt": "Fjern belmondo teskt fra skibene - men lav et par reklamebannere med Pierre Belmondo rundt omkring.",
+  "usage": "Two original Pierre Belmondo banner designs sampled by UV coordinates; the source image is unmodified. Environmental advertising only, not craft livery."
+}

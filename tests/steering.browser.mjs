@@ -19,7 +19,7 @@ async function ready(page) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#mode").selectOption("trial");
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
 }
 async function start(page) {
   await page.locator("#start").click();

@@ -47,7 +47,7 @@ async function open(context) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#mode").selectOption("trial");
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   return page;
 }
 async function start(page) {

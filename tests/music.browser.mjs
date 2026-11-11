@@ -65,7 +65,7 @@ try {
 
   // A real menu gesture starts the default track; exercise actual HTMLMediaElement decoding/playback.
   await page.locator("#music-dialog .close").click();
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

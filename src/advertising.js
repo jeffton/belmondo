@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createPierreAdvertising } from "./pierre-advertising.js";
 
 const ATLAS =
   "/art/openai-image-2026-11-11T16-25-29-514Z-ig_0a4106913d49f121016af496c5017087d286f627a074fae0ad.png";
@@ -184,6 +185,7 @@ export function buildTrackAdvertising(scene, track, environment) {
     4,
     2,
   );
+  const pierre = createPierreAdvertising(scene);
   const box = new THREE.BoxGeometry(1, 1, 1);
   const metal = new THREE.MeshLambertMaterial({ color: 0x314858 });
   const positions = [0.035, 0.108, 0.205, 0.475, 0.535, 0.74, 0.925, 0.985];
@@ -206,18 +208,22 @@ export function buildTrackAdvertising(scene, track, environment) {
       .normalize();
     // Keep the angled landscape panels outside the driving surface.
     const center = f.p.clone().addScaledVector(f.right, side * (f.width + 14));
-    center.y += 24.5;
+    // Two lower, slim lore banners replace ordinary ad slots, away from forks.
+    const pierreDesign = i === 2 ? 0 : i === 6 ? 1 : -1;
+    center.y += pierreDesign >= 0 ? 10.5 : 24.5;
     const yaw = Math.atan2(normal.x, normal.z);
-    const width = i % 3 === 0 ? 24 : 20;
-    const height = width * (384 / 1024);
-    advertising.facade(center, yaw, width, (i + offset) % 8, height);
+    const width = pierreDesign >= 0 || i % 3 === 0 ? 24 : 20;
+    const height = width * (pierreDesign >= 0 ? 0.13 : 384 / 1024);
+    if (pierreDesign >= 0)
+      pierre.facade(center, yaw, width, pierreDesign, height);
+    else advertising.facade(center, yaw, width, (i + offset) % 8, height);
     const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
     for (const [j, direction] of [-1, 1].entries()) {
       const p = center
         .clone()
         .addScaledVector(horizontal, direction * width * 0.32);
       const bottom = environment.heightAt(p.x, p.z) - 2;
-      const top = center.y - height / 2 + 1;
+      const top = center.y - height / 2 + (pierreDesign >= 0 ? -0.1 : 1);
       transform.position.set(p.x, (bottom + top) / 2, p.z);
       transform.scale.set(0.7, top - bottom, 0.9);
       transform.rotation.set(0, yaw, 0);

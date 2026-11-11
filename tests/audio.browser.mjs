@@ -35,7 +35,7 @@ try {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#mode").selectOption("trial");
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.2,

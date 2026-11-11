@@ -44,7 +44,7 @@ async function actualUi(browser) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const view = page.locator("#view");
@@ -83,7 +83,7 @@ async function actualUi(browser) {
   await touch.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await touch.locator("#quality").selectOption("retro");
+  await touch.locator("#quality").check();
   await touch.locator("#start").tap();
   await touch.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const touchView = touch.locator("#view");

@@ -283,7 +283,7 @@ try {
   await actual.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await actual.locator("#quality").selectOption("retro");
+  await actual.locator("#quality").check();
   await actual.locator("#start").click();
   await actual.keyboard.down("ArrowUp");
   await actual.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

@@ -150,21 +150,21 @@ function buildResources() {
   });
   const core = new Skin();
   loft(core, [
-    [4.65, 0, -0.13, 0.11, 0.07, -0.12],
-    [3.4, 0, -0.04, 0.58, 0.24, -0.28],
-    [1.6, 0, 0, 0.94, 0.4, -0.43],
-    [-0.3, 0, 0, 1.12, 0.56, -0.54],
-    [-1.9, 0, -0.04, 1.53, 0.46, -0.57],
-    [-3.05, 0, -0.02, 1.35, 0.35, -0.4],
+    [5.65, 0, -0.1, 0.035, 0.025, -0.06],
+    [3.5, 0, -0.04, 0.32, 0.1, -0.17],
+    [1.6, 0, 0, 0.6, 0.18, -0.25],
+    [-0.3, 0, 0, 0.78, 0.26, -0.3],
+    [-1.9, 0, -0.04, 0.74, 0.23, -0.31],
+    [-3.05, 0, -0.02, 0.52, 0.16, -0.24],
   ]);
-  // A stepped keel below the deck gives the hull a real thickness and rear sill.
+  // A narrow exposed keel, rather than a second bulky hull.
   loft(
     core,
     [
-      [2.35, 0, -0.38, 0.26, 0.03, -0.12],
-      [0.5, 0, -0.43, 0.67, 0.03, -0.3],
-      [-1.9, 0, -0.5, 0.87, 0.02, -0.26],
-      [-2.65, 0, -0.39, 0.81, 0.02, -0.18],
+      [2.35, 0, -0.21, 0.15, 0.03, -0.07],
+      [0.5, 0, -0.25, 0.32, 0.03, -0.13],
+      [-1.9, 0, -0.31, 0.4, 0.02, -0.12],
+      [-2.65, 0, -0.24, 0.35, 0.02, -0.08],
     ],
     2,
   );
@@ -172,39 +172,57 @@ function buildResources() {
   const accent = new Skin();
   const mechanical = new Skin();
   for (const side of [-1, 1]) {
-    // Swept, razor-edged foil joins the core to the thrust pod.
-    const top = [
-      [side * 0.72, -0.04, 1.45],
-      [side * 2.85, -0.16, 0.32],
-      [side * 3.12, -0.23, -2.25],
-      [side * 1.1, -0.12, -2.55],
-    ];
-    const bottom = top.map(([x, y, z]) => [x, y - 0.14, z]);
+    // Two structural spars leave open air between the spine and engine pods.
+    // The negative space is part of the silhouette, not a painted-on recess.
+    for (const [rootZ, tipZ, chord] of [
+      [1.1, 0.05, 0.26],
+      [-1.65, -2.05, 0.36],
+    ]) {
+      const top = [
+        [side * 0.55, -0.08, rootZ],
+        [side * 2.72, -0.16, tipZ],
+        [side * 2.72, -0.16, tipZ - chord],
+        [side * 0.55, -0.08, rootZ - chord],
+      ];
+      const bottom = top.map(([x, y, z]) => [x, y - 0.09, z]);
+      const uv = [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ];
+      core.face(top, 6, uv, SLATE, new THREE.Vector3(0, 1, 0));
+      core.face(bottom, 2, uv, SLATE, new THREE.Vector3(0, -1, 0));
+      const foilCenter = new THREE.Vector3();
+      for (const point of top) foilCenter.add(new THREE.Vector3(...point));
+      foilCenter.multiplyScalar(0.25);
+      for (let i = 0; i < 4; i++) {
+        const k = (i + 1) % 4;
+        const outward = new THREE.Vector3(...top[i])
+          .add(new THREE.Vector3(...top[k]))
+          .multiplyScalar(0.5)
+          .sub(foilCenter);
+        outward.y = 0;
+        core.face(
+          [top[i], bottom[i], bottom[k], top[k]],
+          5,
+          uv,
+          SLATE,
+          outward,
+        );
+      }
+    }
     const uv = [
       [0, 0],
       [1, 0],
       [1, 1],
       [0, 1],
     ];
-    core.face(top, 6, uv, WHITE, new THREE.Vector3(0, 1, 0));
-    core.face(bottom, 2, uv, SLATE, new THREE.Vector3(0, -1, 0));
-    const foilCenter = new THREE.Vector3();
-    for (const point of top) foilCenter.add(new THREE.Vector3(...point));
-    foilCenter.multiplyScalar(0.25);
-    for (let i = 0; i < 4; i++) {
-      const k = (i + 1) % 4;
-      const outward = new THREE.Vector3(...top[i])
-        .add(new THREE.Vector3(...top[k]))
-        .multiplyScalar(0.5)
-        .sub(foilCenter);
-      outward.y = 0;
-      core.face([top[i], bottom[i], bottom[k], top[k]], 5, uv, SLATE, outward);
-    }
     const podSections = [
-      [2.65, side * 1.83, -0.15, 0.17, 0.12, -0.17],
-      [1.45, side * 2.12, -0.1, 0.44, 0.28, -0.3],
-      [-0.45, side * 2.43, -0.04, 0.6, 0.44, -0.43],
-      [-2.5, side * 2.59, -0.06, 0.58, 0.47, -0.43],
+      [3.35, side * 1.94, -0.15, 0.045, 0.04, -0.08],
+      [1.45, side * 2.17, -0.1, 0.27, 0.15, -0.18],
+      [-0.45, side * 2.43, -0.04, 0.39, 0.23, -0.28],
+      [-2.5, side * 2.59, -0.06, 0.43, 0.26, -0.3],
       [-3.25, side * 2.55, -0.08, 0.49, 0.28, -0.33],
     ];
     loft(accent, podSections, 1, WHITE, "front");
@@ -235,12 +253,25 @@ function buildResources() {
     loft(
       core,
       [
-        [-0.5, side * 1.6, 0.1, 0.045, 0.08, -0.12],
-        [-1.7, side * 1.78, 0.15, 0.055, 1.04, -0.18],
-        [-2.8, side * 1.94, 0.05, 0.055, 0.8, -0.15],
+        [-0.9, side * 2.38, 0.12, 0.025, 0.04, -0.07],
+        [-2.05, side * 2.59, 0.16, 0.035, 0.52, -0.08],
+        [-2.85, side * 2.72, 0.13, 0.025, 0.39, -0.06],
       ],
       0,
     );
+    // Unpainted thrust rings sit proud of the tapered composite pods.
+    for (const z of [-2.66, -2.96]) {
+      loft(
+        mechanical,
+        [
+          [z + 0.045, side * 2.55, -0.08, 0.5, 0.3, -0.34],
+          [z - 0.045, side * 2.55, -0.08, 0.5, 0.3, -0.34],
+        ],
+        5,
+        WHITE,
+        false,
+      );
+    }
     // Recessed, chamfered engine mouths with dark inner walls and a backplate.
     const outer = ring([-3.25, side * 2.55, -0.08, 0.49, 0.28, -0.33]);
     const inner = ring([-3.29, side * 2.55, -0.08, 0.31, 0.14, -0.18]);
@@ -270,13 +301,13 @@ function buildResources() {
       new THREE.Vector3(0, 0, -1),
     );
     // Small forward-facing intake visibly sinks into the shoulder.
-    const x = side * 1.48;
+    const x = side * 2.31;
     mechanical.face(
       [
-        [x - 0.17, 0.13, 0.9],
-        [x + 0.17, 0.13, 0.9],
-        [x + 0.19, 0.28, -0.7],
-        [x - 0.19, 0.28, -0.7],
+        [x - 0.13, 0.064, 0.9],
+        [x + 0.13, 0.064, 0.9],
+        [x + 0.17, 0.22, -0.7],
+        [x - 0.17, 0.22, -0.7],
       ],
       7,
       uv,
@@ -290,10 +321,10 @@ function buildResources() {
   loft(
     canopy,
     [
-      [1.53, 0, 0.28, 0.18, 0.06, -0.06],
-      [0.48, 0, 0.42, 0.44, 0.78, -0.04],
-      [-0.74, 0, 0.53, 0.39, 0.68, -0.03],
-      [-1.12, 0, 0.5, 0.29, 0.18, -0.06],
+      [2.05, 0, 0.14, 0.12, 0.025, -0.04],
+      [0.25, 0, 0.24, 0.34, 0.37, -0.04],
+      [-0.83, 0, 0.25, 0.3, 0.3, -0.03],
+      [-1.38, 0, 0.23, 0.2, 0.05, -0.05],
     ],
     4,
   );
@@ -394,7 +425,7 @@ export function createCraft(scene, color) {
     shared.liveries.set(color, livery);
   }
   const craft = new THREE.Group();
-  craft.name = "BELMONDO-07";
+  craft.name = "racer-07";
   for (const name of ["core", "mechanical", "canopy"]) {
     const mesh = new THREE.Mesh(shared[name], shared.skinMaterial);
     mesh.name = name;

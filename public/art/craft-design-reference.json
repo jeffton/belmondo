@@ -1,0 +1,9 @@
+{
+  "file": "craft-design-reference.png",
+  "purpose": "Original craft silhouette and engineering design reference; not a runtime texture",
+  "generatedAt": "2026-11-11T21:04:50.251Z",
+  "tool": "OpenAI Image via local openai-image skill",
+  "imageModel": "gpt-image-2.5-flare",
+  "generationId": "ig_03b8a909b6a60219016af4d855445087d2b280bfc80c9232b8",
+  "prompt": "BELMONDO antigravity racing craft design reference: redesign craft to be low, slender, fast, raw and functional—America's Cup not Bavaria, current silhouette too toy-like/clunky. Preserve excellent twin rear thrusters and speed-dependent flames. Remove all BELMONDO wordmarks/text from ships. Original PS1-era angular industrial racing machine, long sharp prow, very low black canopy, skeletal narrow carbon crossmembers, narrow swept engine nacelles, exposed mechanical engine collars, small cantilever racing foils. Three-quarter front and rear design study on neutral background; no typography."
+}

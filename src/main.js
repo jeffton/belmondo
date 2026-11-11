@@ -108,9 +108,16 @@ for (const [i, c] of CRAFT.entries()) {
 $("crafts").children[0].click();
 selectTrack(0);
 $("mode").onchange = updateRecord;
-$("quality").onchange = () => {
-  world.quality = $("quality").value;
+const qualityToggle = $("quality");
+qualityToggle.checked = localStorage.getItem("nv-render") === "retro";
+function applyQuality() {
+  world.quality = qualityToggle.checked ? "retro" : "clean";
   world.resize();
+}
+applyQuality();
+qualityToggle.onchange = () => {
+  applyQuality();
+  localStorage.setItem("nv-render", world.quality);
 };
 window.addEventListener("resize", () => world.resize());
 function clearInput() {
@@ -140,7 +147,7 @@ async function start() {
   clearInput();
   $("menu").hidden = true;
   $("results").hidden = true;
-  $("pause-panel").hidden = true;
+  $("pause-panel").close();
   updateWeaponHUD(race.player.weapon);
   $("hud").hidden = false;
   $("hud-track").textContent = TRACKS[selectedTrack].name;
@@ -151,10 +158,11 @@ async function start() {
   }
 }
 function setPaused(value) {
-  if (state !== "race" || race.finished) return;
+  if (state !== "race" || race.finished || paused === value) return;
   paused = value;
   clearInput();
-  $("pause-panel").hidden = !paused;
+  if (paused) $("pause-panel").showModal();
+  else $("pause-panel").close();
   sound.setPaused(paused);
   if (paused) music.pause();
   else if (musicEnabled) music.play();
@@ -165,8 +173,9 @@ function quit() {
   clearInput();
   $("menu").hidden = false;
   $("hud").hidden = true;
-  $("pause-panel").hidden = true;
+  $("pause-panel").close();
   $("results").hidden = true;
+  $("start").focus();
   sound.setPaused(true);
   music.pause();
   world.cameraReady = false;
@@ -183,6 +192,10 @@ function toggleView() {
 $("view").onclick = toggleView;
 $("pause").onclick = () => setPaused(!paused);
 $("resume").onclick = () => setPaused(false);
+$("pause-panel").addEventListener("cancel", (e) => {
+  e.preventDefault();
+  setPaused(false);
+});
 for (const [button, dialog] of [
   ["help-open", "help-dialog"],
   ["music-open", "music-dialog"],
@@ -197,7 +210,7 @@ for (const [button, dialog] of [
   };
 for (const b of document.querySelectorAll("dialog .close"))
   b.onclick = () => b.closest("dialog").close();
-for (const d of document.querySelectorAll("dialog"))
+for (const d of document.querySelectorAll("dialog:not(#pause-panel)"))
   d.addEventListener("click", (e) => {
     if (e.target === d) {
       const r = d.getBoundingClientRect();
@@ -221,8 +234,14 @@ $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
 window.addEventListener("keydown", (e) => {
-  if (document.querySelector("dialog[open]")) return;
+  if (document.querySelector("dialog[open]:not(#pause-panel)")) return;
   if (state !== "race") return;
+  if (e.code === "Escape" || e.code === "KeyP") {
+    e.preventDefault();
+    if (!e.repeat) setPaused(!paused);
+    return;
+  }
+  if (paused) return;
   if (
     ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
       e.code,
@@ -230,11 +249,6 @@ window.addEventListener("keydown", (e) => {
   )
     e.preventDefault();
   if (e.repeat) return;
-  if (e.code === "Escape" || e.code === "KeyP") {
-    setPaused(!paused);
-    return;
-  }
-  if (paused) return;
   if (e.code === "KeyV") {
     e.preventDefault();
     toggleView();
@@ -327,7 +341,12 @@ function input() {
     padFire = pad.buttons[2]?.pressed;
     if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
     padView = pad.buttons[3]?.pressed;
-    if (pad.buttons[9]?.pressed && !padPause) setPaused(!paused);
+    if (
+      pad.buttons[9]?.pressed &&
+      !padPause &&
+      !document.querySelector("dialog[open]:not(#pause-panel)")
+    )
+      setPaused(!paused);
     padPause = pad.buttons[9]?.pressed;
   }
   return {
@@ -499,6 +518,7 @@ function animate(now) {
     if (renderTime >= 2.5) {
       if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
         world.quality = "retro";
+        qualityToggle.checked = true;
         world.resize();
       }
       renderFrames = 0;

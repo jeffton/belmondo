@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
+import { getTrackPickups } from "../src/pickups.js";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5188";
 await mkdir("test-artifacts", { recursive: true });
@@ -22,7 +23,7 @@ async function ready(context, mode = "trial") {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#mode").selectOption(mode);
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   return page;
@@ -158,6 +159,16 @@ try {
     pitch: -0.65,
     air: 0,
   });
+  await page.evaluate(() => {
+    window.chordPad.axes = [0, 0, 0, 0];
+    window.chordPad.buttons = [];
+  });
+  await page.screenshot({ path: "test-artifacts/hud-actual-desktop-race.png" });
+  await page.locator("#pause").click();
+  await page.waitForFunction(() => window.nullVector.telemetry.paused);
+  await page.screenshot({
+    path: "test-artifacts/hud-actual-desktop-pause.png",
+  });
   await desktop.close();
 
   const mobile = await browser.newContext({
@@ -278,6 +289,7 @@ try {
   const armedPad = await armed.locator("#steer-pad").boundingBox();
   const brakeBox = await armed.locator('[data-control="brake"]').boundingBox();
   const track = makeTrack(0);
+  const authoredPickups = getTrackPickups(track);
   let touching = false,
     braking = false,
     equipped;
@@ -291,6 +303,17 @@ try {
     const look = track.frame(
       t.progress * track.length + Math.max(14, t.speed * 0.48),
     );
+    const upcoming = authoredPickups.find(
+      (pad) =>
+        pad.type === "weapon" &&
+        pad.branch === 0 &&
+        pad.s > t.progress * track.length,
+    );
+    if (upcoming) {
+      const distance = upcoming.s - t.progress * track.length;
+      const approach = Math.max(0, Math.min(1, (140 - distance) / 70));
+      look.p.addScaledVector(look.right, upcoming.lateral * approach);
+    }
     const delta =
       Math.atan2(look.p.x - t.worldPosition[0], look.p.z - t.worldPosition[2]) -
       t.yaw;
@@ -340,6 +363,14 @@ try {
     progress: equipped.progress,
     lateralPosition: equipped.lateralPosition,
   });
+  await expect(armed.locator("#weapon")).toBeVisible();
+  await armed.screenshot({
+    path: "test-artifacts/hud-actual-mobile-equipped.png",
+  });
+  await expect(armed.locator("#weapon .weapon-name")).toHaveText(
+    equipped.weapon,
+  );
+  await expect(armed.locator("#touch-fire")).toHaveText("FIRE");
   await armedCdp.send("Input.dispatchTouchEvent", {
     type: "touchEnd",
     touchPoints: [],
@@ -375,6 +406,10 @@ try {
   await armed.waitForFunction(
     () => window.nullVector.telemetry.weapon === null,
   );
+  await expect(armed.locator("#weapon")).toBeHidden();
+  await expect(armed.locator("#weapon")).toHaveText("");
+  await expect(armed.locator("#touch-fire")).toBeVisible();
+  await expect(armed.locator("#touch-fire")).toHaveText("FIRE");
   samples.push({
     name: "fourth-finger-weapon-consumed",
     previousWeapon: equipped.weapon,
@@ -386,6 +421,14 @@ try {
   await armedCdp.send("Input.dispatchTouchEvent", {
     type: "touchCancel",
     touchPoints: [],
+  });
+  await armed.screenshot({
+    path: "test-artifacts/hud-actual-mobile-after-fire.png",
+  });
+  await armed.locator("#pause").click();
+  await armed.waitForFunction(() => window.nullVector.telemetry.paused);
+  await armed.screenshot({
+    path: "test-artifacts/hud-actual-mobile-pause.png",
   });
   await armedContext.close();
   expect(errors).toEqual([]);

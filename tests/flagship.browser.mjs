@@ -86,7 +86,7 @@ async function drive(mobile, startupSeconds = null) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#mode").selectOption("trial");
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#start").click();
   if (!mobile) await page.keyboard.down("ArrowUp");
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
@@ -422,7 +422,7 @@ async function restartChecks() {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#quality").selectOption("retro");
+  await page.locator("#quality").check();
   await page.locator("#mode").selectOption("race");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

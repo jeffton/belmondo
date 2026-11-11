@@ -3,6 +3,7 @@ import { mod, clamp } from "./track.js";
 import { buildTrackPads } from "./track-pads.js";
 import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
+import { buildTrackLighting } from "./track-lighting.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
@@ -24,13 +25,13 @@ const colors = {
   lime: 0xc6ff21,
 };
 
-function quadGeometry(quads) {
+function quadGeometry(quads, lighting) {
   const vertices = [],
     c = [],
     uv = [];
   for (const q of quads) {
-    const color = new THREE.Color(q.color);
     for (const i of [0, 2, 1, 0, 3, 2]) {
+      const color = new THREE.Color(lighting.shade(q.p[i], q.color));
       vertices.push(...q.p[i].toArray());
       c.push(color.r, color.g, color.b);
       uv.push(
@@ -89,6 +90,7 @@ export class World {
     this.camera.updateProjectionMatrix();
   }
   build(track) {
+    this.lighting?.dispose();
     if (this.scene) {
       const geometries = new Set(),
         materials = new Set(),
@@ -147,23 +149,7 @@ export class World {
     this.scene.background = new THREE.CanvasTexture(skyCanvas);
     this.scene.background.colorSpace = THREE.SRGBColorSpace;
     this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
-    this.scene.add(
-      new THREE.HemisphereLight(
-        flagship ? 0xb9ccf4 : 0xb9d6ff,
-        flagship ? 0x29283d : 0x253451,
-        flagship ? 1.15 : 1.8,
-      ),
-    );
-    if (flagship) this.scene.add(new THREE.AmbientLight(0xb0c5de, 0.3));
-    const sun = new THREE.DirectionalLight(
-      flagship ? 0xffc3a4 : 0xffd4bc,
-      flagship ? 1.4 : 2.1,
-    );
-    sun.position.set(-300, 500, 150);
-    this.scene.add(sun);
-    const fill = new THREE.DirectionalLight(0x53d9ff, 0.6);
-    fill.position.set(400, 80, -300);
-    this.scene.add(fill);
+    this.lighting = buildTrackLighting(this.scene, track);
     const sea = new THREE.Mesh(
       new THREE.PlaneGeometry(12000, 12000, 1, 1),
       mat(cfg.sea, { map: textures.water }),
@@ -195,25 +181,45 @@ export class World {
       const leftB = clamp(edgeAt(b, left), b.clipMin, b.clipMax),
         rightB = clamp(edgeAt(b, right), b.clipMin, b.clipMax);
       if (leftA === rightA && leftB === rightB) return;
-      const points = [
-        roadPoint(a, leftA, y),
-        roadPoint(a, rightA, y),
-        roadPoint(b, rightB, y),
-        roadPoint(b, leftB, y),
-      ];
       const v0 = (a.u * track.length) / 32,
         v1 = ((b.u < a.u ? b.u + 1 : b.u) * track.length) / 32;
-      quads.push({
-        p: points,
-        color,
-        kind,
-        uv: [
-          [leftA / 32, v0],
-          [rightA / 32, v0],
-          [rightB / 32, v1],
-          [leftB / 32, v1],
-        ],
-      });
+      // Night projectors need vertices across the deck, not just at its edges.
+      // Boundaries and root stations are unchanged; subdivision is render-only.
+      const divisions = kind === "road" && cfg.name === "NOCTILUCENT" ? 8 : 1;
+      for (let strip = 0; strip < divisions; strip++) {
+        const x0 =
+          strip === 0
+            ? leftA
+            : THREE.MathUtils.lerp(leftA, rightA, strip / divisions);
+        const x1 =
+          strip + 1 === divisions
+            ? rightA
+            : THREE.MathUtils.lerp(leftA, rightA, (strip + 1) / divisions);
+        const x2 =
+          strip + 1 === divisions
+            ? rightB
+            : THREE.MathUtils.lerp(leftB, rightB, (strip + 1) / divisions);
+        const x3 =
+          strip === 0
+            ? leftB
+            : THREE.MathUtils.lerp(leftB, rightB, strip / divisions);
+        quads.push({
+          p: [
+            roadPoint(a, x0, y),
+            roadPoint(a, x1, y),
+            roadPoint(b, x2, y),
+            roadPoint(b, x3, y),
+          ],
+          color,
+          kind,
+          uv: [
+            [x0 / 32, v0],
+            [x1 / 32, v0],
+            [x2 / 32, v1],
+            [x3 / 32, v1],
+          ],
+        });
+      }
     };
     const steps = 900;
     const stations = [
@@ -277,48 +283,53 @@ export class World {
             color: 0xbac0b0,
             kind: "concrete",
           });
-          const p = [
-            roadPoint(a, edgeA, 0),
-            roadPoint(b, edgeB, 0),
-            roadPoint(b, edgeB, 1.7),
-            roadPoint(a, edgeA, 1.7),
-          ];
-          quads.push({
-            p,
-            color: nose
-              ? i % 2
-                ? 0xf2f3df
-                : 0xff693c
-              : i % 12 === 0
-                ? 0xf4eee2
-                : 0x3c8d9e,
-            kind: nose || i % 12 === 0 ? "concrete" : "glass",
-            uv: [
-              [(a.u * track.length) / 8, 0],
-              [(b.u * track.length) / 8, 0],
-              [(b.u * track.length) / 8, 0.22],
-              [(a.u * track.length) / 8, 0.22],
-            ],
-          });
-          if (i % 6 < 4) {
-            const p2 = p.map((v, vertex) =>
-              v
-                .clone()
-                .addScaledVector(
-                  vertex === 0 || vertex === 3 ? a.right : b.right,
-                  -side * 0.025,
-                ),
+          // Inner faces remain exactly on the collision boundary, including the
+          // shared world-space seam. All visual thickness extends OUT of the road.
+          const wallPoint = (frame, edge, height, depth = 0) =>
+            roadPoint(frame, edge, height).addScaledVector(
+              frame.right,
+              side * depth,
             );
-            p2[0].addScaledVector(a.up, flagship ? 1.4 : 0.75);
-            p2[1].addScaledVector(b.up, flagship ? 1.4 : 0.75);
-            p2[2].addScaledVector(b.up, flagship ? -0.2 : -0.45);
-            p2[3].addScaledVector(a.up, flagship ? -0.2 : -0.45);
+          const face = (low, high, color, depth = 0, kind = "concrete") => {
             quads.push({
-              p: p2,
-              color: branch === 1 ? 0xe55da5 : cfg.color,
-              kind: "light",
+              p: [
+                wallPoint(a, edgeA, low, depth),
+                wallPoint(b, edgeB, low, depth),
+                wallPoint(b, edgeB, high, depth),
+                wallPoint(a, edgeA, high, depth),
+              ],
+              color,
+              kind,
+              uv: [
+                [(a.u * track.length) / 8, low / 3],
+                [(b.u * track.length) / 8, low / 3],
+                [(b.u * track.length) / 8, high / 3],
+                [(a.u * track.length) / 8, high / 3],
+              ],
             });
-          }
+          };
+          const joint = i % 12 === 0;
+          face(0, 0.46, 0x37434e);
+          face(
+            0.46,
+            1.45,
+            nose ? (i % 2 ? 0xf2e3c7 : 0xff693c) : joint ? 0x525961 : 0xb9bab0,
+          );
+          face(1.45, 1.7, joint ? 0x6a7078 : 0xe2dbca);
+          face(0, 1.7, 0x6b747d, 1.1);
+          quads.push({
+            p: [
+              wallPoint(a, edgeA, 1.7),
+              wallPoint(b, edgeB, 1.7),
+              wallPoint(b, edgeB, 1.7, 1.1),
+              wallPoint(a, edgeA, 1.7, 1.1),
+            ],
+            color: joint ? 0x656c73 : 0xe5dcc9,
+            kind: "concrete",
+          });
+          // Sparse inset reflectors, not luminous wireframe along the whole wall.
+          if (i % 6 === 0)
+            face(0.72, 0.86, nose ? 0xff643c : 0xffca74, -0.018, "light");
         }
         // Repeating overhead ribs and tunnel skin create near-field motion cues.
         if (!flagship && u > cfg.tunnel[0] && u < cfg.tunnel[1]) {
@@ -358,36 +369,28 @@ export class World {
         }
       }
     }
-    for (const kind of ["road", "concrete", "paint", "glass", "light"]) {
+    for (const kind of ["road", "concrete", "paint", "light"]) {
       const material =
-        kind === "glass"
-          ? new THREE.MeshBasicMaterial({
+        flagship && kind === "road"
+          ? new THREE.MeshPhongMaterial({
               vertexColors: true,
-              transparent: true,
-              opacity: 0.48,
-              depthWrite: false,
+              map: textures.road,
+              specular: 0x56516c,
+              shininess: 38,
               side: THREE.DoubleSide,
+              flatShading: true,
             })
-          : flagship && kind === "road"
-            ? new THREE.MeshPhongMaterial({
+          : kind === "light"
+            ? new THREE.MeshBasicMaterial({
                 vertexColors: true,
-                map: textures.road,
-                specular: 0x56516c,
-                shininess: 38,
+                side: THREE.DoubleSide,
+              })
+            : new THREE.MeshLambertMaterial({
+                vertexColors: true,
+                map: textures[kind],
                 side: THREE.DoubleSide,
                 flatShading: true,
-              })
-            : kind === "light"
-              ? new THREE.MeshBasicMaterial({
-                  vertexColors: true,
-                  side: THREE.DoubleSide,
-                })
-              : new THREE.MeshLambertMaterial({
-                  vertexColors: true,
-                  map: textures[kind],
-                  side: THREE.DoubleSide,
-                  flatShading: true,
-                });
+              });
       const chunks = new Map();
       for (const q of quads.filter((q) => q.kind === kind)) {
         const key = `${Math.floor(q.p[0].x / 256)}:${Math.floor(q.p[0].z / 256)}`;
@@ -395,7 +398,9 @@ export class World {
         chunks.get(key).push(q);
       }
       for (const chunk of chunks.values())
-        this.scene.add(new THREE.Mesh(quadGeometry(chunk), material));
+        this.scene.add(
+          new THREE.Mesh(quadGeometry(chunk, this.lighting), material),
+        );
     }
     this.city = buildCity(this.scene, track, textures, environment);
     if (flagship)
@@ -660,6 +665,7 @@ export class World {
     }
     this.sparks.instanceMatrix.needsUpdate = true;
     this.sparks.computeBoundingSphere();
+    this.lighting.update(this.camera);
     this.renderer.render(this.scene, this.camera);
   }
 }
