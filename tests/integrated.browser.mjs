@@ -156,12 +156,28 @@ async function input(page, context, device) {
     await session.detach();
   }
 }
-async function publicSmoke() {
-  const { context, page } = await open("keyboard");
+async function publicSmoke(device) {
+  const { context, page } = await open(device);
   await expect(page.locator("#tracks button")).toHaveCount(3);
   await expect(page.locator("#crafts button")).toHaveCount(3);
+  await expect(page.locator("#speed-class option")).toHaveCount(3);
+  await chooseClass(page, 2, device);
   await start(page);
-  await page.keyboard.down("KeyW");
+  expect((await telemetry(page)).speedClass).toBe(2);
+  expect((await telemetry(page)).laps).toBe(5);
+  await expect(page.locator("#hud-track")).toContainText("C3");
+  await page.evaluate(() => document.fonts.ready);
+  expect(
+    await page.evaluate(() =>
+      [...document.fonts].some(
+        (face) =>
+          face.family.replaceAll('"', "") === "Belmondo Circuit" &&
+          face.status === "loaded",
+      ),
+    ),
+  ).toBe(true);
+  if (device === "keyboard") await page.keyboard.down("KeyW");
+  else await input(page, context, device);
   await page.waitForFunction(() => window.nullVector.telemetry.speed > 65);
   await page.waitForFunction(() =>
     window.qaAudio.some(
@@ -180,14 +196,16 @@ async function publicSmoke() {
         currentTime: audio.currentTime,
       })),
   );
-  await page.keyboard.up("KeyW");
+  if (device === "keyboard") await page.keyboard.up("KeyW");
   await page.locator("#pause").click();
   await expect(page.locator("#pause-panel")).toBeVisible();
   await page.waitForFunction(() =>
     window.qaAudio.every((audio) => audio.paused),
   );
-  await page.screenshot({ path: "test-artifacts/integrated-public-pause.png" });
-  report.cases.push({ public: await telemetry(page), music });
+  await page.screenshot({
+    path: `test-artifacts/integrated-public-${device}-pause.png`,
+  });
+  report.cases.push({ device, public: await telemetry(page), music });
   await context.close();
 }
 async function ui() {
@@ -419,6 +437,95 @@ async function menuSplit() {
   report.cases.push({ menuRacers: [...visited], samples });
   await context.close();
 }
+async function finishFixture() {
+  // Isolated renderer fixture only, not application driving or a Race shortcut.
+  const context = await browser.newContext({
+    viewport: { width: 1000, height: 625 },
+  });
+  const page = await context.newPage();
+  page.on("pageerror", (error) => report.errors.push(error.message));
+  await page.route("**/__finish_fixture__.html", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<!doctype html><style>body{margin:0}canvas{width:100vw;height:100vh;display:block}</style><canvas></canvas>",
+    }),
+  );
+  await page.goto(`${url}/__finish_fixture__.html`);
+  await page.evaluate(async () => {
+    const source = await (await fetch("/src/world.js")).text();
+    const threeModule = source.match(
+      /from\s+["']([^"']*\/three\.js[^"']*)["']/,
+    )[1];
+    const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
+      await Promise.all([
+        import("/src/world.js"),
+        import("/src/race.js"),
+        import("/src/track.js"),
+        import(threeModule),
+      ]);
+    const world = new World(document.querySelector("canvas"));
+    world.quality = "retro";
+    world.resize();
+    const loaded = new Promise((resolve, reject) => {
+      THREE.DefaultLoadingManager.onLoad = resolve;
+      THREE.DefaultLoadingManager.onError = (asset) => reject(Error(asset));
+    });
+    world.build(makeTrack(0));
+    await loaded;
+    window.finishFixture = { world, Race, CRAFT, makeTrack, THREE };
+  });
+  for (const course of [0, 1, 2]) {
+    const state = await page.evaluate(async (course) => {
+      const f = window.finishFixture,
+        track = f.makeTrack(course);
+      let loading = false;
+      let complete;
+      const loaded = new Promise((resolve, reject) => {
+        complete = resolve;
+        f.THREE.DefaultLoadingManager.onStart = () => (loading = true);
+        f.THREE.DefaultLoadingManager.onLoad = resolve;
+        f.THREE.DefaultLoadingManager.onError = (asset) => reject(Error(asset));
+      });
+      f.world.build(track);
+      const race = new f.Race(
+        track,
+        0,
+        "trial",
+        0,
+        f.world.environment.terrain,
+      );
+      f.world.setupRacers(race, f.CRAFT);
+      if (!loading) complete();
+      await loaded;
+      const p = race.player,
+        road = track.frame(track.length * 0.94);
+      p.s = p.contactS = track.length * 0.94;
+      p.position.copy(road.p).addScaledVector(road.up, 2.2);
+      p.yaw = Math.atan2(road.tangent.x, road.tangent.z);
+      p.speed = 100;
+      f.world.draw(race, 0);
+      const district = f.world.scene.getObjectByName("finish-district");
+      let instances = 0;
+      district?.traverse((object) => {
+        if (object.isInstancedMesh) instances += object.count;
+      });
+      return {
+        course,
+        district: !!district,
+        instances,
+        method:
+          "isolated real World/Race renderer placement at u=.94; not driven",
+      };
+    }, course);
+    expect(state.district).toBe(true);
+    expect(state.instances).toBeGreaterThan(0);
+    await page.screenshot({
+      path: `test-artifacts/integrated-finish-fixture-course${course}.png`,
+    });
+    report.cases.push(state);
+  }
+  await context.close();
+}
 async function drive() {
   const { context, page } = await open("keyboard", "drive");
   await page.locator("#mode").selectOption("trial");
@@ -528,16 +635,18 @@ async function drive() {
     records,
     samples,
     method:
-      "five natural keyboard-input laps, alternating split routes; no state injection",
+      "five natural keyboard-input laps; observed routes recorded in samples; no state injection",
   });
   await context.close();
 }
 try {
-  if (scope === "public") await publicSmoke();
+  if (scope === "public")
+    for (const device of ["keyboard", "touch"]) await publicSmoke(device);
   else if (scope === "ui") await ui();
   else if (scope === "pace") await pace();
   else if (scope === "menu") await menuSplit();
   else if (scope === "drive") await drive();
+  else if (scope === "finish") await finishFixture();
   else throw new Error(`Unknown integrated scope: ${scope}`);
   expect(report.errors).toEqual([]);
   console.log(`Integrated ${scope}: ${report.cases.length} cases passed.`);
