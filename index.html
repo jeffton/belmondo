@@ -19,6 +19,13 @@
       type="font/ttf"
       crossorigin
     />
+    <link
+      rel="preload"
+      href="/fonts/belmondo-circuit-bold.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link rel="icon" href="/art/belmondo-icon.png" type="image/png" />
   </head>
   <body>
@@ -36,13 +43,21 @@
         <p class="tagline">Coastal division / 2146</p>
         <div class="selection-label">
           <span>01 / CIRCUIT</span
-          ><span id="track-count">3 SECTORS · 3 LAPS</span>
+          ><span id="track-count">3 SECTORS · 5 LAPS</span>
         </div>
         <div id="tracks" class="choices"></div>
         <div class="selection-label">
           <span>02 / PILOT SYSTEM</span><span id="craft-note"></span>
         </div>
         <div id="crafts" class="choices crafts"></div>
+        <div class="speed-class-row">
+          <label for="speed-class">03 / SPEED CLASS</label>
+          <select id="speed-class">
+            <option value="0">C1 BEGINNER / 1× PACE</option>
+            <option value="1">C2 ADVANCED / 1.2× PACE</option>
+            <option value="2">C3 EXPERT / 1.4× PACE</option>
+          </select>
+        </div>
         <div class="mode-row">
           <label
             >FORMAT
@@ -87,7 +102,7 @@
         </div>
         <div class="lap">
           <span class="hud-label">LAP</span
-          ><strong id="lap">1<small>/3</small></strong>
+          ><strong id="lap">1<small>/5</small></strong>
           <div id="lap-times" class="lap-times" aria-label="Lap times">
             <div class="lap-time current">
               <span>CURRENT</span><b>00:00.00</b>
@@ -222,7 +237,7 @@
       </p>
       <div id="weapon-roster" class="arsenal"></div>
       <p class="help-small">
-        Three laps. Eight pilots. No rubber-banding. Time attack disables
+        Five laps. Eight pilots. No rubber-banding. Time attack disables
         weapons. Records stay in this browser.
       </p>
     </dialog>
@@ -231,7 +246,7 @@
       <p class="eyebrow">AUDIO / BELMONDO</p>
       <h2>SOUND SYSTEM</h2>
       <p>
-        Three original tracks, or your own music. Drop an MP3 folder anywhere;
+        Twelve original tracks, or your own music. Drop an MP3 folder anywhere;
         local files stay on your device.
       </p>
       <div class="file-buttons">
