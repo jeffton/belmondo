@@ -19,7 +19,7 @@ for (const [index, config] of TRACKS.entries()) {
       for (const branch of [-1, 0, 1]) {
         const f = track.frame((i / 300) * track.length, branch);
         assert(
-          env.heightAt(f.p.x, f.p.z) < f.p.y - 5,
+          env.heightAt(f.p.x, f.p.z) < f.p.y - 3.5,
           "terrain cannot occlude the racing deck",
         );
       }

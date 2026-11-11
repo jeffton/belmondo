@@ -1,6 +1,16 @@
 import * as THREE from "three";
 import { clamp, mod, roadBounds } from "./track.js";
 
+// Altitude of the actual local road plane at any world XZ position.
+export function roadHeight(road, position) {
+  return (
+    road.point.y -
+    (road.up.x * (position.x - road.point.x) +
+      road.up.z * (position.z - road.point.z)) /
+      road.up.y
+  );
+}
+
 // Search only the connected neighbourhood, never a spatially nearby remote turn.
 export function projectRoad(track, position, anchor, branch) {
   const step = 4;
@@ -45,16 +55,26 @@ export function projectRoad(track, position, anchor, branch) {
         (route ? (position.y - point.y - 2.2) ** 2 : 0);
       if (best && distance >= best.distance) continue;
       const tangent = b.p.clone().sub(a.p).normalize();
-      const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
-      const lateral =
-        (position.x - point.x) * right.x + (position.z - point.z) * right.z;
       const contactS = s + t * (sampleEnd - s);
+      const frame = track.frame(contactS, route);
+      const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
+      const bank = Math.atan2(
+        -frame.right.y,
+        Math.hypot(frame.tangent.x, frame.tangent.z) * frame.right.dot(right),
+      );
+      const wallAxis = right.clone().divideScalar(Math.cos(bank));
+      right.applyAxisAngle(tangent, -bank);
+      const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
+      const lateral = position.clone().sub(point).dot(wallAxis);
       best = {
         ...roadBounds(track, contactS, route),
         s: contactS,
         point,
         tangent,
         right,
+        up,
+        wallAxis,
+        bank,
         x: lateral,
         distance,
         width: a.width + (b.width - a.width) * t,

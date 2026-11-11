@@ -137,30 +137,86 @@ function loft(skin, sections, tile = 0, tint = WHITE, caps = true) {
   }
 }
 
-function buildResources() {
-  const loader = new THREE.TextureLoader();
-  const atlas = loader.load("/art/craft-livery.png");
-  atlas.colorSpace = THREE.SRGBColorSpace;
-  atlas.magFilter = THREE.NearestFilter;
-  atlas.minFilter = THREE.LinearMipmapLinearFilter;
-  atlas.anisotropy = 2;
-  const skinMaterial = new THREE.MeshLambertMaterial({
-    map: atlas,
-    vertexColors: true,
-    flatShading: true,
-  });
+// The same collision envelope and exhaust hardpoints support three actual airframes.
+const AIRFRAMES = [
+  {
+    name: "STRIKER",
+    hull: [
+      [5.65, 0, -0.1, 0.035, 0.025, -0.06],
+      [3.5, 0, -0.04, 0.3, 0.1, -0.17],
+      [1.6, 0, 0, 0.75, 0.18, -0.25],
+      [-0.3, 0, 0, 1.35, 0.26, -0.3],
+      [-2, 0, -0.04, 2.2, 0.31, -0.33],
+      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+    ],
+    canopy: [
+      [2.05, 0, 0.14, 0.12, 0.025, -0.04],
+      [0.25, 0, 0.24, 0.34, 0.37, -0.04],
+      [-0.83, 0, 0.25, 0.3, 0.3, -0.03],
+      [-1.38, 0, 0.23, 0.2, 0.05, -0.05],
+    ],
+  },
+  {
+    name: "RAPTOR",
+    hull: [
+      [4.9, 0, -0.06, 0.35, 0.055, -0.1],
+      [3.3, 0, -0.02, 0.68, 0.13, -0.19],
+      [1.8, 0, 0, 1.6, 0.22, -0.27],
+      [0, 0, 0, 1.15, 0.26, -0.3],
+      [-1.5, 0, -0.04, 1.2, 0.31, -0.33],
+      [-2.65, 0, -0.02, 2.9, 0.27, -0.4],
+      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+    ],
+    canopy: [
+      [1.3, 0, 0.2, 0.18, 0.035, -0.04],
+      [0.5, 0, 0.25, 0.4, 0.36, -0.04],
+      [-0.55, 0, 0.26, 0.36, 0.32, -0.03],
+      [-1.05, 0, 0.25, 0.22, 0.08, -0.05],
+    ],
+  },
+  {
+    name: "WRAITH",
+    hull: [
+      [5.65, 0, -0.1, 0.02, 0.025, -0.06],
+      [3.4, 0, -0.04, 0.35, 0.1, -0.17],
+      [1.2, 0, 0, 0.8, 0.18, -0.25],
+      [-0.9, 0, 0, 1.2, 0.26, -0.3],
+      [-2.2, 0, -0.04, 1.8, 0.31, -0.33],
+      [-2.8, 0, -0.02, 2.9, 0.27, -0.4],
+      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+    ],
+    canopy: [
+      [2.65, 0, 0.1, 0.09, 0.025, -0.04],
+      [0.1, 0, 0.24, 0.27, 0.32, -0.04],
+      [-1.2, 0, 0.25, 0.24, 0.25, -0.03],
+      [-1.7, 0, 0.23, 0.16, 0.05, -0.05],
+    ],
+  },
+];
+
+function buildHull(variant) {
+  const airframe = AIRFRAMES[variant];
   const core = new Skin();
   // One continuous monocoque wedge: shoulders, engines and prow share a hull.
   // No separate outrigger noses or open watercraft-like structure.
-  const hullSections = [
-    [5.65, 0, -0.1, 0.035, 0.025, -0.06],
-    [3.5, 0, -0.04, 0.68, 0.1, -0.17],
-    [1.6, 0, 0, 1.58, 0.18, -0.25],
-    [-0.3, 0, 0, 2.63, 0.26, -0.3],
-    [-1.9, 0, -0.04, 3.05, 0.31, -0.33],
-    [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
-  ];
+  const hullSections = airframe.hull;
   loft(core, hullSections, 0, WHITE, "front");
+  const deckPoint = (z, across) => {
+    const i = hullSections.findIndex(
+      (section, index) =>
+        index < hullSections.length - 1 &&
+        z <= section[0] &&
+        z >= hullSections[index + 1][0],
+    );
+    const a = hullSections[i],
+      b = hullSections[i + 1];
+    const t = (a[0] - z) / (a[0] - b[0]);
+    return [
+      across * THREE.MathUtils.lerp(a[3], b[3], t),
+      THREE.MathUtils.lerp(a[2] + a[4], b[2] + b[4], t) + 0.012,
+      z,
+    ];
+  };
   // Real rear apertures preserve sightlines into the original recessed engines.
   const rear = ring(hullSections.at(-1));
   const outline = rear.map(([x, y]) => new THREE.Vector2(x, y));
@@ -259,13 +315,12 @@ function buildResources() {
       new THREE.Vector3(0, 0, -1),
     );
     // Flush cooling slots belong to the integrated shoulders, not side pods.
-    const x = side * 1.17;
     mechanical.face(
       [
-        [x - 0.13, 0.212, 0.9],
-        [x + 0.13, 0.212, 0.9],
-        [x + 0.17, 0.267, -0.7],
-        [x - 0.17, 0.267, -0.7],
+        deckPoint(0.9, side * 0.3),
+        deckPoint(0.9, side * 0.58),
+        deckPoint(-0.7, side * 0.58),
+        deckPoint(-0.7, side * 0.3),
       ],
       7,
       uv,
@@ -274,19 +329,81 @@ function buildResources() {
     );
   }
 
+  // Structural racing foils differ in planform as well as in height/profile.
+  if (variant === 0) {
+    // STRIKER: paired outward-raked, swept tail blades on the delta shoulders.
+    for (const side of [-1, 1]) {
+      loft(
+        accent,
+        [
+          [-0.65, side * 1.15, 0.22, 0.035, 0.02, -0.06],
+          [-1.9, side * 1.7, 0.25, 0.045, 0.4, -0.1],
+          [-2.85, side * 2.28, 0.23, 0.025, 0.2, -0.08],
+        ],
+        1,
+      );
+    }
+  } else if (variant === 1) {
+    // RAPTOR: a clipped chisel prow, forward swept canards and a single spine fin.
+    for (const side of [-1, 1]) {
+      loft(
+        accent,
+        [
+          [2.1, side * 0.83, 0.11, 0.08, 0.025, -0.04],
+          [1.3, side * 1.45, 0.13, 0.65, 0.035, -0.06],
+          [0.7, side * 1.05, 0.13, 0.08, 0.025, -0.04],
+        ],
+        1,
+      );
+    }
+    loft(
+      core,
+      [
+        [-0.9, 0, 0.24, 0.025, 0.06, -0.05],
+        [-1.85, 0, 0.27, 0.035, 0.38, -0.06],
+        [-2.8, 0, 0.25, 0.025, 0.19, -0.06],
+      ],
+      6,
+    );
+  } else {
+    // WRAITH: very low cranked trailing-edge winglets, no upright tail pair.
+    for (const side of [-1, 1]) {
+      loft(
+        accent,
+        [
+          [-1.2, side * 1.2, 0.15, 0.035, 0.025, -0.04],
+          [-2.15, side * 2.05, 0.17, 0.7, 0.04, -0.07],
+          [-3.05, side * 2.57, 0.19, 0.45, 0.04, -0.07],
+        ],
+        1,
+      );
+    }
+  }
+
   // Angular framed canopy grows out of the spine, and leans forward into the nose.
   const canopy = new Skin();
-  loft(
-    canopy,
-    [
-      [2.05, 0, 0.14, 0.12, 0.025, -0.04],
-      [0.25, 0, 0.24, 0.34, 0.37, -0.04],
-      [-0.83, 0, 0.25, 0.3, 0.3, -0.03],
-      [-1.38, 0, 0.23, 0.2, 0.05, -0.05],
-    ],
-    4,
-  );
+  loft(canopy, airframe.canopy, 4);
 
+  return {
+    core: core.geometry(),
+    accent: accent.geometry(),
+    mechanical: mechanical.geometry(),
+    canopy: canopy.geometry(),
+  };
+}
+
+function buildResources() {
+  const loader = new THREE.TextureLoader();
+  const atlas = loader.load("/art/craft-livery.png");
+  atlas.colorSpace = THREE.SRGBColorSpace;
+  atlas.magFilter = THREE.NearestFilter;
+  atlas.minFilter = THREE.LinearMipmapLinearFilter;
+  atlas.anisotropy = 2;
+  const skinMaterial = new THREE.MeshLambertMaterial({
+    map: atlas,
+    vertexColors: true,
+    flatShading: true,
+  });
   const flameSkin = new Skin();
   // Two crossed tapered ribbons; alpha feathers to a point rather than an opaque cone.
   for (const points of [
@@ -352,10 +469,7 @@ function buildResources() {
     depthWrite: false,
   });
   return {
-    core: core.geometry(),
-    accent: accent.geometry(),
-    mechanical: mechanical.geometry(),
-    canopy: canopy.geometry(),
+    hulls: new Map(),
     skinMaterial,
     flameGeometry,
     flameMaterial,
@@ -369,11 +483,49 @@ function buildResources() {
   };
 }
 
-export function createCraft(scene, color) {
+// Course teardown owns disposal; racer/grid changes must retain cached airframes.
+// Merge detached variants into the scene's Sets so attached/shared resources are
+// disposed exactly once by the same traversal that owns all other world assets.
+export function collectCraftResources(
+  scene,
+  { geometries, materials, textures },
+) {
+  const shared = resources.get(scene);
+  if (!shared) return;
+  for (const hull of shared.hulls.values()) {
+    for (const geometry of Object.values(hull)) geometries.add(geometry);
+  }
+  for (const geometry of [
+    shared.flameGeometry,
+    shared.glowGeometry,
+    shared.shieldGeometry,
+    shared.shadowGeometry,
+  ])
+    geometries.add(geometry);
+  for (const material of [
+    shared.skinMaterial,
+    shared.flameMaterial,
+    shared.glowMaterial,
+    shared.shieldMaterial,
+    shared.shadowMaterial,
+    ...shared.liveries.values(),
+  ]) {
+    materials.add(material);
+    if (material.map) textures.add(material.map);
+  }
+  resources.delete(scene);
+}
+
+export function createCraft(scene, color, variant = 0) {
   let shared = resources.get(scene);
   if (!shared) {
     shared = buildResources();
     resources.set(scene, shared);
+  }
+  let hull = shared.hulls.get(variant);
+  if (!hull) {
+    hull = buildHull(variant);
+    shared.hulls.set(variant, hull);
   }
   let livery = shared.liveries.get(color);
   if (!livery) {
@@ -383,13 +535,14 @@ export function createCraft(scene, color) {
     shared.liveries.set(color, livery);
   }
   const craft = new THREE.Group();
-  craft.name = "racer-07";
+  craft.name = AIRFRAMES[variant].name;
+  craft.userData.variant = variant;
   for (const name of ["core", "mechanical", "canopy"]) {
-    const mesh = new THREE.Mesh(shared[name], shared.skinMaterial);
+    const mesh = new THREE.Mesh(hull[name], shared.skinMaterial);
     mesh.name = name;
     craft.add(mesh);
   }
-  craft.add(new THREE.Mesh(shared.accent, livery));
+  craft.add(new THREE.Mesh(hull.accent, livery));
   const flames = [];
   for (const side of [-1, 1]) {
     const flame = new THREE.Mesh(shared.flameGeometry, shared.flameMaterial);

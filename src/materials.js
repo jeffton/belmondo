@@ -72,56 +72,80 @@ export function circuitTextures(accent) {
     ctx.font = "bold 10px monospace";
     ctx.fillText("K / 06", 75, 244);
   });
-  const road = raster(128, 256, (ctx, random, noise, chips) => {
-    noise(74, 10);
-    // Aggregate road bed with maintenance patches, not a featureless plastic slab.
-    for (let i = 0; i < 12; i++) {
-      ctx.fillStyle = `rgba(28,36,35,${0.025 + random() * 0.025})`;
+  const road = raster(256, 256, (ctx, random, noise, chips) => {
+    // Abraded induction slabs: broad longitudinal wear and staggered plates,
+    // not dark asphalt, tyre lanes, painted arrows or a highway centreline.
+    noise(150, 38);
+    for (let i = 0; i < 45; i++) {
+      const x = random() * 256,
+        y = random() * 256;
+      const width = 3 + random() * 17,
+        length = 40 + random() * 175;
+      ctx.fillStyle = i % 3 ? "#c6c5ca30" : "#343b5145";
+      ctx.fillRect(x, y, width, length);
+      ctx.fillRect(x, y - 256, width, length);
+      ctx.fillStyle = "#e0dcd326";
+      ctx.fillRect(x, y, 1, length);
+    }
+    for (const [x, y, width, height] of [
+      [0, 21, 91, 82],
+      [91, 0, 108, 143],
+      [199, 86, 57, 123],
+      [48, 173, 119, 83],
+    ]) {
+      ctx.fillStyle = "#53566635";
+      ctx.fillRect(x, y, width, height);
+      ctx.fillStyle = "#373e4c";
+      ctx.fillRect(x, y, width, 2);
+      ctx.fillStyle = "#c6c4bd";
+      ctx.fillRect(x, y + 2, width, 1);
+      ctx.fillStyle = "#555a66";
+      for (const bolt of [x + 6, x + width - 7])
+        ctx.fillRect(bolt, y + 7, 2, 2);
+    }
+    // Uneven scorch and exposed aggregate interrupt the manufactured seams.
+    chips(430, "#616575");
+    chips(310, "#bfc0bd");
+    for (let i = 0; i < 90; i++) {
+      ctx.fillStyle = i % 2 ? "#51546555" : "#c7c2bd55";
       ctx.fillRect(
-        random() * 120,
         random() * 256,
-        7 + random() * 16,
-        12 + random() * 35,
+        random() * 256,
+        1 + random() * 3,
+        8 + random() * 34,
       );
     }
-    ctx.fillStyle = "#343e4c";
-    ctx.fillRect(0, 0, 128, 2);
-    ctx.fillRect(0, 128, 128, 2);
-    ctx.fillStyle = "#626e7d";
-    ctx.fillRect(0, 2, 128, 1);
-    ctx.fillRect(0, 130, 128, 1);
-    for (const x of [13, 114]) {
-      ctx.fillStyle = "#3b4b60";
-      ctx.fillRect(x, 0, 1, 256);
-      for (let y = 0; y < 256; y += 8) {
-        ctx.fillStyle = "#353e3a";
-        ctx.fillRect(x - 2, y, 5, 2);
+  });
+  const edge = raster(128, 128, (ctx, random, noise, chips) => {
+    // Cast impact blocks with embedded fasteners and dirty recessed joints.
+    noise(190, 31);
+    ctx.fillStyle = "#4d535c";
+    ctx.fillRect(0, 0, 5, 128);
+    ctx.fillRect(64, 0, 3, 128);
+    ctx.fillStyle = "#dbd5bd";
+    ctx.fillRect(5, 0, 2, 128);
+    ctx.fillRect(67, 0, 1, 128);
+    for (const x of [13, 52, 77, 116])
+      for (const y of [18, 81]) {
+        ctx.fillStyle = "#56595a";
+        ctx.fillRect(x, y, 4, 4);
+        ctx.fillStyle = "#e3dac2";
+        ctx.fillRect(x, y, 3, 1);
       }
+    for (let i = 0; i < 20; i++) {
+      ctx.fillStyle = "#333c4a30";
+      ctx.fillRect(
+        random() * 128,
+        random() * 128,
+        2 + random() * 7,
+        18 + random() * 60,
+      );
     }
-    // Subtle longitudinal induction-guide scuffing and old paint fragments.
-    for (let i = 0; i < 45; i++) {
-      ctx.fillStyle = i % 3 ? "#52637b55" : "#7287a344";
-      ctx.fillRect(25 + random() * 78, random() * 256, 1, 3 + random() * 24);
-    }
-    chips(100, "#28384a");
-    chips(65, "#72839a");
-    ctx.fillStyle = "#5affee18";
-    ctx.fillRect(4, 0, 5, 256);
-    ctx.fillStyle = "#fb4d9a14";
-    ctx.fillRect(118, 0, 8, 256);
-    ctx.save();
-    ctx.translate(18, 205);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = "#b9baa6";
-    ctx.font = "bold 8px monospace";
-    ctx.fillText("BELMONDO / TRANSIT", 0, 0);
-    ctx.restore();
-    // Mottled worn paint across one service hatch.
-    ctx.strokeStyle = "#5a635a";
-    ctx.strokeRect(48, 73, 32, 24);
-    ctx.fillStyle = "#b0b49f";
-    ctx.fillRect(51, 75, 26, 2);
-    ctx.fillRect(51, 94, 26, 2);
+    ctx.fillStyle = "#555a5b";
+    ctx.fillRect(11, 109, 42, 8);
+    ctx.fillRect(76, 109, 42, 8);
+    chips(130, "#777d80");
+    chips(80, "#dad1b8");
   });
   const facade = raster(128, 256, (ctx, random, noise, chips) => {
     noise(224, 10);
@@ -328,6 +352,7 @@ export function circuitTextures(accent) {
   return {
     concrete,
     road,
+    edge,
     facade,
     paint,
     water,

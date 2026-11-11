@@ -129,6 +129,21 @@ export function makeTrack(index) {
     });
     routes[branch][count] = routes[branch][0];
   }
+  for (const frames of Object.values(routes)) {
+    for (let i = 0; i < count; i++) {
+      const before = frames[mod(i - 6, count)].tangent;
+      const after = frames[(i + 6) % count].tangent;
+      const turn = Math.atan2(
+        before.z * after.x - before.x * after.z,
+        before.dot(after),
+      );
+      frames[i].bank = clamp(
+        (turn * 65) / ((12 * length) / count),
+        -0.18,
+        0.18,
+      );
+    }
+  }
   function frame(s, branch = 0) {
     const frames = routes[branch];
     const u = mod(s, length) / length;
@@ -140,10 +155,20 @@ export function makeTrack(index) {
       .clone()
       .lerp(b.tangent, n % 1)
       .normalize();
-    const right = a.right
-      .clone()
-      .lerp(b.right, n % 1)
-      .normalize();
+    const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
+    // Composed banking lives only in selected bends, away from forks, ramps
+    // and the start/finish. Both signs follow the actual local turn direction.
+    const window = (start, end, fade) =>
+      THREE.MathUtils.smoothstep(u, start, start + fade) *
+      (1 - THREE.MathUtils.smoothstep(u, end - fade, end));
+    const envelope = Math.max(
+      window(0.05, 0.22, 0.035),
+      config.name === "SOLAR ARRAY"
+        ? window(0.78, 0.94, 0.04)
+        : window(0.48, 0.69, 0.04),
+    );
+    const bank = THREE.MathUtils.lerp(a.bank, b.bank, n % 1) * envelope;
+    right.applyAxisAngle(tangent, -bank);
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
     const split = u > start && u < end;
@@ -161,6 +186,7 @@ export function makeTrack(index) {
       tangent,
       right,
       up,
+      bank,
       u,
       width:
         split && branch !== 0
@@ -179,7 +205,15 @@ export function makeTrack(index) {
       b = frame(s + 6, branch).tangent;
     return Math.atan2(a.z * b.x - a.x * b.z, a.dot(b)) / 12;
   }
-  const track = { config, length, frame, gap, curvature };
+  function isTunnel(s) {
+    const u = mod(s, length) / length;
+    return (
+      config.name !== "KAISEKI COAST" &&
+      u > config.tunnel[0] &&
+      u < config.tunnel[1]
+    );
+  }
+  const track = { config, length, frame, gap, curvature, isTunnel };
   track.bounds = (s, branch = 0) => roadBounds(track, s, branch);
   return track;
 }

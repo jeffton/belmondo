@@ -1,0 +1,11 @@
+{
+  "file": "craft-three-airframes-reference.png",
+  "purpose": "Original STRIKER/RAPTOR/WRAITH planform and structural design reference; not a runtime texture",
+  "tool": "OpenAI Image via local openai-image skill",
+  "imageModel": "gpt-image-2.5-flare",
+  "generatedAt": "2026-11-11T22:09:56.717Z",
+  "generationId": "ig_098e2f535939e280016af4e7914c6887d29d4d96a750575311",
+  "sourceGenerationId": "ig_0835ea32a51059b3016af4e70cbef887d2a1553f250f38bd92",
+  "designBrief": "Three distinct original integrated raw technical racing airframes, not trimarans or broad disks. STRIKER: pointed arrow with swept tail blades. RAPTOR: narrow clipped chisel, forward canards and single dorsal fin. WRAITH: stealth needle, low cranked trailing winglets and elongated canopy. Preserve twin exhaust hardpoints. Distinct physical silhouettes, not merely colors. No branding or readable text.",
+  "prompt": "Make ALL THREE ships much SLIMMER, LOWER and LONGER visually: they are too chubby/Millennium Falcon. High-performance dart-like technical racing machines, not wide compact disks and never trimarans. Keep distinct silhouettes, a continuous long central wedge nose and integrated raw carbon hull. Preserve twin cyan thruster positions at rear outer corners; narrow forebody and middle dramatically, with engines integrated only in short aft shoulders, not separate side pods. STRIKER sharp long arrow prow with narrow aft-swept taperingbody; RAPTOR distinct elongated narrow chisel nose with clipped point and small angular forward shoulder facets, not hammerhead; WRAITH longer ultralow stealth needle, smoothly swept narrow shoulders and very flush canopy. Absolutely one connected unit each. Keep same comparison layout and overhead silhouettes, no text or branding."
+}

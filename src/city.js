@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { groundedGeometryOffset } from "./terrain.js";
 
 // Authored districts, not a scatter of interchangeable apartment towers. Each
 // cluster has a clear footprint outside every route, including the flight lane.
@@ -27,6 +28,31 @@ export function buildCity(scene, track, textures, environment) {
     rock: new THREE.DodecahedronGeometry(0.5, 0),
     cone: new THREE.ConeGeometry(0.5, 1, 7),
   };
+  // Distinct angular sandstone masses: taper, slanted bedding and irregular caps.
+  for (let variant = 0; variant < 3; variant++) {
+    const geometry = new THREE.CylinderGeometry(
+      0.32 + variant * 0.04,
+      0.5,
+      1,
+      5 + variant,
+      1,
+    );
+    const positions = geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      const x = positions.getX(i),
+        y = positions.getY(i),
+        z = positions.getZ(i);
+      positions.setXYZ(
+        i,
+        x + y * (0.12 - variant * 0.08),
+        y + x * (0.18 + variant * 0.06),
+        z,
+      );
+    }
+    geometry.computeVertexNormals();
+    geometry.name = `sandstone-outcrop-${variant}`;
+    geometries[`cliff${variant}`] = geometry;
+  }
   const batches = new Map();
   const transform = new THREE.Object3D();
   const road = [];
@@ -71,25 +97,42 @@ export function buildCity(scene, track, textures, environment) {
     // 62 m radius contains the complete cluster; the remainder is the race
     // corridor plus a generous outside shoulder, independent of road height.
     if (clearance(p) < 108) return;
-    const ground = Math.max(
-      ...[-48, 0, 48].flatMap((x) =>
-        [-48, 0, 48].map((z) => environment.heightAt(p.x + x, p.z + z)),
-      ),
-    );
-    const deck = kind === "ferry" ? -19 : Math.max(ground + 3, frame.p.y - 14);
     const yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
     const forward = new THREE.Vector3(
       frame.tangent.x,
       0,
       frame.tangent.z,
     ).normalize();
+    const footprint = [];
+    for (let x = -48; x <= 48; x += 8)
+      for (let z = -48; z <= 48; z += 8) {
+        footprint.push(
+          environment.heightAt(
+            p.x + frame.right.x * x + forward.x * z,
+            p.z + frame.right.z * x + forward.z * z,
+          ),
+        );
+      }
+    const ground = Math.max(...footprint);
+    const deck = kind === "ferry" ? -19 : ground + 3;
     const local = (x, y, z) =>
       p
         .clone()
         .addScaledVector(frame.right, x)
         .addScaledVector(forward, z)
         .setY(y);
-    function put(material, x, y, z, w, h, d, geometry = "box", tilt = 0) {
+    function put(
+      material,
+      x,
+      y,
+      z,
+      w,
+      h,
+      d,
+      geometry = "box",
+      tilt = 0,
+      turn = 0,
+    ) {
       const point = local(x, y, z);
       const key = `${material}:${geometry}:${Math.floor(point.x / 256)}:${Math.floor(point.z / 256)}`;
       if (!batches.has(key))
@@ -99,7 +142,7 @@ export function buildCity(scene, track, textures, environment) {
           matrices: [],
         });
       transform.position.copy(point);
-      transform.rotation.set(tilt, yaw, 0);
+      transform.rotation.set(tilt, yaw + turn, 0);
       transform.scale.set(w, h, d);
       transform.updateMatrix();
       batches.get(key).matrices.push(transform.matrix.clone());
@@ -110,9 +153,8 @@ export function buildCity(scene, track, textures, environment) {
       put("concrete", x, (bottom + top) / 2, z, width, top - bottom, width);
     }
     function podium() {
-      put("concrete", 0, deck - 2, 0, 78, 4, 78);
-      for (const x of [-33, 0, 33])
-        for (const z of [-33, 33]) support(x, z, deck - 3, 4);
+      const bottom = Math.min(...footprint) - 2;
+      put("concrete", 0, (bottom + deck) / 2, 0, 78, deck - bottom, 78);
       put("dark", 0, deck + 0.2, 0, 74, 0.4, 74);
     }
     function crane(x, z, height, reach) {
@@ -136,14 +178,36 @@ export function buildCity(scene, track, textures, environment) {
       put("cargo", x, deck + 10, z + reach - 8, 12, 5, 5);
     }
     if (kind === "cliff") {
-      // Broad faceted masses form a canyon wall, with a readable sediment shelf.
-      for (let j = 0; j < 4; j++) {
-        const h = 65 + ((index + j) % 3) * 25;
-        const x = (j % 2 ? 1 : -1) * 17;
-        const z = -30 + j * 20;
-        put("rock", x, ground + h * 0.32, z, 55, h, 48, "rock");
-        put("concrete", x, ground + h * 0.62, z, 30, 3, 30);
-      }
+      // An authored buttress, broken shelf or narrow stack, not four copied blobs.
+      const formations = [
+        [
+          [-12, -21, 52, 63, 43],
+          [17, 15, 36, 94, 46],
+        ],
+        [
+          [0, -20, 63, 39, 40],
+          [-12, 21, 49, 58, 35],
+          [20, 4, 25, 76, 31],
+        ],
+        [
+          [-18, -12, 34, 105, 42],
+          [18, 20, 38, 66, 37],
+        ],
+      ];
+      formations[index % formations.length].forEach(([x, z, w, h, d], j) => {
+        const geometry = `cliff${(index + j) % 3}`;
+        const turn = ((index % 5) - 2) * 0.19 + j * 0.32;
+        transform.position.copy(local(x, 0, z));
+        transform.rotation.set(0, yaw + turn, 0);
+        transform.scale.set(w, h, d);
+        transform.updateMatrix();
+        const y = groundedGeometryOffset(
+          geometries[geometry],
+          transform.matrix,
+          environment.heightAt,
+        );
+        put("rock", x, y, z, w, h, d, geometry, 0, turn);
+      });
     } else if (kind === "terrace") {
       podium();
       for (let j = 0; j < 4; j++) {

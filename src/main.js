@@ -1,6 +1,6 @@
 import "./style.css";
 import { TRACKS, makeTrack, clamp, mod } from "./track.js";
-import { Race, CRAFT } from "./race.js";
+import { Race, CRAFT, SPEED_CLASSES, LAPS } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine } from "./audio.js";
 import { MusicPlayer } from "./music.js";
@@ -37,6 +37,7 @@ try {
 }
 let selectedTrack = 0,
   selectedCraft = 0,
+  selectedSpeedClass = 0,
   track,
   race;
 let state = "menu",
@@ -66,15 +67,24 @@ function showMessage(text, seconds = 1.7) {
   $("race-message").textContent = text;
   messageUntil = performance.now() + seconds * 1000;
 }
+function recordKey(mode = $("mode").value, speedClass = selectedSpeedClass) {
+  return `${selectedTrack}-${selectedCraft}-${mode}-${SPEED_CLASSES[speedClass].id}-${LAPS}laps`;
+}
 function updateRecord() {
-  const r = records[`${selectedTrack}-${selectedCraft}-${$("mode").value}`];
+  const r = records[recordKey()];
   $("best").textContent = `LOCAL RECORD / ${r ? formatTime(r) : "—"}`;
 }
 function selectTrack(i) {
   selectedTrack = i;
   track = makeTrack(i);
   world.build(track);
-  race = new Race(track, selectedCraft);
+  race = new Race(
+    track,
+    selectedCraft,
+    "race",
+    selectedSpeedClass,
+    world.environment.terrain,
+  );
   world.setupRacers(race, CRAFT);
   demoDistance = track.length * 0.02;
   $("circuit-name").textContent = TRACKS[i].name;
@@ -106,6 +116,10 @@ for (const [i, c] of CRAFT.entries()) {
 $("crafts").children[0].click();
 selectTrack(0);
 $("mode").onchange = updateRecord;
+$("speed-class").onchange = () => {
+  selectedSpeedClass = Number($("speed-class").value);
+  updateRecord();
+};
 const qualityToggle = $("quality");
 qualityToggle.checked = localStorage.getItem("nv-render") === "retro";
 function applyQuality() {
@@ -130,11 +144,18 @@ function clearInput() {
   $("steer-pad").querySelector("i").style.transform = "";
 }
 async function start() {
+  music.setTunnel(false);
   const audioStart = sound.start();
   const musicStart = musicEnabled ? music.play() : Promise.resolve();
   sound.setMuted($("mute").checked);
   sound.setPaused(false);
-  race = new Race(track, selectedCraft, $("mode").value);
+  race = new Race(
+    track,
+    selectedCraft,
+    $("mode").value,
+    selectedSpeedClass,
+    world.environment.terrain,
+  );
   world.setupRacers(race, CRAFT);
   world.cameraReady = false;
   last = performance.now();
@@ -149,7 +170,8 @@ async function start() {
   $("pause-panel").close();
   updateWeaponHUD(race.player.weapon);
   $("hud").hidden = false;
-  $("hud-track").textContent = TRACKS[selectedTrack].name;
+  $("hud-track").textContent =
+    `${TRACKS[selectedTrack].name} / ${race.classSpec.id.toUpperCase()}`;
   try {
     await Promise.all([audioStart, musicStart]);
   } catch (error) {
@@ -177,6 +199,7 @@ function quit() {
   $("start").focus();
   sound.setPaused(true);
   music.pause();
+  music.setTunnel(false);
   world.cameraReady = false;
 }
 $("start").onclick = start;
@@ -405,9 +428,10 @@ function drawMap() {
 }
 function showResults() {
   state = "results";
+  music.setTunnel(false);
   sound.stopEngine();
   $("results").hidden = false;
-  const key = `${selectedTrack}-${selectedCraft}-${race.mode}`;
+  const key = recordKey(race.mode, race.speedClass);
   const isRecord = !records[key] || race.time < records[key];
   if (isRecord) {
     records[key] = race.time;
@@ -421,6 +445,7 @@ function showResults() {
         : `POSITION / ${race.position}`;
   $("result-data").replaceChildren();
   const lines = [
+    ["CLASS", `${race.classSpec.id.toUpperCase()} / ${LAPS} LAPS`],
     ["TOTAL TIME", formatTime(race.time)],
     ...race.laps.map((v, i) => [`LAP / ${i + 1}`, formatTime(v)]),
     ["BEST LAP", formatTime(race.bestLap)],
@@ -442,10 +467,11 @@ function updateHUD(now) {
   const p = race.player;
   $("position").innerHTML =
     `${race.position}<small>/${race.racers.length}</small>`;
-  $("lap").innerHTML = `${Math.min(3, p.lap)}<small>/3</small>`;
+  $("lap").innerHTML = `${Math.min(LAPS, p.lap)}<small>/${LAPS}</small>`;
   $("timer").textContent = formatTime(race.time);
   $("speed").textContent = String(Math.round(p.speed * 3.6)).padStart(3, "0");
-  $("speed-bar").style.width = `${Math.min(100, (p.speed / 175) * 100)}%`;
+  $("speed-bar").style.width =
+    `${Math.min(100, (p.speed / (175 * race.classSpec.pace)) * 100)}%`;
   const launching = race.countdown > 0;
   $("thrust-system").classList.toggle("launch", launching);
   $("thrust-bar").style.width =
@@ -495,9 +521,18 @@ function animate(now) {
       r.x = Math.sin(r.id) * 4;
     }
     for (const r of race.racers) {
+      const u = mod(r.s, track.length) / track.length;
+      r.branch =
+        u > track.config.split[0] && u < track.config.split[1]
+          ? r.id % 2
+            ? 1
+            : -1
+          : 0;
       const f = track.frame(r.s, r.branch);
-      r.position.copy(f.p).addScaledVector(f.right, r.x);
-      r.position.y += 1.6;
+      r.position
+        .copy(f.p)
+        .addScaledVector(f.right, r.x)
+        .addScaledVector(f.up, 1.6);
       r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
       r.contactS = r.s;
     }
@@ -512,18 +547,25 @@ function animate(now) {
         race.update(1 / 120, controls);
         accumulator -= 1 / 120;
       }
+      music.setTunnel(
+        race.player.grounded && track.isTunnel(race.player.contactS),
+      );
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
           world.burst(race.player);
         sound.effect(event.kind, event.text);
       }
       race.events.length = 0;
-      sound.update(race.player.speed / 175, race.player.boost, {
-        ...controls,
-        acceleration: dt > 0 ? (race.player.speed - previousSpeed) / dt : 0,
-        slip: race.player.vx,
-        grounded: race.player.grounded,
-      });
+      sound.update(
+        race.player.speed / (175 * race.classSpec.pace),
+        race.player.boost,
+        {
+          ...controls,
+          acceleration: dt > 0 ? (race.player.speed - previousSpeed) / dt : 0,
+          slip: race.player.vx,
+          grounded: race.player.grounded,
+        },
+      );
       hudTick += dt;
       if (hudTick > 0.05) {
         updateHUD(now);
@@ -655,6 +697,19 @@ window.nullVector = {
           .x,
       progress: mod(race.player.s, track.length) / track.length,
       lap: race.player.lap,
+      laps: LAPS,
+      speedClass: race.speedClass,
+      classId: race.classSpec.id,
+      menuRacers:
+        state === "menu"
+          ? race.racers.map((r) => ({
+              id: r.id,
+              s: r.s,
+              branch: r.branch,
+              x: r.x,
+              position: r.position.toArray(),
+            }))
+          : undefined,
       countdown: race.countdown,
       launch: { ...race.launch },
       lapTimes: [...race.laps],

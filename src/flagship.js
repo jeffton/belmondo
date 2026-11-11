@@ -205,12 +205,17 @@ export function buildFlagship(scene, track, textures, environment, assets) {
         ],
         dark,
       );
-      // Foundations are a visible inhabited viaduct, not floating building shells.
-      if (i % 3 === 0) {
-        for (const z of [-half, half]) {
-          pier(f, side * (w + 9), z, -4, 2);
-          pier(f, side * (w + 30), z, -4, 2.8);
-        }
+      // Shops occupy a grounded urban terrace, not another viaduct on stilts.
+      for (const offset of [5, 34]) {
+        const topA = point(a, side * (a.width + offset), -5);
+        const topB = point(b, side * (b.width + offset), -5);
+        const footA = topA
+          .clone()
+          .setY(environment.heightAt(topA.x, topA.z) - 0.8);
+        const footB = topB
+          .clone()
+          .setY(environment.heightAt(topB.x, topB.z) - 0.8);
+        sheet([topA, topB, footB, footA], dark);
       }
       slab(f, side * (w + 5), side * (w + 34), -5, -half, half, dark);
       panel(f, side * (w + 6.5), 0, 8.7, -half, half, dark);
@@ -523,6 +528,31 @@ export function buildFlagship(scene, track, textures, environment, assets) {
     ],
     dark,
   );
+  // The ferry hall sits on a filled terminal quay; only gangways retain piles.
+  const quay = [
+    terminalPoint(-33, 0, -78),
+    terminalPoint(37, 0, -78),
+    terminalPoint(37, 0, 78),
+    terminalPoint(-33, 0, 78),
+  ];
+  for (let i = 0; i < quay.length; i++) {
+    const a = quay[i],
+      b = quay[(i + 1) % quay.length];
+    const segments = Math.ceil(a.distanceTo(b) / 12);
+    for (let j = 0; j < segments; j++) {
+      const pa = a.clone().lerp(b, j / segments),
+        pb = a.clone().lerp(b, (j + 1) / segments);
+      sheet(
+        [
+          pa,
+          pb,
+          pb.clone().setY(environment.heightAt(pb.x, pb.z) - 1),
+          pa.clone().setY(environment.heightAt(pa.x, pa.z) - 1),
+        ],
+        ceramic,
+      );
+    }
+  }
   for (const z of [-70, -35, 0, 35, 70]) {
     for (const x of [-31, 34, 66]) {
       const p = terminalPoint(x, -1, z);

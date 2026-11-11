@@ -2,13 +2,14 @@ import * as THREE from "three";
 import { mod, clamp } from "./track.js";
 import { buildTrackPads } from "./track-pads.js";
 import { buildStartGantry } from "./start-gantry.js";
+import { buildFinishDistrict } from "./finish-district.js";
 import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
 import { buildTrackLighting } from "./track-lighting.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
-import { createCraft } from "./craft.js";
+import { createCraft, collectCraftResources } from "./craft.js";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -107,6 +108,7 @@ export class World {
             if (m.map) textures.add(m.map);
           }
       });
+      collectCraftResources(this.scene, { geometries, materials, textures });
       this.scene.background?.dispose?.();
       geometries.forEach((g) => {
         if (g !== boxGeo) g.dispose();
@@ -160,6 +162,7 @@ export class World {
     sea.position.y = -16;
     this.scene.add(sea);
     const environment = buildEnvironment(this.scene, track, textures);
+    this.environment = environment;
     const quads = [];
     const roadPoint = (frame, x, y) => {
       const inner =
@@ -265,13 +268,14 @@ export class World {
           f.branch = branch;
         }
         const shared = split && a.connected && b.connected;
-        addStrip(a, b, -w, w, 0, i % 5 === 0 ? 0xabb3ac : colors.road, "road");
-        addStrip(a, b, -w, w, -2, 0x8f9c96, "concrete");
+        addStrip(a, b, -w, w, 0, i % 9 < 2 ? 0xb6bdc4 : 0xc1c3c3, "road");
+        addStrip(a, b, -w, w, -2, 0x7a8589, "concrete");
+        // Recessed service shoulders, not car-racing curbs or painted lanes.
+        // Chevrons belong exclusively to real boost pads.
         if (!shared || branch === -1)
-          addStrip(a, b, -w, -w + 1.1, 0.06, 0xef4d43);
+          addStrip(a, b, -w, -w + 1.65, 0.025, 0x697176, "edge");
         if (!shared || branch === 1)
-          addStrip(a, b, w - 0.5, w, 0.06, colors.white);
-        if (i % 7 < 3) addStrip(a, b, -0.13, 0.13, 0.04, 0xb4c3cf);
+          addStrip(a, b, w - 1.65, w, 0.025, 0x697176, "edge");
         for (const side of [-1, 1]) {
           if (shared && side === -branch) continue;
           const edgeA = clamp(a.width * side, a.clipMin, a.clipMax),
@@ -291,7 +295,7 @@ export class World {
               frame.right,
               side * depth,
             );
-          const face = (low, high, color, depth = 0, kind = "concrete") => {
+          const face = (low, high, color, depth = 0, kind = "edge") => {
             quads.push({
               p: [
                 wallPoint(a, edgeA, low, depth),
@@ -309,15 +313,15 @@ export class World {
               ],
             });
           };
-          const joint = i % 12 === 0;
-          face(0, 0.46, 0x37434e);
+          const joint = i % 3 === 0;
+          face(0, 0.38, 0x464d58);
           face(
-            0.46,
+            0.38,
             1.45,
-            nose ? (i % 2 ? 0xf2e3c7 : 0xff693c) : joint ? 0x525961 : 0xb9bab0,
+            nose ? (i % 2 ? 0xe5ce89 : 0x6b4d3e) : joint ? 0x717c8a : 0xc9c4b4,
           );
-          face(1.45, 1.7, joint ? 0x6a7078 : 0xe2dbca);
-          face(0, 1.7, 0x6b747d, 1.1);
+          face(1.45, 1.7, joint ? 0x7b858d : 0xbebdb4);
+          face(0, 1.7, 0x737e84, 1.1);
           quads.push({
             p: [
               wallPoint(a, edgeA, 1.7),
@@ -325,15 +329,43 @@ export class World {
               wallPoint(b, edgeB, 1.7, 1.1),
               wallPoint(a, edgeA, 1.7, 1.1),
             ],
-            color: joint ? 0x656c73 : 0xe5dcc9,
-            kind: "concrete",
+            color: joint ? 0x737e84 : 0xb5b7b1,
+            kind: "edge",
           });
-          // Sparse inset reflectors, not luminous wireframe along the whole wall.
-          if (i % 6 === 0)
-            face(0.72, 0.86, nose ? 0xff643c : 0xffca74, -0.018, "light");
+          // Substantial cast impact blocks project OUT of the physical boundary.
+          // The continuous inner face/height remains exactly the collision wall.
+          if (joint && (branch === 0 || side === branch)) {
+            face(-2, 1.7, 0x7e8a91, 2.6);
+            quads.push({
+              p: [
+                wallPoint(a, edgeA, 1.7, 1.1),
+                wallPoint(b, edgeB, 1.7, 1.1),
+                wallPoint(b, edgeB, 1.7, 2.6),
+                wallPoint(a, edgeA, 1.7, 2.6),
+              ],
+              color: 0xaeb1a8,
+              kind: "edge",
+            });
+            for (const [f, edge] of [
+              [a, edgeA],
+              [b, edgeB],
+            ])
+              quads.push({
+                p: [
+                  wallPoint(f, edge, -2, 1.1),
+                  wallPoint(f, edge, 1.7, 1.1),
+                  wallPoint(f, edge, 1.7, 2.6),
+                  wallPoint(f, edge, -2, 2.6),
+                ],
+                color: 0x68757e,
+                kind: "edge",
+              });
+          }
+          if (i % 8 === 0)
+            face(0.65, 0.82, nose ? 0xffa348 : 0xc3c6a0, -0.018, "light");
         }
         // Repeating overhead ribs and tunnel skin create near-field motion cues.
-        if (!flagship && u > cfg.tunnel[0] && u < cfg.tunnel[1]) {
+        if (track.isTunnel(u * track.length)) {
           addStrip(
             a,
             b,
@@ -370,14 +402,14 @@ export class World {
         }
       }
     }
-    for (const kind of ["road", "concrete", "paint", "light"]) {
+    for (const kind of ["road", "concrete", "paint", "edge", "light"]) {
       const material =
         flagship && kind === "road"
           ? new THREE.MeshPhongMaterial({
               vertexColors: true,
               map: textures.road,
-              specular: 0x56516c,
-              shininess: 38,
+              specular: 0x252630,
+              shininess: 7,
               side: THREE.DoubleSide,
               flatShading: true,
             })
@@ -413,12 +445,57 @@ export class World {
         this.flagshipAssets,
       );
     const obj = new THREE.Object3D();
-    const supportFrames = Array.from({ length: 60 }, (_, i) => {
-      const u = i / 60;
-      return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0]).map(
-        (branch) => track.frame(u * track.length, branch),
-      );
-    }).flat();
+    const foundationQuads = [];
+    for (let i = 0; i < stations.length - 1; i++) {
+      const u = stations[i],
+        next = stations[i + 1];
+      if (track.gap(u)) continue;
+      for (const branch of u >= cfg.split[0] && u < cfg.split[1]
+        ? [-1, 1]
+        : [0]) {
+        if (
+          environment.bridgeAt(u, branch) ||
+          environment.bridgeAt(next % 1, branch)
+        )
+          continue;
+        const a = track.frame(u * track.length, branch),
+          b = track.frame(next * track.length, branch);
+        Object.assign(a, track.bounds(u * track.length, branch), { branch });
+        Object.assign(b, track.bounds(next * track.length, branch), { branch });
+        for (const side of [-1, 1]) {
+          if (a.connected && b.connected && side === -branch) continue;
+          const pa = roadPoint(a, side < 0 ? a.clipMin : a.clipMax, -2);
+          const pb = roadPoint(b, side < 0 ? b.clipMin : b.clipMax, -2);
+          const fa = pa.clone().setY(environment.heightAt(pa.x, pa.z) - 0.7);
+          const fb = pb.clone().setY(environment.heightAt(pb.x, pb.z) - 0.7);
+          foundationQuads.push({
+            p: [pa, pb, fb, fa],
+            color: cfg.name === "SOLAR ARRAY" ? 0x92765c : 0x737b78,
+          });
+        }
+      }
+    }
+    const foundationMaterial = mat(0xffffff, {
+      map: textures.concrete,
+      vertexColors: true,
+      side: THREE.DoubleSide,
+    });
+    this.scene.add(
+      new THREE.Mesh(
+        quadGeometry(foundationQuads, this.lighting),
+        foundationMaterial,
+      ),
+    );
+    const supportFrames = Array.from(
+      { length: Math.ceil(track.length / 38) },
+      (_, i) => {
+        const u = i / Math.ceil(track.length / 38);
+        if (u > cfg.jump - 0.025 && u < cfg.jump + 0.04) return [];
+        return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0])
+          .filter((branch) => environment.bridgeAt(u, branch))
+          .map((branch) => track.frame(u * track.length, branch));
+      },
+    ).flat();
     const supports = new THREE.InstancedMesh(
       boxGeo,
       mat(0xf4eee1, { map: textures.concrete }),
@@ -463,6 +540,12 @@ export class World {
     this.scene.add(supports, trusses);
     buildTrackPads(this.scene, track, textures);
     this.startGantry = buildStartGantry(this.scene, track);
+    this.finishDistrict = buildFinishDistrict(
+      this.scene,
+      track,
+      textures,
+      environment,
+    );
     const startFrame = track.frame(0);
     for (let x = -startFrame.width; x < startFrame.width; x += 2)
       for (let z = 0; z < 4; z += 2) {
@@ -483,51 +566,6 @@ export class World {
       }
     buildSplitMarkers(this.scene, track);
     buildTrackAdvertising(this.scene, track, environment);
-    if (!flagship) {
-      const ribMaterial = mat(0xf5eee1, { map: textures.paint });
-      const ribLight = basic(cfg.color);
-      for (let i = 0; i < 6; i++) {
-        const u = 0.025 + i * 0.16;
-        for (const branch of u > cfg.split[0] && u < cfg.split[1]
-          ? [-1, 1]
-          : [0]) {
-          const f = track.frame(u * track.length, branch),
-            w = f.width + 4;
-          const points = [
-            [-w, -2],
-            [-w + 1, 10],
-            [0, 21],
-            [w - 1, 10],
-            [w, -2],
-          ].map(([x, y]) =>
-            f.p.clone().addScaledVector(f.right, x).addScaledVector(f.up, y),
-          );
-          const path = new THREE.CatmullRomCurve3(points);
-          this.scene.add(
-            new THREE.Mesh(
-              new THREE.TubeGeometry(path, 20, 0.8, 4, false),
-              ribMaterial,
-            ),
-          );
-          const lightPath = new THREE.CatmullRomCurve3(
-            points.map((p) => p.clone().addScaledVector(f.tangent, -0.9)),
-          );
-          this.scene.add(
-            new THREE.Mesh(
-              new THREE.TubeGeometry(lightPath, 20, 0.13, 4, false),
-              ribLight,
-            ),
-          );
-          const footing = new THREE.Mesh(
-            new THREE.BoxGeometry(w * 2 + 2, 1.2, 3),
-            ribMaterial,
-          );
-          footing.position.copy(f.p).addScaledVector(f.up, -2.5);
-          footing.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
-          this.scene.add(footing);
-        }
-      }
-    }
     this.weaponEffects = new WeaponEffects(this.scene);
     this.effectMat = basic(0xff9730);
     this.sparks = new THREE.InstancedMesh(
@@ -552,8 +590,8 @@ export class World {
     mesh.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
     this.scene.add(mesh);
   }
-  makeShip(color) {
-    return createCraft(this.scene, color);
+  makeShip(color, variant = 0) {
+    return createCraft(this.scene, color, variant);
   }
   setupRacers(race, specs) {
     this.weaponEffects.reset();
@@ -562,7 +600,9 @@ export class World {
     for (const particle of this.sparkData) particle.life = 0;
     this.cameraForward = null;
     this.cameraReady = false;
-    this.ships = race.racers.map((r) => this.makeShip(specs[r.craft].color));
+    this.ships = race.racers.map((r) =>
+      this.makeShip(specs[r.craft].color, r.craft),
+    );
   }
   burst(racer) {
     const f = this.track.frame(racer.s, racer.branch);
@@ -582,6 +622,7 @@ export class World {
     this.time += dt;
     this.city.update(this.time);
     this.startGantry.update(race, demo);
+    this.finishDistrict.update(this.time);
     const player = race.player,
       track = this.track;
     const f = track.frame(player.s, player.branch);
@@ -614,7 +655,7 @@ export class World {
       this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
     }
     this.cameraFocus = focus;
-    this.camera.up.copy(UP);
+    this.camera.up.lerp(f.up, 1 - Math.exp(-dt * 7)).normalize();
     this.camera.lookAt(ahead);
     const fov = 68 + player.speed * 0.085 + player.boost * 5;
     this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3.5));
@@ -629,7 +670,7 @@ export class World {
       ship.rotation.set(
         pitch,
         r.yaw,
-        clamp(-r.yawRate * 0.45, -0.5, 0.5),
+        -rf.bank + clamp(-r.yawRate * 0.45, -0.5, 0.5),
         "YXZ",
       );
       const shield = ship.userData.shield;
@@ -639,7 +680,14 @@ export class World {
       ship.userData.updateExhaust(r.speed, r.boost, this.time);
       const shadow = ship.userData.shadow;
       shadow.position.copy(r.position);
-      shadow.position.y = rf.p.y + 0.12;
+      shadow.position.y =
+        rf.p.y -
+        (rf.up.x * (r.position.x - rf.p.x) +
+          rf.up.z * (r.position.z - rf.p.z)) /
+          rf.up.y +
+        0.12;
+      shadow.quaternion.setFromUnitVectors(UP, rf.up);
+      shadow.rotateX(-Math.PI / 2);
       shadow.visible = r.h < 15 && ship.visible && !track.gap(rf.u);
     }
     if (!demo && this.view === "first-person") {

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, mod } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { Race, LAPS, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 import { solveContacts, hullExtent } from "../src/contacts.js";
 
@@ -481,12 +481,46 @@ test("nearby unrelated road cannot teleport projection or award a cut lap", () =
   assert.equal(race.laps.length, 0);
 });
 
-test("ordered forward gates complete three earned laps", () => {
-  const race = setup();
-  drive(race, 65, driver);
-  assert(race.finished);
-  assert.equal(race.laps.length, 3);
-  assert.equal(race.player.lap, 4);
+test("five earned laps finish every class; four laps do not, and AI advances the ranking", () => {
+  for (let c = 0; c < SPEED_CLASSES.length; c++) {
+    const race = new Race(circuit(), 0, "race", c);
+    race.countdown = 0;
+    drive(race, 5, { ...neutral, throttle: false });
+    assert(
+      race.position > 1,
+      "rivals physically overtake the stationary player",
+    );
+    let sawFourth = false;
+    for (let step = 0; step < 160 * 120 && !race.finished; step++) {
+      const pace = race.classSpec.pace;
+      const controls = driver({
+        ...race,
+        player: {
+          ...race.player,
+          speed: race.player.speed / pace,
+          yawRate: race.player.yawRate / pace,
+        },
+      });
+      race.update(1 / 120, controls);
+      if (race.laps.length === 4) {
+        sawFourth = true;
+        assert.equal(race.finished, false);
+        assert.equal(race.player.lap, 5);
+      }
+    }
+    assert(
+      sawFourth,
+      "crossed the actual fourth finish after its ordered gates",
+    );
+    assert(race.finished, `class ${c} finishes its fifth earned lap`);
+    assert.equal(race.laps.length, LAPS);
+    assert.equal(race.player.lap, LAPS + 1);
+    assert.equal(race.player.gate, LAPS * 32 + 1);
+    assert(
+      race.racers.slice(1).every((r) => r.lap > 1),
+      "AI keeps earning laps during the five-lap race",
+    );
+  }
 });
 
 test("arriving at the finish with missing sector gates cannot award a lap", () => {

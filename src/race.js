@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import { clamp, mod, roadBounds } from "./track.js";
-import { projectRoad } from "./road-projection.js";
+import { projectRoad, roadHeight } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
 import { getTrackPickups, crossesPickup } from "./pickups.js";
 import { Launch } from "./launch.js";
+import { SPEED_CLASSES } from "./speed-classes.js";
+
+export { SPEED_CLASSES } from "./speed-classes.js";
 
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const HOVER = 2.2;
@@ -42,9 +45,13 @@ export const CRAFT = [
   },
 ];
 export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
+export const LAPS = 5;
 
 export class Race {
-  constructor(track, craft = 0, mode = "race") {
+  constructor(track, craft = 0, mode = "race", speedClass = 0, terrain = null) {
+    this.terrain = terrain;
+    this.speedClass = speedClass;
+    this.classSpec = SPEED_CLASSES[speedClass];
     this.track = track;
     this.pickups = getTrackPickups(track);
     this.mode = mode;
@@ -196,7 +203,7 @@ export class Race {
           owner: r.id,
           target: target?.r.id,
           position: r.position.clone(),
-          velocity: forward.clone().multiplyScalar(320),
+          velocity: forward.clone().multiplyScalar(320 * this.classSpec.pace),
           type: weapon,
           life: 3,
         });
@@ -217,6 +224,11 @@ export class Race {
     }
     this.time += dt;
     const { track } = this;
+    const { pace } = this.classSpec;
+    const pace2 = pace * pace;
+    // A class traverses the same physical envelope in less real time.
+    // Race/countdown clocks stay real; mechanical effects use class time.
+    const classDt = dt * pace;
     const previousPositions = new Map(
       this.racers.map((r) => {
         r.recoveredThisStep = false;
@@ -226,14 +238,14 @@ export class Race {
     const previousYaw = new Map(this.racers.map((r) => [r, r.yaw]));
     for (const r of this.racers) {
       r.wallTouched = r.contactMoved = false;
-      r.contactSound = Math.max(0, r.contactSound - dt);
+      r.contactSound = Math.max(0, r.contactSound - classDt);
       const spec = CRAFT[r.craft];
       const ai = r.id !== 0;
       let controls = input;
       if (ai) {
         // A look-ahead driver, not a second movement model.
         const look = track.frame(
-          r.contactS + Math.max(18, r.speed * 0.65),
+          r.contactS + Math.max(18, (r.speed * 0.65) / pace),
           r.branch,
         );
         const desiredYaw = Math.atan2(
@@ -243,69 +255,74 @@ export class Race {
         const error = angle(desiredYaw - r.yaw);
         const curve = Math.max(
           ...[0.25, 0.6, 1].map((t) =>
-            Math.abs(track.curvature(r.contactS + r.speed * t, r.branch)),
+            Math.abs(
+              track.curvature(r.contactS + (r.speed * t) / pace, r.branch),
+            ),
           ),
         );
-        const cornerSpeed = Math.sqrt(82 / Math.max(curve, 0.0001));
+        const cornerSpeed = Math.sqrt((82 * pace2) / Math.max(curve, 0.0001));
         controls = {
           throttle: true,
-          steer: clamp(error * 2.5 - r.yawRate * 0.25, -1, 1),
+          steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
           air: clamp(error * 0.8, -1, 1),
           brake: Math.max(
-            clamp((r.speed - cornerSpeed) / 30, 0, 1),
+            clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
             Math.abs(error) > 0.7 ? 1 : 0,
           ),
         };
-        r.aiFire -= dt;
+        r.aiFire -= classDt;
         if (r.aiFire <= 0) {
           this.fire(r);
           r.aiFire = 4 + ((r.id * 7) % 6);
         }
       }
-      r.protect = Math.max(0, r.protect - dt);
-      r.surge = Math.max(0, r.surge - dt);
-      r.stun = Math.max(0, r.stun - dt);
+      r.protect = Math.max(0, r.protect - classDt);
+      r.surge = Math.max(0, r.surge - classDt);
+      r.stun = Math.max(0, r.stun - classDt);
       const left = controls.airLeft ?? Math.max(0, controls.air || 0);
       const right = controls.airRight ?? Math.max(0, -(controls.air || 0));
       const air = controls.air ?? left - right;
       const airDrag = left + right;
       r.pitchTrim +=
         ((controls.pitch || 0) * 0.24 - r.pitchTrim) *
-        (1 - Math.exp(-dt / 0.16));
+        (1 - Math.exp(-classDt / 0.16));
       const yawTarget =
         ((controls.steer || 0) * 0.9 * spec.handling + air * 0.5) *
-        (r.stun ? 0.45 : 1);
-      r.yawRate += (yawTarget - r.yawRate) * (1 - Math.exp(-dt / 0.2));
+        (r.stun ? 0.45 : 1) *
+        pace;
+      r.yawRate += (yawTarget - r.yawRate) * (1 - Math.exp(-classDt / 0.2));
       r.yaw += r.yawRate * dt;
       const fx = Math.sin(r.yaw),
         fz = Math.cos(r.yaw);
       const rx = fz,
         rz = -fx;
       const lateralSpeed = r.velocity.x * rx + r.velocity.z * rz;
-      const grip = r.grounded ? 110 : 4;
-      const lateralForce = clamp(-lateralSpeed * 7, -grip, grip);
+      const grip = (r.grounded ? 110 : 4) * pace2;
+      const lateralForce = clamp(-lateralSpeed * 7 * pace, -grip, grip);
       // Engines supply force; aerodynamic drag determines speed, not a velocity ceiling.
       const boostTarget = r.surge > 0 ? 1 : 0;
       r.boost +=
         (boostTarget - r.boost) *
-        (1 - Math.exp(-dt / (boostTarget ? 0.35 : 1.1)));
-      const thrust = (controls.throttle ? spec.thrust : 0) + r.boost * 65;
+        (1 - Math.exp(-classDt / (boostTarget ? 0.35 : 1.1)));
+      const thrust =
+        ((controls.throttle ? spec.thrust : 0) + r.boost * 65) * pace2;
       const drag =
-        0.02 +
+        0.02 * pace +
         Math.hypot(r.velocity.x, r.velocity.z) * 0.0024 +
-        (controls.brake || 0) * 0.85 +
-        airDrag * 0.22;
+        (controls.brake || 0) * 0.85 * pace +
+        airDrag * 0.22 * pace;
       r.velocity.x +=
         (fx * thrust + rx * lateralForce - r.velocity.x * drag) * dt;
       r.velocity.z +=
         (fz * thrust + rz * lateralForce - r.velocity.z * drag) * dt;
       if (!r.grounded) {
         // Deflect momentum, not position: pulling up trades forward speed for climb.
-        // Authority tends to 20.16 m/s², below gravity, even at extreme velocity.
-        const pitchRate = (r.pitchTrim * 0.7) / (1 + r.velocity.length() / 120);
+        // Pitch authority stays below class gravity, even at extreme velocity.
+        const pitchRate =
+          (r.pitchTrim * 0.7 * pace) / (1 + r.velocity.length() / (120 * pace));
         r.velocity.applyAxisAngle(new THREE.Vector3(rx, 0, rz), pitchRate * dt);
       }
-      r.velocity.y -= 35 * dt;
+      r.velocity.y -= 35 * pace2 * dt;
       r.position.addScaledVector(r.velocity, dt);
     }
     const roads = new Map(
@@ -329,20 +346,20 @@ export class Race {
     const constrainWall = (r) => {
       r.contactMoved = true;
       const road = roads.get(r);
-      const extent = hullExtent(r, road.right);
+      const extent = hullExtent(r, road.wallAxis);
       const min = road.wallMin + extent,
         max = road.wallMax - extent;
       const previousExtent = hullExtent(
         { yaw: previousYaw.get(r) },
-        road.right,
+        road.wallAxis,
       );
-      const x = r.position.clone().sub(road.point).dot(road.right);
+      const x = r.position.clone().sub(road.point).dot(road.wallAxis);
       const oldX = previousPositions
         .get(r)
         .clone()
         .sub(road.point)
-        .dot(road.right);
-      const height = r.position.y - road.point.y - HOVER;
+        .dot(road.wallAxis);
+      const height = r.position.y - roadHeight(road, r.position) - HOVER;
       if (
         track.gap(mod(road.s, track.length) / track.length) ||
         height <= -3 ||
@@ -367,6 +384,7 @@ export class Race {
       r.contactMoved = r.wallTouched;
     }
     solveContacts(this.racers, constrainWall, (a, b, closing) => {
+      closing /= pace;
       for (const r of [a, b]) {
         if (closing > 12 && r.protect <= 0)
           r.shield -= ((closing - 12) * 0.1) / CRAFT[r.craft].armor;
@@ -389,10 +407,10 @@ export class Race {
       const splitterEntry = crossesSplitter(r, road);
       r.contactS = road.s;
       r.x = road.x;
-      r.vx = r.velocity.dot(road.right);
+      r.vx = r.velocity.dot(road.wallAxis);
       const gap = track.gap(u);
-      const height = r.position.y - road.point.y - HOVER;
-      const extent = hullExtent(r, road.right);
+      const height = r.position.y - roadHeight(road, r.position) - HOVER;
+      const extent = hullExtent(r, road.wallAxis);
       const min = road.wallMin + extent,
         max = road.wallMax - extent;
       const onDeck = road.x >= min - 0.05 && road.x <= max + 0.05;
@@ -401,15 +419,16 @@ export class Race {
       if (wasGrounded && !r.grounded && onDeck) r.flight = true;
       if (r.grounded) {
         r.flight = false;
-        // Contact supplies road height/vertical reaction only, never heading or XZ motion.
-        const slope =
-          road.tangent.y / Math.hypot(road.tangent.x, road.tangent.z);
-        const along =
-          r.velocity.x * road.tangent.x + r.velocity.z * road.tangent.z;
-        const roadVy = slope * along;
-        r.velocity.y += ((roadVy - r.velocity.y) * 18 - height * 90) * dt;
+        const roadVy =
+          -(road.up.x * r.velocity.x + road.up.z * r.velocity.z) / road.up.y;
+        const reaction =
+          ((roadVy - r.velocity.y) * 18 * pace - height * 90 * pace2) * dt;
+        r.velocity.y += reaction;
+        // Bank support contributes inward force, never heading or velocity alignment.
+        r.velocity.x += road.wallAxis.x * Math.sin(road.bank) * reaction;
+        r.velocity.z += road.wallAxis.z * Math.sin(road.bank) * reaction;
         if (height < -0.35) {
-          r.position.y = road.point.y + HOVER - 0.35;
+          r.position.y = roadHeight(road, r.position) + HOVER - 0.35;
           r.velocity.y = Math.max(r.velocity.y, roadVy);
         }
         if (!wasGrounded && r.id === 0) this.emit("land", "TOUCHDOWN");
@@ -421,6 +440,16 @@ export class Race {
         )
           r.checkpoint = { s: r.s, branch: r.branch, gate: r.gate };
       } else if (gap && wasGrounded && r.id === 0) this.emit("jump", "FLIGHT");
+      if (
+        !r.grounded &&
+        this.terrain?.sweepSurface(previous, r.position, 1.1)
+      ) {
+        this.recover(r);
+        r.shield = Math.max(10, r.shield - 24);
+        if (!ai) this.emit("hit", "GROUND IMPACT");
+        // A checkpoint return cannot sweep through gates or pickups.
+        continue;
+      }
       if (r.grounded || (r.flight && onDeck && height > -3)) {
         const gateS = (r.gate * track.length) / GATES;
         const gateFrame = track.frame(gateS, r.branch);
@@ -438,8 +467,8 @@ export class Race {
               this.laps.push(lapTime);
               this.bestLap = Math.min(this.bestLap, lapTime);
               this.lapStart = this.time;
-              this.emit("lap", "LAP " + Math.min(3, r.lap) + " / 3");
-              if (r.lap > 3) {
+              this.emit("lap", "LAP " + Math.min(LAPS, r.lap) + " / " + LAPS);
+              if (r.lap > LAPS) {
                 this.finished = true;
                 this.emit("finish", "RACE COMPLETE");
               }
@@ -457,12 +486,12 @@ export class Race {
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.
       const previousExtent = hullExtent(
         { yaw: previousYaw.get(r) },
-        road.right,
+        road.wallAxis,
       );
       const previousX =
         road.x -
-        (r.position.x - previous.x) * road.right.x -
-        (r.position.z - previous.z) * road.right.z;
+        (r.position.x - previous.x) * road.wallAxis.x -
+        (r.position.z - previous.z) * road.wallAxis.z;
       if (
         r.wallTouched ||
         (!gap &&
@@ -482,15 +511,15 @@ export class Race {
         const outward = r.velocity.dot(road.right) * sign;
         if (outward > 0)
           r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
-        r.velocity.x *= Math.exp(-3 * dt);
-        r.velocity.z *= Math.exp(-3 * dt);
-        if (r.protect <= 0) r.shield -= dt * 10;
+        r.velocity.x *= Math.exp(-3 * classDt);
+        r.velocity.z *= Math.exp(-3 * classDt);
+        if (r.protect <= 0) r.shield -= classDt * 10;
         if (r.stun === 0) {
           r.stun = 0.3;
           if (!ai) this.emit("scrape", "IMPACT");
         }
       }
-      if (!r.grounded) r.offroad += dt;
+      if (!r.grounded) r.offroad += classDt;
       if (height < -18 || r.offroad > 3 || r.shield <= 0) {
         const destroyed = r.shield <= 0;
         this.recover(r);
@@ -499,7 +528,7 @@ export class Race {
         if (!ai) this.emit("hit", destroyed ? "EMERGENCY REBOOT" : "RESCUE");
         continue;
       }
-      r.h = Math.max(0, r.position.y - road.point.y - HOVER);
+      r.h = Math.max(0, r.position.y - roadHeight(road, r.position) - HOVER);
       r.vy = r.velocity.y;
       r.speed = Math.hypot(r.velocity.x, r.velocity.z);
       r.pitch =
@@ -521,7 +550,8 @@ export class Race {
           } else if (!r.weapon && this.mode !== "trial") {
             r.weapon =
               WEAPONS[
-                (Math.floor(this.time * 13) + r.id + index) % WEAPONS.length
+                (Math.floor(this.time * pace * 13) + r.id + index) %
+                  WEAPONS.length
               ];
             if (!ai) this.emit("pickup", r.weapon);
           } else r.shield = Math.min(100, r.shield + 8);
@@ -530,16 +560,16 @@ export class Race {
       r.shield = clamp(r.shield, 0, 100);
     }
     for (const shot of this.shots) {
-      shot.life -= dt;
+      shot.life -= classDt;
       if (shot.type !== "MISSILE") continue;
       const previous = shot.position.clone();
       const target = this.racers[shot.target];
       if (target) {
         const desired = target.position.clone().sub(shot.position).normalize();
         shot.velocity
-          .lerp(desired.multiplyScalar(320), 1 - Math.exp(-dt * 3))
+          .lerp(desired.multiplyScalar(320 * pace), 1 - Math.exp(-classDt * 3))
           .normalize()
-          .multiplyScalar(320);
+          .multiplyScalar(320 * pace);
       }
       shot.position.addScaledVector(shot.velocity, dt);
       if (target) {
@@ -559,7 +589,7 @@ export class Race {
     }
     this.shots = this.shots.filter((s) => s.life > 0);
     for (const mine of this.mines) {
-      mine.life -= dt;
+      mine.life -= classDt;
       for (const r of this.racers)
         if (r.id !== mine.owner && r.position.distanceTo(mine.position) < 5) {
           this.damage(r, 24);

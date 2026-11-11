@@ -43,12 +43,21 @@ await music.play();
 music.pause();
 await music.next();
 music.volume = 0.5;
-music.dispose();
+music.setTunnel(true); // Active grounded contact within track.isTunnel(s).
+await music.dispose();
 ```
 
 Import `MusicPlayer` from `src/music.js`.
 
 `loadFiles(files)` accepts browser-readable MP3, M4A, AAC, Ogg/Opus, WAV, FLAC, WebM and other `audio/*` files without uploading them. Playback starts after `play()` or `next()`; `next()` loops through local files in selection order. The callback receives `{ name, count, playing, error }`, including browser playback failures. Replacing or disposing the playlist pauses playback and revokes its object URLs. `loadTracks(tracks)` accepts named URLs and replaces the playlist without starting playback. The built-in playlist uses shuffled bags: all twelve tracks play once before reshuffling, with no immediate repeat at a bag boundary. Loading/restoring the OST starts a fresh bag. Local files replace the built-in playlist without shuffling; BELMONDO OST restores all twelve default tracks. Effects mute and volume do not change music settings.
+
+### Tunnel acoustics
+
+One lazy music-only AudioContext routes the existing media element through a dry path and a filtered 145 ms delay with 25% feedback. Both built-in and local tracks use this graph. Authored enclosed tunnels add an 11% wet layer, with 200 ms entrance/exit fades; the dry signal stays unfiltered and the wet path reaches exactly zero outside. The main loop uses the same `track.isTunnel(contactS)` helper as the tunnel meshes, while grounded. Solar Array's enclosed section is 20–28% around the circuit; Noctilucent's is 44–53%. Kaiseki's open interchange does not trigger echo.
+
+Music volume is applied through an output GainNode rather than the media element's hardware-dependent volume property. Pause/blur gate the complete output, including delay tails. Track changes discard the previous delay graph but retain one context and media source; disposal disconnects the graph and closes its context. SFX retain their separate, unchanged audio context. Context resume and native media play are both invoked directly inside the play gesture.
+
+`node tests/music-tunnel.browser.mjs` measures native default/local wet output, dry outside, fades, pause/volume silence and context reuse without WebGL. `node tests/music-tunnel-game.browser.mjs` checks the production main-loop hook with fixed contact positions across all three circuits; it is an integration fixture, not a driving test.
 
 ## Soundtrack credits
 

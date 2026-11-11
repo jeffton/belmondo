@@ -1,4 +1,11 @@
 @font-face {
+  font-family: "Belmondo Circuit";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/belmondo-circuit-bold.ttf") format("truetype");
+}
+@font-face {
   font-family: "Archivo";
   font-style: normal;
   font-weight: 100 900;

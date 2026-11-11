@@ -1,18 +1,25 @@
 # BELMONDO typography
 
-Archivo is the single Latin type family across the wordmark, main menu, pause menu, race HUD, controls and central screens. Its variable width and weight axes provide one coherent hierarchy:
+**Belmondo Circuit** is original display lettering shared by the wordmark, menu choices, pause and results headings, race numerals and major controls. Archivo provides small labels, reading text and precision timers. The same display/support hierarchy applies across every screen.
 
-- **Identity:** extra-condensed black italic, with a vermilion rule.
-- **Headlines:** condensed black, upright.
-- **Instruments and actions:** compact semibold/bold; tabular numerals stabilize times and speeds.
-- **Reading text:** normal-width regular; small labels retain contrast and spacing.
+## Original display face
 
-The reference is the disciplined graphic hierarchy of [The Designers Republic’s PS1 racing work](https://www.thedesignersrepublic.com/project/wipeout), not copied logos or imitation sci-fi lettering. Archivo’s [headline origins](https://fonts.google.com/specimen/Archivo) and broad width range support both race graphics and readable interface text. [Saira](https://www.omnibus-type.com/fonts/saira/) was also considered for its industrial range; Archivo provides a more neutral grotesk base for the original identity.
+Circuit is built from hand-authored route geometry on a 600 × 700 cap grid: heavy strokes, flat-cut terminals, chamfered junctions, compressed proportions and a fixed forward rake. Angular counters in B/D/O, the raised central junction in M and the squared launch arch in A form its signature. Digits have equal advances to prevent speed and position jitter. Small technical labels remain in Archivo rather than compressing the display face below readable sizes.
 
-## Local font assets
+No third-party font outlines, WipEout logos or Psygnosis assets are used. The reference is the graphic discipline of [The Designers Republic’s PS1 racing work](https://www.thedesignersrepublic.com/project/wipeout), not copied letterforms.
 
-The interface makes no runtime request to a font service.
+The complete original glyph source and builder are in [`build-belmondo-circuit.py`](../public/fonts/build-belmondo-circuit.py). The build requires FontTools; version 4.68.0 was used for verification:
 
-**Archivo:** unmodified variable upright and italic TTFs from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/archivo), downloaded 11 November 2026. Original filenames: `Archivo[wdth,wght].ttf` and `Archivo-Italic[wdth,wght].ttf`. Local filenames: `public/fonts/archivo-variable.ttf` and `archivo-italic-variable.ttf`. Weight range 100–900; width range 62–125%. Copyright 2020 The Archivo Project Authors. SIL Open Font License 1.1, included as [`archivo-OFL.txt`](../public/fonts/archivo-OFL.txt). [Original project](https://github.com/Omnibus-Type/Archivo); [designer’s specimen](https://www.omnibus-type.com/fonts/archivo/).
+```sh
+python public/fonts/build-belmondo-circuit.py
+```
+
+The script produces `public/fonts/belmondo-circuit-bold.ttf`, including font metadata and fixed timestamps for byte-reproducible output. Capitals, lowercase-to-capital mappings, tabular digits and interface punctuation are included. Copyright 2026 BELMONDO contributors. Font software and glyph source are licensed under the included [SIL Open Font License 1.1](../public/fonts/belmondo-circuit-OFL.txt).
+
+## Supporting fonts
+
+All fonts are served locally; the interface makes no runtime request to a font service.
+
+**Archivo:** unmodified variable upright and italic TTFs from [Google Fonts](https://github.com/google/fonts/tree/main/ofl/archivo). Original filenames: `Archivo[wdth,wght].ttf` and `Archivo-Italic[wdth,wght].ttf`. Local filenames: `public/fonts/archivo-variable.ttf` and `archivo-italic-variable.ttf`. Copyright 2020 The Archivo Project Authors. SIL Open Font License 1.1, included as [`archivo-OFL.txt`](../public/fonts/archivo-OFL.txt). [Original project](https://github.com/Omnibus-Type/Archivo); [designer’s specimen](https://www.omnibus-type.com/fonts/archivo/).
 
 Noto Sans JP supplies Japanese glyphs for environmental artwork, with its included [`OFL license`](../public/fonts/notosansjp-OFL.txt) and [source](https://github.com/google/fonts/tree/main/ofl/notosansjp). Existing Barlow, IBM Plex and Chakra Petch files retain their bundled licenses; they are not loaded by the interface stylesheet.

@@ -4,6 +4,8 @@ export class MusicPlayer {
   constructor(onChange = () => {}) {
     this.audio = new Audio();
     this.audio.preload = "metadata";
+    this.context = null;
+    this.inTunnel = false;
     this.audio.addEventListener("ended", () => this.next());
     this.audio.addEventListener("play", () => this.#emit());
     this.audio.addEventListener("pause", () => this.#emit());
@@ -26,7 +28,7 @@ export class MusicPlayer {
 
   set volume(value) {
     this._volume = Math.max(0, Math.min(1, Number(value)));
-    this.audio.volume = this._volume;
+    if (this.context) this.#setOutput(!this.audio.paused);
   }
 
   get current() {
@@ -71,9 +73,14 @@ export class MusicPlayer {
     const request = ++this.playRequest;
     this.error = null;
     try {
-      await this.audio.play();
+      this.#ensureGraph();
+      // Both calls remain in the original gesture: do not await resume first.
+      const unlocked = this.context.resume();
+      this.#setOutput(true);
+      await Promise.all([unlocked, this.audio.play()]);
     } catch (error) {
       if (request !== this.playRequest) return;
+      if (this.context) this.#setOutput(false);
       this.error = error.message || "Playback was blocked by the browser.";
       this.#emit();
     }
@@ -82,6 +89,7 @@ export class MusicPlayer {
   pause() {
     this.playRequest++;
     this.audio.pause();
+    if (this.context) this.#setOutput(false);
   }
 
   async next() {
@@ -105,12 +113,89 @@ export class MusicPlayer {
     this.index = 0;
     this.error = null;
     this.#emit();
+    if (this.context) {
+      this.source.disconnect();
+      this.echoNodes.forEach((node) => node.disconnect());
+      this.output.disconnect();
+      const context = this.context;
+      this.context = null;
+      return context.close();
+    }
+  }
+
+  setTunnel(inside) {
+    if (this.inTunnel === inside) return;
+    this.inTunnel = inside;
+    if (this.context) this.#setEcho();
+  }
+
+  #ensureGraph() {
+    if (this.context) return;
+    const Context = window.AudioContext || window.webkitAudioContext;
+    this.context = new Context();
+    this.source = this.context.createMediaElementSource(this.audio);
+    this.output = this.context.createGain();
+    this.output.gain.value = 0;
+    this.source.connect(this.output); // Dry signal is never filtered.
+    this.output.connect(this.context.destination);
+    this.#buildEcho();
+  }
+
+  #buildEcho() {
+    this.echoNodes?.forEach((node) => node.disconnect());
+    const ctx = this.context;
+    this.send = ctx.createGain();
+    this.filter = ctx.createBiquadFilter();
+    this.filter.type = "lowpass";
+    this.filter.frequency.value = 2300;
+    this.filter.Q.value = 0.5;
+    this.delay = ctx.createDelay(0.5);
+    this.delay.delayTime.value = 0.145;
+    this.feedback = ctx.createGain();
+    this.feedback.gain.value = 0.25;
+    this.wet = ctx.createGain();
+    this.send.gain.value = 0;
+    this.wet.gain.value = 0;
+    this.source.connect(this.send);
+    this.send.connect(this.filter);
+    this.filter.connect(this.delay);
+    this.delay.connect(this.feedback);
+    this.feedback.connect(this.filter);
+    this.delay.connect(this.wet);
+    this.wet.connect(this.output);
+    this.echoNodes = [
+      this.send,
+      this.filter,
+      this.delay,
+      this.feedback,
+      this.wet,
+    ];
+    this.#setEcho();
+  }
+
+  #ramp(param, value, seconds) {
+    const now = this.context.currentTime;
+    param.cancelAndHoldAtTime(now);
+    param.linearRampToValueAtTime(value, now + seconds);
+  }
+
+  #setEcho() {
+    this.#ramp(this.send.gain, this.inTunnel ? 1 : 0, 0.2);
+    this.#ramp(this.wet.gain, this.inTunnel ? 0.11 : 0, 0.2);
+  }
+
+  #setOutput(playing) {
+    this.#ramp(this.output.gain, playing ? this._volume : 0, 0.012);
   }
 
   #selectCurrent() {
     if (!this.current) return;
     this.audio.src = this.current.url;
-    this.audio.volume = this._volume;
+    if (this.context) {
+      // A skip must not carry the previous recording's echo into the next one.
+      this.source.disconnect(this.send);
+      this.#buildEcho();
+    }
   }
 
   #emit() {

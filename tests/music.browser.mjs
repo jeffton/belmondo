@@ -31,9 +31,15 @@ try {
     window.Audio.prototype = NativeAudio.prototype;
     const NativeContext = window.AudioContext;
     window.AudioContext = class extends NativeContext {
+      createMediaElementSource(audio) {
+        window.musicContext = this;
+        return super.createMediaElementSource(audio);
+      }
       createGain() {
         const gain = super.createGain();
         if (!window.effectMasterGain) window.effectMasterGain = gain;
+        if (this === window.musicContext && !window.musicOutputGain)
+          window.musicOutputGain = gain;
         return gain;
       }
     };
@@ -107,7 +113,7 @@ try {
     }
     return {
       src: audio.currentSrc,
-      volume: audio.volume,
+      volume: window.musicOutputGain.gain.value,
       paused: audio.paused,
       currentTime: audio.currentTime,
       decoded,
@@ -245,14 +251,9 @@ try {
     element.value = "0.31";
     element.dispatchEvent(new Event("input", { bubbles: true }));
   });
-  const musicVolume = await page.evaluate(
-    () => window.musicAudioElements.at(-1).volume,
-  );
-  assert.equal(
-    musicVolume,
-    0.31,
-    "Music slider should set media-element volume",
-  );
+  await expect
+    .poll(() => page.evaluate(() => window.musicOutputGain.gain.value))
+    .toBeCloseTo(0.31, 5);
   await page.locator("#mute").evaluate((element) => {
     element.checked = true;
     element.dispatchEvent(new Event("change", { bubbles: true }));
