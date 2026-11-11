@@ -1,4 +1,4 @@
-"""Bake the hero craft's UV atlas. Requires Pillow; uses the original image wordmark."""
+"""Bake the hero craft's UV atlas. Requires Pillow and generate-belmondo-mark.py output."""
 from pathlib import Path
 from random import Random
 from PIL import Image, ImageDraw, ImageFont
@@ -32,12 +32,12 @@ for index in range(8):
             for y in (64, 164, 224):
                 d.rectangle((x, y, x+2, y+2), fill="#4c5d66")
         if index == 0:
-            # Real extracted OpenAI-image design asset, preserved separately.
-            mark = Image.open(ROOT / "null-vector-mark.png").convert("RGB")
+            # Same self-hosted typographic identity as the start screen.
+            mark = Image.open(ROOT / "belmondo-mark.png").convert("RGB")
             mark.thumbnail((196, 26), Image.Resampling.LANCZOS)
             d.rectangle((25, 185, 231, 222), fill="#111b25")
             tile.paste(mark, ((256-mark.width)//2, 191))
-            d.text((93, 232), "NV / 07", fill="#35434b", font=small)
+            d.text((93, 232), "B / 07", fill="#35434b", font=small)
             d.polygon([(115, 8), (141, 8), (141, 86), (128, 99), (115, 86)], fill="#f04a35")
         elif index == 1:
             d.polygon([(90, 0), (180, 0), (156, 256), (66, 256)], fill="#fafaf0")
@@ -46,7 +46,7 @@ for index in range(8):
             for y in range(207, 231, 5):
                 d.rectangle((179, y, 226, y+2), fill="#3c4a51")
         else:
-            d.text((57, 117), "NULL / VECTOR", fill="#293e48", font=font)
+            d.text((57, 117), "BELMONDO", fill="#293e48", font=font)
             for y in range(174, 230, 7):
                 d.rectangle((45, y, 211, y+3), fill="#283a44")
     elif index in (2, 3, 7):

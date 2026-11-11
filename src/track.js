@@ -1,80 +1,60 @@
 import * as THREE from "three";
 
+// Smooth three-lobed circuits provide broad linked bends and genuine direction
+// changes. Control-point spacing is measured against the craft's turn/grip envelope.
+function circuitPoints(radius, modulation, baseHeight) {
+  return Array.from({ length: 36 }, (_, i) => {
+    const theta = (i / 36) * Math.PI * 2;
+    const r = radius * (1 + modulation * Math.cos(3 * theta));
+    return [
+      r * Math.cos(theta) - radius * (1 + modulation),
+      baseHeight + 12 * (1 - Math.cos(theta)) + 10 * (1 - Math.cos(2 * theta)),
+      r * Math.sin(theta),
+    ];
+  });
+}
+
 export const TRACKS = [
   {
     name: "KAISEKI COAST",
-    width: 12,
-    banking: true,
     subtitle: "01 / Coastal megastructure",
     color: 0x13d9e7,
     sky: 0x1e3859,
     fog: 0x657e9a,
     sea: 0x143b57,
-    points: [
-      [0, 30, 0],
-      [0, 32, 260],
-      [-140, 65, 450],
-      [-420, 75, 400],
-      [-540, 40, 120],
-      [-400, 25, -180],
-      [-130, 62, -270],
-      [170, 95, -460],
-      [410, 65, -290],
-      [380, 30, 60],
-      [0, 30, -150],
-    ],
-    split: [0.28, 0.43],
-    jump: 0.66,
+    width: 15,
+    branchWidths: [13, 15],
+    points: circuitPoints(650, 0.19, 45),
+    split: [0.285, 0.445],
+    jump: 0.82,
     tunnel: [0.11, 0.19],
   },
   {
     name: "SOLAR ARRAY",
-    width: 16,
     subtitle: "02 / High desert transmission",
     color: 0xff853a,
     sky: 0x825c76,
     fog: 0xb7949b,
     sea: 0x79645f,
-    points: [
-      [0, 65, 0],
-      [80, 80, 300],
-      [-160, 110, 520],
-      [-480, 90, 420],
-      [-550, 40, 80],
-      [-320, 65, -150],
-      [-500, 120, -400],
-      [-130, 150, -550],
-      [210, 95, -370],
-      [380, 65, -100],
-      [0, 65, -150],
-    ],
-    split: [0.36, 0.51],
-    jump: 0.72,
+    width: 16,
+    branchWidths: [14, 16],
+    points: circuitPoints(740, -0.16, 65),
+    split: [0.28, 0.46],
+    jump: 0.64,
     tunnel: [0.2, 0.28],
   },
   {
     name: "NOCTILUCENT",
-    width: 16,
     subtitle: "03 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x101b35,
     fog: 0x263652,
     sea: 0x14314d,
-    points: [
-      [0, 45, 0],
-      [-50, 60, 300],
-      [-300, 110, 410],
-      [-510, 100, 150],
-      [-400, 55, -150],
-      [-160, 65, -200],
-      [-240, 120, -470],
-      [100, 135, -540],
-      [360, 65, -270],
-      [450, 40, 80],
-      [0, 45, -150],
-    ],
-    split: [0.23, 0.4],
-    jump: 0.64,
+    width: 15,
+    branchWidths: [13, 15],
+    points: circuitPoints(610, 0.22, 45),
+    split: [0.28, 0.45],
+    jump: 0.82,
     tunnel: [0.44, 0.53],
   },
 ];
@@ -91,8 +71,28 @@ export function makeTrack(index) {
   );
   const length = curve.getLength();
   const count = 1500;
+  const runwayStart = config.jump - 0.05;
+  const runwayEnd = config.jump + 0.08;
+  const approachPoint = curve.getPointAt(runwayStart);
+  const landingPoint = curve.getPointAt(runwayEnd);
   const base = Array.from({ length: count + 1 }, (_, i) => {
-    const p = curve.getPointAt(i / count);
+    const u = i / count;
+    const p = curve.getPointAt(u);
+    // An authored straight chord supports flight, with broad transitions that
+    // preserve the circuit's natural large-radius bends.
+    const approach = THREE.MathUtils.smoothstep(
+      u,
+      runwayStart - 0.07,
+      runwayStart,
+    );
+    const departure =
+      1 - THREE.MathUtils.smoothstep(u, runwayEnd, runwayEnd + 0.07);
+    p.lerp(
+      approachPoint
+        .clone()
+        .lerp(landingPoint, (u - runwayStart) / (runwayEnd - runwayStart)),
+      approach * departure,
+    );
     const tangent = curve.getTangentAt(i / count).normalize();
     const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
@@ -142,14 +142,6 @@ export function makeTrack(index) {
       .clone()
       .lerp(b.right, n % 1)
       .normalize();
-    if (config.banking) {
-      const before = frames[mod(Math.floor(n) - 4, count)].tangent,
-        after = frames[(Math.floor(n) + 4) % count].tangent;
-      const bend =
-        Math.atan2(before.z * after.x - before.x * after.z, before.dot(after)) /
-        ((8 * length) / count);
-      right.applyAxisAngle(tangent, clamp(-bend * 16, -0.28, 0.28));
-    }
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
     const split = u > start && u < end;
@@ -170,13 +162,15 @@ export function makeTrack(index) {
       u,
       width:
         split && branch !== 0
-          ? config.width - (config.width - (branch === -1 ? 7 : 9)) * narrowing
+          ? config.width -
+            (config.width - config.branchWidths[branch === -1 ? 0 : 1]) *
+              narrowing
           : config.width,
       metric: a.metric + (b.metric - a.metric) * (n % 1),
     };
   }
   function gap(u) {
-    return u >= config.jump && u < config.jump + 0.016;
+    return u >= config.jump && u < config.jump + 0.014;
   }
   function curvature(s, branch = 0) {
     const a = frame(s - 6, branch).tangent,

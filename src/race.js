@@ -1,11 +1,19 @@
+import * as THREE from "three";
 import { clamp, mod } from "./track.js";
+import { projectRoad } from "./road-projection.js";
+import { solveContacts, hullExtent } from "./contacts.js";
+
+const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+const HOVER = 2.2;
+const GATES = 32;
 
 export const CRAFT = [
   {
     name: "STRIKER",
     team: "VX / 01",
     color: 0xf04d35,
-    speed: 108,
+    speed: 160,
+    thrust: 64,
     handling: 1,
     armor: 1,
     text: "Balanced / precise / forgiving",
@@ -14,7 +22,8 @@ export const CRAFT = [
     name: "RAPTOR",
     team: "LX / 27",
     color: 0x3488ff,
-    speed: 119,
+    speed: 175,
+    thrust: 76,
     handling: 0.82,
     armor: 0.85,
     text: "High velocity / wide racing lines",
@@ -23,7 +32,8 @@ export const CRAFT = [
     name: "WRAITH",
     team: "PH / 44",
     color: 0xc4f743,
-    speed: 103,
+    speed: 132,
+    thrust: 44,
     handling: 1.23,
     armor: 1.15,
     text: "Agile / strong shields / technical",
@@ -58,6 +68,7 @@ export class Race {
       shield: 100,
       protect: 0,
       surge: 0,
+      boost: 0,
       stun: 0,
       weapon: null,
       pad: -1,
@@ -66,6 +77,22 @@ export class Race {
     }));
     this.player = this.racers[0];
     this.player.x = 0;
+    for (const r of this.racers) {
+      const f = track.frame(r.s);
+      r.position = f.p.clone().addScaledVector(f.right, r.x);
+      r.position.y += HOVER;
+      r.velocity = new THREE.Vector3();
+      r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      r.yawRate = 0;
+      r.pitchTrim = 0;
+      r.pitch = -Math.asin(f.tangent.y);
+      r.contactS = r.s;
+      r.gate = 1;
+      r.grounded = true;
+      r.checkpoint = { s: r.s, branch: 0, gate: 1 };
+      r.offroad = 0;
+      r.contactSound = 0;
+    }
   }
   emit(kind, text) {
     this.events.push({ kind, text });
@@ -73,17 +100,35 @@ export class Race {
   damage(r, amount) {
     if (r.protect > 0) return;
     r.shield -= amount / CRAFT[r.craft].armor;
-    r.speed *= 0.78;
+    r.velocity.multiplyScalar(0.78);
+    r.speed = Math.hypot(r.velocity.x, r.velocity.z);
     r.stun = 0.6;
     if (r.id === 0) this.emit("hit", "IMPACT");
     if (r.shield <= 0) {
       r.shield = 65;
-      r.speed = 25;
-      r.x = 0;
-      r.vx = 0;
+      this.recover(r);
       r.protect = 2;
       if (r.id === 0) this.emit("hit", "EMERGENCY REBOOT");
     }
+  }
+  recover(r) {
+    const { s, branch, gate } = r.checkpoint;
+    r.gate = gate;
+    const f = this.track.frame(s, branch);
+    r.position.copy(f.p);
+    r.position.y += HOVER;
+    r.velocity.set(0, 0, 0);
+    r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+    r.yawRate = 0;
+    r.pitchTrim = 0;
+    r.pitch = -Math.asin(f.tangent.y);
+    r.contactS = s;
+    r.s = s;
+    r.branch = branch;
+    r.speed = r.x = r.vx = r.h = r.vy = r.offroad = 0;
+    r.grounded = true;
+    r.flight = false;
+    r.boost = r.surge = 0;
   }
   fire(r = this.player) {
     if (!r.weapon || this.countdown > 0 || this.finished) return;
@@ -94,33 +139,44 @@ export class Race {
     else if (weapon === "SHIELD") {
       r.protect = 5;
       r.shield = Math.min(100, r.shield + 12);
-    } else if (weapon === "MINE")
+    } else if (weapon === "MINE") {
+      const forward = new THREE.Vector3(Math.sin(r.yaw), 0, Math.cos(r.yaw));
       this.mines.push({
-        s: r.s - 5,
+        s: r.s,
         x: r.x,
         branch: r.branch,
+        position: r.position.clone().addScaledVector(forward, -5),
         owner: r.id,
         life: 14,
       });
-    else {
-      const target = this.racers
-        .filter((t) => t.id !== r.id && t.branch === r.branch)
-        .map((t) => ({ r: t, d: mod(t.s - r.s, this.track.length) }))
-        .filter((t) => t.d < (weapon === "PULSE" ? 90 : 220))
+    } else {
+      const forward = new THREE.Vector3(Math.sin(r.yaw), 0, Math.cos(r.yaw));
+      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      const targets = this.racers
+        .filter((t) => t.id !== r.id)
+        .map((t) => {
+          const offset = t.position.clone().sub(r.position);
+          return {
+            r: t,
+            d: offset.dot(forward),
+            side: Math.abs(offset.dot(right)),
+            height: Math.abs(offset.y),
+          };
+        })
+        .filter((t) => t.d > 0 && t.height < 12);
+      const target = targets
+        .filter(
+          (t) => t.d < 220 && t.side < t.d * 0.6 && t.r.branch === r.branch,
+        )
         .sort((a, b) => a.d - b.d)[0];
       if (weapon === "PULSE") {
-        for (const t of this.racers)
-          if (
-            t.id !== r.id &&
-            mod(t.s - r.s, this.track.length) < 90 &&
-            Math.abs(t.x - r.x) < 10 &&
-            t.branch === r.branch
-          )
-            this.damage(t, 18);
+        for (const target of targets)
+          if (target.d < 90 && target.side < 10) this.damage(target.r, 18);
         this.shots.push({
           s: r.s,
           x: r.x,
           branch: r.branch,
+          position: r.position.clone(),
           owner: r.id,
           type: weapon,
           life: 0.35,
@@ -134,6 +190,8 @@ export class Race {
           branch: r.branch,
           owner: r.id,
           target: target?.r.id,
+          position: r.position.clone(),
+          velocity: forward.clone().multiplyScalar(320),
           type: weapon,
           life: 3,
         });
@@ -148,26 +206,43 @@ export class Race {
     }
     this.time += dt;
     const { track } = this;
+    const previousPositions = new Map(
+      this.racers.map((r) => [r, r.position.clone()]),
+    );
+    const previousProgress = new Map(this.racers.map((r) => [r, r.s]));
+    const previousYaw = new Map(this.racers.map((r) => [r, r.yaw]));
     for (const r of this.racers) {
-      const prev = r.s;
-      const oldFrame = track.frame(r.s, r.branch);
+      r.wallTouched = r.contactMoved = false;
+      r.contactSound = Math.max(0, r.contactSound - dt);
       const spec = CRAFT[r.craft];
       const ai = r.id !== 0;
-      const curve = track.curvature(r.s, r.branch);
-      let steer = input.steer;
-      let brake = input.brake;
-      let air = input.air;
+      let controls = input;
       if (ai) {
-        const desired = Math.sin(this.time * 0.45 + r.id * 2) * 3;
-        steer = clamp(
-          (desired - r.x) * 0.23 -
-            r.vx * 0.13 +
-            (curve * r.speed * r.speed * 0.25) / (29 * spec.handling),
-          -1,
-          1,
+        // A look-ahead driver, not a second movement model.
+        const look = track.frame(
+          r.contactS + Math.max(18, r.speed * 0.65),
+          r.branch,
         );
-        brake = Math.abs(curve) > 0.014 && r.speed > 68;
-        air = 0;
+        const desiredYaw = Math.atan2(
+          look.p.x - r.position.x,
+          look.p.z - r.position.z,
+        );
+        const error = angle(desiredYaw - r.yaw);
+        const curve = Math.max(
+          ...[0.25, 0.6, 1].map((t) =>
+            Math.abs(track.curvature(r.contactS + r.speed * t, r.branch)),
+          ),
+        );
+        const cornerSpeed = Math.sqrt(82 / Math.max(curve, 0.0001));
+        controls = {
+          throttle: true,
+          steer: clamp(error * 2.5 - r.yawRate * 0.25, -1, 1),
+          air: clamp(error * 0.8, -1, 1),
+          brake: Math.max(
+            clamp((r.speed - cornerSpeed) / 30, 0, 1),
+            Math.abs(error) > 0.7 ? 1 : 0,
+          ),
+        };
         r.aiFire -= dt;
         if (r.aiFire <= 0) {
           this.fire(r);
@@ -177,77 +252,229 @@ export class Race {
       r.protect = Math.max(0, r.protect - dt);
       r.surge = Math.max(0, r.surge - dt);
       r.stun = Math.max(0, r.stun - dt);
-      const throttle = ai || input.throttle;
-      const maxSpeed =
-        spec.speed * (ai ? 0.83 + r.id * 0.018 : 1) + (r.surge > 0 ? 38 : 0);
-      r.speed +=
-        ((throttle ? 40 : -18) -
-          r.speed * 0.13 -
-          (brake ? 62 : 0) -
-          Math.abs(air) * 19) *
-        dt;
-      r.speed = clamp(r.speed, 0, maxSpeed);
-      const traction = (r.h > 1 ? 0.5 : 1) * (r.stun ? 0.4 : 1);
-      r.vx +=
-        ((steer * 29 * spec.handling + air * 30) * traction -
-          curve * r.speed * r.speed * 0.25 -
-          r.vx * (2.3 + Math.abs(air) * 1.2)) *
-        dt;
-      r.x += r.vx * dt;
-      r.s += (r.speed * dt) / oldFrame.metric;
-      const f = track.frame(r.s, r.branch);
+      const left = controls.airLeft ?? Math.max(0, controls.air || 0);
+      const right = controls.airRight ?? Math.max(0, -(controls.air || 0));
+      const air = controls.air ?? left - right;
+      const airDrag = left + right;
+      r.pitchTrim +=
+        ((controls.pitch || 0) * 0.24 - r.pitchTrim) *
+        (1 - Math.exp(-dt / 0.16));
+      const yawTarget =
+        ((controls.steer || 0) * 0.9 * spec.handling + air * 0.5) *
+        (r.stun ? 0.45 : 1);
+      r.yawRate += (yawTarget - r.yawRate) * (1 - Math.exp(-dt / 0.2));
+      r.yaw += r.yawRate * dt;
+      const fx = Math.sin(r.yaw),
+        fz = Math.cos(r.yaw);
+      const rx = fz,
+        rz = -fx;
+      const lateralSpeed = r.velocity.x * rx + r.velocity.z * rz;
+      const grip = r.grounded ? 110 : 4;
+      const lateralForce = clamp(-lateralSpeed * 7, -grip, grip);
+      // Engines supply force; aerodynamic drag determines speed, not a velocity ceiling.
+      const boostTarget = r.surge > 0 ? 1 : 0;
+      r.boost +=
+        (boostTarget - r.boost) *
+        (1 - Math.exp(-dt / (boostTarget ? 0.35 : 1.1)));
+      const thrust = (controls.throttle ? spec.thrust : 0) + r.boost * 65;
+      const drag =
+        0.02 +
+        Math.hypot(r.velocity.x, r.velocity.z) * 0.0024 +
+        (controls.brake || 0) * 0.85 +
+        airDrag * 0.22;
+      r.velocity.x +=
+        (fx * thrust + rx * lateralForce - r.velocity.x * drag) * dt;
+      r.velocity.z +=
+        (fz * thrust + rz * lateralForce - r.velocity.z * drag) * dt;
+      if (!r.grounded) {
+        // Deflect momentum, not position: pulling up trades forward speed for climb.
+        // Authority tends to 20.16 m/s², below gravity, even at extreme velocity.
+        const pitchRate = (r.pitchTrim * 0.7) / (1 + r.velocity.length() / 120);
+        r.velocity.applyAxisAngle(new THREE.Vector3(rx, 0, rz), pitchRate * dt);
+      }
+      r.velocity.y -= 35 * dt;
+      r.position.addScaledVector(r.velocity, dt);
+    }
+    const roads = new Map(
+      this.racers.map((r) => [
+        r,
+        projectRoad(track, r.position, r.contactS, r.branch),
+      ]),
+    );
+    const constrainWall = (r) => {
+      r.contactMoved = true;
+      const road = roads.get(r);
+      const half = road.width - hullExtent(r, road.right);
+      const previousHalf =
+        road.width - hullExtent({ yaw: previousYaw.get(r) }, road.right);
+      const x = r.position.clone().sub(road.point).dot(road.right);
+      const oldX = previousPositions
+        .get(r)
+        .clone()
+        .sub(road.point)
+        .dot(road.right);
+      const height = r.position.y - road.point.y - HOVER;
+      if (
+        track.gap(mod(road.s, track.length) / track.length) ||
+        height <= -3 ||
+        height >= 4 ||
+        Math.abs(oldX) > previousHalf + 0.05 ||
+        Math.abs(x) <= half
+      )
+        return;
+      const sign = Math.sign(x);
+      r.position.addScaledVector(road.right, sign * (half - Math.abs(x)));
+      const outward = r.velocity.dot(road.right) * sign;
+      if (outward > 0)
+        r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
+      r.wallTouched = true;
+    };
+    // Resolve static barriers before hover contact as well as between pair iterations.
+    for (const r of this.racers) {
+      constrainWall(r);
+      r.contactMoved = r.wallTouched;
+    }
+    solveContacts(this.racers, constrainWall, (a, b, closing) => {
+      for (const r of [a, b]) {
+        if (closing > 12 && r.protect <= 0)
+          r.shield -= ((closing - 12) * 0.1) / CRAFT[r.craft].armor;
+        if (closing > 4 && r.contactSound === 0) {
+          if (r.id === 0) this.emit(closing > 18 ? "hit" : "scrape", "CONTACT");
+          r.contactSound = 0.25;
+        }
+      }
+    });
+    for (const r of this.racers) {
+      const previous = previousPositions.get(r);
+      const oldS = previousProgress.get(r);
+      const ai = r.id !== 0;
+      const road = r.contactMoved
+        ? projectRoad(track, r.position, r.contactS, r.branch)
+        : roads.get(r);
+      const u = mod(road.s, track.length) / track.length;
       const [splitStart, splitEnd] = track.config.split;
-      if (oldFrame.u < splitStart && f.u >= splitStart) {
-        r.branch = r.x < 0 ? -1 : 1;
-        if (r.id === 0)
-          this.emit(
-            "route",
-            r.branch < 0 ? "LEFT / COASTLINE" : "RIGHT / SKYLINE",
+      if (u > splitStart && u < splitEnd) r.branch = road.branch;
+      else r.branch = 0;
+      r.contactS = road.s;
+      r.x = road.x;
+      r.vx = r.velocity.dot(road.right);
+      const gap = track.gap(u);
+      const height = r.position.y - road.point.y - HOVER;
+      const half = road.width - hullExtent(r, road.right);
+      const onDeck = Math.abs(road.x) <= half + 0.05;
+      const wasGrounded = r.grounded;
+      r.grounded = !gap && onDeck && height < 1.2 && height > -3;
+      if (wasGrounded && !r.grounded && onDeck) r.flight = true;
+      if (r.grounded) {
+        r.flight = false;
+        // Contact supplies road height/vertical reaction only, never heading or XZ motion.
+        const slope =
+          road.tangent.y / Math.hypot(road.tangent.x, road.tangent.z);
+        const along =
+          r.velocity.x * road.tangent.x + r.velocity.z * road.tangent.z;
+        const roadVy = slope * along;
+        r.velocity.y += ((roadVy - r.velocity.y) * 18 - height * 90) * dt;
+        if (height < -0.35) {
+          r.position.y = road.point.y + HOVER - 0.35;
+          r.velocity.y = Math.max(r.velocity.y, roadVy);
+        }
+        if (!wasGrounded && r.id === 0) this.emit("land", "TOUCHDOWN");
+        r.offroad = 0;
+        if (
+          (u < track.config.jump - 0.025 || u > track.config.jump + 0.025) &&
+          road.s >= ((r.gate - 1) * track.length) / GATES &&
+          road.s < (r.gate * track.length) / GATES
+        )
+          r.checkpoint = { s: r.s, branch: r.branch, gate: r.gate };
+      } else if (gap && wasGrounded && r.id === 0) this.emit("jump", "FLIGHT");
+      if (r.grounded || (r.flight && onDeck && height > -3)) {
+        const gateS = (r.gate * track.length) / GATES;
+        const gateFrame = track.frame(gateS, r.branch);
+        const before = previous.clone().sub(gateFrame.p).dot(gateFrame.tangent);
+        const after = r.position
+          .clone()
+          .sub(gateFrame.p)
+          .dot(gateFrame.tangent);
+        if (before < 0 && after >= 0 && Math.abs(road.s - gateS) < 12) {
+          r.gate++;
+          if ((r.gate - 1) % GATES === 0 && (r.gate - 1) / GATES >= r.lap) {
+            r.lap++;
+            if (!ai) {
+              const lapTime = this.time - this.lapStart;
+              this.laps.push(lapTime);
+              this.bestLap = Math.min(this.bestLap, lapTime);
+              this.lapStart = this.time;
+              this.emit("lap", "LAP " + Math.min(3, r.lap) + " / 3");
+              if (r.lap > 3) {
+                this.finished = true;
+                this.emit("finish", "RACE COMPLETE");
+              }
+            }
+          }
+        }
+        r.s = clamp(
+          road.s,
+          r.gate === 1
+            ? Math.min(0, road.s)
+            : ((r.gate - 1) * track.length) / GATES,
+          (r.gate * track.length) / GATES - 0.001,
+        );
+      }
+      // Resolve a crossing from inside the barrier, never pull a remote body back to it.
+      const previousHalf =
+        road.width - hullExtent({ yaw: previousYaw.get(r) }, road.right);
+      const previousX =
+        road.x -
+        (r.position.x - previous.x) * road.right.x -
+        (r.position.z - previous.z) * road.right.z;
+      if (
+        r.wallTouched ||
+        (!gap &&
+          Math.abs(road.x) > half &&
+          Math.abs(previousX) <= previousHalf + 0.05 &&
+          height > -3 &&
+          height < 4)
+      ) {
+        const sign = Math.sign(road.x);
+        if (Math.abs(road.x) > half)
+          r.position.addScaledVector(
+            road.right,
+            sign * (half - Math.abs(road.x)),
           );
-      }
-      if (oldFrame.u < splitEnd && f.u >= splitEnd) r.branch = 0;
-      const half = f.width - 1.8;
-      if (Math.abs(r.x) > half) {
-        r.x = Math.sign(r.x) * half;
-        r.vx *= -0.25;
-        r.speed *= Math.pow(0.72, dt * 4);
-        r.shield -= dt * 4;
-        if (!ai && r.stun === 0) {
-          this.emit("scrape", "AIRBRAKE INTO THE TURN");
-          r.stun = 0.4;
+        const outward = r.velocity.dot(road.right) * sign;
+        if (outward > 0)
+          r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
+        r.velocity.x *= Math.exp(-3 * dt);
+        r.velocity.z *= Math.exp(-3 * dt);
+        if (r.protect <= 0) r.shield -= dt * 10;
+        if (r.stun === 0) {
+          r.stun = 0.3;
+          if (!ai) this.emit("scrape", "IMPACT");
         }
       }
-      if (oldFrame.u < track.config.jump && f.u >= track.config.jump) {
-        r.h = 8;
-        r.vy = 14 + r.speed * 0.12;
-        if (!ai) this.emit("jump", "FLIGHT");
+      if (!r.grounded) r.offroad += dt;
+      if (height < -18 || r.offroad > 3 || r.shield <= 0) {
+        const destroyed = r.shield <= 0;
+        this.recover(r);
+        r.shield = destroyed ? 65 : Math.max(10, r.shield - 24);
+        if (destroyed) r.protect = 2;
+        if (!ai) this.emit("hit", destroyed ? "EMERGENCY REBOOT" : "RESCUE");
+        continue;
       }
-      if (r.h > 0 || track.gap(f.u)) {
-        r.vy -= 35 * dt;
-        r.h += r.vy * dt;
-        if (r.h <= 0 && !track.gap(f.u)) {
-          r.h = 0;
-          r.vy = 0;
-          if (!ai) this.emit("land", "TOUCHDOWN");
-        }
-        if (r.h < -10) {
-          r.s =
-            (Math.floor(r.s / track.length) + track.config.jump + 0.019) *
-            track.length;
-          r.h = 0;
-          r.vy = 0;
-          r.speed = 35;
-          r.x = 0;
-          this.damage(r, 24);
-          if (!ai) this.emit("hit", "RESCUE / INSUFFICIENT VELOCITY");
-        }
-      }
-      r.lap = Math.floor(Math.max(0, r.s) / track.length) + 1;
-      const local = mod(r.s, track.length) / track.length;
+      r.h = Math.max(0, r.position.y - road.point.y - HOVER);
+      r.vy = r.velocity.y;
+      r.speed = Math.hypot(r.velocity.x, r.velocity.z);
+      r.pitch =
+        (r.grounded
+          ? -Math.asin(road.tangent.y)
+          : -Math.atan2(r.velocity.y, r.speed)) + r.pitchTrim;
       const crossed = PAD_POSITIONS.findIndex(
-        (p) => oldFrame.u < p && local >= p,
+        (p) =>
+          oldS < (Math.floor(r.s / track.length) + p) * track.length &&
+          r.s >= (Math.floor(r.s / track.length) + p) * track.length,
       );
       if (
+        r.grounded &&
         crossed >= 0 &&
         r.pad !== Math.floor(r.s / track.length) * 10 + crossed &&
         Math.abs(r.x) < 7
@@ -261,43 +488,34 @@ export class Race {
             WEAPONS[
               (Math.floor(this.time * 13) + r.id + crossed) % WEAPONS.length
             ];
-          if (!ai) this.emit("pickup", r.weapon + " / READY");
+          if (!ai) this.emit("pickup", r.weapon);
         } else r.shield = Math.min(100, r.shield + 8);
-      }
-      if (
-        Math.floor(prev / track.length) < Math.floor(r.s / track.length) &&
-        prev > 0 &&
-        !ai
-      ) {
-        const lapTime = this.time - this.lapStart;
-        this.laps.push(lapTime);
-        this.bestLap = Math.min(this.bestLap, lapTime);
-        this.lapStart = this.time;
-        this.emit("lap", "LAP " + Math.min(3, r.lap) + " / 3");
-        if (r.lap > 3) {
-          this.finished = true;
-          this.emit("finish", "RACE COMPLETE");
-        }
       }
       r.shield = clamp(r.shield, 0, 100);
     }
     for (const shot of this.shots) {
       shot.life -= dt;
       if (shot.type !== "SEEKER") continue;
-      const oldShotFrame = track.frame(shot.s, shot.branch);
-      shot.s += (210 * dt) / oldShotFrame.metric;
+      const previous = shot.position.clone();
       const target = this.racers[shot.target];
-      const shotFrame = track.frame(shot.s, shot.branch);
-      const [splitStart, splitEnd] = track.config.split;
-      if (oldShotFrame.u < splitStart && shotFrame.u >= splitStart)
-        shot.branch = target?.branch || (shot.x < 0 ? -1 : 1);
-      if (oldShotFrame.u < splitEnd && shotFrame.u >= splitEnd) shot.branch = 0;
       if (target) {
-        shot.x += (target.x - shot.x) * dt * 4;
-        if (
-          mod(target.s - shot.s, track.length) < 8 &&
-          target.branch === shot.branch
-        ) {
+        const desired = target.position.clone().sub(shot.position).normalize();
+        shot.velocity
+          .lerp(desired.multiplyScalar(320), 1 - Math.exp(-dt * 3))
+          .normalize()
+          .multiplyScalar(320);
+      }
+      shot.position.addScaledVector(shot.velocity, dt);
+      if (target) {
+        const segment = shot.position.clone().sub(previous);
+        const t = clamp(
+          target.position.clone().sub(previous).dot(segment) /
+            segment.lengthSq(),
+          0,
+          1,
+        );
+        const closest = previous.addScaledVector(segment, t);
+        if (closest.distanceTo(target.position) < 5) {
           this.damage(target, 28);
           shot.life = 0;
         }
@@ -307,31 +525,13 @@ export class Race {
     for (const mine of this.mines) {
       mine.life -= dt;
       for (const r of this.racers)
-        if (
-          r.id !== mine.owner &&
-          Math.abs(
-            mod(r.s - mine.s + track.length / 2, track.length) -
-              track.length / 2,
-          ) < 5 &&
-          Math.abs(r.x - mine.x) < 4 &&
-          r.branch === mine.branch
-        ) {
+        if (r.id !== mine.owner && r.position.distanceTo(mine.position) < 5) {
           this.damage(r, 24);
           mine.life = 0;
           break;
         }
     }
     this.mines = this.mines.filter((m) => m.life > 0);
-    for (const r of this.racers.slice(1))
-      if (
-        Math.abs(r.s - this.player.s) < 4 &&
-        r.branch === this.player.branch &&
-        Math.abs(r.x - this.player.x) < 3
-      ) {
-        const sign = this.player.x >= r.x ? 1 : -1;
-        this.player.vx += sign * dt * 35;
-        r.vx -= sign * dt * 35;
-      }
   }
   get position() {
     return 1 + this.racers.filter((r) => r.s > this.player.s).length;

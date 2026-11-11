@@ -114,7 +114,7 @@ export function circuitTextures(accent) {
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = "#b9baa6";
     ctx.font = "bold 8px monospace";
-    ctx.fillText("NV / TRANSIT", 0, 0);
+    ctx.fillText("BELMONDO / TRANSIT", 0, 0);
     ctx.restore();
     // Mottled worn paint across one service hatch.
     ctx.strokeStyle = "#5a635a";
@@ -159,7 +159,7 @@ export function circuitTextures(accent) {
     ctx.fillRect(5, 228, 56, 16);
     ctx.fillStyle = "#293a40";
     ctx.font = "bold 10px monospace";
-    ctx.fillText("NV—04", 8, 240);
+    ctx.fillText("BM—04", 8, 240);
     chips(18, "#b4c3ce");
   });
   const paint = raster(128, 128, (ctx, random, noise, chips) => {

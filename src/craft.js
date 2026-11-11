@@ -389,7 +389,7 @@ export function createCraft(scene, color) {
     shared.liveries.set(color, livery);
   }
   const craft = new THREE.Group();
-  craft.name = "NV-07";
+  craft.name = "BELMONDO-07";
   for (const name of ["core", "mechanical", "canopy"]) {
     const mesh = new THREE.Mesh(shared[name], shared.skinMaterial);
     mesh.name = name;
@@ -417,12 +417,12 @@ export function createCraft(scene, color) {
   scene.add(shadow, craft);
   craft.userData.shadow = shadow;
   craft.userData.updateExhaust = (speed, boost, time) => {
-    const length = (0.25 + Math.min(1.4, speed / 115)) * (boost ? 1.65 : 1);
+    const length = (0.25 + Math.min(1.4, speed / 175)) * (1 + boost * 0.65);
     for (let i = 0; i < flames.length; i++) {
       const flame = flames[i];
       flame.scale.z = length * (1 + Math.sin(time * 47 + i * 2) * 0.045);
-      flame.scale.x = boost ? 1.18 : 1;
-      flame.scale.y = boost ? 1.18 : 1;
+      flame.scale.x = 1 + boost * 0.18;
+      flame.scale.y = 1 + boost * 0.18;
     }
   };
   craft.userData.updateExhaust(0, false, 0);

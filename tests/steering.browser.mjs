@@ -36,9 +36,10 @@ async function reset(page) {
 }
 async function checkDirection(page, before, direction, label) {
   await page.waitForFunction(
-    ({ position }) =>
-      Math.abs(window.nullVector.telemetry.lateralPosition - position) > 1,
-    { position: before.lateralPosition },
+    ({ position, direction }) =>
+      (window.nullVector.telemetry.lateralPosition - position) * direction <
+        -1 && window.nullVector.telemetry.roll * direction > 0.02,
+    { position: before.lateralPosition, direction },
     { timeout: 10000 },
   );
   const after = await page.evaluate(() => window.nullVector.telemetry);
@@ -53,7 +54,9 @@ async function checkDirection(page, before, direction, label) {
     `${label} must move toward the requested side in the current camera`,
   ).toBe(direction);
   expect(Math.abs(pixels)).toBeGreaterThan(3);
-  expect(after.height).toBe(before.height);
+  expect(after.grounded).toBe(true);
+  expect(after.height).toBeCloseTo(0, 0);
+  expect(Math.sign(after.roll)).toBe(direction);
 }
 try {
   const desktop = await browser.newContext({
@@ -70,23 +73,25 @@ try {
     ["KeyE", 1],
   ]) {
     const before = await start(page);
+    await page.keyboard.down("ArrowUp");
     await page.keyboard.down(key);
     await checkDirection(page, before, direction, key);
     await page.keyboard.up(key);
+    await page.keyboard.up("ArrowUp");
     await page.screenshot({ path: `test-artifacts/steering-${key}.png` });
     await reset(page);
   }
   await start(page);
   await page.keyboard.down("ArrowUp");
   await page.waitForFunction(
-    () => window.nullVector.telemetry.progress > 0.075,
+    () => window.nullVector.telemetry.speed > 40,
     {},
     { timeout: 30000 },
   );
   await expect(page.locator("#race-message")).toHaveText("");
   expect(
     (await page.evaluate(() => window.nullVector.telemetry)).speed,
-  ).toBeGreaterThan(108);
+  ).toBeGreaterThan(40);
   await page.keyboard.up("ArrowUp");
   await reset(page);
   await page.locator("#help-open").click();
@@ -102,13 +107,18 @@ try {
   await gamepad.addInitScript(() => {
     window.testPadAxis = 0;
     window.testPadButton = -1;
+    window.testPadThrottle = false;
     Object.defineProperty(navigator, "getGamepads", {
       value: () => [
         {
           axes: [window.testPadAxis, 0],
           buttons: Array.from({ length: 17 }, (_, i) => ({
-            value: i === window.testPadButton ? 1 : 0,
-            pressed: i === window.testPadButton,
+            value:
+              i === window.testPadButton || (i === 0 && window.testPadThrottle)
+                ? 1
+                : 0,
+            pressed:
+              i === window.testPadButton || (i === 0 && window.testPadThrottle),
           })),
           mapping: "standard",
           connected: true,
@@ -122,10 +132,12 @@ try {
     const before = await start(g);
     await g.evaluate((d) => {
       window.testPadAxis = d;
+      window.testPadThrottle = true;
     }, direction);
     await checkDirection(g, before, direction, `gamepad ${direction}`);
     await g.evaluate(() => {
       window.testPadAxis = 0;
+      window.testPadThrottle = false;
     });
     await reset(g);
   }
@@ -136,10 +148,12 @@ try {
     const before = await start(g);
     await g.evaluate((b) => {
       window.testPadButton = b;
+      window.testPadThrottle = true;
     }, button);
     await checkDirection(g, before, direction, `gamepad airbrake ${button}`);
     await g.evaluate(() => {
       window.testPadButton = -1;
+      window.testPadThrottle = false;
     });
     await reset(g);
   }

@@ -4,7 +4,8 @@ import { PAD_POSITIONS } from "./race.js";
 import { circuitTextures } from "./materials.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
-import { buildFlagship } from "./flagship.js";
+import { buildSplitMarkers } from "./advertising.js";
+import { createCraft } from "./craft.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
 const mat = (color, extra = {}) =>
@@ -47,27 +48,9 @@ function quadGeometry(quads) {
   g.computeVertexNormals();
   return g;
 }
-function textTexture(text, bg = "#14202a", fg = "#e9ece6") {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 512, 128);
-  ctx.fillStyle = fg;
-  ctx.font = "italic 900 58px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, 256, 66, 480);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.magFilter = THREE.NearestFilter;
-  return texture;
-}
 
 export class World {
-  constructor(canvas, flagshipAssets) {
-    this.flagshipAssets = flagshipAssets;
+  constructor(canvas) {
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: false,
@@ -82,8 +65,14 @@ export class World {
     this.effects = [];
     this.time = 0;
     this.cameraReady = false;
+    this.view = "chase";
     this.quality = "clean";
     this.resize();
+  }
+  setView(view) {
+    this.view = view;
+    this.cameraReady = false;
+    this.cameraForward = null;
   }
   resize() {
     const scale =
@@ -376,14 +365,6 @@ export class World {
         this.scene.add(new THREE.Mesh(quadGeometry(chunk), material));
     }
     this.city = buildCity(this.scene, track, textures, environment);
-    if (track.config.banking)
-      buildFlagship(
-        this.scene,
-        track,
-        textures,
-        environment,
-        this.flagshipAssets,
-      );
     const obj = new THREE.Object3D();
     const supportFrames = Array.from({ length: 60 }, (_, i) => {
       const u = i / 60;
@@ -456,7 +437,7 @@ export class World {
       }
     }
     const startFrame = track.frame(0);
-    for (let x = -startFrame.width; x < startFrame.width; x += 2)
+    for (let x = -16; x < 16; x += 2)
       for (let z = 0; z < 4; z += 2) {
         const tile = new THREE.Mesh(
           new THREE.BoxGeometry(2, 0.05, 2),
@@ -473,7 +454,7 @@ export class World {
         );
         this.scene.add(tile);
       }
-    this.sign(cfg.split[0] - 0.024, "← SKY / COAST →", "#62fff0");
+    buildSplitMarkers(this.scene, track);
     const ribMaterial = mat(0xf5eee1, { map: textures.paint });
     const ribLight = basic(cfg.color);
     for (let i = 0; i < 6; i++) {
@@ -540,98 +521,12 @@ export class World {
     mesh.rotation.y = Math.atan2(f.tangent.x, f.tangent.z);
     this.scene.add(mesh);
   }
-  sign(u, text, fg, branch = 0) {
-    const f = this.track.frame(u * this.track.length, branch);
-    const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(32, 8),
-      new THREE.MeshBasicMaterial({
-        map: textTexture(text, "#17222a", fg),
-        side: THREE.DoubleSide,
-      }),
-    );
-    sign.position.copy(f.p).addScaledVector(f.up, 16);
-    sign.rotation.y = Math.atan2(f.tangent.x, f.tangent.z) + Math.PI;
-    this.scene.add(sign);
-    this.crossbar(f, 20, 20, 0x485964);
-  }
   makeShip(color) {
-    const group = new THREE.Group();
-    const hullMat = mat(color, { map: this.textures.paint }),
-      white = mat(0xdce5df, { map: this.textures.paint }),
-      dark = mat(0x233747);
-    const shape = new THREE.BufferGeometry();
-    const v = [
-      0, 0.4, 4.5, -1.7, 0, -2.4, 1.7, 0, -2.4, 0, 1.3, -0.9, 0, -0.55, -1.9,
-    ];
-    shape.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
-    shape.setAttribute(
-      "uv",
-      new THREE.Float32BufferAttribute(
-        [0.5, 1, 0, 0, 1, 0, 0.5, 0.36, 0.5, 0.07],
-        2,
-      ),
-    );
-    shape.setIndex([0, 1, 3, 0, 3, 2, 1, 2, 3, 0, 4, 1, 0, 2, 4, 1, 4, 2]);
-    shape.computeVertexNormals();
-    group.add(new THREE.Mesh(shape, white));
-    for (const side of [-1, 1]) {
-      const wing = new THREE.Mesh(
-        new THREE.BoxGeometry(1.3, 0.65, 4.5),
-        hullMat,
-      );
-      wing.position.set(side * 2.1, -0.12, -0.5);
-      wing.rotation.y = side * -0.18;
-      group.add(wing);
-      const stripe = new THREE.Mesh(
-        new THREE.BoxGeometry(0.5, 0.68, 3.3),
-        white,
-      );
-      stripe.position.set(side * 2.1, -0.1, -0.2);
-      stripe.rotation.y = side * -0.18;
-      group.add(stripe);
-      const nozzle = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.4), dark);
-      nozzle.position.set(side * 2.1, 0, -2.8);
-      group.add(nozzle);
-      const flame = new THREE.Mesh(
-        new THREE.ConeGeometry(0.5, 3.5, 4),
-        basic(0x35e6ff),
-      );
-      flame.rotation.x = -Math.PI / 2;
-      flame.position.set(side * 2.1, 0, -4.4);
-      flame.name = "flame";
-      group.add(flame);
-    }
-    const cockpit = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 1.8), dark);
-    cockpit.position.set(0, 1, 0.1);
-    group.add(cockpit);
-    const shield = new THREE.Mesh(
-      new THREE.SphereGeometry(4, 12, 8),
-      new THREE.MeshBasicMaterial({
-        color: 0x65f1ff,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.22,
-      }),
-    );
-    shield.visible = false;
-    shield.name = "shield";
-    group.add(shield);
-    const shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(3.7, 12),
-      new THREE.MeshBasicMaterial({
-        color: 0x10202b,
-        transparent: true,
-        opacity: 0.4,
-        depthWrite: false,
-      }),
-    );
-    shadow.rotation.x = -Math.PI / 2;
-    this.scene.add(shadow);
-    group.userData.shadow = shadow;
-    this.scene.add(group);
-    return group;
+    return createCraft(this.scene, color);
   }
   setupRacers(race, specs) {
+    this.cameraForward = null;
+    this.cameraReady = false;
     this.ships = race.racers.map((r) => this.makeShip(specs[r.craft].color));
   }
   burst(racer) {
@@ -640,10 +535,7 @@ export class World {
       const particle =
         this.sparkData[this.sparkCursor++ % this.sparkData.length];
       particle.life = 0.25 + Math.random() * 0.4;
-      particle.p
-        .copy(f.p)
-        .addScaledVector(f.right, racer.x)
-        .addScaledVector(f.up, 1.6);
+      particle.p.copy(racer.position);
       particle.v
         .copy(f.tangent)
         .multiplyScalar(-12 - Math.random() * 18)
@@ -657,21 +549,19 @@ export class World {
     const player = race.player,
       track = this.track;
     const f = track.frame(player.s, player.branch);
-    const base = f.p.clone().addScaledVector(f.right, player.x);
-    const focus = base.clone().addScaledVector(f.up, 2 + Math.max(0, player.h));
+    const focus = player.position.clone().addScaledVector(UP, 0.7);
+    const forward = new THREE.Vector3(
+      Math.sin(player.yaw),
+      0,
+      Math.cos(player.yaw),
+    );
+    this.cameraForward ??= forward.clone();
+    this.cameraForward.lerp(forward, 1 - Math.exp(-dt * 5)).normalize();
     const desired = focus
       .clone()
-      .addScaledVector(
-        f.tangent,
-        track.config.banking
-          ? -12 - player.speed * 0.02
-          : -15 - player.speed * 0.035,
-      )
-      .addScaledVector(UP, track.config.banking ? 4 : 7);
-    const ahead = track
-      .frame(player.s + 24, player.branch)
-      .p.addScaledVector(f.right, player.x * 0.5)
-      .addScaledVector(UP, 3 + Math.max(0, player.h) * 0.5);
+      .addScaledVector(this.cameraForward, -11 - player.speed * 0.018)
+      .addScaledVector(UP, 4.2);
+    const ahead = focus.clone().addScaledVector(this.cameraForward, 28);
     if (demo) {
       desired
         .copy(f.p)
@@ -684,51 +574,40 @@ export class World {
       this.camera.position.copy(desired);
       this.cameraReady = true;
     } else this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
-    this.camera.up
-      .copy(UP)
-      .lerp(f.up, track.config.banking ? 0.35 : 0)
-      .addScaledVector(f.right, clamp(0.006 * player.vx, -0.07, 0.07))
-      .normalize();
+    this.camera.up.copy(UP);
     this.camera.lookAt(ahead);
-    this.camera.fov = track.config.banking
-      ? (this.camera.aspect < 1 ? 72 : 52) +
-        Math.min(player.speed / 140, 1) * 4 +
-        (player.surge > 0 ? 2 : 0)
-      : 68 + player.speed * 0.065 + (player.surge > 0 ? 4 : 0);
+    const fov = 68 + player.speed * 0.085 + player.boost * 5;
+    this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3.5));
     this.camera.updateProjectionMatrix();
     for (const r of race.racers) {
       const ship = this.ships[r.id];
       if (!ship) continue;
-      const behind =
-        mod(player.s - r.s + track.length / 2, track.length) - track.length / 2;
-      ship.visible = demo || r.id === 0 || behind < 3 || behind > 28;
-      const rf = track.frame(r.s, r.branch);
-      ship.position
-        .copy(rf.p)
-        .addScaledVector(rf.right, r.x)
-        .addScaledVector(
-          rf.up,
-          1.6 + r.h + Math.sin(this.time * 8 + r.id) * 0.13,
-        );
-      const matrix = new THREE.Matrix4().makeBasis(rf.right, rf.up, rf.tangent);
-      ship.quaternion.setFromRotationMatrix(matrix);
-      ship.rotateZ(-r.vx * 0.024);
-      ship.rotateY(r.vx * 0.017);
-      ship.rotateX(r.h > 0 ? -0.09 : 0);
+      ship.visible = demo || r !== player || this.view !== "first-person";
+      const rf = track.frame(r.contactS, r.branch);
+      ship.position.copy(r.position);
+      const pitch = r.pitch;
+      ship.rotation.set(
+        pitch,
+        r.yaw,
+        clamp(-r.yawRate * 0.45, -0.5, 0.5),
+        "YXZ",
+      );
       ship.getObjectByName("shield").visible = r.protect > 0;
-      for (const child of ship.children)
-        if (child.name === "flame") {
-          child.scale.y =
-            (r.speed / 90 + 0.2) *
-            (r.surge > 0 ? 1.7 : 1) *
-            (1 + Math.sin(this.time * 45) * 0.15);
-        }
+      ship.userData.updateExhaust(r.speed, r.boost, this.time);
       const shadow = ship.userData.shadow;
-      shadow.position
-        .copy(rf.p)
-        .addScaledVector(rf.right, r.x)
-        .addScaledVector(rf.up, 0.12);
+      shadow.position.copy(r.position);
+      shadow.position.y = rf.p.y + 0.12;
       shadow.visible = r.h < 15 && ship.visible && !track.gap(rf.u);
+    }
+    if (!demo && this.view === "first-person") {
+      const ship = this.ships[player.id];
+      const up = UP.clone().applyQuaternion(ship.quaternion);
+      const gaze = new THREE.Vector3(0, 0, 1).applyQuaternion(ship.quaternion);
+      this.camera.position
+        .copy(player.position)
+        .add(new THREE.Vector3(0, 1.15, 0.6).applyQuaternion(ship.quaternion));
+      this.camera.up.copy(up);
+      this.camera.lookAt(this.camera.position.clone().add(gaze));
     }
     // Shared effect meshes are pooled rather than allocated on every animation frame.
     const live = [...race.shots, ...race.mines];
@@ -745,11 +624,14 @@ export class World {
         e = live[i];
       m.visible = !!e;
       if (e) {
-        const ef = track.frame(e.s, e.branch);
-        m.position
-          .copy(ef.p)
-          .addScaledVector(ef.right, e.x)
-          .addScaledVector(ef.up, 2);
+        if (e.position) m.position.copy(e.position);
+        else {
+          const ef = track.frame(e.s, e.branch);
+          m.position
+            .copy(ef.p)
+            .addScaledVector(ef.right, e.x)
+            .addScaledVector(ef.up, 2);
+        }
         m.rotation.set(this.time * 3, this.time * 5, 0);
         m.scale.setScalar(e.type === "PULSE" ? 6 : 1);
       }
