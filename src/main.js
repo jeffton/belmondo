@@ -3,9 +3,16 @@ import { TRACKS, makeTrack, clamp, mod } from "./track.js";
 import { Race, CRAFT } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine, MusicPlayer } from "./audio.js";
+import { createWeaponHUD } from "./weapon-ui.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
+const updateWeaponHUD = createWeaponHUD(
+  $("weapon"),
+  $("touch-fire"),
+  $("weapon-roster"),
+);
+updateWeaponHUD(null);
 const sound = new AudioEngine();
 const music = new MusicPlayer((state) => {
   $("music-status").textContent =
@@ -134,6 +141,7 @@ async function start() {
   $("menu").hidden = true;
   $("results").hidden = true;
   $("pause-panel").hidden = true;
+  updateWeaponHUD(race.player.weapon);
   $("hud").hidden = false;
   $("hud-track").textContent = TRACKS[selectedTrack].name;
   try {
@@ -416,9 +424,7 @@ function updateHUD(now) {
   $("shield-num").textContent = Math.ceil(p.shield);
   $("shield-bar").style.width = `${p.shield}%`;
   $("shield-bar").style.background = p.shield < 25 ? "#ff642a" : "#d4f53c";
-  $("weapon").innerHTML =
-    `${p.weapon || "—"}<small>${p.weapon ? "SPACE / FIRE" : "WEAPON SYSTEM IDLE"}</small>`;
-  $("weapon").classList.toggle("loaded", !!p.weapon);
+  updateWeaponHUD(p.weapon);
   if (race.countdown > 0) {
     const count = Math.ceil(race.countdown);
     $("race-message").className = "countdown";

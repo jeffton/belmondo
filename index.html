@@ -95,8 +95,12 @@
           ></canvas>
         </div>
         <div class="weapon">
-          <span class="hud-label">WEAPON SYSTEM</span
-          ><button id="weapon">— <small>SPACE / FIRE</small></button>
+          <span class="hud-label">EQUIPPED</span>
+          <button
+            id="weapon"
+            type="button"
+            aria-label="Fire: no weapon equipped"
+          ></button>
         </div>
         <div class="velocity">
           <strong id="speed">000</strong><span>KM/H</span>
@@ -123,7 +127,13 @@
           </div>
           <div>
             <button data-control="brake">BRAKE</button
-            ><button id="touch-fire">FIRE</button>
+            ><button
+              id="touch-fire"
+              type="button"
+              aria-label="Fire: no weapon equipped"
+            >
+              FIRE
+            </button>
           </div>
         </div>
       </div>
@@ -184,18 +194,13 @@
           </p>
           <h3>THE CIRCUIT</h3>
           <p>
-            Cyan pads boost. Lime pads arm one weapon. Pick a lane before the
-            split. Keep your speed over the jump. Wall contact scrubs velocity.
+            Cyan BOOST pads accelerate. Amber/magenta WEAPON pads arm one
+            weapon. Follow FORK signs and pick a lane before the split. Keep
+            your speed over the jump. Wall contact scrubs velocity.
           </p>
         </div>
       </div>
-      <div class="arsenal">
-        <b>SEEKER</b><span>Homing missile / 220 m lock</span><b>PULSE</b
-        ><span>Short-range forward shockwave</span><b>MINE</b
-        ><span>Persistent rear proximity charge</span><b>SHIELD</b
-        ><span>5 s protection + shield repair</span><b>SURGE</b
-        ><span>2.4 s overdrive</span>
-      </div>
+      <div id="weapon-roster" class="arsenal"></div>
       <p class="help-small">
         Three laps. Eight pilots. No rubber-banding. Time attack disables
         weapons. Records stay in this browser.

@@ -367,30 +367,59 @@ footer {
   margin-top: 14px;
 }
 .weapon {
-  width: 200px;
-  text-align: center;
+  width: 220px;
+  text-align: left;
   margin-bottom: 5px;
 }
 .weapon button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   width: 100%;
   margin-top: 8px;
-  border: 1px solid #c0d2da99;
-  background: #182d38cc;
-  min-height: 53px;
-  font: italic 800 25px "Barlow Condensed";
-  letter-spacing: 1px;
-}
-.weapon button.loaded {
-  background: var(--lime);
-  color: var(--ink);
-  border-color: var(--lime);
+  padding: 9px 14px;
+  border: 1px solid var(--weapon-color);
+  border-left: 4px solid var(--weapon-color);
+  background: #10202ced;
+  min-height: 78px;
+  text-align: left;
   text-shadow: none;
 }
-.weapon small {
+.weapon-icon {
   display: block;
-  font: 9px "IBM Plex Mono";
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  color: var(--weapon-color);
+}
+.weapon-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.weapon-name {
+  display: block;
+  font:
+    italic 900 30px/1 "Barlow Condensed",
+    sans-serif;
   letter-spacing: 1px;
-  margin-top: 3px;
+  color: var(--weapon-color);
+}
+.weapon-action {
+  display: block;
+  font:
+    9px/1 "IBM Plex Mono",
+    monospace;
+  letter-spacing: 1px;
+  color: var(--paper);
+}
+.weapon button.loaded {
+  box-shadow: inset 0 -3px var(--weapon-color);
+}
+.weapon button:active,
+.touch-actions #touch-fire:active {
+  background: #304452;
 }
 .velocity {
   text-align: right;
@@ -529,7 +558,8 @@ kbd {
 }
 .arsenal {
   display: grid;
-  grid-template-columns: 85px 1fr;
+  grid-template-columns: 126px 1fr;
+  align-items: center;
   gap: 8px;
   margin-top: 20px;
   border-top: 1px solid #526975;
@@ -537,7 +567,14 @@ kbd {
   font-size: 10px;
 }
 .arsenal b {
-  color: var(--lime);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--weapon-color);
+}
+.arsenal .weapon-icon {
+  width: 27px;
+  height: 27px;
 }
 .file-buttons {
   display: flex;
@@ -704,9 +741,36 @@ body.touch #touch-controls {
   border-radius: 5px;
 }
 .touch-actions #touch-fire {
-  background: var(--orange);
-  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px;
+  background: #10202ced;
+  color: var(--paper);
+  border-color: var(--weapon-color);
+  border-radius: 0;
+  text-shadow: none;
+}
+.touch-actions #touch-fire.loaded {
+  box-shadow: inset 0 -2px var(--weapon-color);
+}
+#touch-fire .weapon-icon {
+  width: 23px;
+  height: 29px;
+}
+#touch-fire .weapon-copy {
+  align-items: center;
+  gap: 3px;
+}
+#touch-fire .weapon-name {
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+#touch-fire .weapon-action {
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 .touch-actions button.pressed {
   background: var(--lime);
@@ -952,8 +1016,16 @@ body.touch .shield {
     width: 160px;
   }
   .weapon button {
-    font-size: 22px;
-    min-height: 45px;
+    gap: 9px;
+    padding: 7px 9px;
+    min-height: 59px;
+  }
+  .weapon .weapon-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .weapon-name {
+    font-size: 23px;
   }
   .panel {
     padding: 20px;

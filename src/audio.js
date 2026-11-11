@@ -304,7 +304,7 @@ export class AudioEngine {
             this.tone(220, 880, 0.5, 0.3, "triangle");
             this.tone(330, 1320, 0.5, 0.16, "sine");
             break;
-          case "SURGE":
+          case "TURBO":
             this.effect("boost");
             break;
           case "MINE":

@@ -39,7 +39,7 @@ export const CRAFT = [
     text: "Agile / strong shields / technical",
   },
 ];
-export const WEAPONS = ["SEEKER", "PULSE", "MINE", "SHIELD", "SURGE"];
+export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
 export const PAD_POSITIONS = [0.065, 0.21, 0.46, 0.58, 0.79, 0.91];
 
 export class Race {
@@ -135,7 +135,7 @@ export class Race {
     const weapon = r.weapon;
     r.weapon = null;
     if (r.id === 0) this.emit("fire", weapon);
-    if (weapon === "SURGE") r.surge = 2.4;
+    if (weapon === "TURBO") r.surge = 2.4;
     else if (weapon === "SHIELD") {
       r.protect = 5;
       r.shield = Math.min(100, r.shield + 12);
@@ -179,6 +179,7 @@ export class Race {
           position: r.position.clone(),
           owner: r.id,
           type: weapon,
+          direction: forward,
           life: 0.35,
         });
       } else {
@@ -521,7 +522,7 @@ export class Race {
     }
     for (const shot of this.shots) {
       shot.life -= dt;
-      if (shot.type !== "SEEKER") continue;
+      if (shot.type !== "MISSILE") continue;
       const previous = shot.position.clone();
       const target = this.racers[shot.target];
       if (target) {

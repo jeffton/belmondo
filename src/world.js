@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
-import { PAD_POSITIONS } from "./race.js";
+import { buildTrackPads } from "./track-pads.js";
+import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
@@ -65,7 +66,6 @@ export class World {
     this.camera = new THREE.PerspectiveCamera(68, 1, 0.4, 1700);
     this.scene = new THREE.Scene();
     this.ships = [];
-    this.effects = [];
     this.time = 0;
     this.cameraReady = false;
     this.view = "chase";
@@ -116,7 +116,6 @@ export class World {
     this.scene = new THREE.Scene();
     this.track = track;
     this.ships = [];
-    this.effects = [];
     this.cameraReady = false;
     const cfg = track.config;
     const flagship = cfg.name === "KAISEKI COAST";
@@ -266,25 +265,6 @@ export class World {
         if (!shared || branch === 1)
           addStrip(a, b, w - 0.5, w, 0.06, colors.white);
         if (i % 7 < 3) addStrip(a, b, -0.13, 0.13, 0.04, 0xb4c3cf);
-        if (i % 28 === 0) {
-          const point = ([x, z]) =>
-            a.p
-              .clone()
-              .addScaledVector(a.right, x)
-              .addScaledVector(a.tangent, z)
-              .addScaledVector(a.up, 0.1);
-          for (const side of [-1, 1])
-            quads.push({
-              p: [
-                [0, 5],
-                [side * 3, 0],
-                [side * 3, -1.5],
-                [0, 3.5],
-              ].map(point),
-              color: 0xe8f2ee,
-              kind: "light",
-            });
-        }
         for (const side of [-1, 1]) {
           if (shared && side === -branch) continue;
           const edgeA = clamp(a.width * side, a.clipMin, a.clipMax),
@@ -475,28 +455,7 @@ export class World {
       }
     });
     this.scene.add(supports, trusses);
-    for (const [i, u] of PAD_POSITIONS.entries()) {
-      for (const branch of u > cfg.split[0] && u < cfg.split[1]
-        ? [-1, 1]
-        : [0]) {
-        const f = track.frame(u * track.length, branch);
-        const pad = new THREE.Mesh(
-          new THREE.PlaneGeometry(12, 7),
-          new THREE.MeshBasicMaterial({
-            map: i % 3 === 0 ? textures.boost : textures.arms,
-          }),
-        );
-        pad.position.copy(f.p).addScaledVector(f.up, 0.09);
-        pad.quaternion.setFromRotationMatrix(
-          new THREE.Matrix4().makeBasis(
-            f.right,
-            f.tangent.clone().negate(),
-            f.up,
-          ),
-        );
-        this.scene.add(pad);
-      }
-    }
+    buildTrackPads(this.scene, track, textures);
     const startFrame = track.frame(0);
     for (let x = -startFrame.width; x < startFrame.width; x += 2)
       for (let z = 0; z < 4; z += 2) {
@@ -562,6 +521,7 @@ export class World {
         }
       }
     }
+    this.weaponEffects = new WeaponEffects(this.scene);
     this.effectMat = basic(0xff9730);
     this.sparks = new THREE.InstancedMesh(
       new THREE.TetrahedronGeometry(0.18),
@@ -589,6 +549,7 @@ export class World {
     return createCraft(this.scene, color);
   }
   setupRacers(race, specs) {
+    this.weaponEffects.reset();
     for (const ship of this.ships)
       this.scene.remove(ship, ship.userData.shadow, ship.userData.shield);
     for (const particle of this.sparkData) particle.life = 0;
@@ -683,33 +644,7 @@ export class World {
       this.camera.up.copy(up);
       this.camera.lookAt(this.camera.position.clone().add(gaze));
     }
-    // Shared effect meshes are pooled rather than allocated on every animation frame.
-    const live = [...race.shots, ...race.mines];
-    while (this.effects.length < live.length) {
-      const m = new THREE.Mesh(
-        new THREE.OctahedronGeometry(1.1),
-        this.effectMat,
-      );
-      this.scene.add(m);
-      this.effects.push(m);
-    }
-    for (let i = 0; i < this.effects.length; i++) {
-      const m = this.effects[i],
-        e = live[i];
-      m.visible = !!e;
-      if (e) {
-        if (e.position) m.position.copy(e.position);
-        else {
-          const ef = track.frame(e.s, e.branch);
-          m.position
-            .copy(ef.p)
-            .addScaledVector(ef.right, e.x)
-            .addScaledVector(ef.up, 2);
-        }
-        m.rotation.set(this.time * 3, this.time * 5, 0);
-        m.scale.setScalar(e.type === "PULSE" ? 6 : 1);
-      }
-    }
+    this.weaponEffects.update(race, dt, this.time);
     const sparkTransform = new THREE.Object3D();
     for (let i = 0; i < this.sparkData.length; i++) {
       const particle = this.sparkData[i];

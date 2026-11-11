@@ -212,35 +212,110 @@ export function circuitTextures(accent) {
     }
   });
   const pad = (boost) =>
-    raster(128, 64, (ctx, random, noise, chips) => {
-      noise(54, 27);
-      ctx.fillStyle = boost ? "#1ee5ef" : "#bedc45";
-      ctx.fillRect(3, 3, 122, 58);
-      ctx.fillStyle = "#26363b";
-      ctx.fillRect(6, 6, 116, 52);
-      ctx.fillStyle = boost ? "#5effed" : "#d6f166";
+    raster(256, 128, (ctx, random, noise, chips) => {
+      // A readable silhouette first; service detail stays inside the dark frame.
+      const ice = boost ? "#b4ffff" : "#ffe2a5";
+      const signal = boost ? "#23dae8" : "#ffb34a";
+      const secondary = boost ? "#125568" : "#d74a9b";
+      noise(26, 9);
+      const panel = (inset, cut, fill) => {
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.moveTo(inset + cut, inset);
+        ctx.lineTo(256 - inset - cut, inset);
+        ctx.lineTo(256 - inset, inset + cut);
+        ctx.lineTo(256 - inset, 128 - inset - cut);
+        ctx.lineTo(256 - inset - cut, 128 - inset);
+        ctx.lineTo(inset + cut, 128 - inset);
+        ctx.lineTo(inset, 128 - inset - cut);
+        ctx.lineTo(inset, inset + cut);
+        ctx.closePath();
+        ctx.fill();
+      };
+      panel(0, 14, "#74808b");
+      panel(3, 13, "#111e2c");
+      panel(9, 11, secondary);
+      panel(12, 10, "#152936");
+      // Bright rails are paired, rather than the generic on-road arrow language.
+      ctx.fillStyle = signal;
+      for (const x of [15, 231]) ctx.fillRect(x, 22, 10, 83);
+      ctx.fillStyle = ice;
+      for (const x of [17, 233]) ctx.fillRect(x, 25, 3, 76);
       if (boost) {
-        for (const y of [7, 23, 39]) {
-          ctx.beginPath();
-          ctx.moveTo(18, y);
-          ctx.lineTo(64, y + 10);
-          ctx.lineTo(110, y);
-          ctx.lineTo(110, y + 7);
-          ctx.lineTo(64, y + 17);
-          ctx.lineTo(18, y + 7);
-          ctx.fill();
+        // Transverse induction coils read as a cyan acceleration field at distance.
+        for (const y of [20, 31, 42]) {
+          ctx.fillStyle = secondary;
+          ctx.fillRect(34, y, 188, 8);
+          ctx.fillStyle = signal;
+          ctx.fillRect(43, y, 170, 3);
+          ctx.fillStyle = ice;
+          ctx.fillRect(53, y, 150, 1);
         }
+        ctx.fillStyle = "#0a1522";
+        ctx.fillRect(32, 56, 192, 43);
+        ctx.fillStyle = ice;
+        ctx.font = "900 39px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("BOOST", 128, 91);
+        ctx.fillStyle = signal;
+        for (const x of [37, 82, 127, 172]) ctx.fillRect(x, 105, 35, 6);
       } else {
-        ctx.fillRect(57, 13, 14, 38);
-        ctx.fillRect(45, 25, 38, 14);
-        ctx.strokeStyle = "#bbd852";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(28, 10, 72, 44);
+        // Split hexagonal armament socket: no medical cross or boost chevrons.
+        ctx.strokeStyle = secondary;
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(107, 17);
+        ctx.lineTo(78, 32);
+        ctx.lineTo(78, 56);
+        ctx.lineTo(107, 70);
+        ctx.moveTo(149, 17);
+        ctx.lineTo(178, 32);
+        ctx.lineTo(178, 56);
+        ctx.lineTo(149, 70);
+        ctx.stroke();
+        ctx.fillStyle = ice;
+        ctx.beginPath();
+        for (const [i, [x, y]] of [
+          [128, 17],
+          [143, 36],
+          [137, 36],
+          [137, 59],
+          [119, 59],
+          [119, 36],
+          [113, 36],
+        ].entries()) {
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = signal;
+        for (const x of [40, 199]) {
+          ctx.fillRect(x, 23, 17, 8);
+          ctx.fillRect(x, 42, 17, 8);
+          ctx.fillRect(x, 61, 17, 8);
+        }
+        ctx.fillStyle = "#0b1421";
+        ctx.fillRect(32, 78, 192, 34);
+        ctx.fillStyle = ice;
+        ctx.font = "900 30px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("WEAPON", 128, 104);
       }
-      chips(160, "#384642aa");
-      ctx.fillStyle = "#a8b2a0";
-      for (const x of [9, 116])
-        for (const y of [9, 53]) ctx.fillRect(x, y, 3, 2);
+      // Edge-only wear keeps the field and its lettering intact.
+      ctx.fillStyle = "#9299a0";
+      for (let i = 0; i < 65; i++) {
+        const x = 25 + random() * 205;
+        const y = random() > 0.5 ? 4 : 120;
+        ctx.fillRect(x, y, 1 + random() * 4, 1);
+      }
+      for (const x of [8, 245])
+        for (const y of [18, 107]) {
+          ctx.fillStyle = "#020913";
+          ctx.fillRect(x, y, 4, 4);
+          ctx.fillStyle = "#a6b5bd";
+          ctx.fillRect(x + 1, y, 2, 1);
+        }
     });
   return {
     concrete,

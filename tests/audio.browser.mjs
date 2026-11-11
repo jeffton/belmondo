@@ -275,7 +275,7 @@ try {
           a.stopEngine();
         },
       ],
-      ...["MISSILE", "PULSE", "MINE", "SHIELD", "SURGE"].map((weapon) => [
+      ...["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"].map((weapon) => [
         weapon,
         (a) => a.effect("fire", weapon),
       ]),

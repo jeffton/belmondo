@@ -677,7 +677,7 @@ test("reversed ship fires forward in body space and leaves a stationary mine beh
   race.fire();
   assert.equal(behind.shield, 100, "track-forward is behind the reversed ship");
   assert(ahead.shield < 100, "pulse follows the actual nose");
-  p.weapon = "SEEKER";
+  p.weapon = "MISSILE";
   race.fire();
   assert.equal(race.shots.at(-1).target, ahead.id);
   p.weapon = "MINE";
