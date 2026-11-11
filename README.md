@@ -7,7 +7,7 @@ Original browser-based anti-gravity combat racer. Three circuits, eight pilots, 
 https://antigrav.roybot.se
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes (Q/E also work), I nose down / K nose up, S/↓ brake, Space fire, V camera, P/Esc pause.
-- **Gamepad:** left stick steer, right stick pitch, A/R2 thrust, L1/R1 airbrakes, X fire, B brake, Y camera, Start pause.
+- **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, B brake, Y camera, Start pause.
 - **Touch:** automatic thrust, two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and brake/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
 
 Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equipped items have individual silhouettes, names and colors: red MISSILE (homing), magenta PULSE, amber MINE, cyan SHIELD and electric-blue TURBO. Equipped items appear below the timer at the top of the HUD; the indicator disappears when unarmed. Fire with Space, the inventory button or the separate mobile FIRE control. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Three-lap records are stored locally per circuit/craft/mode.

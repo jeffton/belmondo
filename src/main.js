@@ -331,7 +331,7 @@ function input() {
   const pad = navigator.getGamepads?.()[0];
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) steer = pad.axes[0];
-    if (Math.abs(pad.axes[3]) > 0.12) pitch = -pad.axes[3];
+    if (Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
     airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
     airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
     throttle =
