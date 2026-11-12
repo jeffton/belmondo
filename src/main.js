@@ -27,6 +27,7 @@ const music = new MusicPlayer((state) => {
       : "NO LOCAL TRACKS LOADED");
 });
 music.volume = 0.65;
+music.setMenu(true);
 music.loadTracks(soundtrack, { shuffle: true });
 let musicEnabled = true;
 let world;
@@ -171,7 +172,6 @@ async function start(event) {
     await Promise.all([audioStart, musicStart]);
   } catch (error) {
     if (generation !== startGeneration) return;
-    music.pause();
     sound.setPaused(true);
     window.alert(`Could not load audio: ${error.message}`);
     return;
@@ -190,6 +190,7 @@ async function start(event) {
   world.cameraReady = false;
   last = performance.now();
   state = "race";
+  music.setMenu(false);
   paused = false;
   accumulator = 0;
   previousCount = 4;
@@ -211,7 +212,8 @@ function setPaused(value) {
   if (paused) $("pause-panel").showModal();
   else $("pause-panel").close();
   sound.setPaused(paused);
-  if (paused) music.pause();
+  music.setMenu(paused);
+  if (paused) music.setTunnel(false);
   else if (musicEnabled) music.play();
 }
 function quit() {
@@ -226,7 +228,7 @@ function quit() {
   $("start").focus();
   sound.setPaused(true);
   sound.stopCrowd();
-  music.pause();
+  music.setMenu(true);
   music.setTunnel(false);
   world.cameraReady = false;
 }
@@ -314,7 +316,10 @@ window.addEventListener("blur", () => {
   clearInput();
 });
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden && state === "race") setPaused(true);
+  if (document.hidden) {
+    if (state === "race") setPaused(true);
+    music.pause();
+  }
   last = performance.now();
 });
 for (const b of document.querySelectorAll("[data-control]")) {
@@ -456,6 +461,7 @@ function drawMap() {
 }
 function showResults() {
   state = "results";
+  music.setMenu(true);
   music.setTunnel(false);
   sound.stopEngine();
   sound.stopCrowd();

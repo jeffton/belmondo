@@ -38,8 +38,10 @@ try {
       createGain() {
         const gain = super.createGain();
         if (!window.effectMasterGain) window.effectMasterGain = gain;
-        if (this === window.musicContext && !window.musicOutputGain)
-          window.musicOutputGain = gain;
+        if (this === window.musicContext) {
+          if (!window.musicOutputGain) window.musicOutputGain = gain;
+          else if (!window.musicSceneGain) window.musicSceneGain = gain;
+        }
         return gain;
       }
     };
@@ -146,21 +148,36 @@ try {
     "Native MP3 playback time must advance in the browser",
   );
 
-  // Pause/resume the game without changing an explicit user choice to stop music.
+  // Game menus keep the same recording running quietly; manual transport pause is separate.
+  const beforePause = await page.evaluate(() => ({
+    src: window.musicAudioElements.at(-1).src,
+    time: window.musicAudioElements.at(-1).currentTime,
+  }));
   await page.locator("#pause").click();
   await expect(page.locator("#pause-panel")).toBeVisible();
   await expect
-    .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
-    .toBe(true);
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBeCloseTo(0.35, 5);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    false,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforePause.src,
+  );
+  assert(
+    (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
+      beforePause.time,
+  );
   await page.locator("#resume").click();
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBe(1);
   await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
   await page.locator("#pause").click();
   await expect(page.locator("#pause-panel")).toBeVisible();
   await page.locator("#pause-music").click();
-  await page.locator("#music-play").click();
-  await expect
-    .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
-    .toBe(false);
   await page.locator("#music-play").click();
   await expect
     .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
@@ -276,6 +293,25 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
     .toBe(false);
+  // Drive the document lifecycle event while retaining native audio transport.
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
+  await page.evaluate(() => {
+    delete document.hidden;
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    true,
+  );
+  await page.locator("#resume").click();
+  await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
   const beforeBlur = await page.evaluate(
     () => window.musicAudioElements.at(-1).currentTime,
   );
@@ -295,11 +331,68 @@ try {
       beforeBlur,
     "Music playback should resume after focus and game resume",
   );
+  const beforeQuit = await page.evaluate(() => ({
+    src: window.musicAudioElements.at(-1).src,
+    time: window.musicAudioElements.at(-1).currentTime,
+  }));
   await page.locator("#pause").click();
   await page.locator("#quit").click();
   await expect
-    .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
-    .toBe(true);
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBeCloseTo(0.35, 5);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    false,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeQuit.src,
+  );
+  assert(
+    (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
+      beforeQuit.time,
+  );
+  await page.locator("#start").click();
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBe(1);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeQuit.src,
+  );
+  assert(
+    (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
+      beforeQuit.time,
+  );
+  await page.locator("#pause").click();
+  await page.locator("#restart").click();
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBe(1);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeQuit.src,
+  );
+  await page.locator("#pause").click();
+  await page.locator("#pause-music").click();
+  await page.locator("#music-play").click();
+  await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
+  const manualTime = await page.evaluate(
+    () => window.musicAudioElements.at(-1).currentTime,
+  );
+  await page.locator("#music-dialog .close").click();
+  await page.locator("#quit").click();
+  await page.locator("#start").click();
+  await page.locator("#pause").click();
+  await page.locator("#restart").click();
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    true,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).currentTime),
+    manualTime,
+  );
   assert.deepEqual(errors, [], "No uncaught browser errors");
   console.log(
     JSON.stringify(
@@ -316,7 +409,9 @@ try {
           "next and ended advance",
           "local override and OST restore",
           "independent music/effects controls",
-          "blur and quit pause music",
+          "blur and hidden document pause music without automatic resume",
+          "quiet menu/race gain and track continuity",
+          "quit and restart preserve manual transport pause",
           "portrait controls fit",
         ],
       },
