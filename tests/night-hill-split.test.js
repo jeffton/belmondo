@@ -10,7 +10,7 @@ import { projectRoad } from "../src/road-projection.js";
 test("Night hill routes cross at two physical levels and return on opposite sides", () => {
   const track = makeTrack(2),
     L = track.length;
-  assert.equal(track.config.layoutId, "noctilucent-4");
+  assert.equal(track.config.layoutId, "noctilucent-4-finish-end");
   for (const u of [0.3, 0.43]) {
     const delta = track.frame(u * L, 1).p.sub(track.frame(u * L, -1).p);
     assert.equal(

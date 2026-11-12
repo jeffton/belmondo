@@ -26,9 +26,9 @@ test("all courses expose wider main decks and keep both split routes clear", () 
 });
 
 const legacyRadius = {
-  "coast-4": 79.18256462241654,
-  "solar-4": 94.08613815383424,
-  "noctilucent-4": 102.80189052236103,
+  "coast-4-finish-end": 79.18256462241654,
+  "solar-4-finish-end": 94.08613815383424,
+  "noctilucent-4-finish-end": 102.80189052236103,
 };
 for (let index = 0; index < TRACKS.length; index++) {
   test(`${TRACKS[index].name}: authored bend radius and any jump's aligned ballistic landing`, () => {
@@ -54,9 +54,11 @@ for (let index = 0; index < TRACKS.length; index++) {
     else
       assert.ok(
         minimumRadius >=
-          ({ "monsoon-4": 95, "cinderline-2": 89, "vesper-1": 66 }[
-            track.config.layoutId
-          ] ?? 150),
+          ({
+            "monsoon-4-finish-end": 95,
+            "cinderline-2-finish-end": 89,
+            "vesper-1-finish-end": 66,
+          }[track.config.layoutId] ?? 150),
         `Tight road kink: radius ${minimumRadius} m`,
       );
     if (track.config.jump !== null) {

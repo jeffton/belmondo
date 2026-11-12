@@ -16,9 +16,9 @@ test("CINDERLINE: integrated Whiteout and Monsoon configurations match accepted 
     createHash("sha256")
       .update(JSON.stringify(NEW_COURSES.slice(0, 2)))
       .digest("hex"),
-    "0b13310fc69beff0c8de8ec0ee610de0ff994942b05c3fadb444c2728e9bf402",
+    "d33dad62aaad8ab195bdb4de7596510988609eafe2f1836566422c1294744843",
   );
-  assert.equal(TRACKS[5].layoutId, "cinderline-2");
+  assert.equal(TRACKS[5].layoutId, "cinderline-2-finish-end");
 });
 
 test("CINDERLINE: visible setup, real gap, downhill landing and asymmetric fork", () => {

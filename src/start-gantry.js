@@ -113,13 +113,6 @@ function drawPip(ctx, stage) {
   ctx.restore();
 }
 
-// Shared by the physical display and countdown voice dispatch.
-export function countdownBoardStage(race) {
-  if (race.countdown > 3) return "armed";
-  if (race.countdown > 0) return Math.ceil(race.countdown);
-  return race.time < 1.2 ? "GO" : "idle";
-}
-
 // The display, stripe and timing plane share the authored straight endpoint.
 export function buildStartGantry(scene, track) {
   const signal = track.frame(track.finishS);

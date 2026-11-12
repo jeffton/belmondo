@@ -4,9 +4,14 @@ import { makeTrack } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 
 const legacy = [
-  { index: 0, id: "coast-4", technical: [0.43, 0.51], turbo: 0.42 },
-  { index: 1, id: "solar-4", technical: [0.77, 0.92], turbo: 0.77 },
-  { index: 2, id: "noctilucent-4", technical: [0.08, 0.19], turbo: 0.08 },
+  { index: 0, id: "coast-4-finish-end", technical: [0.43, 0.51], turbo: 0.42 },
+  { index: 1, id: "solar-4-finish-end", technical: [0.77, 0.92], turbo: 0.77 },
+  {
+    index: 2,
+    id: "noctilucent-4-finish-end",
+    technical: [0.08, 0.19],
+    turbo: 0.08,
+  },
 ];
 
 function physicalRadius(track, s, branch = 0) {

@@ -7,12 +7,12 @@ import { createTerrain } from "../src/terrain.js";
 
 // Intentional integrated legacy-v4, Whiteout-2, Cinderline-2 and Vesper configs.
 const unchanged = {
-  0: "c6d77d194b8a15648e39de2caa3eced7ea56b9ea6db29bc51e26bedd84664d19",
-  1: "686274b6441f75a0b9c83538200cc206de7e8464ec84abbbff1cd5e4e623a25f",
-  2: "c78e901591a63ea99f5c1d28574f475536adfbe29aad2cddc6dcd86a1e9ef048",
-  3: "239492a08c400f1161afa3321a19c0ec2110de27a7c672da934338bfbb6ea264",
-  5: "3f90bf9b4f883394a69213eda32ee5e4afa6a4cba30f972f2aa2e1a188f66dfe",
-  6: "6f6188271f10b922eb3ee78352b2f6ae6f967c51608819db4a3cab5ee6d75614",
+  0: "8511931749978e55e724f0f88f78291e33597f439c08e457fd738dc5f5935bcf",
+  1: "d715040db09c0fe2c065393c76f13c461d9edea6ff329dd39605e8571e9741ca",
+  2: "7cb03942ffa0f9a8d9ab32a731146b129c94136a8554fc4fca438aee6e6fd787",
+  3: "0681393a868d69e29f13f7059cd3bcc9ff48ff5763d83fc45681f86cad280c82",
+  5: "712c4f96e379f6460ffedbe759c66773bbff0c8623741f0ec483b47621af1c44",
+  6: "344855ae9bcd3c7a939c68cb6d520778f96df9f96b914eb48366622896b266ae",
 };
 test("the other six integrated course configurations match their accepted authored versions", () => {
   for (const [index, hash] of Object.entries(unchanged))
@@ -26,7 +26,7 @@ const track = makeTrack(4);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 test("spillway is a steep continuous dry descent with a low curved lock and climbing fork", () => {
-  assert.equal(track.config.layoutId, "monsoon-4");
+  assert.equal(track.config.layoutId, "monsoon-4-finish-end");
   assert.equal(track.config.jump, null);
   let steepest = 0;
   for (let i = 0; i < 12000; i++) {

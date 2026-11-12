@@ -13,7 +13,9 @@ test("race clock crosses each physical countdown stage once, with no wall timer"
     if (stage !== previous) announcements.push(stage);
     previous = stage;
   };
-  for (let frame = 0; frame < 420; frame++) {
+  // Five seconds of real race updates, plus half a second paused, includes
+  // the two-second armed approach and all three spoken countdown stages.
+  for (let frame = 0; frame < 660; frame++) {
     // Pausing is the main loop withholding race updates. Rendering continues.
     if (frame < 100 || frame >= 160) race.update(1 / 120, {});
     tick();

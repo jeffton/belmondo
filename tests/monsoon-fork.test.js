@@ -17,7 +17,7 @@ test("Monsoon fork changes no crest, spillway, lock, outlet or shared base frame
     createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
     "acd548bf47f2ff2b2f0d743a16b0ed3fb97f0d489ab735abfdb947d29ea914ed",
   );
-  assert.equal(track.config.layoutId, "monsoon-4");
+  assert.equal(track.config.layoutId, "monsoon-4-finish-end");
 });
 
 test("low pressure conduit and exposed reservoir route are distinct physical levels with level shared noses", () => {

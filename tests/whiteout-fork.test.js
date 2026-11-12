@@ -15,7 +15,7 @@ const hash = (value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
 test("WHITEOUT: public spiral, base deck and existing fork stations are preserved", () => {
-  assert.equal(track.config.layoutId, "whiteout-2");
+  assert.equal(track.config.layoutId, "whiteout-2-finish-end");
   assert.deepEqual(track.config.split, [0.74, 0.87]);
   // Captured from d026dd3: every authored point and the full unsplit deck,
   // including the beloved descending basin spiral, not just its section name.
