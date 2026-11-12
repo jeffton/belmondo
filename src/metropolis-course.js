@@ -4,11 +4,11 @@
 const blocks = [
   [-600, 90, 0, 140],
   [1100, 90, 0, 140],
-  [1100, 145, 650, 120],
-  [500, 145, 650, 110],
-  [500, 190, 1150, 120],
-  [1200, 190, 1150, 150],
-  [1200, 130, 1800, 150],
+  [1100, 145, 650, 130],
+  [850, 145, 650, 85],
+  [900, 145, 880, 100],
+  [1200, 145, 880, 150],
+  [1200, 190, 1800, 150],
   [-100, 70, 1800, 130],
   [-100, 45, 1250, 110],
   [-750, 45, 1250, 110],
@@ -26,23 +26,36 @@ function cityRibbon() {
   const corners = blocks.map(([x, y, z, radius], i) => {
     const before = blocks[(i + blocks.length - 1) % blocks.length];
     const after = blocks[(i + 1) % blocks.length];
-    const incoming = [Math.sign(x - before[0]), Math.sign(z - before[2])];
-    const outgoing = [Math.sign(after[0] - x), Math.sign(after[2] - z)];
-    const entry = [x - incoming[0] * radius, y, z - incoming[1] * radius];
-    const exit = [x + outgoing[0] * radius, y, z + outgoing[1] * radius];
+    const beforeLength = Math.hypot(x - before[0], z - before[2]);
+    const afterLength = Math.hypot(after[0] - x, after[2] - z);
+    const incoming = [
+      (x - before[0]) / beforeLength,
+      (z - before[2]) / beforeLength,
+    ];
+    const outgoing = [
+      (after[0] - x) / afterLength,
+      (after[2] - z) / afterLength,
+    ];
+    const turn = Math.atan2(
+      incoming[0] * outgoing[1] - incoming[1] * outgoing[0],
+      incoming[0] * outgoing[0] + incoming[1] * outgoing[1],
+    );
+    const trim = radius * Math.tan(Math.abs(turn) / 2);
+    const entry = [x - incoming[0] * trim, y, z - incoming[1] * trim];
+    const exit = [x + outgoing[0] * trim, y, z + outgoing[1] * trim];
     const center = [
-      entry[0] + outgoing[0] * radius,
-      entry[2] + outgoing[1] * radius,
+      entry[0] - incoming[1] * Math.sign(turn) * radius,
+      entry[2] + incoming[0] * Math.sign(turn) * radius,
     ];
     const start = Math.atan2(entry[2] - center[1], entry[0] - center[0]);
-    const turn = incoming[0] * outgoing[1] - incoming[1] * outgoing[0];
     return { entry, exit, center, start, turn, radius };
   });
   const points = [];
   for (let i = 0; i < corners.length; i++) {
     const c = corners[i];
-    for (let j = 0; j < 9; j++) {
-      const a = c.start + (c.turn * Math.PI * j) / 16;
+    const arcSteps = Math.ceil(Math.abs(c.turn) / (Math.PI / 12));
+    for (let j = 0; j <= arcSteps; j++) {
+      const a = c.start + (c.turn * j) / arcSteps;
       points.push([
         c.center[0] + c.radius * Math.cos(a),
         c.entry[1],
@@ -51,7 +64,7 @@ function cityRibbon() {
     }
     const next = corners[(i + 1) % corners.length].entry;
     const distance = Math.hypot(next[0] - c.exit[0], next[2] - c.exit[2]);
-    const steps = Math.ceil(distance / 45);
+    const steps = Math.ceil(distance / 90);
     for (let j = 1; j < steps; j++) {
       const t = j / steps;
       const smooth = t * t * (3 - 2 * t);
@@ -87,7 +100,7 @@ export const METROPOLIS_COURSE = {
   width: 20,
   branchWidths: [18, 18],
   points: cityRibbon(),
-  split: [0.31, 0.435],
+  split: [0.285, 0.355],
   fork: {
     offsets: [-55, 80],
     rise: [0, 48],
@@ -106,7 +119,7 @@ export const METROPOLIS_COURSE = {
     runway: null,
     rooftopClimb: [0.08, 0.27],
     rooftopDescent: [0.27, 0.44],
-    elevatedFork: [0.31, 0.435],
+    elevatedFork: [0.285, 0.355],
     marketChicane: [0.46, 0.63],
     towerCanyon: [0.63, 0.8],
     lowerCity: [0.8, 0.94],
