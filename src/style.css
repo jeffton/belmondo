@@ -37,6 +37,10 @@ select {
 button {
   cursor: pointer;
 }
+body.race-active,
+body.race-active * {
+  cursor: none;
+}
 button,
 #hud,
 .file-buttons label {
