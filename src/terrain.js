@@ -1,5 +1,10 @@
 import * as THREE from "three";
 import { getWaterfrontDistricts } from "./course-geography.js";
+import {
+  newCourseRecipe,
+  assertKnownEnvironment,
+  biomeLandHeight,
+} from "./new-course-recipes.js";
 
 const smooth = (a, b, x) => THREE.MathUtils.smoothstep(x, a, b);
 const STEP = 23;
@@ -29,6 +34,8 @@ export function groundedGeometryOffset(
 
 /** One indexed surface is shared by scenery foundations and the rendered land. */
 export function createTerrain(track) {
+  assertKnownEnvironment(track);
+  const recipe = newCourseRecipe(track);
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
   const samples = [];
@@ -57,7 +64,9 @@ export function createTerrain(track) {
   const upperBridge = track.config.sections.upperBridge;
   const onUpperBridge = (u) =>
     upperBridge && u >= upperBridge[0] && u <= upperBridge[1];
-  const crossings = (harbor ? [0.135, 0.5] : desert ? [] : [0.215]).map((u) => {
+  const crossings = (
+    recipe ? [] : harbor ? [0.135, 0.5] : desert ? [] : [0.215]
+  ).map((u) => {
     const f = track.frame(u * track.length);
     return {
       p: f.p,
@@ -80,15 +89,19 @@ export function createTerrain(track) {
     }
     return cut;
   }
-  const jump = track.frame(
-    (track.config.jump + track.config.gapLength / 2) * track.length,
-  );
-  const ravineHalfLength = (track.config.gapLength * track.length) / 2 + 12;
-  const jumpForward = new THREE.Vector2(
-    jump.tangent.x,
-    jump.tangent.z,
-  ).normalize();
+  const jump = recipe
+    ? null
+    : track.frame(
+        (track.config.jump + track.config.gapLength / 2) * track.length,
+      );
+  const ravineHalfLength = recipe
+    ? null
+    : (track.config.gapLength * track.length) / 2 + 12;
+  const jumpForward = jump
+    ? new THREE.Vector2(jump.tangent.x, jump.tangent.z).normalize()
+    : null;
   function ravine(x, z) {
+    if (recipe) return 0;
     const along = Math.abs(
       (x - jump.p.x) * jumpForward.x + (z - jump.p.z) * jumpForward.y,
     );
@@ -116,7 +129,16 @@ export function createTerrain(track) {
     const { frame: f, distance } = nearest(x, z);
     const r = Math.hypot((x - centerX) / radiusX, (z - centerZ) / radiusZ);
     let base;
-    if (desert) {
+    if (recipe) {
+      base = biomeLandHeight(recipe, x, z, {
+        centerX,
+        centerZ,
+        radiusX,
+        radiusZ,
+        distance,
+        roadY: f.p.y,
+      });
+    } else if (desert) {
       const strata = 12 * Math.sin(z * 0.006 + x * 0.002);
       const mesa = smooth(80, 170, distance) * (1 - smooth(350, 650, distance));
       base =
@@ -139,6 +161,13 @@ export function createTerrain(track) {
     if (distance > f.width + 38) y = Math.max(y, base);
     const cut = Math.max(waterway(x, z), ravine(x, z));
     y = THREE.MathUtils.lerp(y, desert ? 15 : -25, cut);
+    if (recipe?.biome === "hydraulic") {
+      const [start, end] = track.config.sections.dryLock;
+      // Excavated reservoir shelves stay below the retained local water, while
+      // the dry road remains lower still. No water is placed on the deck.
+      if (f.u >= start - 0.015 && f.u <= end + 0.015 && distance < 145)
+        y = Math.min(y, f.p.y + 16);
+    }
     return y;
   }
   const heights = new Float32Array(STRIDE * STRIDE);
@@ -180,7 +209,7 @@ export function createTerrain(track) {
       lowerCell(f.p.x + f.right.x * x, f.p.z + f.right.z * x, deckCeiling);
     }
   }
-  if (!desert && !harbor) {
+  if (!recipe && !desert && !harbor) {
     // Occupied waterfront floors are authored relative to the road. Clear their
     // basements in the land itself; do not push terrain through existing shops.
     const galleries = getWaterfrontDistricts(track);
@@ -332,7 +361,19 @@ export function createTerrain(track) {
           positions.setXYZ(index, x, h, z);
           uv.setXY(index, x / 45, z / 45);
           const variation = Math.sin(x * 0.021) * Math.cos(z * 0.017) * 0.025;
-          if (desert) tint.setHSL(0.072, 0.31, 0.43 + h * 0.0006 + variation);
+          if (recipe) {
+            const [hue, saturation, lightness] = recipe.ground;
+            const ice = recipe.biome === "polar";
+            const sulfur =
+              recipe.biome === "volcanic" &&
+              Math.sin(x * 0.013 + z * 0.009) > 0.94;
+            tint.setHSL(
+              sulfur ? 0.15 : hue,
+              sulfur ? 0.48 : saturation,
+              lightness + variation + (ice ? Math.max(0, h) * 0.0005 : 0),
+            );
+          } else if (desert)
+            tint.setHSL(0.072, 0.31, 0.43 + h * 0.0006 + variation);
           else if (harbor) tint.setHSL(0.58, 0.12, 0.29 + variation);
           else if (h < 0) tint.setHSL(0.12, 0.15, 0.5 + variation);
           else tint.setHSL(0.25, 0.25, 0.31 + h * 0.0005 + variation);
