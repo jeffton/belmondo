@@ -55,7 +55,7 @@ OpenAI Image design boards are in `public/art/`; **Design study** opens the Japa
 
 ## Deployment
 
-`scripts/deploy.sh` builds and atomically points `/var/www/belmondo/current` at a new static release. Existing releases are retained. Nginx serves only this domain; no application service or database is required. See `deploy/nginx.conf` for HTTPS configuration. The retired `antigrav.roybot.se` hostname returns HTTP 410 without redirecting.
+`scripts/deploy.sh` builds and atomically points `/var/www/belmondo/current` at a new static release. Existing releases are retained. Nginx serves only this domain; no application service or database is required. See `deploy/nginx.conf` for HTTPS configuration. The retired `antigrav.roybot.se` hostname returns HTTP 410 without redirecting. Both TLS vhosts enable HTTP/2 so browsers can reuse a connection established with Batty's shared wildcard certificate. Verify coalesced routing with `node tests/http2-vhosts.mjs 443 4` and `node tests/http2-vhosts.mjs 443 6`.
 
 ## Verification
 
