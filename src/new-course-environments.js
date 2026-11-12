@@ -2,15 +2,18 @@ import * as THREE from "three";
 import { newCourseRecipe } from "./new-course-recipes.js";
 import { buildHydraulicLock, LOCK_WATER_LEVEL } from "./hydraulic-lock.js";
 import { terrainFootprint } from "./terrain-footprint.js";
+import { groundedGeometryOffset } from "./terrain.js";
+import { biomeGroundTexture } from "./biome-ground-texture.js";
 
 /** One visible heightfield is also the collision/foundation surface. */
 export function buildNewTerrainSurface(scene, track, textures, terrain) {
   const root = new THREE.Group();
   root.name = "environment";
   scene.add(root);
+  const naturalMap = biomeGroundTexture(newCourseRecipe(track).biome);
   const material = new THREE.MeshLambertMaterial({
     vertexColors: true,
-    map: textures.concrete,
+    map: naturalMap,
     flatShading: true,
   });
   const ground = new THREE.Group();
@@ -21,6 +24,7 @@ export function buildNewTerrainSurface(scene, track, textures, terrain) {
   root.add(ground);
   return {
     heightAt: terrain.heightAt,
+    naturalMap,
     group: root,
     terrain,
     bridgeAt: terrain.bridgeAt,
@@ -42,6 +46,7 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       ["pale", recipe.pale],
       ["accent", recipe.accent],
       ["rock", recipe.rock],
+      ["frost", recipe.pale],
       ["green", recipe.vegetation],
       ["dark", 0x203841],
       ["water", 0x34766f],
@@ -49,7 +54,10 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       name,
       new THREE.MeshLambertMaterial({
         color,
-        map: textures.concrete,
+        map:
+          name === "rock" || name === "frost"
+            ? environment.naturalMap
+            : textures.concrete,
         flatShading: true,
       }),
     ]),
@@ -131,9 +139,13 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       ) + 0.6;
     const put = (mat, x, y, z, w, h, d, shape = "box") =>
       emit(local(x, y, z), yaw, [w, h, d], mat, shape);
-    // Foundation contains the complete district, not just one sampled centre.
-    put("rock", 0, (bottom + deck) / 2, 0, width, deck - bottom, depth);
-    put("wall", 0, deck + 0.25, 0, width, 0.5, depth);
+    const geology = kind === "basalt" || kind === "iceface";
+    // Architecture uses a complete foundation. Natural columns instead root
+    // their actual lower silhouettes directly into the existing hillside.
+    if (!geology) {
+      put("rock", 0, (bottom + deck) / 2, 0, width, deck - bottom, depth);
+      put("wall", 0, deck + 0.25, 0, width, 0.5, depth);
+    }
     footprints.push({
       name,
       kind,
@@ -147,8 +159,15 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       bottom,
       deck,
       contacts,
+      foundation: !geology,
     });
-    if (kind === "observatory" || kind === "survey" || kind === "weather") {
+    if (kind === "weather") {
+      put("accent", 0, deck + 5, 12, 18, 10, 22);
+      put("pale", 0, deck + 10.5, 12, 22, 1, 24);
+      put("dark", 0, deck + 6, 0.8, 12, 3, 0.3);
+      put("pale", 0, deck + 14, -20, 1.5, 28, 1.5);
+      put("accent", 0, deck + 27, -20, 9, 1, 2);
+    } else if (kind === "observatory" || kind === "survey") {
       const count = kind === "observatory" ? 3 : 2;
       for (let i = 0; i < count; i++) {
         const x = (i - (count - 1) / 2) * 22;
@@ -168,9 +187,9 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
     } else if (kind === "cold-store") {
       put("pale", 0, deck + 8, 0, width - 12, 16, depth - 16);
       put("dark", 0, deck + 17, 0, width - 8, 2, depth - 12);
-      for (const x of [-20, 0, 20]) {
-        put("accent", x, deck + 6, -depth / 2 + 7, 14, 12, 1);
-        put("dark", x, deck + 4, -depth / 2 + 6.3, 10, 8, 0.5);
+      for (const z of [-20, 0, 20]) {
+        put("accent", -width / 2 + 5.5, deck + 6, z, 1, 12, 14);
+        put("dark", -width / 2 + 4.8, deck + 4, z, 0.5, 8, 10);
       }
     } else if (kind === "pipe-yard") {
       for (const x of [-22, -7, 8, 23]) {
@@ -257,17 +276,25 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
         const h = 12 + ((i * 13) % 29);
         const x = (i - 3) * 10;
         const z = Math.sin(i * 2.1) * 12;
+        transform.position.copy(local(x, 0, z));
+        transform.rotation.set(0, yaw, 0);
+        transform.scale.set(14, h, 17);
+        transform.updateMatrix();
+        const y = groundedGeometryOffset(
+          geometries.basalt,
+          transform.matrix,
+          environment.heightAt,
+        );
         put(
-          kind === "iceface" && i % 3 === 0 ? "pale" : "rock",
+          kind === "iceface" && i % 3 === 0 ? "frost" : "rock",
           x,
-          deck + h / 2,
+          y,
           z,
           14,
           h,
           17,
           "basalt",
         );
-        if (kind === "basalt") put("accent", x, deck + 0.4, z, 18, 0.8, 21);
       }
     } else if (kind === "geothermal" || kind === "condenser") {
       // White turbine hall / condenser field; stacks are connected to the works.
@@ -293,7 +320,7 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
     const widths = {
       observatory: 84,
       survey: 66,
-      weather: 66,
+      weather: 28,
       reservoir: 110,
       pumps: 94,
       "pump-island": 42,
@@ -301,7 +328,7 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       geothermal: 92,
       basalt: 88,
       condenser: 88,
-      "cold-store": 88,
+      "cold-store": 28,
       "pipe-yard": 88,
       iceface: 88,
     };
