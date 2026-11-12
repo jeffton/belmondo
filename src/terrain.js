@@ -89,19 +89,20 @@ export function createTerrain(track) {
     }
     return cut;
   }
-  const jump = recipe
-    ? null
-    : track.frame(
-        (track.config.jump + track.config.gapLength / 2) * track.length,
-      );
-  const ravineHalfLength = recipe
-    ? null
-    : (track.config.gapLength * track.length) / 2 + 12;
+  const jump =
+    track.config.jump === null
+      ? null
+      : track.frame(
+          (track.config.jump + track.config.gapLength / 2) * track.length,
+        );
+  const ravineHalfLength = jump
+    ? (track.config.gapLength * track.length) / 2 + 12
+    : null;
   const jumpForward = jump
     ? new THREE.Vector2(jump.tangent.x, jump.tangent.z).normalize()
     : null;
   function ravine(x, z) {
-    if (recipe) return 0;
+    if (!jump) return 0;
     const along = Math.abs(
       (x - jump.p.x) * jumpForward.x + (z - jump.p.z) * jumpForward.y,
     );
