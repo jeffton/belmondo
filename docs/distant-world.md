@@ -10,4 +10,5 @@ The source occupies 2 MiB. Three.js 0.187 converts it to a 512px cubemap, approx
 
 - Eight focused CPU checks cover seamless longitude, poles, fog, celestial clearance, deterministic course diversity and independent texture ownership. Full suite: 186 tests; build and formatting pass.
 - Independent Sol review approved orientation, colour space, celestial clearance and source/derived resource disposal.
-- Browser visual and repeated-rebuild resource acceptance is pending; CPU checks do not establish visual quality or device performance.
+- Frozen desktop/mobile fixtures cover 24 candidate chase/first-person race views across all courses, cardinal yaw including the longitude seam, and byte-identical renders after camera translation. Selected race, mobile and seam images were inspected.
+- Repeated warmed course rebuilds retain stable geometry/texture counts. Against the unchanged baseline, all 12 desktop race views add zero draw calls, ten background triangles and one derived texture. These are stationary simulation/render fixtures using SwiftShader, not human gameplay or device-FPS measurements.
