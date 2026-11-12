@@ -59,6 +59,7 @@ export const VEGETATION_PROFILES = {
     tint: 0x8eaaa8,
   },
   WHITEOUT: { ranges: [], species: [] },
+  "VESPER CIRCUIT": { ranges: [], species: [] },
   CINDERLINE: {
     ranges: [
       [0.14, 0.18],

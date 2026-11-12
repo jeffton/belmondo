@@ -93,14 +93,14 @@ if (registered === -1) TRACKS.pop();
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 
-test("VESPER: the six accepted routes retain every sampled physical output", () => {
+test("VESPER: the six intentionally integrated layouts retain accepted sampled physical outputs", () => {
   const hashes = [
-    "c72ae886b6a2b0b570c24158f3fe152dfd68cbb420e75d4b2746112c9de47b3b",
-    "9cf01f56225f0a9feba93fbc71e4192111bdbd9536e64dafff244978502b0747",
-    "b097f5bdced2d53944797bc261c173e08643d647a36af32485e0b1359e82ba63",
-    "2b86400d7dfb95d2e7a285647eab6fa1a24b409554033df821de796383cbff09",
-    "ef632880e5a08fa1b4fa6407292c938a7ef9a5258db2e8cd5735cc5af8322895",
-    "bad81edd2f8fd9501e1a6ba2665c034aaa27804e72d2f933b35010f18699d38b",
+    "3fb907ffd5b6aebb6d9500cdc2bc362541c2b66f2430e293477fea96abf02d9c",
+    "d2be34d1fcaee87b1edca63e0fd9f094786db15d6f432e87912d3a1dbb93d142",
+    "44251c842a0f69edb88d9959b0ec4b45c6bb81951bac666829262d95314a2123",
+    "0f81d25ac5f903f4014cafb710828f28f3f13f6324e0fe923793a55f1f4f8624",
+    "53a799ce08a667105f27cf178adb67ccec324f6fc5a92ea2734660e778e26010",
+    "85bb34890c7f8957c918d661e786d520caa301ea309e5c90d47261a977115f19",
   ];
   for (let i = 0; i < hashes.length; i++) {
     const previous = makeTrack(i);

@@ -36,10 +36,17 @@ for (const [index, config] of TRACKS.entries()) {
       }
     }
     // Distinguishes grounded geography from the previous 54–105m-high viaduct.
-    assert(
-      close / total > 0.85,
-      "most of the real course must sit on land, not stilts",
-    );
+    if (config.biome !== "metropolis")
+      assert(
+        close / total > 0.85,
+        "most of the real course must sit on land, not stilts",
+      );
+    else
+      assert.equal(
+        close,
+        0,
+        "urban roof racing is elevated above the city floor",
+      );
     if (config.jump !== null) {
       const jump = track.frame(
         (config.jump + config.gapLength / 2) * track.length,
@@ -117,7 +124,14 @@ for (const [index, config] of TRACKS.entries()) {
         );
         ridgeTested = true;
       }
-    assert(ridgeTested, "exercise a real sloping landform");
+    if (config.biome !== "metropolis")
+      assert(ridgeTested, "exercise a real sloping landform");
+    else
+      assert.equal(
+        ridgeTested,
+        false,
+        "city floor is flat; roof clearances are tested against emitted architecture",
+      );
     terrain.geometries.forEach((g) => g.dispose());
     material.dispose();
   });

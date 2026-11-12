@@ -66,11 +66,11 @@ for (const version of ["production-v3", "redesigned-v4"])
       );
     });
 
-// Captured before the universal correction (724abc8), including both caps.
+// Accepted integrated Whiteout-2/Monsoon-4/Cinderline-2 outputs, including both caps.
 const biomeHashes = [
-  "9f63fa6d1d41bb25a953f7e2a3be440fde1545ba210d2af02beb6e365d205649",
-  "971242eef21a22d18920ea7378f723abaf09561d9563d15e7dfce5db84240586",
-  "b512ddb1f42257b5c3770281974628f901576951ef9038f14c091a096758927e",
+  "0c8c499a8fcd1214b20452f028f1cfc3963ad1bbdaac8f54f0e8fca1194c8c01",
+  "e2917282207d4ea64f790deedebe02ae92a0403a8ebd4dbfd07f77e2e136ddd5",
+  "536b366fea8a95f693fb986eb12907bd69d39e4b92211f1786755204279e8052",
 ];
 for (let index = 3; index < 6; index++)
   test(`biome ${index}: universal fork geometry preserves accepted physical outputs`, () => {

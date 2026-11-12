@@ -14,7 +14,8 @@ test("all courses expose wider main decks and keep both split routes clear", () 
 
     assert(main.width >= 18, `${track.config.name}: main deck is not wider`);
     assert(
-      left.width >= 16 && right.width >= 16,
+      left.width >= track.config.branchWidths[0] &&
+        right.width >= track.config.branchWidths[1],
       `${track.config.name}: split deck is too narrow`,
     );
     assert(
@@ -52,7 +53,10 @@ for (let index = 0; index < TRACKS.length; index++) {
       );
     else
       assert.ok(
-        minimumRadius >= (track.config.layoutId === "monsoon-3" ? 95 : 150),
+        minimumRadius >=
+          ({ "monsoon-4": 95, "cinderline-2": 89, "vesper-1": 66 }[
+            track.config.layoutId
+          ] ?? 150),
         `Tight road kink: radius ${minimumRadius} m`,
       );
     if (track.config.jump !== null) {

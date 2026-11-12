@@ -74,7 +74,12 @@ for (const index of [3, 4, 5]) {
           );
         assert(
           Math.abs(track.curvature(s, branch)) <=
-            1 / (index === 4 ? 80 : index === 5 && u >= 0.17 && u <= 0.34 ? 95 : 150),
+            1 /
+              (index === 4
+                ? 80
+                : index === 5 && u >= 0.17 && u <= 0.34
+                  ? 95
+                  : 150),
           `radius below authored readable-turn envelope at ${u}, branch ${branch}`,
         );
         assert.equal(
@@ -184,13 +189,10 @@ for (const index of [3, 4, 5]) {
             "the selected separated carriageway was actually driven",
           );
           if (boostAt === null) {
-            if (index === 5)
-              assert(r.shield > 0, "technical Cinderline AI finishes alive");
-            else
-              assert(
-                r.shield > 95,
-                "ordinary driving avoids repeated wall impacts",
-              );
+            assert(
+              r.shield > 95,
+              "ordinary driving avoids repeated wall impacts",
+            );
           } else {
             assert(fired, "the signature TURBO was actually fired");
           }

@@ -113,12 +113,12 @@ for (const index of [0, 1]) {
   });
 }
 
-// Approved 1290238 terrain, including Night's over/under and Whiteout's spiral.
+// Accepted integrated Night-v4, Whiteout-2, Monsoon-4 and Cinderline-2 terrain.
 for (const [index, expected] of [
   [2, "cc6affd35fc979a58fd73590b928f6dd563f720076e0ee96e7d96e0a622de954"],
-  [3, "79f3537f077c632dc157ff49537c7da6378c79c412f7ba7eef21805038bff2a9"],
-  [4, "43fb8dabfe7fc08e099fa17046a37713e2552a588e67e417dcc3cba524c9bd63"],
-  [5, "a87606fef5cb3b7a064781c056b16a57994a990eba297c7bc0abf0f73cda1dbb"],
+  [3, "8608f13cb20fc8387dd43f811d3f0f1cb1ee1fff273bdfa52f29549ec5212a37"],
+  [4, "118aa36d2e32c0031c1004b3285b19c3aff330b8c4e7d22d5cc017dcab775c8c"],
+  [5, "fd4066762d9886e2661518c9def35a4251a9819362ec2a00ab2a5e139c1890ce"],
 ]) {
   test(`course ${index}: terrain output remains byte-identical`, () => {
     const terrain = createTerrain(makeTrack(index));

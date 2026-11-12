@@ -10,14 +10,13 @@ const track = makeTrack(5);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 
-test("CINDERLINE: other expansion course configurations are untouched", () => {
-  // Captured from d9e86c6; original three physical outputs are covered by
-  // new-courses.test.js. No runtime Git/history dependency in the test suite.
+test("CINDERLINE: integrated Whiteout and Monsoon configurations match accepted fixtures", () => {
+  // Intentional Whiteout-2 and Monsoon-4 integration snapshot.
   assert.equal(
     createHash("sha256")
       .update(JSON.stringify(NEW_COURSES.slice(0, 2)))
       .digest("hex"),
-    "806bf0de4e5da75f0e7086d250108b9e758ace7f3cdd646aa45ca68d39d1df84",
+    "0b13310fc69beff0c8de8ec0ee610de0ff994942b05c3fadb444c2728e9bf402",
   );
   assert.equal(TRACKS[5].layoutId, "cinderline-2");
 });

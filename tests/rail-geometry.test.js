@@ -11,8 +11,9 @@ function frameAt(track, u, branch) {
 
 const risingForkProbes = {
   WHITEOUT: 0.76496,
-  MONSOON: 0.79274,
+  MONSOON: 0.79566,
   CINDERLINE: 0.77895,
+  "VESPER CIRCUIT": 0.29695,
 };
 
 for (const [index, config] of TRACKS.entries()) {

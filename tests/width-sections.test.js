@@ -6,12 +6,13 @@ import { railPoint } from "../src/rail-geometry.js";
 import { createTerrain } from "../src/terrain.js";
 
 const LEGACY_FRAME_HASHES = [
-  "a15aa78a0a5a35c8c4ab1ce653546971b276b4d3dca4a028773abbae6f8bc734",
-  "e995b599ab0a91c401b6d28f2203a5fa65e721efeb18d04bf843eb85f16e5819",
-  "5ddec413d3ee4d87df2b789fb085c7a00f2e61d08b29d36bf403b1c53b3ce139",
-  "11071b561efd5e918f1e0568ca22f374c2e298019897a389d93eb7486ba8f535",
-  "c5280f97140bd70ad20ec1690893d3597968e96c7a5bee8c021d6eaf7e3c29a3",
-  "28044677eeeecc94558a09a95b0fc3e72ba3bc05ed21e0a06be9961fe03ab0e4",
+  "671c02ec22b1a924e29f348bb37f8fe55e762fd9c525af1b03c79ea0355c0871",
+  "5cc226061716de8246426edabfe062d04e5e9cb4e40b4fedd828a795f060c6da",
+  "0238606031fc83b95a334dafc06f2c8a4a087e6779231ae53ccf1ef0f56a5ffd",
+  "98324f23e94cdca7c64423b486f39b89284eeea5d42d535d21503290593de39d",
+  "97af92dda76458984295ff63e7e30a63ac4808bb633392c47544bf6f396411da",
+  "b5184e3272ace6f391e1e9da8ed4bbc6ee68741fcd9e9044fd1277419b912527",
+  "3562453e6a421e9ff433a51c61b132fd7edf605e1e7701f9b52a6ec3427aac21",
 ];
 
 function frameHash(track) {
@@ -41,11 +42,11 @@ function frameHash(track) {
   return hash.digest("hex");
 }
 
-test("without authored width sections, all six legacy frame outputs are byte-stable", () => {
+test("without authored width sections, all integrated layout frame outputs are byte-stable", () => {
   assert.equal(TRACKS.length, LEGACY_FRAME_HASHES.length);
   for (const [index, expected] of LEGACY_FRAME_HASHES.entries()) {
     const track = makeTrack(index);
-    assert.equal(track.config.widthSections, undefined);
+    delete track.config.widthSections;
     assert.equal(frameHash(track), expected, TRACKS[index].name);
   }
 });

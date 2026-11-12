@@ -37,13 +37,19 @@ for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index),
       scene = new THREE.Scene();
     const environment = buildEnvironment(scene, track, textures);
-    buildCity(scene, track, textures, environment);
+    if (track.config.name !== "VESPER CIRCUIT")
+      buildCity(scene, track, textures, environment);
     const occupied = vegetationObstacles(scene);
     const root = buildVegetation(scene, track, environment);
     const plants = root.userData.plants;
     const profile = VEGETATION_PROFILES[track.config.name];
-    if (track.config.name === "WHITEOUT") {
-      assert.equal(plants.length, 0, "glacial basin is not a forest");
+    if (["WHITEOUT", "VESPER CIRCUIT"].includes(track.config.name)) {
+      assert.deepEqual(profile, { ranges: [], species: [] });
+      assert.equal(
+        plants.length,
+        0,
+        "glacial basin and urban rooftops have no vegetation",
+      );
       assert.equal(root.children.length, 0, "no unused GPU resources");
       dispose(scene);
       return;
