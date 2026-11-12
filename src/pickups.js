@@ -69,8 +69,14 @@ const layouts = {
       "Accessible basin exit acceleration into the return valley",
     ],
     [0.63, 0, -8, "weapon", "Inside valley armament before the fork decision"],
-    [0.785, -1, -6, "boost", "Inner return-fork exit reward"],
-    [0.81, 1, 7, "weapon", "Outer weather-station route armament"],
+    [
+      0.84,
+      -1,
+      -2,
+      "boost",
+      "Exposed ridge descent exit acceleration trades distance for speed",
+    ],
+    [0.805, 1, 7, "weapon", "Sheltered blue-ice cut armament line"],
     [0.905, 0, 2, "weapon", "Accessible armament after the uphill merge"],
     [
       0.935,
