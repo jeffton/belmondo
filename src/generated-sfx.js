@@ -1,5 +1,10 @@
-// Original ElevenLabs SFX V3 one-shots. Full provenance: docs/generated-sfx/.
+// Original ElevenLabs SFX V3 one-shots: docs/generated-sfx/.
+// Local synthetic countdown speech: docs/countdown-voice.md.
 export const SFX_CUES = {
+  "voice:3": { files: ["/audio/voice/three.wav"], gain: 0.9 },
+  "voice:2": { files: ["/audio/voice/two.wav"], gain: 0.9 },
+  "voice:1": { files: ["/audio/voice/one.wav"], gain: 0.9 },
+  "voice:0": { files: ["/audio/voice/go.wav"], gain: 0.9 },
   boost: {
     files: ["/audio/sfx/boost-1.wav", "/audio/sfx/boost-2.wav"],
     gain: 0.7,

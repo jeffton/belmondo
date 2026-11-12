@@ -4,6 +4,7 @@ import { TRACKS, makeTrack, clamp, mod } from "./track.js";
 import { Race, CRAFT, SPEED_CLASSES, LAPS } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine } from "./audio.js";
+import { countdownBoardStage } from "./start-gantry.js";
 import { getCrowdMix } from "./crowd.js";
 import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
@@ -49,7 +50,7 @@ let state = "menu",
   accumulator = 0,
   last = performance.now(),
   messageUntil = 0,
-  previousCount = 4;
+  previousCount = "armed";
 let demoDistance = 50,
   renderFrames = 0,
   renderTime = 0;
@@ -165,6 +166,7 @@ async function start(event) {
   button.disabled = true;
   music.setTunnel(false);
   const audioStart = sound.start();
+  sound.stopSamples();
   const musicStart = musicEnabled ? music.play() : Promise.resolve();
   sound.setMuted($("mute").checked);
   sound.setPaused(false);
@@ -193,7 +195,7 @@ async function start(event) {
   music.setMenu(false);
   paused = false;
   accumulator = 0;
-  previousCount = 4;
+  previousCount = "armed";
   messageUntil = 0;
   clearInput();
   $("menu").hidden = true;
@@ -527,17 +529,10 @@ function updateHUD(now) {
   $("shield-bar").style.background = p.shield < 25 ? "#ff642a" : "#d4f53c";
   updateWeaponHUD(p.weapon);
   if (race.countdown > 0) {
-    const count = Math.ceil(race.countdown);
     $("race-message").className = "";
     $("race-message").textContent = "";
-    if (count <= 3 && count !== previousCount) {
-      sound.effect("countdown", count);
-      previousCount = count;
-    }
   } else {
     $("race-message").className = "";
-    if (previousCount > 0) sound.effect("go");
-    previousCount = 0;
     if (now > messageUntil) $("race-message").textContent = "";
   }
   drawMap();
@@ -581,6 +576,13 @@ function animate(now) {
       while (accumulator >= 1 / 120) {
         race.update(1 / 120, controls);
         accumulator -= 1 / 120;
+      }
+      // Dispatch on the same frame as the physical board, not the HUD cadence.
+      const count = countdownBoardStage(race);
+      if (count !== previousCount) {
+        if (count === "GO") sound.effect("go");
+        else if (typeof count === "number") sound.effect("countdown", count);
+        previousCount = count;
       }
       music.setTunnel(
         race.player.grounded &&
