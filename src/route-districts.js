@@ -448,12 +448,14 @@ export function buildRouteDistricts(parent, track, textures, environment) {
             box(x, 5, z, 10, 10, 10, palette.dark);
             for (const rib of [-3, 0, 3])
               box(x + rib, 5, z, 0.8, 11, 11, palette.wall);
-            box(x, 13, z, 0.7, 6, 0.7, palette.accent, cylinder);
+            box(x, 12, z, 0.7, 4, 0.7, palette.accent, cylinder);
           }
+          // Each low busbar rests on two ground-supported posts and connects
+          // to the transformer insulators below; no suspended aerial crosses.
+          for (const x of [-15, 15])
+            box(x, 7.25, z, 1.5, 14.5, 1.5, palette.wall);
+          box(0, 14.5, z, 32, 1, 1.5, palette.accent);
         }
-        box(district.side * 12, 19, 0, 2, 38, 2, palette.wall);
-        box(0, 37, 0, 30, 1.5, 2, palette.accent);
-        box(0, 37, 0, 2, 1.5, depth - 2, palette.accent);
       } else if (district.style === "silos") {
         for (const z of [-depth * 0.24, depth * 0.24]) {
           const h = height + (z > 0 ? 10 : 0);
