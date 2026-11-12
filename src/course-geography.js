@@ -65,7 +65,7 @@ export function buildCourseGeography(scene, track, textures, environment) {
         return environment.heightAt(p.x, p.z) - f.p.y - 1;
       };
       const width = f.width + 4;
-      const profile = track.config.night
+      let profile = track.config.night
         ? [
             [-180, outerGround(-180)],
             [-130, 18],
@@ -102,7 +102,35 @@ export function buildCourseGeography(scene, track, textures, environment) {
       ).normalize();
       // Recessed strata/buttresses break the portal into irregular rock planes.
       // The tunnel void and outer grounded feet retain their exact stations.
-      const ledges = [0, 16, 35, 52, 26, 10, 0, 0, 0, 0, 0];
+      let ledges = [0, 16, 35, 52, 26, 10, 0, 0, 0, 0, 0];
+      if (track.config.name === "SOLAR ARRAY") {
+        // The bored mountain is a separate rock volume, not the land grid.
+        // Break its six broad exterior planes into offset ridges and gullies;
+        // retain the exact grounded feet and four-point racing-void contour.
+        const exterior = [];
+        const recesses = [];
+        for (let j = 0; j < 6; j++) {
+          for (let k = 0; k < 4; k++) {
+            const t = k / 4;
+            const x = THREE.MathUtils.lerp(profile[j][0], profile[j + 1][0], t);
+            const envelope = Math.sin(((x + 180) / 360) * Math.PI);
+            const ridge =
+              envelope *
+              (9 * Math.sin(x * 0.061 + fraction * 13) +
+                5 * Math.sin(x * 0.117 - fraction * 21));
+            exterior.push([
+              x,
+              THREE.MathUtils.lerp(profile[j][1], profile[j + 1][1], t) + ridge,
+            ]);
+            recesses.push(
+              THREE.MathUtils.lerp(ledges[j], ledges[j + 1], t) +
+                envelope * 7 * Math.sin(x * 0.083),
+            );
+          }
+        }
+        profile = [...exterior, ...profile.slice(6)];
+        ledges = [...recesses, ...ledges.slice(6)];
+      }
       profiles.push({
         profile,
         points: profile.map(([x, y], j) =>
@@ -120,12 +148,13 @@ export function buildCourseGeography(scene, track, textures, environment) {
     for (let i = 0; i < profiles.length - 1; i++) {
       const a = profiles[i].points,
         b = profiles[i + 1].points;
+      const outerEnd = a.length - 5;
       for (let j = 0; j < a.length; j++) {
         const next = (j + 1) % a.length;
         const color =
-          j === 8
+          j === outerEnd + 2
             ? 0x66504a
-            : j >= 7
+            : j >= outerEnd + 1
               ? 0x8b6851
               : (i + j) % 4
                 ? 0xae805f
@@ -177,7 +206,7 @@ export function buildCourseGeography(scene, track, textures, environment) {
     mountain.userData.voidHeight = 22;
     mountain.userData.groundingContacts = profiles.flatMap(({ points }) => [
       points[0],
-      points[6],
+      points[points.length - 5],
     ]);
   }
   const bridges = [
