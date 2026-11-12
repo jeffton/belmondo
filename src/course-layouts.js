@@ -89,7 +89,7 @@ export const NEW_COURSES = [
       riseProfile: [0.18, 0.4, 0.6, 0.82],
     },
     rhythm: [
-      { start: 0.15, end: 0.33, offset: 90 },
+      { start: 0.15, end: 0.33, offset: 210 },
       { start: 0.65, end: 0.88, offset: -145 },
     ],
     banks: [

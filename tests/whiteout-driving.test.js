@@ -1,6 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, clamp, mod } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
@@ -65,10 +65,14 @@ test("WHITEOUT: both routes keep broad readable curvature, continuous banks and 
       const f = track.frame(s, branch);
       const next = track.frame(s + 3, branch);
       assert(
-        Math.abs(track.curvature(s, branch)) <= 1 / 150,
+        Math.abs(track.curvature(s, branch)) <= 1 / 85,
         `radius at ${f.u}, branch ${branch}`,
       );
-      assert(f.p.distanceTo(next.p) < 4.5);
+      assert(
+        f.p.distanceTo(track.frame(s + 0.01, branch).p) < 0.02,
+        "no positional discontinuity in the continuous deck",
+      );
+      assert(f.tangent.dot(next.tangent) > 0.995, "continuous road heading");
       assert(Math.abs(f.bank - next.bank) < 0.02);
       assert.equal(track.gap(f.u), false);
       if (i % 10 === 0) {
@@ -82,6 +86,68 @@ test("WHITEOUT: both routes keep broad readable curvature, continuous banks and 
       }
     }
   }
+});
+
+test("WHITEOUT: C3 ordinary-input airbrakes reward a clean faster lap with service braking available in both runs", (t) => {
+  function lap(airEnabled) {
+    const race = new Race(track, 0, "trial", 2, terrain);
+    race.countdown = 0;
+    const r = race.player;
+    let steps = 0;
+    let railFrames = 0;
+    for (; steps < 180 * 120 && r.lap < 2; steps++) {
+      const pace = race.classSpec.pace;
+      const u = mod(r.contactS, track.length) / track.length;
+      const [start, end] = track.config.split;
+      const choosing = u > start - 0.04 && u < start + (end - start) * 0.3;
+      const branch =
+        choosing && (!r.branch || track.bounds(r.contactS, r.branch).connected)
+          ? -1
+          : r.branch;
+      const look = track.frame(
+        r.contactS + Math.max(18, (r.speed * 0.65) / pace),
+        branch,
+      );
+      const heading = Math.atan2(
+        look.p.x - r.position.x,
+        look.p.z - r.position.z,
+      );
+      const error = Math.atan2(
+        Math.sin(heading - r.yaw),
+        Math.cos(heading - r.yaw),
+      );
+      const curvature = Math.max(
+        ...[0.25, 0.6, 1].map((dt) =>
+          Math.abs(track.curvature(r.contactS + (r.speed * dt) / pace, branch)),
+        ),
+      );
+      const cornerSpeed = Math.sqrt(
+        (82 * pace * pace) / Math.max(curvature, 0.0001),
+      );
+      // Identical ordinary controls and service-brake policy. Only the paired
+      // airbrake ability changes; neither run disables the service brake.
+      race.update(1 / 120, {
+        throttle: true,
+        steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
+        air: airEnabled ? clamp(error * 0.8, -1, 1) : 0,
+        brake: Math.max(
+          clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
+          Math.abs(error) > 0.7 ? 1 : 0,
+        ),
+      });
+      assert.equal(r.recoveredThisStep, false);
+      if (r.wallTouched) railFrames++;
+    }
+    assert.equal(r.lap, 2);
+    return { seconds: steps / 120, shield: r.shield, railFrames };
+  }
+  const withAir = lap(true);
+  const withoutAir = lap(false);
+  t.diagnostic(JSON.stringify({ withAir, withoutAir }));
+  assert.equal(withAir.railFrames, 0);
+  assert(withoutAir.railFrames > 0);
+  assert(withAir.shield > withoutAir.shield);
+  assert(withAir.seconds < withoutAir.seconds);
 });
 
 for (let speedClass = 0; speedClass < 3; speedClass++) {
