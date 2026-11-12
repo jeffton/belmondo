@@ -32,6 +32,27 @@ procedural artwork, not an AI-generated panorama.
 
 ## Acceptance
 
+The frozen candidate passes **89 focused tests in 22.8 seconds**, build and
+formatting. Route and world changes have separate independent Sol approvals.
+This is CPU acceptance, not visual/GPU acceptance.
+
+- Physical distance is approximately 11.6 km, with 145 m elevation range.
+  The linked rooftop phrase combines 130/85/100/150 m radii,
+  90°/102°/78°/90° turns and short gaps.
+- All 18 craft/class/fork laps use actual terrain, earn every gate, collect real
+  boosts, retain shield 100 and have zero rail-touch/recovery frames.
+- A poor A exit costs 1.53 seconds and 5.75 shield in B after correct B controls
+  resume. In a bounded full-width racing-line search, clean air-enabled pace is
+  20.57 seconds versus 23.27 seconds for independently tuned clean no-air pace.
+  This demonstrates a pace advantage, not universal airbrake necessity.
+- The upper fork is 1–2.5% quicker with its actual boost. C1 Striker is
+  6.375/6.267 seconds lower/upper; C3 is 4.558/4.483 seconds. Other craft remain
+  similarly balanced. No route-specific force or equal-time correction exists.
+- Whole-world authored scenery: 297 close buildings, 6,661 instanced parts in
+  46 batches, approximately 89,690 triangles, 697 rooftop foundation segments
+  and 19 covered market bays. These are construction counts, not measured
+  visible draw calls or GPU frame-time claims.
+
 - Focused metropolis world tests: explicit registry/record identity, actual ground
   and building clearance, rooftop structural contacts, pickup choices, panorama
   ownership/resolution/seam and original-art provenance.

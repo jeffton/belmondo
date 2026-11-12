@@ -189,7 +189,7 @@ export function buildMetropolis(
     const right = new THREE.Vector3(forward.z, 0, -forward.x);
     const yaw = Math.atan2(forward.x, forward.z);
     const depth = ((arcadeEnd - arcadeStart) * track.length) / bays + 1;
-    const top = f.p.y + 35;
+    const top = f.p.y + 45;
     const roof = {
       center: f.p.clone(),
       right,
@@ -209,8 +209,8 @@ export function buildMetropolis(
         center,
         right,
         forward,
-        width: 2.5,
-        depth: 3,
+        width: 2.7,
+        depth: 3.2,
         bottom: environment.heightAt(center.x, center.z) - 1,
         top,
         u,
@@ -230,15 +230,9 @@ export function buildMetropolis(
     arcadeParts.push(roof);
     for (const [index, column] of columns.entries()) {
       const center = column.center.clone().setY((column.bottom + top) / 2);
-      box(
-        "facade",
-        center,
-        yaw,
-        [column.width, top - column.bottom, column.depth],
-        0x6a6470,
-      );
+      box("facade", center, yaw, [2.5, top - column.bottom, 3], 0x6a6470);
       const glow = column.center.clone().setY(f.p.y + 26);
-      box("neon", glow, yaw, [1.6, 1, depth - 2], index ? 0xf4b274 : 0x50dbe5);
+      box("neon", glow, yaw, [2.6, 1, 3.1], index ? 0xf4b274 : 0x50dbe5);
       arcadeParts.push(column);
     }
   }
