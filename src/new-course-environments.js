@@ -19,27 +19,8 @@ export function buildNewTerrainSurface(scene, track, textures, terrain) {
     ground.add(new THREE.Mesh(geometry, material)),
   );
   root.add(ground);
-  const { heightAt, samples } = terrain;
-  const clear = (p, radius) =>
-    samples.every(
-      (f) => Math.hypot(f.p.x - p.x, f.p.z - p.z) > f.width + radius + 10,
-    );
-  function buildingPosition(p) {
-    for (let radius = 0; radius < terrain.extent * 3; radius += 40) {
-      const steps = Math.max(1, Math.ceil((radius * Math.PI * 2) / 40));
-      for (let i = 0; i < steps; i++) {
-        const x = p.x + radius * Math.cos((i / steps) * Math.PI * 2);
-        const z = p.z + radius * Math.sin((i / steps) * Math.PI * 2);
-        if (Math.max(Math.abs(x), Math.abs(z)) > terrain.extent - 70) continue;
-        const point = new THREE.Vector3(x, 0, z);
-        if (clear(point, 50)) return point.setY(heightAt(x, z));
-      }
-    }
-    throw new Error(`No land footprint available for ${track.config.name}`);
-  }
   return {
-    heightAt,
-    buildingPosition,
+    heightAt: terrain.heightAt,
     group: root,
     terrain,
     bridgeAt: terrain.bridgeAt,

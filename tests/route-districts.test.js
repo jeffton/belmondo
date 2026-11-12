@@ -95,7 +95,10 @@ function projectedDistanceSquared(x, z, triangle) {
   );
 }
 
-for (const [index, config] of TRACKS.entries()) {
+// This builder owns the three legacy district recipes. New biome architecture
+// is exercised through the real buildCity dispatch in new-course-environments.
+for (const [index] of ROUTE_DISTRICTS.entries()) {
+  const config = TRACKS[index];
   test(`${config.name}: emitted districts occupy real places and clear every route's full XZ corridor`, () => {
     const { track, terrain, concrete, build } = fixture(index);
     const root = build();

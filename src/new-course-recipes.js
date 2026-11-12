@@ -17,7 +17,7 @@ export const NEW_COURSE_RECIPES = {
       { name: "EXPEDITION STORES", u: 0.13, side: 1, kind: "cold-store" },
       { name: "GLACIAL ENTRY FACE", u: 0.28, side: 1, kind: "iceface" },
       { name: "BASIN BLUE ICE", u: 0.39, side: -1, kind: "iceface" },
-      { name: "VALLEY CORE DEPOT", u: 0.62, side: 1, kind: "cold-store" },
+      { name: "VALLEY CORE DEPOT", u: 0.62, side: -1, kind: "cold-store" },
       { name: "UPPER PASS RELAY", u: 0.9, side: -1, kind: "weather" },
     ],
   },
