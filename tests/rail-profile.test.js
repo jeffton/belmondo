@@ -149,9 +149,13 @@ test("inner split faces taper in the shared median instead of intersecting the o
       const h = lb.railMaxHeight;
       assert.equal(h, rb.railMinHeight);
       assert(h >= 0 && h <= RAIL_PROFILE.height);
-      assert(
-        (2 * h * RAIL_PROFILE.topOutset) / RAIL_PROFILE.height <= gap + 1e-6,
-      );
+      const axis = track.frame(s).right;
+      const expansion =
+        left.up.dot(axis) -
+        right.up.dot(axis) +
+        (RAIL_PROFILE.topOutset / RAIL_PROFILE.height) *
+          (left.right.dot(axis) + right.right.dot(axis));
+      assert(h * expansion <= gap + 1e-6);
       if (h > 0 && h < RAIL_PROFILE.height) tapered = true;
     }
     assert(
