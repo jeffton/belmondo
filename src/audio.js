@@ -1,4 +1,5 @@
 import { SFX_CUES } from "./generated-sfx.js";
+import { createEngineBed, updateEngineSound } from "./engine-sound.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -155,73 +156,14 @@ export class AudioEngine {
       seed = (seed * 16807) % 2147483647;
       samples[i] = (seed / 2147483647) * 2 - 1;
     }
-    // Original PCM, not stock oscillator waveforms: a vibrating hover chamber
-    // and a separate, air-driven turbine with drifting blade resonances.
-    this.motor = this.loopBed(this.createEngineBed(false), "lowpass", 700);
-    this.turbine = this.loopBed(this.createEngineBed(true), "lowpass", 3200);
+    this.motor = this.loopBed(createEngineBed(ctx, false), "lowpass", 700);
+    this.turbine = this.loopBed(createEngineBed(ctx, true), "lowpass", 3200);
     this.launchCues = [3, 2, 1, 0].map((stage) => this.createLaunchCue(stage));
     this.previousSpeed = 0;
     this.previousUpdate = null;
     this.wind = this.loopNoise("lowpass", 900, 0.6);
     this.brake = this.loopNoise("bandpass", 2200, 1.2);
     this.boost = this.loopNoise("bandpass", 800, 0.7);
-  }
-
-  createEngineBed(turbine) {
-    // Four seconds at 24 kHz, stereo: 0.77 MB per bed. Integer-cycle carriers
-    // and modulation close the loop without a splice or repeated one-cycle buzz.
-    const rate = 24000;
-    const seconds = 4;
-    const buffer = this.context.createBuffer(2, rate * seconds, rate);
-    const tau = Math.PI * 2;
-    for (let channel = 0; channel < 2; channel++) {
-      const samples = buffer.getChannelData(channel);
-      let seed = 1987 + channel * 401 + (turbine ? 1103 : 0);
-      let slow = 0,
-        fast = 0;
-      const phase = channel * 0.37;
-      for (let i = 0; i < samples.length; i++) {
-        const t = i / rate;
-        seed = (seed * 16807) % 2147483647;
-        const white = (seed / 2147483647) * 2 - 1;
-        slow += 0.018 * (white - slow);
-        fast += 0.18 * (white - fast);
-        const drift = Math.sin(tau * 0.75 * t + phase);
-        const flutter = Math.sin(tau * 3.25 * t + phase);
-        if (turbine) {
-          // Several non-octave casing modes; phase modulation spreads the
-          // blade harmonics rather than exposing a single video-game note.
-          const blade = tau * 183 * t + 1.7 * drift + 0.18 * flutter;
-          const rotor =
-            0.19 * Math.sin(blade) +
-            0.09 * Math.sin(tau * 367.5 * t + 2.1 * drift + phase) +
-            0.065 * Math.sin(tau * 731.25 * t + 2.8 * drift) +
-            0.035 * Math.sin(tau * 1099.5 * t + flutter + phase);
-          const air = (fast - slow) * (0.6 + 0.16 * flutter);
-          samples[i] = rotor * (0.86 + 0.1 * Math.sin(tau * 1.25 * t)) + air;
-        } else {
-          const rotor = tau * 49 * t + 0.22 * drift;
-          const chamber =
-            0.39 * Math.sin(rotor) +
-            0.13 * Math.sin(tau * 73.5 * t + 0.4 * drift + phase) +
-            0.095 * Math.sin(rotor * 2 + 0.3 * flutter) +
-            0.05 * Math.sin(tau * 147.25 * t + drift + phase);
-          samples[i] =
-            Math.tanh(chamber * (1.1 + 0.08 * flutter)) + slow * 0.65;
-        }
-      }
-      // Only stochastic airflow needs a seam; blend its complete mix over
-      // 30 ms so the loop is also safe at elevated boost playback rates.
-      const seam = Math.round(rate * 0.03);
-      const boundary = (samples[0] + samples[samples.length - 1]) * 0.5;
-      for (let i = 0; i < seam; i++) {
-        const blend = 0.5 - 0.5 * Math.cos((Math.PI * i) / seam);
-        samples[i] = boundary + (samples[i] - boundary) * blend;
-        const end = samples.length - 1 - i;
-        samples[end] = boundary + (samples[end] - boundary) * blend;
-      }
-    }
-    return buffer;
   }
 
   createLaunchCue(stage) {
@@ -332,34 +274,17 @@ export class AudioEngine {
     const load = clamp(acceleration / 25, -1, 1);
     const slip = clamp(Math.abs(controls.slip || 0) / 20, 0, 1);
     const air = Math.max(Math.abs(controls.air || 0), controls.brake ? 0.6 : 0);
-    const airborne = controls.grounded === false;
     const target = (param, value, smoothing = 0.1) =>
       param.setTargetAtTime(value, t, smoothing);
-    // Speed drives blade rate; acceleration opens the chamber under load.
-    // Coasting unloads it rather than sounding like the throttle is stuck on.
-    target(
-      this.motor.source.playbackRate,
-      0.84 + speed * 0.61 + boost * 0.09,
-      0.16,
+    updateEngineSound(
+      this.motor,
+      this.turbine,
+      t,
+      speed,
+      boost,
+      load,
+      controls,
     );
-    target(
-      this.turbine.source.playbackRate,
-      0.7 + speed * 0.83 + load * 0.06 + boost * 0.16,
-      0.12,
-    );
-    target(
-      this.motor.gain.gain,
-      (0.17 + speed * 0.18 + load * 0.035) * (airborne ? 0.65 : 1),
-    );
-    target(
-      this.turbine.gain.gain,
-      0.035 + speed * 0.18 + Math.max(0, load) * 0.07 + boost * 0.05,
-    );
-    target(
-      this.motor.filter.frequency,
-      380 + speed * 650 + Math.max(0, load) * 260,
-    );
-    target(this.turbine.filter.frequency, 1400 + speed * 2400 + boost * 900);
     target(this.wind.gain.gain, speed * speed * 0.2 + slip * 0.07);
     target(this.wind.filter.frequency, 700 + speed * 2000 + slip * 600);
     target(
