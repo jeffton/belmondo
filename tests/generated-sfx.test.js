@@ -97,6 +97,20 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   await audio.start();
   assert.equal(globalThis.fetch.mock.callCount(), loads);
 
+  audio.effect("voice:3");
+  const spoken = [...audio.sampleVoices][0];
+  assert.equal(spoken.gain.gain.value, 0.9);
+  audio.setPaused(true);
+  assert.equal(spoken.source.playing, false);
+  audio.setPaused(false);
+  assert.equal(audio.sampleVoices.size, 0, "speech never replays on resume");
+  audio.effect("voice:2");
+  audio.setMuted(true);
+  assert.equal(audio.sampleVoices.size, 0);
+  audio.effect("voice:1");
+  assert.equal(audio.sampleVoices.size, 0);
+  audio.setMuted(false);
+
   audio.effect("fire", "MISSILE");
   const first = [...audio.sampleVoices][0];
   audio.effect("fire", "MISSILE");
@@ -219,6 +233,10 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "incoming",
       "lap",
       "finish",
+      "voice:3",
+      "voice:2",
+      "voice:1",
+      "voice:0",
     ].sort(),
   );
   for (const cue of Object.values(SFX_CUES)) {

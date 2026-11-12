@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { LAPS } from "./race.js";
 
+// Shared by the physical signal and its voice; the race owns the only clock.
+export function countdownBoardStage(race) {
+  if (race.countdown > 3) return "armed";
+  if (race.countdown > 0) return Math.ceil(race.countdown);
+  return race.time < 1.2 ? "GO" : "idle";
+}
+
 const INK = "#142333";
 const PAPER = "#f3f5e7";
 const MINT = "#9bffd9";
@@ -200,11 +207,9 @@ export function buildStartGantry(scene, track) {
     let approaching = false;
     let displayedLap;
     if (!demo) {
-      if (race.countdown > 3) stage = "armed";
-      else if (race.countdown > 0) stage = Math.ceil(race.countdown);
-      else if (race.finished) stage = "FINISH";
-      else if (race.time < 1.2) stage = "GO";
-      else {
+      stage = countdownBoardStage(race);
+      if (race.finished) stage = "FINISH";
+      else if (stage === "idle") {
         const player = race.player;
         // Announce the lap entered at this line throughout the authored home
         // straight's incoming leg. Unwrapped, gate-earned progression keeps the

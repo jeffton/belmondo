@@ -16,7 +16,7 @@ try {
       body: "<title>Launch audio</title>",
     }),
   );
-  await page.route("http://audio.test/audio/sfx/*.wav", async (route) => {
+  await page.route("http://audio.test/audio/**/*.wav", async (route) => {
     const path = new URL(route.request().url()).pathname;
     await route.fulfill({
       contentType: "audio/wav",

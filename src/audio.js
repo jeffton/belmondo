@@ -267,6 +267,7 @@ export class AudioEngine {
   }
 
   launchCue(stage) {
+    this.playSample(`voice:${stage}`);
     const source = this.context.createBufferSource();
     source.buffer = this.launchCues[stage === 0 ? 3 : 3 - stage];
     const filter = this.context.createBiquadFilter();
