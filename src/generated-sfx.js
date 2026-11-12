@@ -18,10 +18,14 @@ export const SFX_CUES = {
     files: ["/audio/sfx/boost-1.wav", "/audio/sfx/boost-2.wav"],
     gain: 0.7,
   },
-  finish: {
-    files: ["/audio/sfx/finish-1.wav", "/audio/sfx/finish-2.wav"],
-    gain: 0.75,
-  },
+  "voice:result:1": { files: ["/audio/voice/you-won.wav"], gain: 0.9 },
+  "voice:result:2": { files: ["/audio/voice/second-place.wav"], gain: 0.9 },
+  "voice:result:3": { files: ["/audio/voice/third-place.wav"], gain: 0.9 },
+  "voice:result:4": { files: ["/audio/voice/fourth-place.wav"], gain: 0.9 },
+  "voice:result:5": { files: ["/audio/voice/fifth-place.wav"], gain: 0.9 },
+  "voice:result:6": { files: ["/audio/voice/sixth-place.wav"], gain: 0.9 },
+  "voice:result:7": { files: ["/audio/voice/seventh-place.wav"], gain: 0.9 },
+  "voice:result:8": { files: ["/audio/voice/you-lost.wav"], gain: 0.9 },
   hit: {
     files: ["/audio/sfx/hit-1.wav", "/audio/sfx/hit-2.wav"],
     gain: 0.9,

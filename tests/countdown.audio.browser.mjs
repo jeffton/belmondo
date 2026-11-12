@@ -64,6 +64,22 @@ try {
       "voice:MINE",
       "voice:SHIELD",
       "voice:TURBO",
+      "finish:1",
+      "finish:2",
+      "finish:3",
+      "finish:4",
+      "finish:5",
+      "finish:6",
+      "finish:7",
+      "finish:8",
+      "voice:result:1",
+      "voice:result:2",
+      "voice:result:3",
+      "voice:result:4",
+      "voice:result:5",
+      "voice:result:6",
+      "voice:result:7",
+      "voice:result:8",
     ]) {
       const context = new OfflineAudioContext(2, 48000, 48000);
       context.resume = () => Promise.resolve();
@@ -81,6 +97,8 @@ try {
         audio.effect("lap", stage.slice(4));
       else if (typeof stage === "string" && stage.startsWith("pickup:"))
         audio.effect("pickup", stage.slice(7));
+      else if (typeof stage === "string" && stage.startsWith("finish:"))
+        audio.effect("finish", stage.slice(7));
       else if (stage === 0) audio.effect("go");
       else if (typeof stage === "number") audio.effect("countdown", stage);
       else audio.effect("countdown");
@@ -146,6 +164,18 @@ try {
       result.channels,
       results.find((item) => item.stage === voiceKey).channels,
       `${result.stage}: speech only, with no old lap or pickup sound`,
+    );
+  }
+  for (const result of results.filter((item) =>
+    String(item.stage).startsWith("finish:"),
+  )) {
+    const reference = results.find(
+      (item) => item.stage === `voice:result:${result.stage.slice(7)}`,
+    );
+    assert.deepEqual(
+      result.channels,
+      reference.channels,
+      `${result.stage}: result voice only, without the old finish sound`,
     );
   }
   const frames = 48000 * 4;

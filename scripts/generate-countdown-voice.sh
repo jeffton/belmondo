@@ -6,7 +6,10 @@ trap 'rm -rf "$work"' EXIT
 mkdir -p public/audio/voice
 for cue in "three|three" "two|two" "one|one" "go|go" \
   "lap-2|lap two" "lap-3|lap three" "lap-4|lap four" "final-lap|final lap" \
-  "missile|missile" "pulse|pulse" "mine|mine" "shield|shield" "turbo|turbo"; do
+  "missile|missile" "pulse|pulse" "mine|mine" "shield|shield" "turbo|turbo" \
+  "you-won|you won" "second-place|second place" "third-place|third place" \
+  "fourth-place|fourth place" "fifth-place|fifth place" "sixth-place|sixth place" \
+  "seventh-place|seventh place" "you-lost|you lost"; do
   word=${cue%%|*}
   text=${cue#*|}
   espeak-ng -v en-us+m3 -p 24 -s 165 -a 150 -w "$work/$word.wav" "$text"
