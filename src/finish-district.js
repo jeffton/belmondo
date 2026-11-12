@@ -529,8 +529,8 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     crowd(group, points, side);
   }
 
-  // Timing portal is exactly on frame(0). The signal board remains downstream
-  // at +42m and is deliberately a separate structure with a different purpose.
+  // Keep the timing-line architecture and checkers at frame(0), without a
+  // second sign. The downstream board owns countdown, player lap and finish.
   const finish = track.frame(0);
   const portal = place(finish, "finish-line-portal");
   const halfSpan = finish.width + 4;
@@ -566,8 +566,6 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     portalFeet.push({ x: foot.x, z: foot.z, width: 2.8, length: 4 });
   }
   box(portal, materials.dark, 0, 17, 0, halfSpan * 2 + 2, 1, 1.3);
-  box(portal, materials.dark, 0, 15.4, 0, 16.6, 2.7, 0.7);
-  lettering(portal, "FINISH", 0, 15.4, -0.39, 0.29);
   for (const side of [-1, 1])
     for (let n = 0; n < 5; n++)
       box(
