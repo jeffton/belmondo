@@ -144,7 +144,7 @@ async function open(device, heldFromMenu = false, viewport, label) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#mode").selectOption("trial");
+  await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
   if (device === "keyboard" && heldFromMenu) await page.keyboard.down("KeyW");
   if (label || (device === "keyboard" && !heldFromMenu))

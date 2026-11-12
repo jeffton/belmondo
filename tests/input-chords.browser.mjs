@@ -23,7 +23,7 @@ async function ready(context, mode = "trial") {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#mode").selectOption(mode);
+  await page.locator(`input[name="mode"][value="${mode}"]`).check();
   await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

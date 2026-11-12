@@ -35,7 +35,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#mode").selectOption("trial");
+  await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
   await page.locator("#start").click();
   await page.waitForFunction(

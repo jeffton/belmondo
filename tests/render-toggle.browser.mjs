@@ -49,9 +49,12 @@ try {
     };
     await page.goto(url);
     await ready();
-    const toggle = page.getByRole("switch", { name: "LOW-RES" });
-    await expect(toggle).not.toBeChecked();
+    const toggle = page.locator('#render-quality input[value="retro"]');
+    await expect(toggle).toBeChecked();
     await expect(page.locator("select#quality")).toHaveCount(0);
+    await rendered(true);
+    await page.locator("#quality-clean").check();
+    await expect(toggle).not.toBeChecked();
     await rendered(false);
     if (mobile) await toggle.tap();
     else {

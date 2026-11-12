@@ -58,26 +58,63 @@
           <span>02 / PILOT SYSTEM</span><span id="craft-note"></span>
         </div>
         <div id="crafts" class="choices crafts"></div>
-        <div class="speed-class-row">
-          <label for="speed-class">03 / SPEED CLASS</label>
-          <select id="speed-class">
-            <option value="0">C1 BEGINNER / 1× PACE</option>
-            <option value="1">C2 ADVANCED / 1.2× PACE</option>
-            <option value="2">C3 EXPERT / 1.4× PACE</option>
-          </select>
-        </div>
+        <fieldset id="speed-class" class="menu-options">
+          <legend class="selection-label">03 / SPEED CLASS</legend>
+          <div class="choices speed-choices">
+            <label class="choice"
+              ><input type="radio" name="speed-class" value="0" checked /><b
+                >FLOW</b
+              ></label
+            >
+            <label class="choice"
+              ><input type="radio" name="speed-class" value="1" /><b
+                >RUSH</b
+              ></label
+            >
+            <label class="choice"
+              ><input type="radio" name="speed-class" value="2" /><b
+                >OVERDRIVE</b
+              ></label
+            >
+          </div>
+        </fieldset>
         <div class="mode-row">
-          <label
-            >FORMAT
-            <select id="mode">
-              <option value="race">COMBAT / 8 PILOTS</option>
-              <option value="trial">TIME ATTACK / SOLO</option>
-            </select></label
-          ><label class="render-toggle"
-            >LOW-RES
-            <input id="quality" type="checkbox" role="switch" />
-            <span class="switch-track" aria-hidden="true"></span
-          ></label>
+          <fieldset id="mode" class="menu-options">
+            <legend>FORMAT</legend>
+            <div class="binary-options">
+              <label
+                ><input type="radio" name="mode" value="race" checked /><span
+                  >COMBAT</span
+                ></label
+              >
+              <label
+                ><input type="radio" name="mode" value="trial" /><span
+                  >TIME ATTACK</span
+                ></label
+              >
+            </div>
+          </fieldset>
+          <fieldset id="render-quality" class="menu-options">
+            <legend>LOW-RES</legend>
+            <div class="binary-options">
+              <label
+                ><input
+                  id="quality-clean"
+                  type="radio"
+                  name="quality"
+                  value="clean"
+                /><span>OFF</span></label
+              >
+              <label
+                ><input
+                  id="quality"
+                  type="radio"
+                  name="quality"
+                  value="retro"
+                /><span>ON</span></label
+              >
+            </div>
+          </fieldset>
         </div>
         <button id="start" class="start">ENTER THE GRID</button>
         <div class="menu-links">
@@ -200,42 +237,101 @@
       <p class="eyebrow">PILOT / FIELD MANUAL</p>
       <h2>PILOT CONTROLS</h2>
       <div class="brief-grid">
-        <div>
-          <h3>DESKTOP</h3>
-          <p>
-            <kbd>↑ W</kbd> Thrust<br /><kbd>← → A D</kbd> Steer<br /><kbd
-              >J L / Q E</kbd
-            >
-            Left / right airbrake<br /><kbd>I / K</kbd> Nose down / up<br /><kbd
-              >↓ S</kbd
-            >
-            Brake<br /><kbd>Space</kbd> Fire · <kbd>P Esc</kbd> Pause<br /><kbd
-              >V</kbd
-            >
-            Change view
-          </p>
-          <h3>GAMEPAD</h3>
-          <p>
-            Left stick steer + pitch (up: nose down)<br />A / R2 thrust · L1 /
-            R1 airbrakes<br />X fire · B brake<br />Y change view · Start pause
-          </p>
-        </div>
-        <div>
-          <h3>TOUCH</h3>
-          <p>
-            Auto-thrust. Drag the left stick to steer; push up for nose down,
-            pull down for nose up. Airbrake into sharp turns. Fire with the
-            right thumb. At the start, hold BRAKE to lower thrust; release to
-            build it. Aim for the marked 65–80% band at GO. Landscape gives the
-            best view; VIEW switches cameras.
-          </p>
-          <h3>THE CIRCUIT</h3>
-          <p>
-            Cyan BOOST pads accelerate. Amber/magenta WEAPON pads arm one
-            weapon. Follow FORK signs and pick a lane before the split. Keep
-            your speed over the jump. Wall contact scrubs velocity.
-          </p>
-        </div>
+        <section class="control-card" aria-labelledby="keyboard-heading">
+          <h3 id="keyboard-heading">KEYBOARD</h3>
+          <div
+            class="keyboard-diagram"
+            aria-label="W thrust, A and D steer, S brake; arrow keys also work"
+          >
+            <div><kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd></div>
+            <div><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div>
+            <span>STEER / THRUST / BRAKE</span>
+          </div>
+          <dl class="control-list">
+            <div>
+              <dt><kbd>W</kbd> / <kbd>↑</kbd></dt>
+              <dd>Thrust</dd>
+            </div>
+            <div>
+              <dt><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd></dt>
+              <dd>Steer</dd>
+            </div>
+            <div>
+              <dt><kbd>S</kbd> / <kbd>↓</kbd></dt>
+              <dd>Brake</dd>
+            </div>
+            <div>
+              <dt><kbd>Q</kbd><kbd>E</kbd> / <kbd>J</kbd><kbd>L</kbd></dt>
+              <dd>Left / right airbrake</dd>
+            </div>
+            <div>
+              <dt><kbd>I</kbd> / <kbd>K</kbd></dt>
+              <dd>Nose down / up</dd>
+            </div>
+            <div>
+              <dt><kbd>SPACE</kbd></dt>
+              <dd>Fire</dd>
+            </div>
+            <div>
+              <dt><kbd>V</kbd></dt>
+              <dd>Change view</dd>
+            </div>
+            <div>
+              <dt><kbd>P</kbd> / <kbd>ESC</kbd></dt>
+              <dd>Pause</dd>
+            </div>
+          </dl>
+        </section>
+        <section class="control-card" aria-labelledby="gamepad-heading">
+          <h3 id="gamepad-heading">GAMEPAD</h3>
+          <div class="gamepad-diagram" aria-hidden="true">
+            <span class="pad-shoulder pad-left">L1</span>
+            <span class="pad-shoulder pad-right">R1 · R2</span>
+            <span class="pad-stick">L<small>↔ ↕</small></span>
+            <span class="pad-start">START</span>
+            <span class="pad-face pad-y">Y</span
+            ><span class="pad-face pad-x">X</span>
+            <span class="pad-face pad-b">B</span
+            ><span class="pad-face pad-a">A</span>
+          </div>
+          <dl class="control-list">
+            <div>
+              <dt><span class="pad-key">L</span></dt>
+              <dd>
+                Steer + pitch<br /><small>Up: nose down · down: nose up</small>
+              </dd>
+            </div>
+            <div>
+              <dt>
+                <span class="pad-key">A</span> / <span class="pad-key">R2</span>
+              </dt>
+              <dd>Thrust</dd>
+            </div>
+            <div>
+              <dt>
+                <span class="pad-key">L1</span> /
+                <span class="pad-key">R1</span>
+              </dt>
+              <dd>Left / right airbrake</dd>
+            </div>
+            <div>
+              <dt><span class="pad-key">B</span></dt>
+              <dd>Brake</dd>
+            </div>
+            <div>
+              <dt><span class="pad-key">X</span></dt>
+              <dd>Fire</dd>
+            </div>
+            <div>
+              <dt><span class="pad-key">Y</span></dt>
+              <dd>Change view</dd>
+            </div>
+            <div>
+              <dt><span class="pad-key">START</span></dt>
+              <dd>Pause</dd>
+            </div>
+          </dl>
+        </section>
       </div>
       <h3>LAUNCH</h3>
       <p>
@@ -244,10 +340,6 @@
         automatic thrust alone does not earn it.
       </p>
       <div id="weapon-roster" class="arsenal"></div>
-      <p class="help-small">
-        Five laps. Eight pilots. No rubber-banding. Time attack disables
-        weapons. Records stay in this browser.
-      </p>
     </dialog>
     <dialog id="music-dialog">
       <button class="close" aria-label="Close sound system">×</button>

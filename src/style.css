@@ -177,23 +177,15 @@ h1.wordmark {
   color: var(--ink);
   border-color: var(--paper);
 }
-.choice.active:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--orange);
-}
 .choice b {
   font: 700 17px/1.15 var(--display);
   display: block;
 }
 .choice small {
   display: block;
-  font-size: 10px;
-  line-height: 1.25;
+  font: 700 10px/1.35 var(--display);
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
   margin-top: 6px;
   opacity: 0.85;
 }
@@ -210,77 +202,86 @@ h1.wordmark {
   flex-shrink: 0;
   background: var(--craft);
 }
-.speed-class-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 10px 0;
-  border-bottom: 1px solid #68829055;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-.speed-class-row select {
-  max-width: 65%;
+.menu-options {
+  border: 0;
+  padding: 0;
+  margin: 0;
   min-width: 0;
-  padding: 9px 6px;
+}
+.menu-options legend {
+  padding: 0;
+}
+#speed-class {
+  margin-top: 20px;
+}
+#speed-class .selection-label {
+  margin: 0 0 8px;
+  color: var(--paper);
+}
+.speed-choices .choice {
+  cursor: pointer;
+  text-align: center;
+  padding: 12px 5px;
+}
+.speed-choices .choice b {
+  font-size: clamp(12px, 3.4vw, 17px);
+}
+.speed-choices input,
+.binary-options input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.speed-choices .choice:has(input:checked) {
+  color: var(--ink);
+  background: var(--mint);
+  border-color: var(--paper);
+}
+.speed-choices .choice:has(input:focus-visible),
+.binary-options:has(input:focus-visible) {
+  outline: 3px solid var(--lime);
+  outline-offset: 3px;
 }
 .mode-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
   gap: 12px;
   margin-top: 18px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #b3c5cd;
 }
-.mode-row label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.mode-row legend {
+  display: block;
+  margin-bottom: 7px;
+  letter-spacing: 1px;
 }
-.render-toggle {
+.binary-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  border: 1px solid #68829088;
+  background: #172a35;
+}
+.binary-options label {
   position: relative;
   cursor: pointer;
-  min-height: 32px;
 }
-.render-toggle input {
-  position: absolute;
-  right: 0;
-  width: 40px;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
+.binary-options span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 5px;
+  text-align: center;
 }
-.switch-track {
-  width: 38px;
-  height: 22px;
-  border: 1px solid #66818c;
-  border-radius: 12px;
-  background: #172a35;
-  pointer-events: none;
-}
-.switch-track::after {
-  content: "";
-  display: block;
-  width: 14px;
-  height: 14px;
-  margin: 3px;
-  border-radius: 50%;
-  background: #91a8b1;
-  transition:
-    transform 120ms,
-    background 120ms;
-}
-.render-toggle input:checked + .switch-track {
-  border-color: var(--orange);
-}
-.render-toggle input:checked + .switch-track::after {
-  transform: translateX(16px);
-  background: var(--orange);
+.binary-options label:has(input:checked) span {
+  color: var(--ink);
+  background: var(--mint);
 }
 select {
   background: #172a35;
@@ -783,11 +784,131 @@ h3 {
 p {
   line-height: 1.7;
 }
-kbd {
-  font: inherit;
-  color: var(--lime);
-  display: inline-block;
-  margin: 2px 5px 2px 0;
+kbd,
+.pad-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 25px;
+  min-height: 26px;
+  padding: 3px 5px;
+  margin: 2px 1px;
+  border: 1px solid #9db0b799;
+  border-bottom-width: 3px;
+  border-radius: 3px;
+  background: #233c4a;
+  color: var(--paper);
+  font: 700 11px/1 var(--interface);
+}
+.control-card {
+  min-width: 0;
+}
+.keyboard-diagram {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0c1a2466;
+}
+.keyboard-diagram kbd {
+  width: 39px;
+  height: 37px;
+  color: var(--mint);
+}
+.keyboard-diagram > span {
+  margin-top: 9px;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.control-list {
+  margin: 16px 0 0;
+  font-size: 11px;
+}
+.control-list > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  border-bottom: 1px solid #68829033;
+}
+.control-list dt,
+.control-list dd {
+  margin: 0;
+}
+.control-list dd small {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.5;
+  color: #b3c5cd;
+}
+.gamepad-diagram {
+  position: relative;
+  width: min(270px, 100%);
+  height: 160px;
+  margin: 0 auto;
+  border: 2px solid #91a8b1;
+  border-radius: 38px 38px 48px 48px;
+  background: #233c4a;
+}
+.gamepad-diagram > span {
+  position: absolute;
+  display: grid;
+  place-content: center;
+  font: 700 11px var(--interface);
+}
+.pad-shoulder {
+  top: 10px;
+  padding: 4px 9px;
+  border: 1px solid var(--mint);
+  border-radius: 4px;
+}
+.pad-left {
+  left: 19px;
+}
+.pad-right {
+  right: 15px;
+}
+.pad-stick {
+  width: 57px;
+  height: 57px;
+  border: 2px solid var(--mint);
+  border-radius: 50%;
+  top: 57px;
+  left: 22px;
+  text-align: center;
+}
+.pad-stick small {
+  margin-top: 4px;
+  letter-spacing: 3px;
+}
+.pad-start {
+  top: 59px;
+  left: 43%;
+  font-size: 8px !important;
+}
+.pad-face {
+  width: 27px;
+  height: 27px;
+  border: 1px solid var(--lilac);
+  border-radius: 50%;
+}
+.pad-y {
+  top: 44px;
+  right: 43px;
+}
+.pad-x {
+  top: 73px;
+  right: 72px;
+}
+.pad-b {
+  top: 73px;
+  right: 14px;
+}
+.pad-a {
+  top: 102px;
+  right: 43px;
 }
 .arsenal {
   display: grid;
@@ -1051,9 +1172,8 @@ body.touch .shield {
   #menu .craft-icon {
     height: 26px;
   }
-  #menu .speed-class-row {
+  #menu #speed-class {
     margin-top: 12px;
-    padding: 7px 0;
   }
   #menu .mode-row {
     margin-top: 12px;
@@ -1141,9 +1261,6 @@ body.touch .shield {
   }
   .mode-row {
     gap: 6px;
-  }
-  .mode-row label {
-    gap: 4px;
   }
   .menu-links {
     gap: 8px;

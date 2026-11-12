@@ -192,14 +192,16 @@ async function open(
   return { context, page };
 }
 async function chooseClass(page, value, device) {
-  const selector = page.locator("#speed-class");
+  const selected = page.locator('input[name="speed-class"]:checked');
+  const target = page.locator(`input[name="speed-class"][value="${value}"]`);
   if (device === "keyboard") {
-    await selector.focus();
-    await page.keyboard.press("Home");
-    for (let i = 0; i < value; i++) await page.keyboard.press("ArrowDown");
+    await selected.focus();
+    const previous = Number(await selected.inputValue());
+    for (let i = 0; i < (value - previous + 3) % 3; i++)
+      await page.keyboard.press("ArrowRight");
     await page.keyboard.press("Tab");
-  } else await selector.selectOption(String(value));
-  await expect(selector).toHaveValue(String(value));
+  } else await target.check();
+  await expect(target).toBeChecked();
 }
 async function start(page) {
   await page.locator("#start").click();
@@ -258,7 +260,7 @@ async function publicSmoke(device) {
   const { context, page } = await open(device);
   await expect(page.locator("#tracks button")).toHaveCount(3);
   await expect(page.locator("#crafts button")).toHaveCount(3);
-  await expect(page.locator("#speed-class option")).toHaveCount(3);
+  await expect(page.locator("#speed-class input")).toHaveCount(3);
   await chooseClass(page, 2, device);
   await start(page);
   expect((await telemetry(page)).speedClass).toBe(2);
@@ -333,8 +335,8 @@ async function ui() {
       "Belmondo Circuit",
       "Belmondo Circuit",
     ]);
-    await expect(page.locator("#speed-class option")).toHaveCount(3);
-    await page.locator("#mode").selectOption("trial");
+    await expect(page.locator("#speed-class input")).toHaveCount(3);
+    await page.locator('input[name="mode"][value="trial"]').check();
     for (const speedClass of [0, 1, 2].filter(
       (speedClass) =>
         !process.env.INTEGRATED_CLASSES ||
@@ -350,9 +352,9 @@ async function ui() {
       );
       // Craft and class are independent: changing craft must not change class.
       await page.locator("#crafts button").nth(1).click();
-      await expect(page.locator("#speed-class")).toHaveValue(
-        String(speedClass),
-      );
+      await expect(
+        page.locator('input[name="speed-class"]:checked'),
+      ).toHaveValue(String(speedClass));
       await expect(page.locator("#best")).toHaveText("LOCAL RECORD / —");
       await page.locator("#crafts button").first().click();
       await start(page);
@@ -434,7 +436,7 @@ async function pace() {
   const cases = [];
   for (const speedClass of [0, 1, 2]) {
     const { context, page } = await open("keyboard");
-    await page.locator("#mode").selectOption("trial");
+    await page.locator('input[name="mode"][value="trial"]').check();
     await chooseClass(page, speedClass, "keyboard");
     await page.locator("#start").click();
     await page.keyboard.down("KeyW");
@@ -822,7 +824,7 @@ async function drive() {
     classSpec.id,
   );
   await page.locator("#tracks button").nth(course).click();
-  await page.locator("#mode").selectOption("trial");
+  await page.locator('input[name="mode"][value="trial"]').check();
   await chooseClass(page, speedClass, device);
   // Complete the first GPU/asset paint on the menu, before the race clock starts.
   await page.waitForLoadState("networkidle");

@@ -70,7 +70,10 @@ function showMessage(text, seconds = 1.7) {
   $("race-message").textContent = text;
   messageUntil = performance.now() + seconds * 1000;
 }
-function recordKey(mode = $("mode").value, speedClass = selectedSpeedClass) {
+function selectedMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
+function recordKey(mode = selectedMode(), speedClass = selectedSpeedClass) {
   return `${TRACKS[selectedTrack].layoutId}-${selectedCraft}-${mode}-${SPEED_CLASSES[speedClass].id}-${LAPS}laps`;
 }
 function updateRecord() {
@@ -91,8 +94,11 @@ function selectTrack(i) {
   world.setupRacers(race, CRAFT);
   demoDistance = track.length * 0.02;
   $("circuit-name").textContent = TRACKS[i].name;
-  for (const b of $("tracks").children)
-    b.classList.toggle("active", Number(b.dataset.index) === i);
+  for (const b of $("tracks").children) {
+    const active = Number(b.dataset.index) === i;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-pressed", String(active));
+  }
   updateRecord();
 }
 for (const [i, t] of TRACKS.entries()) {
@@ -109,8 +115,10 @@ for (const [i, c] of CRAFT.entries()) {
   button.innerHTML = `<i class="craft-icon" style="--craft:#${c.color.toString(16)}"></i><span><b>${c.name}</b><small>${c.team}</small></span>`;
   button.onclick = () => {
     selectedCraft = i;
-    for (const [j, b] of [...$("crafts").children].entries())
+    for (const [j, b] of [...$("crafts").children].entries()) {
       b.classList.toggle("active", i === j);
+      b.setAttribute("aria-pressed", String(i === j));
+    }
     $("craft-note").textContent = c.text.split("/")[0].trim().toUpperCase();
     updateRecord();
   };
@@ -120,17 +128,20 @@ $("crafts").children[0].click();
 selectTrack(0);
 $("mode").onchange = updateRecord;
 $("speed-class").onchange = () => {
-  selectedSpeedClass = Number($("speed-class").value);
+  selectedSpeedClass = Number(
+    document.querySelector('input[name="speed-class"]:checked').value,
+  );
   updateRecord();
 };
 const qualityToggle = $("quality");
 qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
+$("quality-clean").checked = !qualityToggle.checked;
 function applyQuality() {
   world.quality = qualityToggle.checked ? "retro" : "clean";
   world.resize();
 }
 applyQuality();
-qualityToggle.onchange = () => {
+$("render-quality").onchange = () => {
   applyQuality();
   localStorage.setItem("nv-render", world.quality);
 };
@@ -171,7 +182,7 @@ async function start(event) {
   race = new Race(
     track,
     selectedCraft,
-    $("mode").value,
+    selectedMode(),
     selectedSpeedClass,
     world.environment.terrain,
   );

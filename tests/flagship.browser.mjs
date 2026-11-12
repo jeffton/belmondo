@@ -85,7 +85,7 @@ async function drive(mobile, startupSeconds = null) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator("#mode").selectOption("trial");
+  await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
   await page.locator("#start").click();
   if (!mobile) await page.keyboard.down("ArrowUp");
@@ -423,7 +423,7 @@ async function restartChecks() {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#quality").check();
-  await page.locator("#mode").selectOption("race");
+  await page.locator('input[name="mode"][value="race"]').check();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/8");
@@ -435,14 +435,14 @@ async function restartChecks() {
   await page.locator("#quit").click();
   await page.locator("#crafts button").nth(1).click();
   await expect(page.locator("#crafts button").nth(1)).toHaveClass(/active/);
-  await page.locator("#mode").selectOption("trial");
+  await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/1");
   const result = {
     raceRestart: true,
     changedCraft: await page.locator("#crafts button.active b").textContent(),
-    changedMode: await page.locator("#mode").inputValue(),
+    changedMode: await page.locator('input[name="mode"]:checked').inputValue(),
     trialPosition: await page.locator("#position").textContent(),
   };
   await context.close();
