@@ -217,9 +217,9 @@ export function getTrackAdvertisingLayout(track) {
     CINDERLINE: [
       [0.1, -1, 1],
       [0.41, 1, 4],
-      [0.705, -1, 6],
+      [0.695, -1, 6],
       [0.925, 1, 7],
-      [0.555, -1, -1],
+      [0.61, -1, -1],
       [0.945, 1, -2],
     ],
     NOCTILUCENT: [
