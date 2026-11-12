@@ -32,15 +32,17 @@ for (let rank = 1; rank <= 8; rank++) {
     const race = new Race(track);
     race.countdown = 0;
     const line = track.finishS + LAPS * track.length;
+    // Earlier finishers must earn their terminal positions by crossing the
+    // real plane; merely placing an active body beyond it is not a finish.
+    for (const racer of race.racers.slice(1, rank)) {
+      place(track, racer, line - 0.1);
+      race.update(1 / 120, {});
+      assert(racer.finished);
+    }
     place(track, race.player, line - 0.1);
-    for (const racer of race.racers.slice(1))
-      place(
-        track,
-        racer,
-        racer.id < rank
-          ? line + 100 + racer.id * 20
-          : line - 100 - racer.id * 20,
-      );
+    for (const racer of race.racers.slice(rank))
+      if (racer !== race.player)
+        place(track, racer, line - 100 - racer.id * 20);
     for (let step = 0; step < 120 && !race.finished; step++)
       race.update(1 / 120, {});
     assert(race.finished);

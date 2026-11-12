@@ -708,7 +708,7 @@ export class World {
       const ship = this.ships[r.id];
       if (!ship) continue;
       ship.visible =
-        !r.eliminated &&
+        (demo || !r.eliminated) &&
         (demo || r !== player || this.view !== "first-person" || approach > 0);
       const rf = track.frame(r.contactS, r.branch);
       ship.position.copy(r.position);
@@ -729,7 +729,7 @@ export class World {
       const shield = ship.userData.shield;
       shield.position.copy(ship.position);
       shield.quaternion.copy(ship.quaternion);
-      shield.visible = !r.eliminated && r.protect > 0;
+      shield.visible = (demo || !r.eliminated) && r.protect > 0;
       ship.userData.updateExhaust(r.speed, r.boost, this.time);
       const shadow = ship.userData.shadow;
       shadow.position.copy(r.position);

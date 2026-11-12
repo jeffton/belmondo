@@ -7,12 +7,13 @@ import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 
-// Legacy-v4 routes with Coast/Solar branch identity. CPU output regression;
-// visual acceptance is performed separately before release.
+// Legacy-v4 branch worlds with finish-end timing stripe/approach signs
+// (96251d6) and Solar's ridged bored mountain (e11b2f1). Exact emitted-output
+// regression; separate clearance/terrain contracts and visual acceptance remain.
 const BASELINE = [
-  "26d19da6c22128e94c8d21030435b7c04f83b88fe5b4ca4b0202a4ab2d0fc8b5",
-  "dbafedf8b1d13095c81bf70281ced5ab156aa7a5c8af47bcae81966bbadb7166",
-  "944fa0b05065fe72b9c466282690d6baa25212031a667e3d0e4d85fca2f2147c",
+  "8a63bb605ac41802b407b4bd85031da4512953c6b411256bf767eb77e2af0ab4",
+  "4fd1bc958c3ccdcbb32bd60a3917f987aed357e24444958e6686ae38067234fe",
+  "298a092be875552f65e24c3a0f5734479939d6923b3d8314955092386bf0e2d2",
 ];
 export function environmentDigest(index) {
   const scene = new THREE.Scene();
