@@ -36,8 +36,7 @@ try {
           const source = super.createBufferSource();
           const start = source.start.bind(source);
           source.start = (...args) => {
-            // These four short static clips are distinct from the .52/.86 s
-            // synthesized signal cues and all continuously looping engine beds.
+            // Four short static spoken words; continuous engine beds loop.
             if (source.buffer && source.buffer.duration < 0.4 && !source.loop) {
               window.voiceStarts.push({
                 duration: source.buffer.duration,
