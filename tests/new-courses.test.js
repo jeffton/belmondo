@@ -7,15 +7,15 @@ import { createTerrain } from "../src/terrain.js";
 import { getJumpMarkingLayout } from "../src/jump-markings.js";
 import { projectRoad } from "../src/road-projection.js";
 
-// Captured from ab0109e before extending the registry. Includes every original
-// branch's frames, bounds, gap and tunnel decisions, not only the course IDs.
+// Accepted legacy-v4 routes d3f8eb8, universal fork correction ed9de33 and
+// Coast launch 0d0509a. Includes frames, bounds, gaps and tunnel decisions.
 const originalHashes = [
-  "c72ae886b6a2b0b570c24158f3fe152dfd68cbb420e75d4b2746112c9de47b3b",
-  "9cf01f56225f0a9feba93fbc71e4192111bdbd9536e64dafff244978502b0747",
-  "b097f5bdced2d53944797bc261c173e08643d647a36af32485e0b1359e82ba63",
+  "3fb907ffd5b6aebb6d9500cdc2bc362541c2b66f2430e293477fea96abf02d9c",
+  "d2be34d1fcaee87b1edca63e0fd9f094786db15d6f432e87912d3a1dbb93d142",
+  "44251c842a0f69edb88d9959b0ec4b45c6bb81951bac666829262d95314a2123",
 ];
 for (let index = 0; index < 3; index++) {
-  test(`original course ${index}: sampled physical outputs remain identical`, () => {
+  test(`legacy-v4 course ${index}: sampled physical outputs match the accepted route`, () => {
     const track = makeTrack(index);
     const rows = [track.length, track.physicalLengths];
     for (let j = 0; j < 300; j++) {

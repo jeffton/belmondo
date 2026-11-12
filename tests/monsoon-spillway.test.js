@@ -5,15 +5,16 @@ import { TRACKS, makeTrack } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
-// Exact complete configuration snapshots from main d9e86c6, not only IDs.
+// Complete accepted configuration snapshots, not only IDs: legacy-v4 routes
+// with Coast launch 0d0509a; Whiteout/Cinderline remain at d9e86c6.
 const unchanged = {
-  0: "5aa22f84e77d8866bc8f970a6191500ca8a8964373590df5e2b50c40e34546b7",
-  1: "65904238fda6ac54a165a7e3db2f24d9dbc29445fa3e6f7105f5ce7d37b77da8",
-  2: "0ed50c5e9e67597f8f01cc3f21cfe37e5a2c6d953a0944b9b2f6379976067160",
+  0: "c6d77d194b8a15648e39de2caa3eced7ea56b9ea6db29bc51e26bedd84664d19",
+  1: "686274b6441f75a0b9c83538200cc206de7e8464ec84abbbff1cd5e4e623a25f",
+  2: "c78e901591a63ea99f5c1d28574f475536adfbe29aad2cddc6dcd86a1e9ef048",
   3: "9b5ee8b38010d2bca751f7f1c513c0bc1575a5790ba64987f4bf62e2fd7b6bcc",
   5: "abed34f0b015ad47414600cfe4e539d42fffb67761e4da754faeb5d4b78fb7da",
 };
-test("Monsoon reauthoring leaves all five other configurations exactly intact", () => {
+test("the other five course configurations match their accepted authored versions", () => {
   for (const [index, hash] of Object.entries(unchanged))
     assert.equal(
       createHash("sha256").update(JSON.stringify(TRACKS[index])).digest("hex"),

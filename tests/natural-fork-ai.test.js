@@ -11,7 +11,7 @@ const production = JSON.parse(
   readFileSync(new URL("./fixtures/legacy-v3-configs.json", import.meta.url)),
 );
 for (const version of ["production-v3", "redesigned-v4"])
-  for (let index = 0; index < 2; index++)
+  for (let index = 0; index < (version === "production-v3" ? 2 : 3); index++)
     test(`${version} course ${index}: genuine odd/even NPCs choose both forks from grid in all classes`, () => {
       const current = TRACKS[index];
       let track;

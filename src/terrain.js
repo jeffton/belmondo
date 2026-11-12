@@ -214,22 +214,37 @@ export function createTerrain(track) {
     // basements in the land itself; do not push terrain through existing shops.
     const galleries = getWaterfrontDistricts(track);
     for (const [start, end, branch, side] of galleries) {
-      const bays = Math.ceil(((end - start) * track.length) / 5);
-      for (let i = 0; i <= bays; i++) {
-        const f = track.frame(
+      // Match the occupied basement slabs emitted by buildFlagship: each bay
+      // has one horizontal longitudinal axis, not a continuously climbing floor.
+      const bays = Math.ceil(((end - start) * track.length) / 25);
+      for (let i = 0; i < bays; i++) {
+        const a = track.frame(
           (start + ((end - start) * i) / bays) * track.length,
           branch,
         );
-        for (let x = f.width + 3; x <= f.width + 39; x += 4) {
-          lowerCell(
-            f.p.x + side * f.right.x * x,
-            f.p.z + side * f.right.z * x,
-            (px, pz) =>
-              f.p.y -
-              (f.up.x * (px - f.p.x) + f.up.z * (pz - f.p.z)) / f.up.y -
-              6.5,
-          );
-        }
+        const b = track.frame(
+          (start + ((end - start) * (i + 1)) / bays) * track.length,
+          branch,
+        );
+        const f = track.frame(
+          (start + ((end - start) * (i + 0.5)) / bays) * track.length,
+          branch,
+        );
+        const forward = new THREE.Vector2(f.tangent.x, f.tangent.z).normalize();
+        const determinant = f.right.x * forward.y - f.right.z * forward.x;
+        const ceiling = (px, pz) => {
+          const localX =
+            ((px - f.p.x) * forward.y - (pz - f.p.z) * forward.x) / determinant;
+          return f.p.y + f.right.y * localX - 6.5;
+        };
+        const half = a.p.distanceTo(b.p) * 0.45 + 3;
+        for (let x = f.width + 3; x <= f.width + 39; x += 3)
+          for (let z = -half; z <= half + 3; z += 3)
+            lowerCell(
+              f.p.x + side * f.right.x * x + forward.x * z,
+              f.p.z + side * f.right.z * x + forward.y * z,
+              ceiling,
+            );
       }
     }
     const terminal = track.frame(0.232 * track.length);
