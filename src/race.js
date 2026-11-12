@@ -4,6 +4,10 @@ import { projectRoad, roadHeight } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
 import { getTrackPickups, crossesPickup } from "./pickups.js";
 import { Launch } from "./launch.js";
+import {
+  GRID_APPROACH_SECONDS,
+  LAUNCH_COUNTDOWN_SECONDS,
+} from "./start-sequence.js";
 import { railBounds, respondToRail, RAIL_PROFILE } from "./rail-profile.js";
 import { SPEED_CLASSES } from "./speed-classes.js";
 
@@ -57,7 +61,7 @@ export class Race {
     this.pickups = getTrackPickups(track);
     this.mode = mode;
     this.time = 0;
-    this.countdown = 3.2;
+    this.countdown = GRID_APPROACH_SECONDS + LAUNCH_COUNTDOWN_SECONDS;
     this.launch = new Launch();
     this.finished = false;
     this.events = [];
@@ -69,7 +73,7 @@ export class Race {
     this.racers = Array.from({ length: mode === "trial" ? 1 : 8 }, (_, i) => ({
       id: i,
       craft: i ? i % 3 : craft,
-      s: -i * 9,
+      s: track.finishS - 18 - i * 9,
       x: i % 2 ? -3 : 3,
       vx: 0,
       speed: 0,
@@ -254,7 +258,14 @@ export class Race {
     if (this.finished) return;
     if (this.countdown > 0) {
       const countdownStep = Math.min(dt, this.countdown);
-      this.launch.update(countdownStep, input.throttle, input.launchIntent);
+      this.launch.observe(input.throttle, input.launchIntent);
+      const launchStep = clamp(
+        LAUNCH_COUNTDOWN_SECONDS - (this.countdown - countdownStep),
+        0,
+        countdownStep,
+      );
+      if (launchStep > 0)
+        this.launch.update(launchStep, input.throttle, input.launchIntent);
       this.countdown = Math.max(0, this.countdown - countdownStep);
       if (this.countdown > 0) return;
       this.launch.resolve();
@@ -551,8 +562,8 @@ export class Race {
           (track.config.jump === null ||
             u < track.config.jump - 0.025 ||
             u > track.config.jump + 0.025) &&
-          road.s >= ((r.gate - 1) * track.length) / GATES &&
-          road.s < (r.gate * track.length) / GATES
+          road.s >= track.finishS + ((r.gate - 1) * track.length) / GATES &&
+          road.s < track.finishS + (r.gate * track.length) / GATES
         )
           r.checkpoint = { s: r.s, branch: r.branch, gate: r.gate };
       } else if (gap && wasGrounded && r.id === 0) this.emit("jump", "FLIGHT");
@@ -567,7 +578,7 @@ export class Race {
         continue;
       }
       if (r.grounded || (r.flight && onDeck && height > -3)) {
-        const gateS = (r.gate * track.length) / GATES;
+        const gateS = track.finishS + (r.gate * track.length) / GATES;
         const gateFrame = track.frame(gateS, r.branch);
         const before = previous.clone().sub(gateFrame.p).dot(gateFrame.tangent);
         const after = r.position
@@ -617,9 +628,9 @@ export class Race {
         r.s = clamp(
           road.s,
           r.gate === 1
-            ? Math.min(0, road.s)
-            : ((r.gate - 1) * track.length) / GATES,
-          (r.gate * track.length) / GATES - 0.001,
+            ? Math.min(track.finishS - 18, road.s)
+            : track.finishS + ((r.gate - 1) * track.length) / GATES,
+          track.finishS + (r.gate * track.length) / GATES - 0.001,
         );
       }
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.

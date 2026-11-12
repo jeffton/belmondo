@@ -140,7 +140,7 @@ test("physical start signal stays dark and legible across real countdown boundar
             race.track.length -
           1;
         draw(`LAP ${lap}`);
-        player.s = lap * race.track.length - 100;
+        player.s = race.track.finishS + lap * race.track.length - 100;
         draw(lap === LAPS ? "FINISH" : `LAP ${lap + 1}`);
         assert.equal(race.finished, false, "preview does not finish the race");
         assert.ok(
@@ -159,7 +159,7 @@ test("physical start signal stays dark and legible across real countdown boundar
           version,
         );
         race.racers.pop();
-        const s = lap * race.track.length - 1;
+        const s = race.track.finishS + lap * race.track.length - 1;
         const frame = race.track.frame(s);
         player.lap = lap;
         player.s = s;

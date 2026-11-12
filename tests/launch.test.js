@@ -107,7 +107,7 @@ test("Race samples precisely at GO, keeps the grid still, and accelerates smooth
   const race = new Race(makeTrack(0), 0, "trial");
   const start = race.player.position.clone();
   // Choose an exact final countdown slice so crossing GO can be tested separately.
-  race.update(2.6, idle);
+  race.update(4.6, idle);
   race.update(0.58, press);
   assert.equal(race.launch.resolved, false);
   assert.equal(race.time, 0);
@@ -129,7 +129,7 @@ test("Race samples precisely at GO, keeps the grid still, and accelerates smooth
 test("GO timing and reward are independent of countdown update frequency", () => {
   for (const step of [1 / 30, 1 / 60, 1 / 120, 0.137]) {
     const race = new Race(makeTrack(0), 0, "trial");
-    advance(race, 2.62, idle, step);
+    advance(race, 4.62, idle, step);
     advance(race, 0.59, press, step);
     assert.equal(race.launch.resolved, true);
     assert.equal(race.launch.success, true);
@@ -141,7 +141,7 @@ test("GO timing and reward are independent of countdown update frequency", () =>
 
 test("held throttle produces a normal start without launch or repeated rewards", () => {
   const race = new Race(makeTrack(0), 0, "trial");
-  race.update(3.2, press);
+  race.update(5.2, press);
   assert.equal(race.launch.success, false);
   assert.equal(race.player.surge, 0);
   assert.equal(race.player.speed, 0);

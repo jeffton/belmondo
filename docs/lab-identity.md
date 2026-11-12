@@ -10,7 +10,7 @@ The graphic reference is the playful, disciplined contrast of Japanese design-la
 
 ## Physical start signal
 
-`buildStartGantry(scene, track)` keeps the existing `{ update, assembly }` API. Its signal stays at track station 42, ahead of the unchanged timing line. Large Circuit 3/2/1/GO cards, progressive capsule lamps and PIP’s changing expression carry the countdown. Mint mechanical fins snap at each stage and fan outward at GO. Motion uses race countdown/time, so pausing also freezes it; there is no independent timer or HUD countdown.
+`buildStartGantry(scene, track)` keeps the existing `{ update, assembly }` API. Its signal shares `track.finishS` with the physical stripe and lap gate, at the downstream end of the authored home straight. A two-second camera approach precedes the 3-2-1 countdown. Large Circuit 3/2/1/GO cards, progressive capsule lamps and PIP’s changing expression carry the countdown. Mint mechanical fins snap at each stage and fan outward at GO. Motion uses race countdown/time, so pausing also freezes it; there is no independent timer or HUD countdown.
 
 The 1024×256 canvas uploads only when its stage or loaded lettering changes. Fin transforms animate without repainting the texture. Existing scene traversal disposes the canvas texture, materials and geometry.
 

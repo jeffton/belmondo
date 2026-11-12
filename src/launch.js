@@ -9,11 +9,15 @@ export class Launch {
     this.ready = false;
   }
 
+  observe(throttle, intent) {
+    // A genuine release during the camera approach also releases menu input.
+    if (!(intent && throttle > 0)) this.ready = true;
+  }
+
   update(dt, throttle, intent) {
     if (this.resolved) return;
+    this.observe(throttle, intent);
     const pressed = intent && throttle > 0;
-    // Input carried from the menu/start action must first be released.
-    if (!pressed) this.ready = true;
     const rate = this.ready && pressed ? throttle * 1.25 : -0.8;
     this.level = Math.max(0, Math.min(1, this.level + rate * dt));
   }

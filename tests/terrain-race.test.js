@@ -39,7 +39,10 @@ for (let index = 0; index < 3; index++) {
       );
       assert(
         r.position.distanceTo(
-          track.frame(0).p.clone().add({ x: 0, y: 2.2, z: 0 }),
+          track
+            .frame(track.finishS - 18)
+            .p.clone()
+            .add({ x: 0, y: 2.2, z: 0 }),
         ) < 1e-8,
       );
     }

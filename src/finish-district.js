@@ -184,6 +184,51 @@ export function buildFinishMarkings(root, track, textures) {
   return mesh;
 }
 
+/** A crisp transverse stripe identifies the timing plane within the checker district. */
+export function buildTimingStripe(root, track) {
+  const positions = [];
+  const colors = [];
+  const columns = Math.ceil((track.config.width * 2) / 2);
+  for (let row = 0; row < 2; row++) {
+    const a = track.frame(track.finishS - 2 + row * 2);
+    const b = track.frame(track.finishS + row * 2);
+    for (let column = 0; column < columns; column++) {
+      const left = (column / columns) * 2 - 1;
+      const right = ((column + 1) / columns) * 2 - 1;
+      const point = (f, x) =>
+        f.p
+          .clone()
+          .addScaledVector(f.right, x * f.width)
+          .addScaledVector(f.up, 0.065);
+      const corners = [
+        point(a, left),
+        point(a, right),
+        point(b, right),
+        point(b, left),
+      ];
+      const tint = new THREE.Color((row + column) % 2 ? 0x101820 : 0xf3f5e7);
+      for (const vertex of [0, 2, 1, 0, 3, 2]) {
+        positions.push(...corners[vertex].toArray());
+        colors.push(tint.r, tint.g, tint.b);
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  const stripe = new THREE.Mesh(
+    geometry,
+    new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }),
+  );
+  stripe.name = "timing-line-stripe";
+  stripe.userData.finishS = track.finishS;
+  root.add(stripe);
+  return stripe;
+}
+
 /** Scenery only: never writes track, racer, gate or collision state. */
 export function buildFinishDistrict(scene, track, textures, environment) {
   const recipe = newCourseRecipe(track);
@@ -568,58 +613,10 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     crowd(group, points, side);
   }
 
-  // Keep the timing-line architecture and checkers at frame(0), without a
-  // second sign. The downstream board owns countdown, player lap and finish.
-  const finish = track.frame(0);
-  const portal = place(finish, "finish-line-portal");
-  const halfSpan = finish.width + 4;
-  const portalFeet = [];
-  for (const side of [-1, 1]) {
-    const x = side * halfSpan;
-    const foot = finish.p.clone().addScaledVector(finish.right, x);
-    const base = Math.min(
-      ...[-1.4, 0, 1.4].flatMap((dx) =>
-        [-2, 0, 2].map((dz) => {
-          const p = foot
-            .clone()
-            .addScaledVector(finish.right, dx)
-            .addScaledVector(finish.tangent, dz);
-          return environment.heightAt(p.x, p.z) - finish.p.y - 1;
-        }),
-      ),
-    );
-    box(portal, materials.foundation, x, base / 2, 0, 2.8, -base, 4);
-    box(portal, materials.accent, x, 8.5, 0, 1.6, 17, 2.1);
-    box(portal, materials.light, x - side * 0.86, 8, -0.1, 0.16, 12, 0.6);
-    for (let n = 0; n < 4; n++)
-      box(
-        portal,
-        n % 2 ? materials.dark : materials.pale,
-        x,
-        13 + n * 0.7,
-        -1.1,
-        2.3,
-        0.7,
-        0.25,
-      );
-    portalFeet.push({ x: foot.x, z: foot.z, width: 2.8, length: 4 });
-  }
-  box(portal, materials.dark, 0, 17, 0, halfSpan * 2 + 2, 1, 1.3);
-  for (const side of [-1, 1])
-    for (let n = 0; n < 5; n++)
-      box(
-        portal,
-        n % 2 ? materials.dark : materials.pale,
-        side * (9.5 + n * 1.4),
-        15.4,
-        -0.4,
-        1.4,
-        2.5,
-        0.12,
-      );
+  buildTimingStripe(root, track);
 
   for (const distance of [300, 160, 60]) {
-    const frame = track.frame(track.length - distance);
+    const frame = track.frame(track.finishS - distance);
     const group = place(frame, `finish-approach-${distance}`);
     const x = -(frame.width + 5);
     const foot = frame.p.clone().addScaledVector(frame.right, x);
@@ -645,8 +642,7 @@ export function buildFinishDistrict(scene, track, textures, environment) {
   root.userData.foundationFootprints = foundations.map(
     ({ kind, corners, bottom, deck }) => ({ kind, corners, bottom, deck }),
   );
-  root.userData.finishS = 0;
-  root.userData.portalFeet = portalFeet;
+  root.userData.finishS = track.finishS;
   return {
     root,
     foundations,
