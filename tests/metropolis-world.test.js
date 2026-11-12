@@ -56,7 +56,7 @@ test("VESPER architecture grounds on actual rendered terrain and clears banked h
     signMap,
   );
   const root = scene.getObjectByName("metropolis-districts");
-  const { volumes, supports } = root.userData;
+  const { volumes, supports, arcadeParts } = root.userData;
   assert(
     volumes.length > 150,
     `close inhabited frontage, not remote skyline: ${volumes.length}`,
@@ -83,6 +83,22 @@ test("VESPER architecture grounds on actual rendered terrain and clears banked h
       volume.top > Math.max(...contacts),
       "occupied floors rise above ground",
     );
+  }
+  assert(
+    arcadeParts.filter((part) => part.kind === "market-roof").length > 20,
+    "lower route has an enclosed market experience, not just a parallel road",
+  );
+  for (const part of arcadeParts) {
+    assert.equal(part.branch, -1, "high route stays open to the skyline");
+    assert(
+      clearsMetropolisRoad(part, terrain.samples),
+      "arcade clears both physical road/hull envelopes",
+    );
+    if (part.kind === "market-column")
+      assert.equal(
+        part.bottom,
+        terrain.heightAt(part.center.x, part.center.z) - 1,
+      );
   }
   assert(
     supports.length > 500,
