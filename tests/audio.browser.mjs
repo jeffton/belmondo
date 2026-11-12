@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { SFX_CUES } from "../src/generated-sfx.js";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const artifactDirectory = "test-artifacts";
@@ -95,7 +96,10 @@ try {
   );
   await synthesis.addScriptTag({
     content:
-      source.replaceAll("export class ", "class ") +
+      `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
+      source
+        .replace(/^import[^\n]*\n/, "")
+        .replaceAll("export class ", "class ") +
       "\nwindow.AudioEngineUnderTest = AudioEngine;",
   });
   // Record the actual realtime bus, including continuously changing blade rate.
@@ -108,8 +112,8 @@ try {
         const context = audio.context;
         const rate = context.sampleRate;
         const channels = [
-          new Float32Array(rate * 13),
-          new Float32Array(rate * 13),
+          new Float32Array(rate * 14),
+          new Float32Array(rate * 14),
         ];
         const tap = context.createScriptProcessor(2048, 2, 2);
         const startAt = context.currentTime;
@@ -159,7 +163,7 @@ try {
               audio.effect("finish");
               finished = true;
             }
-            if (t >= 12) {
+            if (t >= 13.2) {
               clearInterval(timer);
               resolve();
             }
@@ -171,7 +175,7 @@ try {
         return {
           rate,
           channels: channels.map((channel) =>
-            Array.from(channel.slice(0, rate * 12)),
+            Array.from(channel.slice(0, rate * 13.2)),
           ),
         };
       })();
@@ -187,7 +191,7 @@ try {
     ["boost", 7.6, 8.9],
     ["airborne", 9.4, 9.8],
     ["finish", 10.1, 10.6],
-    ["finished-silence", 11, 11.8],
+    ["finished-silence", 12.3, 13],
   ].map(([name, start, end]) => ({
     name,
     ...measure(

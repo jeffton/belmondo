@@ -1,3 +1,5 @@
+import { SFX_CUES } from "./generated-sfx.js";
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export class AudioEngine {
@@ -11,6 +13,10 @@ export class AudioEngine {
     this.hidden = false;
     this.lastEffect = new Map();
     this.sources = [];
+    this.sampleBuffers = new Map();
+    this.sampleVoices = new Set();
+    this.sampleIndices = new Map();
+    this.ready = null;
     this.onBlur = () => {
       this.hidden = true;
       this.applyVolume();
@@ -39,9 +45,58 @@ export class AudioEngine {
       window.addEventListener("focus", this.onFocus);
       document.addEventListener("visibilitychange", this.onVisibility);
       this.applyVolume();
-      await unlocked;
+      this.ready = this.loadSamples();
+      await Promise.all([unlocked, this.ready]);
     } else {
-      await this.context.resume();
+      await Promise.all([this.context.resume(), this.ready]);
+    }
+  }
+
+  async loadSamples() {
+    const context = this.context;
+    const buffers = await Promise.all(
+      Object.entries(SFX_CUES).map(async ([key, cue]) => {
+        const variants = await Promise.all(
+          cue.files.map(async (url) => {
+            const response = await fetch(url);
+            if (!response.ok)
+              throw new Error(`Sound effect ${url}: HTTP ${response.status}`);
+            return context.decodeAudioData(await response.arrayBuffer());
+          }),
+        );
+        return [key, variants];
+      }),
+    );
+    this.sampleBuffers = new Map(buffers);
+  }
+
+  playSample(key) {
+    const variants = this.sampleBuffers.get(key);
+    const index = this.sampleIndices.get(key) ?? 0;
+    this.sampleIndices.set(key, (index + 1) % variants.length);
+    const source = this.context.createBufferSource();
+    source.buffer = variants[index];
+    const gain = this.context.createGain();
+    gain.gain.value = SFX_CUES[key].gain;
+    source.connect(gain);
+    gain.connect(this.master);
+    const voice = { key, source, gain };
+    this.sampleVoices.add(voice);
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+      this.sampleVoices.delete(voice);
+    };
+    source.start();
+  }
+
+  stopSamples(key) {
+    for (const voice of this.sampleVoices) {
+      if (key !== undefined && voice.key !== key) continue;
+      voice.source.stop();
+      voice.source.disconnect();
+      voice.gain.disconnect();
+      this.sampleVoices.delete(voice);
     }
   }
 
@@ -294,34 +349,6 @@ export class AudioEngine {
       loop.gain.gain.setTargetAtTime(0, t, 0.025);
   }
 
-  tone(frequency, endFrequency, duration, volume, type = "sine", delay = 0) {
-    const ctx = this.context;
-    const t = ctx.currentTime + delay;
-    const source = ctx.createOscillator();
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 4200;
-    source.type = type;
-    source.frequency.setValueAtTime(frequency, t);
-    source.frequency.exponentialRampToValueAtTime(endFrequency, t + duration);
-    source.connect(filter);
-    this.transient(source, filter, t, duration, volume);
-  }
-
-  noiseBurst(frequency, endFrequency, duration, volume, delay = 0) {
-    const ctx = this.context;
-    const t = ctx.currentTime + delay;
-    const source = ctx.createBufferSource();
-    source.buffer = this.noise;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.Q.value = 0.65;
-    filter.frequency.setValueAtTime(frequency, t);
-    filter.frequency.exponentialRampToValueAtTime(endFrequency, t + duration);
-    source.connect(filter);
-    this.transient(source, filter, t, duration, volume);
-  }
-
   transient(source, filter, t, duration, volume) {
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(0, t);
@@ -345,6 +372,14 @@ export class AudioEngine {
     const cooldown = kind === "scrape" ? 0.16 : kind === "hit" ? 0.08 : 0;
     if (now - (this.lastEffect.get(kind) ?? -Infinity) < cooldown) return;
     this.lastEffect.set(kind, now);
+    const key = kind === "fire" ? `fire:${weapon.toUpperCase()}` : kind;
+    if (Object.hasOwn(SFX_CUES, key)) {
+      // The final gate emits lap then finish in one frame; only the finish cue
+      // should speak, rather than stacking both announcements.
+      if (kind === "finish") this.stopSamples("lap");
+      this.playSample(key);
+      return;
+    }
     switch (kind) {
       case "countdown":
         this.launchCue(typeof weapon === "number" ? weapon : 3);
@@ -352,70 +387,12 @@ export class AudioEngine {
       case "go":
         this.launchCue(0);
         break;
-      case "pickup":
-        [880, 1175, 1760].forEach((f, i) =>
-          this.tone(f, f, 0.12, 0.22, "sine", i * 0.055),
-        );
-        break;
-      case "fire":
-        switch (weapon.toUpperCase()) {
-          case "SHIELD":
-            this.tone(220, 880, 0.5, 0.3, "triangle");
-            this.tone(330, 1320, 0.5, 0.16, "sine");
-            break;
-          case "TURBO":
-            this.effect("boost");
-            break;
-          case "MINE":
-            this.tone(580, 140, 0.16, 0.35, "square");
-            this.tone(180, 100, 0.18, 0.25, "triangle", 0.1);
-            break;
-          case "PULSE":
-            [0, 0.07, 0.14].forEach((delay) => {
-              this.tone(900, 110, 0.12, 0.3, "sawtooth", delay);
-              this.noiseBurst(3200, 700, 0.1, 0.24, delay);
-            });
-            break;
-          default: // Missile launch: ignition crack, then rising exhaust.
-            this.noiseBurst(600, 2600, 0.5, 0.65);
-            this.tone(110, 380, 0.35, 0.24, "sawtooth");
-        }
-        break;
-      case "hit":
-        this.noiseBurst(2200, 150, 0.32, 0.85);
-        this.tone(150, 38, 0.32, 0.48, "triangle");
-        break;
-      case "scrape":
-        this.noiseBurst(3600, 900, 0.19, 0.48);
-        this.tone(1600, 410, 0.09, 0.11, "sawtooth");
-        break;
-      case "boost":
-        this.noiseBurst(350, 3200, 0.55, 0.6);
-        this.tone(120, 540, 0.4, 0.22, "triangle");
-        break;
-      case "jump":
-        this.noiseBurst(1400, 450, 0.27, 0.22);
-        break;
-      case "land":
-        this.noiseBurst(750, 160, 0.19, 0.4);
-        this.tone(96, 40, 0.22, 0.35, "sine");
-        break;
-      case "incoming":
-        [0, 0.17].forEach((delay) =>
-          this.tone(1100, 850, 0.1, 0.23, "square", delay),
-        );
-        break;
-      case "lap":
-      case "finish":
-        [587, 784, 1175].forEach((f, i) =>
-          this.tone(f, f, 0.28, 0.22, "triangle", i * 0.12),
-        );
-        break;
     }
   }
 
   applyVolume() {
     if (!this.master) return;
+    if (this.muted || this.paused || this.hidden) this.stopSamples();
     this.master.gain.setTargetAtTime(
       this.muted || this.paused || this.hidden ? 0 : this.volume,
       this.context.currentTime,
@@ -443,6 +420,7 @@ export class AudioEngine {
     window.removeEventListener("blur", this.onBlur);
     window.removeEventListener("focus", this.onFocus);
     document.removeEventListener("visibilitychange", this.onVisibility);
+    this.stopSamples();
     this.sources.forEach((source) => {
       source.stop();
       source.disconnect();
@@ -452,6 +430,9 @@ export class AudioEngine {
     this.master = null;
     this.sources = [];
     this.lastEffect.clear();
+    this.sampleBuffers.clear();
+    this.sampleIndices.clear();
+    this.ready = null;
     this.started = false;
   }
 }

@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { SFX_CUES } from "../src/generated-sfx.js";
 
 // Audio-only fixture: no game world, GPU context, server or autoplay bypass.
 const browser = await chromium.launch({
@@ -15,6 +16,13 @@ try {
       body: "<title>Launch audio</title>",
     }),
   );
+  await page.route("http://audio.test/audio/sfx/*.wav", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    await route.fulfill({
+      contentType: "audio/wav",
+      body: await readFile(new URL(`../public${path}`, import.meta.url)),
+    });
+  });
   await page.goto("http://audio.test/");
   const source = await readFile(
     new URL("../src/audio.js", import.meta.url),
@@ -22,7 +30,10 @@ try {
   );
   await page.addScriptTag({
     content:
-      source.replaceAll("export class ", "class ") +
+      `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
+      source
+        .replace(/^import[^\n]*\n/, "")
+        .replaceAll("export class ", "class ") +
       "\nwindow.LaunchAudio = AudioEngine;",
   });
   const results = await page.evaluate(async () => {

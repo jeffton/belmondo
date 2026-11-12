@@ -1,0 +1,1732 @@
+{
+  "project": "BELMONDO",
+  "model": "elevenlabs/sound-effects/v3",
+  "assetCount": 28,
+  "eventCount": 14,
+  "successCount": 28,
+  "rejectedCount": 0,
+  "listedUsdPerSecond": 0.002,
+  "listedEstimateUsd": 0.0816,
+  "billing": "Estimate based on requested duration and displayed fal rate; account invoice not inspected.",
+  "commercialUseSource": "https://fal.ai/models/elevenlabs/sound-effects/v3",
+  "apiSchema": "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=elevenlabs/sound-effects/v3",
+  "creativeDirection": "Original serious mechanical and energy-based futuristic racing effects; no existing game samples or named sound replicas used.",
+  "audition": "Technical decode, envelope, clipping and container validation only; no human or audio-understanding listening available.",
+  "integration": {
+    "countdownAndGo": "Preserve current launch cues; not replaced.",
+    "engine": "Preserve speed/load-dependent procedural engine.",
+    "mixing": "Masters peak-matched to -3 dBFS, not equal loudness; set event gains in game. Preserve effects volume, mute, pause, blur and source cleanup.",
+    "pulse": "Single discharge asset; current weapon fires one event. Do not repeat three times unless intentionally matching its visual cadence.",
+    "finish": "Race currently emits lap and finish together; avoid overlapping both cues on the finish frame."
+  },
+  "assets": [
+    {
+      "id": "boost-1",
+      "event": "boost",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/boost-1.wav",
+      "sha256": "d721f66f0b1a2c56fb0c78cd770aa32d0f3ae5c96197f1d75c9a83400db05ca9",
+      "durationSeconds": 1.2,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/boost-1.mp3",
+        "sha256": "baec9599aec6c133d3043a257f9607b4536cc6aee0468f96255c3f6b0972b9f1",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -1.3948450740451785,
+          "rmsDbfs": -19.883197610698492,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -1.6051549259548215,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -21.49177882711683,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-0634-7c80-a8f8-2c2d81f82f6e",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "boost-1",
+        "event": "boost",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-0634-7c80-a8f8-2c2d81f82f6e",
+        "generatedAtUtc": "2026-11-12T08:34:44.304495+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "baec9599aec6c133d3043a257f9607b4536cc6aee0468f96255c3f6b0972b9f1",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Vehicle crossing a magnetic acceleration strip: compact inductive thump immediately becomes a fast pressured air rush and gritty magnetic shimmer. Tight transient, short tail.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "boost-2",
+      "event": "boost",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/boost-2.wav",
+      "sha256": "eeebc9b42bc0847323db2cfdbb24ce55cfe655e34e6743a985bcdadbc3c4a58f",
+      "durationSeconds": 1.045668934240363,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/boost-2.mp3",
+        "sha256": "e0bf02c04f8a4bef64b78d86a57a088c9babe54994fead6385aa9ea95369bac9",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -1.1295540346392088,
+          "rmsDbfs": -18.64844328359131,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.15433106575963718,
+        "gainDb": -1.8704459653607912,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.921292844965798,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-064a-7152-b2a0-d90f98a0f4e9",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "boost-2",
+        "event": "boost",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-064a-7152-b2a0-d90f98a0f4e9",
+        "generatedAtUtc": "2026-11-12T08:34:42.098195+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "e0bf02c04f8a4bef64b78d86a57a088c9babe54994fead6385aa9ea95369bac9",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Vehicle crossing a magnetic acceleration strip: compact inductive thump immediately becomes a fast pressured air rush and gritty magnetic shimmer. Tight transient, short tail. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "finish-1",
+      "event": "finish",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/finish-1.wav",
+      "sha256": "79db81d02d8c662a1c83f57ba1462bcea15fa8e79dbae4cf1c44e3bf7b840de8",
+      "durationSeconds": 1.6163945578231294,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/finish-1.mp3",
+        "sha256": "42849cd716c761681e68d92e1ad7355fd482bf7833845540a23b741460d7249b",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.48,
+        "metrics": {
+          "peakDbfs": -0.7715151099065166,
+          "rmsDbfs": -18.97022022767668,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0019727891156462586,
+        "trimmedEndSeconds": 0.8616326530612245,
+        "gainDb": -2.2284848900934833,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.339989403708387,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-74f6-76e2-be91-eb81062f22e4",
+      "listedEstimateUsd": 0.005,
+      "generation": {
+        "id": "finish-1",
+        "event": "finish",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-74f6-76e2-be91-eb81062f22e4",
+        "generatedAtUtc": "2026-11-12T08:35:12.794788+00:00",
+        "requestedDurationSeconds": 2.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.005,
+        "sourceSha256": "42849cd716c761681e68d92e1ad7355fd482bf7833845540a23b741460d7249b",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Race completion cue: decisive heavy machinery lock followed by a broad luminous electromagnetic release and deep resonant metal exhale. Victorious through power and texture, not a melody or fanfare.",
+          "duration_seconds": 2.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "finish-2",
+      "event": "finish",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/finish-2.wav",
+      "sha256": "183f86a3530af099eaa159aa91456ed835eec87dfae73c9c23a112619a88cc50",
+      "durationSeconds": 2.1431746031746033,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/finish-2.mp3",
+        "sha256": "878999e69571252163f0f920f185df4b685811cde0d08da0d221b5665ccf5fac",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.48,
+        "metrics": {
+          "peakDbfs": -5.945724827959047,
+          "rmsDbfs": -23.21443487443147,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3368253968253968,
+        "gainDb": 2.9457248279590473,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.635077054892392,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-7752-7880-81c7-2cfc99a3cfb0",
+      "listedEstimateUsd": 0.005,
+      "generation": {
+        "id": "finish-2",
+        "event": "finish",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-7752-7880-81c7-2cfc99a3cfb0",
+        "generatedAtUtc": "2026-11-12T08:35:13.370356+00:00",
+        "requestedDurationSeconds": 2.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.005,
+        "sourceSha256": "878999e69571252163f0f920f185df4b685811cde0d08da0d221b5665ccf5fac",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Race completion cue: decisive heavy machinery lock followed by a broad luminous electromagnetic release and deep resonant metal exhale. Victorious through power and texture, not a melody or fanfare. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 2.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "hit-1",
+      "event": "hit",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/hit-1.wav",
+      "sha256": "d36471a27e8ad8d3e07f5ff46b09a7de373215857177068b5b48a25aaac33cc4",
+      "durationSeconds": 1.1214965986394558,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/hit-1.mp3",
+        "sha256": "82e842727a0dcf9b9c4132a8812903a4520abd6357fb694cc8b83c1d1384163e",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.48,
+        "metrics": {
+          "peakDbfs": -0.9992689794153609,
+          "rmsDbfs": -19.547692862854866,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3585034013605442,
+        "gainDb": -2.000731020584639,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -20.345024006267643,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-1d31-7fc2-b9f0-2525d9efa343",
+      "listedEstimateUsd": 0.003,
+      "generation": {
+        "id": "hit-1",
+        "event": "hit",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-1d31-7fc2-b9f0-2525d9efa343",
+        "generatedAtUtc": "2026-11-12T08:34:50.207812+00:00",
+        "requestedDurationSeconds": 1.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.003,
+        "sourceSha256": "82e842727a0dcf9b9c4132a8812903a4520abd6357fb694cc8b83c1d1384163e",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Severe high speed impact on composite racing hull: crushing low metal slam, brittle carbon fragments and brief electrical arcing. Weighty compact hit, no huge cinematic explosion.",
+          "duration_seconds": 1.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "hit-2",
+      "event": "hit",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/hit-2.wav",
+      "sha256": "783eb0c96c899821c2014e06295058cdcc2857fdf7505310e30d728a6bfe3caf",
+      "durationSeconds": 1.189342403628118,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/hit-2.mp3",
+        "sha256": "7d25927da3ec1d4f7ee566911cdc00716462148d9172f01769eb4d32db13272d",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.48,
+        "metrics": {
+          "peakDbfs": -3.1203446882791974,
+          "rmsDbfs": -24.554614873781105,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.2906575963718821,
+        "gainDb": 0.12034468827919742,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -23.525556004280723,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-1efc-7982-a145-a8bac52a1b51",
+      "listedEstimateUsd": 0.003,
+      "generation": {
+        "id": "hit-2",
+        "event": "hit",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-1efc-7982-a145-a8bac52a1b51",
+        "generatedAtUtc": "2026-11-12T08:34:48.307458+00:00",
+        "requestedDurationSeconds": 1.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.003,
+        "sourceSha256": "7d25927da3ec1d4f7ee566911cdc00716462148d9172f01769eb4d32db13272d",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Severe high speed impact on composite racing hull: crushing low metal slam, brittle carbon fragments and brief electrical arcing. Weighty compact hit, no huge cinematic explosion. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "incoming-1",
+      "event": "incoming",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/incoming-1.wav",
+      "sha256": "7f9bd12fd44f18ce7446ee3e370fa4d5edad8850666acc40033c44e52f8ae9c8",
+      "durationSeconds": 1.2,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/incoming-1.mp3",
+        "sha256": "284e156e460ccf97ae72893388326ffc90bdc69a106fe2e61e14dd4635110ffb",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -1.169346510318316,
+          "rmsDbfs": -16.063143285140452,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -1.830653489681684,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -17.902806463174926,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-4f55-7521-821e-205472c27057",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "incoming-1",
+        "event": "incoming",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-4f55-7521-821e-205472c27057",
+        "generatedAtUtc": "2026-11-12T08:35:03.012655+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "284e156e460ccf97ae72893388326ffc90bdc69a106fe2e61e14dd4635110ffb",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Urgent futuristic missile threat signal: two tight raspy mechanical alarm bursts with gritty filtered electrical resonance. Serious military equipment, readable alert, no arcade beeps, no voice.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "incoming-2",
+      "event": "incoming",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/incoming-2.wav",
+      "sha256": "0a8bd4bd8bfca532fe4dff095c3fad25ce06f59f2ecaf2311fd0c0cde7437afa",
+      "durationSeconds": 1.2,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/incoming-2.mp3",
+        "sha256": "5fc4a4ad37c414db5d30ec26807a9db2f2cf5ce044c1f9726b22dae698e63e29",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -1.661392188875301,
+          "rmsDbfs": -19.15557372979061,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -1.338607811124699,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -20.49446944243482,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-5b93-7100-b380-ee74d612e95f",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "incoming-2",
+        "event": "incoming",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-5b93-7100-b380-ee74d612e95f",
+        "generatedAtUtc": "2026-11-12T08:35:06.316184+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "5fc4a4ad37c414db5d30ec26807a9db2f2cf5ce044c1f9726b22dae698e63e29",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Urgent futuristic missile threat signal: two tight raspy mechanical alarm bursts with gritty filtered electrical resonance. Serious military equipment, readable alert, no arcade beeps, no voice. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "jump-1",
+      "event": "jump",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/jump-1.wav",
+      "sha256": "5c68efebec31f1514529739bf22da58da7e19abf1fd736e795a9a219c4eb5410",
+      "durationSeconds": 0.7822675736961451,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/jump-1.mp3",
+        "sha256": "fac62ffebe5d42c2870d5d7cc6e2dd06647fd3025cbf61d8040cefa48a399260",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.0,
+        "metrics": {
+          "peakDbfs": -0.6841816245682624,
+          "rmsDbfs": -17.663361546219065,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.21773242630385486,
+        "gainDb": -2.3158183754317374,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -18.913092439483847,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-360a-7282-b596-e103314dab17",
+      "listedEstimateUsd": 0.002,
+      "generation": {
+        "id": "jump-1",
+        "event": "jump",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-360a-7282-b596-e103314dab17",
+        "generatedAtUtc": "2026-11-12T08:34:56.524194+00:00",
+        "requestedDurationSeconds": 1.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.002,
+        "sourceSha256": "fac62ffebe5d42c2870d5d7cc6e2dd06647fd3025cbf61d8040cefa48a399260",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Fast racing craft leaves its magnetic track: brief low suspension release and focused aerodynamic pressure whoosh, subtle granular trailing air. No impact and no musical pitch sweep.",
+          "duration_seconds": 1.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "jump-2",
+      "event": "jump",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/jump-2.wav",
+      "sha256": "db8160878433eb309caec781b83a7a111ad5ccbfc7fdee853521f6b187453c19",
+      "durationSeconds": 0.6745124716553288,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/jump-2.mp3",
+        "sha256": "346cea4390295d4fafe687ac7502e83504b12d93bdb0c0578d0cb96a4916cf05",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.0,
+        "metrics": {
+          "peakDbfs": -1.178881102834187,
+          "rmsDbfs": -18.427109845588213,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3254875283446712,
+        "gainDb": -1.821118897165813,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -18.577153010043887,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-3eb2-77a1-b935-334fde08cdef",
+      "listedEstimateUsd": 0.002,
+      "generation": {
+        "id": "jump-2",
+        "event": "jump",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-3eb2-77a1-b935-334fde08cdef",
+        "generatedAtUtc": "2026-11-12T08:34:56.680360+00:00",
+        "requestedDurationSeconds": 1.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.002,
+        "sourceSha256": "346cea4390295d4fafe687ac7502e83504b12d93bdb0c0578d0cb96a4916cf05",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Fast racing craft leaves its magnetic track: brief low suspension release and focused aerodynamic pressure whoosh, subtle granular trailing air. No impact and no musical pitch sweep. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "land-1",
+      "event": "land",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/land-1.wav",
+      "sha256": "21fc45db5e3134aec98fd4e81775dc1ab0f3a697b1e8bf9f410cecdaa76705cd",
+      "durationSeconds": 0.5647619047619048,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/land-1.mp3",
+        "sha256": "2bf23db2f08ca4ac0eee557493ca53a31b8ed7d3eecef79e7c9e38c693174763",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.0,
+        "metrics": {
+          "peakDbfs": -5.769386462889847,
+          "rmsDbfs": -22.67971765895084,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.43523809523809526,
+        "gainDb": 2.7693864628898472,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -17.459445939271884,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-41aa-7b22-9e0f-58a995bd0959",
+      "listedEstimateUsd": 0.002,
+      "generation": {
+        "id": "land-1",
+        "event": "land",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-41aa-7b22-9e0f-58a995bd0959",
+        "generatedAtUtc": "2026-11-12T08:34:59.813777+00:00",
+        "requestedDurationSeconds": 1.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.002,
+        "sourceSha256": "2bf23db2f08ca4ac0eee557493ca53a31b8ed7d3eecef79e7c9e38c693174763",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Magnetic racing craft lands hard: deep tight suspension compression, short metal chassis shudder and pressurized air expulsion. One solid controlled landing, no explosion.",
+          "duration_seconds": 1.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "land-2",
+      "event": "land",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/land-2.wav",
+      "sha256": "227125c868ea80e788f69575ce3c5412c795bd51e1940f7229fd1a9fbb8976b4",
+      "durationSeconds": 0.8002267573696145,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/land-2.mp3",
+        "sha256": "0a14e4f1e3403b0f1275e9bf01765c41b3805d406812873862f1714f7a1d30f7",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.0,
+        "metrics": {
+          "peakDbfs": -3.475650560115604,
+          "rmsDbfs": -21.33178107790887,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.19977324263038548,
+        "gainDb": 0.475650560115604,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.888735432251927,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-4eb7-77b0-90c3-5655dd86fe22",
+      "listedEstimateUsd": 0.002,
+      "generation": {
+        "id": "land-2",
+        "event": "land",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-4eb7-77b0-90c3-5655dd86fe22",
+        "generatedAtUtc": "2026-11-12T08:35:00.499555+00:00",
+        "requestedDurationSeconds": 1.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.002,
+        "sourceSha256": "0a14e4f1e3403b0f1275e9bf01765c41b3805d406812873862f1714f7a1d30f7",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Magnetic racing craft lands hard: deep tight suspension compression, short metal chassis shudder and pressurized air expulsion. One solid controlled landing, no explosion. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "lap-1",
+      "event": "lap",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/lap-1.wav",
+      "sha256": "3ad07fcbd5bdcc0cb5d72c794a994316220ee72f29ff02b225e6ac4b31b9517e",
+      "durationSeconds": 0.7523356009070294,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/lap-1.mp3",
+        "sha256": "e297f3f91e27dce4019d07a78d43d999dcf1c5552fe4622f9e2c9f276009153a",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -0.2500447665511117,
+          "rmsDbfs": -27.45087714922766,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.4476643990929705,
+        "gainDb": -2.749955233448888,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -28.181001999680127,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-5e3f-7d50-9b68-cdee9d7b6916",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "lap-1",
+        "event": "lap",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-5e3f-7d50-9b68-cdee9d7b6916",
+        "generatedAtUtc": "2026-11-12T08:35:06.918766+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "e297f3f91e27dce4019d07a78d43d999dcf1c5552fe4622f9e2c9f276009153a",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Race timing gate confirmation: compact authoritative industrial shutter snap followed by a polished spatial magnetic sweep and short metallic bloom. Restrained technical achievement cue, no tune or beeps.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "lap-2",
+      "event": "lap",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/lap-2.wav",
+      "sha256": "ce5320ae2a595c23031e6061a986964bba30e24f7ebbcbd6b55c37378bc54814",
+      "durationSeconds": 0.8441269841269842,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/lap-2.mp3",
+        "sha256": "3c7f12d7ca50d4e321cedd89bc713446565386e97c1abdd72fd4c9e68652f0bf",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -4.723836803281003,
+          "rmsDbfs": -20.504816193810672,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3558730158730159,
+        "gainDb": 1.723836803281003,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -17.253744738519824,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-680e-77f1-bf96-ca620ca177ab",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "lap-2",
+        "event": "lap",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-680e-77f1-bf96-ca620ca177ab",
+        "generatedAtUtc": "2026-11-12T08:35:09.509846+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "3c7f12d7ca50d4e321cedd89bc713446565386e97c1abdd72fd4c9e68652f0bf",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Race timing gate confirmation: compact authoritative industrial shutter snap followed by a polished spatial magnetic sweep and short metallic bloom. Restrained technical achievement cue, no tune or beeps. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "mine-1",
+      "event": "fire:MINE",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/mine-1.wav",
+      "sha256": "3f8031a14b6d0d162aa9f682734fd3ff84b8b918f50af2773aceb42646c4d1ff",
+      "durationSeconds": 1.1793650793650794,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/mine-1.mp3",
+        "sha256": "67a16c16cdddd7f5a86df187a6aa4cb4a7a4c06807df5d90fbafcf361d6b5c98",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -4.679482281552606,
+          "rmsDbfs": -21.53585440980057,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.020634920634920634,
+        "gainDb": 1.6794822815526063,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.78494903637898,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-dc9b-75f3-8e8e-8d3efd6e50e6",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "mine-1",
+        "event": "fire:MINE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-dc9b-75f3-8e8e-8d3efd6e50e6",
+        "generatedAtUtc": "2026-11-12T08:34:31.530974+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "67a16c16cdddd7f5a86df187a6aa4cb4a7a4c06807df5d90fbafcf361d6b5c98",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Heavy magnetic device ejected from a vehicle: tight double mechanical latch, solid metal thunk and brief descending induction resonance. Precise, dangerous equipment.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "mine-2",
+      "event": "fire:MINE",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/mine-2.wav",
+      "sha256": "7809b4213027774a19768b411531a5ef506f06add446dabff4e8ba42b3562b9d",
+      "durationSeconds": 1.1773696145124717,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/mine-2.mp3",
+        "sha256": "d45d7901275d0d16366a1e16c5e7f3c4acbe1accd2a50c60217e0344a37b59b9",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.2,
+        "metrics": {
+          "peakDbfs": -2.3021224195504946,
+          "rmsDbfs": -20.535061570055127,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.022630385487528343,
+        "gainDb": -0.6978775804495054,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -21.151589283924096,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-dcb9-76d0-bae2-4432fcc52f7b",
+      "listedEstimateUsd": 0.0024,
+      "generation": {
+        "id": "mine-2",
+        "event": "fire:MINE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-dcb9-76d0-bae2-4432fcc52f7b",
+        "generatedAtUtc": "2026-11-12T08:34:31.533278+00:00",
+        "requestedDurationSeconds": 1.2,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0024,
+        "sourceSha256": "d45d7901275d0d16366a1e16c5e7f3c4acbe1accd2a50c60217e0344a37b59b9",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Heavy magnetic device ejected from a vehicle: tight double mechanical latch, solid metal thunk and brief descending induction resonance. Precise, dangerous equipment. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.2,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "missile-1",
+      "event": "fire:MISSILE",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/missile-1.wav",
+      "sha256": "45fd036896dbff5d0344bf3aecc7c3b796941de2f883a76b3f398069434f6b93",
+      "durationSeconds": 1.6303401360544219,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/missile-1.mp3",
+        "sha256": "0facee9c099b2edf661e696dead32717613b35a7c9e015e7908bf4487b7ae4d4",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.0,
+        "metrics": {
+          "peakDbfs": -1.578920333315643,
+          "rmsDbfs": -21.461170988050355,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3696598639455782,
+        "gainDb": -1.421079666684357,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -21.99504682574414,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-cca8-74e1-9887-99586e8ad604",
+      "listedEstimateUsd": 0.004,
+      "generation": {
+        "id": "missile-1",
+        "event": "fire:MISSILE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-cca8-74e1-9887-99586e8ad604",
+        "generatedAtUtc": "2026-11-12T08:34:27.311012+00:00",
+        "requestedDurationSeconds": 2.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.004,
+        "sourceSha256": "0facee9c099b2edf661e696dead32717613b35a7c9e015e7908bf4487b7ae4d4",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Compact missile rack release: hard titanium latch and ignition crack, then aggressive pressurized rocket exhaust ripping away. Short controlled tail.",
+          "duration_seconds": 2.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "missile-2",
+      "event": "fire:MISSILE",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/missile-2.wav",
+      "sha256": "05320323ee2cbfecae873a3c4355053442323fc4714d6cac3b9a21434c0b67bc",
+      "durationSeconds": 1.8039455782312925,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/missile-2.mp3",
+        "sha256": "24ac53a1b5ec7a6e1cab6ad823d07b5a131764a7b39675782581c5310cf320d7",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.0,
+        "metrics": {
+          "peakDbfs": -1.2884651157631102,
+          "rmsDbfs": -18.127296287886644,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.1960544217687075,
+        "gainDb": -1.7115348842368898,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.39106336638108,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-ccaa-7982-9925-fa231a04f00b",
+      "listedEstimateUsd": 0.004,
+      "generation": {
+        "id": "missile-2",
+        "event": "fire:MISSILE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-ccaa-7982-9925-fa231a04f00b",
+        "generatedAtUtc": "2026-11-12T08:34:27.335681+00:00",
+        "requestedDurationSeconds": 2.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.004,
+        "sourceSha256": "24ac53a1b5ec7a6e1cab6ad823d07b5a131764a7b39675782581c5310cf320d7",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Compact missile rack release: hard titanium latch and ignition crack, then aggressive pressurized rocket exhaust ripping away. Short controlled tail. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 2.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "pickup-1",
+      "event": "pickup",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/pickup-1.wav",
+      "sha256": "1b5c24bfaceb176edb89bd833d6dadfd4d35e3d3f30573f08a59e0dcd55ae30e",
+      "durationSeconds": 0.6705215419501134,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/pickup-1.mp3",
+        "sha256": "4ea43bb665f617563f2e83f9306cfb546f3a079c778e5124f77ebad907f80f61",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 0.8,
+        "metrics": {
+          "peakDbfs": -1.0489478706161781,
+          "rmsDbfs": -23.251754244615796,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.1294784580498866,
+        "gainDb": -1.9510521293838219,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -24.436363423490825,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-0d88-7252-89e9-3008a005abe3",
+      "listedEstimateUsd": 0.0016,
+      "generation": {
+        "id": "pickup-1",
+        "event": "pickup",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-0d88-7252-89e9-3008a005abe3",
+        "generatedAtUtc": "2026-11-12T08:34:43.847172+00:00",
+        "requestedDurationSeconds": 0.8,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0016,
+        "sourceSha256": "4ea43bb665f617563f2e83f9306cfb546f3a079c778e5124f77ebad907f80f61",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Advanced weapon module locking into a racing craft: crisp precision mechanical clack and very short glass-metal induction flutter. Satisfying equipment confirmation, not a chime.",
+          "duration_seconds": 0.8,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "pickup-2",
+      "event": "pickup",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/pickup-2.wav",
+      "sha256": "bb5d672b4ab31625a7a25554936692262b1b879a89318488308929fbf36a6dc1",
+      "durationSeconds": 0.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/pickup-2.mp3",
+        "sha256": "7421eaee5cb1e7cade874c50f8aabe71cf3e83bb19b77e612e98192d95dee4f9",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 0.8,
+        "metrics": {
+          "peakDbfs": -1.2142809831029242,
+          "rmsDbfs": -16.711364269332847,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -1.7857190168970758,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -18.50248861500869,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-165b-7422-b453-42e9f5aceb3b",
+      "listedEstimateUsd": 0.0016,
+      "generation": {
+        "id": "pickup-2",
+        "event": "pickup",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-165b-7422-b453-42e9f5aceb3b",
+        "generatedAtUtc": "2026-11-12T08:34:46.055731+00:00",
+        "requestedDurationSeconds": 0.8,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0016,
+        "sourceSha256": "7421eaee5cb1e7cade874c50f8aabe71cf3e83bb19b77e612e98192d95dee4f9",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Advanced weapon module locking into a racing craft: crisp precision mechanical clack and very short glass-metal induction flutter. Satisfying equipment confirmation, not a chime. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 0.8,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "pulse-1",
+      "event": "fire:PULSE",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/pulse-1.wav",
+      "sha256": "fe30ec5138758b3abbc8bc4ccf2e6ce685bfde8e54fd426818a0c36b23f00071",
+      "durationSeconds": 1.1394557823129252,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/pulse-1.mp3",
+        "sha256": "da4807795f382b7ac0a454cbe6ea04f3e71c2f1f994e72a0e135e898dd3eb74e",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.48,
+        "metrics": {
+          "peakDbfs": -7.183510211232499,
+          "rmsDbfs": -24.92235614368528,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3405442176870748,
+        "gainDb": 4.183510211232499,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -19.603582323227563,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-cca9-7f30-879d-344547029f37",
+      "listedEstimateUsd": 0.003,
+      "generation": {
+        "id": "pulse-1",
+        "event": "fire:PULSE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-cca9-7f30-879d-344547029f37",
+        "generatedAtUtc": "2026-11-12T08:34:27.251177+00:00",
+        "requestedDurationSeconds": 1.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.003,
+        "sourceSha256": "da4807795f382b7ac0a454cbe6ea04f3e71c2f1f994e72a0e135e898dd3eb74e",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. One powerful electromagnetic cannon discharge: sharp contactor snap, gritty electrical pressure burst and resonant low metal recoil. One shot, not a sequence.",
+          "duration_seconds": 1.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "pulse-2",
+      "event": "fire:PULSE",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/pulse-2.wav",
+      "sha256": "0a8740f948abab7d2f94e0670da81146f17787a4fe1d349b1a37dd6c91553168",
+      "durationSeconds": 1.1195011337868481,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/pulse-2.mp3",
+        "sha256": "644f2e9dbac7b80edb74dd1466f667d84e4beb1558b75627f81786bbca3b55b0",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 1.48,
+        "metrics": {
+          "peakDbfs": -0.9754441882336061,
+          "rmsDbfs": -21.859603251557104,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.3604988662131519,
+        "gainDb": -2.024555811766394,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -22.674609552174697,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-dc6d-79b1-9fe3-a1ae6933d1e7",
+      "listedEstimateUsd": 0.003,
+      "generation": {
+        "id": "pulse-2",
+        "event": "fire:PULSE",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-dc6d-79b1-9fe3-a1ae6933d1e7",
+        "generatedAtUtc": "2026-11-12T08:34:33.925715+00:00",
+        "requestedDurationSeconds": 1.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.003,
+        "sourceSha256": "644f2e9dbac7b80edb74dd1466f667d84e4beb1558b75627f81786bbca3b55b0",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. One powerful electromagnetic cannon discharge: sharp contactor snap, gritty electrical pressure burst and resonant low metal recoil. One shot, not a sequence. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 1.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "scrape-1",
+      "event": "scrape",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/scrape-1.wav",
+      "sha256": "cda90ecd51ae7d82dc5c6c28dff174b2d321e117072686ff71e88f7ba96aeaf3",
+      "durationSeconds": 0.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/scrape-1.mp3",
+        "sha256": "eb6eda79440da2845aab497e69a93fab977514fbfe0edbd52fd0e55c638d2866",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 0.8,
+        "metrics": {
+          "peakDbfs": -0.9226072501485666,
+          "rmsDbfs": -16.46869558568995,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -2.0773927498514335,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -18.566576053177034,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-25d5-7c53-adfc-092373136783",
+      "listedEstimateUsd": 0.0016,
+      "generation": {
+        "id": "scrape-1",
+        "event": "scrape",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-25d5-7c53-adfc-092373136783",
+        "generatedAtUtc": "2026-11-12T08:34:53.183268+00:00",
+        "requestedDurationSeconds": 0.8,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0016,
+        "sourceSha256": "eb6eda79440da2845aab497e69a93fab977514fbfe0edbd52fd0e55c638d2866",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Racing hull scraping an industrial metal barrier: hard gritty metal tearing friction, bright sparks and rough composite chatter. Immediate short contact, no tonal squeal.",
+          "duration_seconds": 0.8,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "scrape-2",
+      "event": "scrape",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/scrape-2.wav",
+      "sha256": "4bb1be710aa4243e60464f3e71a233b840b5d884bf0dd58bdbd63029af68c4d0",
+      "durationSeconds": 0.8,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/scrape-2.mp3",
+        "sha256": "8075d5ee7007f7eaf8a819758478e64694e7d440f4f0f488104fef0bf6f8e941",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 0.8,
+        "metrics": {
+          "peakDbfs": -2.5043326742401497,
+          "rmsDbfs": -21.20531085720016,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": -0.4956673257598503,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -21.721810223384836,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee5-2e9f-72e2-9f75-66dce89c14cd",
+      "listedEstimateUsd": 0.0016,
+      "generation": {
+        "id": "scrape-2",
+        "event": "scrape",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee5-2e9f-72e2-9f75-66dce89c14cd",
+        "generatedAtUtc": "2026-11-12T08:34:52.421438+00:00",
+        "requestedDurationSeconds": 0.8,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.0016,
+        "sourceSha256": "8075d5ee7007f7eaf8a819758478e64694e7d440f4f0f488104fef0bf6f8e941",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Racing hull scraping an industrial metal barrier: hard gritty metal tearing friction, bright sparks and rough composite chatter. Immediate short contact, no tonal squeal. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 0.8,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "shield-1",
+      "event": "fire:SHIELD",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/shield-1.wav",
+      "sha256": "0b8081dc1145c17d633ab5c4b5d1d58aa7ab09d58e3f073718a4df265944e6af",
+      "durationSeconds": 1.996031746031746,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/shield-1.mp3",
+        "sha256": "45c93cdaab7c4bfbe9bda9199ce3e7f20ff2da3ad69044ed6faeb15d3cef9cb1",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.0,
+        "metrics": {
+          "peakDbfs": -5.428157385457944,
+          "rmsDbfs": -22.713617893236115,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.003968253968253968,
+        "trimmedEndSeconds": 0.0,
+        "gainDb": 2.4281573854579444,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -20.277114240877893,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-ed18-7441-80b5-13896614931e",
+      "listedEstimateUsd": 0.004,
+      "generation": {
+        "id": "shield-1",
+        "event": "fire:SHIELD",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-ed18-7441-80b5-13896614931e",
+        "generatedAtUtc": "2026-11-12T08:34:37.981481+00:00",
+        "requestedDurationSeconds": 2.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.004,
+        "sourceSha256": "45c93cdaab7c4bfbe9bda9199ce3e7f20ff2da3ad69044ed6faeb15d3cef9cb1",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Protective field engaging: hard relay closes, dense induction power swell wraps outward, glassy granular energy skin settles. No musical notes, no sustained loop.",
+          "duration_seconds": 2.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "shield-2",
+      "event": "fire:SHIELD",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/shield-2.wav",
+      "sha256": "59cd3ac6325337f3addc400b6ca37a58c115fd515745cb5769891ff3f5b49578",
+      "durationSeconds": 1.9675736961451247,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/shield-2.mp3",
+        "sha256": "b47e3ef68c29c0b281520e641f2e93edb0594d4daeea7a8ee376ccc5658bc07e",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.0,
+        "metrics": {
+          "peakDbfs": -4.38283668188495,
+          "rmsDbfs": -22.702202617868082,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.032426303854875285,
+        "gainDb": 1.3828366818849496,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -21.249128083319807,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-ed17-7b20-b4a5-d6de311330f2",
+      "listedEstimateUsd": 0.004,
+      "generation": {
+        "id": "shield-2",
+        "event": "fire:SHIELD",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-ed17-7b20-b4a5-d6de311330f2",
+        "generatedAtUtc": "2026-11-12T08:34:35.484246+00:00",
+        "requestedDurationSeconds": 2.0,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.004,
+        "sourceSha256": "b47e3ef68c29c0b281520e641f2e93edb0594d4daeea7a8ee376ccc5658bc07e",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Protective field engaging: hard relay closes, dense induction power swell wraps outward, glassy granular energy skin settles. No musical notes, no sustained loop. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 2.0,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "turbo-1",
+      "event": "fire:TURBO",
+      "variant": 1,
+      "relativeFile": "public/audio/sfx/turbo-1.wav",
+      "sha256": "9ed6819555e7b0b7bd08c86964ec9a8379d335d3c1be05f0ca22881e1debcf1d",
+      "durationSeconds": 2.055374149659864,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/turbo-1.mp3",
+        "sha256": "19246d0666608ea6a32b4f16f7649f3588451314ce7ef09c022a4d745a6a1ac6",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.48,
+        "metrics": {
+          "peakDbfs": -1.5302459121976733,
+          "rmsDbfs": -19.55515091001378,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.42462585034013606,
+        "gainDb": -1.4697540878023267,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -20.210018099941802,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-f678-75b1-a9a5-74fb9caa7ed8",
+      "listedEstimateUsd": 0.005,
+      "generation": {
+        "id": "turbo-1",
+        "event": "fire:TURBO",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-f678-75b1-a9a5-74fb9caa7ed8",
+        "generatedAtUtc": "2026-11-12T08:34:37.963096+00:00",
+        "requestedDurationSeconds": 2.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.005,
+        "sourceSha256": "19246d0666608ea6a32b4f16f7649f3588451314ce7ef09c022a4d745a6a1ac6",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Racing turbine overdrive engaging: heavy pneumatic clutch slam, deep engine pressure surge into tearing high velocity airflow. Powerful, tactile, controlled short decay.",
+          "duration_seconds": 2.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    },
+    {
+      "id": "turbo-2",
+      "event": "fire:TURBO",
+      "variant": 2,
+      "relativeFile": "public/audio/sfx/turbo-2.wav",
+      "sha256": "2d4667e88fabc4fe5ec86c22d8eaf08975b539bb5ce0513a579325a113cb2897",
+      "durationSeconds": 1.965578231292517,
+      "sampleRate": 44100,
+      "channels": 2,
+      "encoding": "16-bit PCM WAV decoded from generated MP3192 source; not lossless generation",
+      "source": {
+        "file": "docs/generated-sfx/sources/turbo-2.mp3",
+        "sha256": "f535a5f3044b39687f64aeb429923551866644b2f4eb801ed4963e7c7223b3b3",
+        "codec": "mp3",
+        "sampleRate": 44100,
+        "durationSeconds": 2.48,
+        "metrics": {
+          "peakDbfs": -1.113710077834262,
+          "rmsDbfs": -19.89568965439263,
+          "finite": true,
+          "clippedSampleCount": 0
+        }
+      },
+      "processing": {
+        "trimmedStartSeconds": 0.0,
+        "trimmedEndSeconds": 0.514421768707483,
+        "gainDb": -1.886289922165738,
+        "attackFadeMs": 1.5,
+        "tailFadeMs": 8
+      },
+      "metrics": {
+        "peakDbfs": -3.0003622493859567,
+        "rmsDbfs": -20.772799293882855,
+        "finite": true,
+        "clippedSampleCount": 0
+      },
+      "requestId": "01a1cee4-fc86-7900-aa6d-0e3cbafb93b9",
+      "listedEstimateUsd": 0.005,
+      "generation": {
+        "id": "turbo-2",
+        "event": "fire:TURBO",
+        "model": "elevenlabs/sound-effects/v3",
+        "requestId": "01a1cee4-fc86-7900-aa6d-0e3cbafb93b9",
+        "generatedAtUtc": "2026-11-12T08:34:39.834765+00:00",
+        "requestedDurationSeconds": 2.5,
+        "listedUsdPerOutputSecond": 0.002,
+        "listedEstimateUsd": 0.005,
+        "sourceSha256": "f535a5f3044b39687f64aeb429923551866644b2f4eb801ed4963e7c7223b3b3",
+        "input": {
+          "text": "Serious futuristic racing SFX. Dry isolated one-shot, immediate onset, detailed mechanical weight. No music, melody, speech, retro bleeps or cartoon sounds. Racing turbine overdrive engaging: heavy pneumatic clutch slam, deep engine pressure surge into tearing high velocity airflow. Powerful, tactile, controlled short decay. Alternative take with a rougher metallic attack and darker resonant body.",
+          "duration_seconds": 2.5,
+          "output_format": "mp3_44100_192",
+          "loop": false,
+          "prompt_influence": 0.55,
+          "enable_safety_checker": true
+        },
+        "commercialUse": "Commercial use badge verified at https://fal.ai/models/elevenlabs/sound-effects/v3",
+        "creativeBrief": "Original serious mechanical/energy-based futuristic racing SFX. No third-party samples or specific existing sound reproduction.",
+        "audition": "No human or audio-understanding listening performed. Technical decode and signal validation follow separately."
+      }
+    }
+  ]
+}
