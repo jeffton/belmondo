@@ -6,6 +6,7 @@ import { WeaponEffects } from "../src/weapon-effects.js";
 
 const track = {
   length: 100_000,
+  finishS: 0,
   config: { split: [0.9, 0.95], jump: 0.99 },
   curvature: () => 0,
   gap: () => false,
@@ -150,14 +151,19 @@ test("connected split entry and merge remain legitimate PULSE hits", () => {
   }
 });
 
-test("reboot clears PULSE disruption instead of carrying it onto the recovered craft", () => {
+test("lethal PULSE permanently eliminates and clears electrical disruption", () => {
   const race = setup();
   const target = race.racers[1];
   target.shield = 1;
   race.fire();
-  assert.equal(target.shield, 65);
-  assert.equal(target.protect, 2);
+  assert.equal(target.shield, 0);
+  assert.equal(target.eliminated, true);
+  assert.equal(target.protect, 0);
   assert.equal(target.pulseHit, 0);
+  const position = target.position.clone();
+  for (let step = 0; step < 90; step++) race.update(1 / 120, throttle);
+  assert(target.position.equals(position));
+  assert.equal(target.shield, 0);
 });
 
 test("PULSE electrical arcs follow only genuine struck hulls and reuse slots after reset", () => {
