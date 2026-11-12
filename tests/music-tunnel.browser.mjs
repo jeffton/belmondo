@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { soundtrack } from "../src/soundtrack.js";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -90,13 +91,13 @@ try {
   assert(exit > 0, "Exit fades smoothly");
   await page.waitForFunction(() => player.wet.gain.value === 0);
   assert.equal(await sample("wet"), 0, "Exit is exactly dry after the fade");
-  await page.evaluate(async () => {
-    const bytes = await (await fetch("/music/ion-drift.mp3")).arrayBuffer();
+  await page.evaluate(async (url) => {
+    const bytes = await (await fetch(url)).arrayBuffer();
     await player.loadFiles([
       new File([bytes], "local.mp3", { type: "audio/mpeg" }),
     ]);
     await player.play();
-  });
+  }, soundtrack[0].url);
   await page.waitForFunction(() => player.audio.currentTime > 0.15);
   assert.equal(await sample("wet"), 0);
   await page.evaluate(() => player.setTunnel(true));

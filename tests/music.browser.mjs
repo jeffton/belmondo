@@ -53,7 +53,7 @@ try {
   const dialog = page.locator("#music-dialog");
   await expect(dialog).toBeVisible();
   await expect(page.locator("#music-status")).toContainText("BELMONDO");
-  await expect(page.locator("#music-status")).toContainText("12 TRACKS");
+  await expect(page.locator("#music-status")).toContainText("8 TRACKS");
   await expect(page.locator("#music-default")).toBeVisible();
   await page.locator("#effects-volume").evaluate((element) => {
     element.value = "0.22";
@@ -227,21 +227,23 @@ try {
   await page
     .locator("#files")
     .setInputFiles(
-      fileURLToPath(new URL("../public/music/ion-drift.mp3", import.meta.url)),
+      fileURLToPath(new URL(`../public${soundtrack[0].url}`, import.meta.url)),
     );
   await page.waitForFunction(
     () =>
       window.musicAudioElements.at(-1)?.currentSrc.startsWith("blob:") &&
       !window.musicAudioElements.at(-1).paused,
   );
-  await expect(page.locator("#music-status")).toContainText("ion-drift.mp3");
+  await expect(page.locator("#music-status")).toContainText(
+    "slipstream-glass.mp3",
+  );
   await page.locator("#music-default").click();
   await page.waitForFunction(
     () =>
       window.musicAudioElements.at(-1)?.currentSrc.includes("/music/") &&
       !window.musicAudioElements.at(-1).paused,
   );
-  await expect(page.locator("#music-status")).toContainText("12 TRACKS");
+  await expect(page.locator("#music-status")).toContainText("8 TRACKS");
 
   // Music slider does not alter effects volume or mute; effects mute does not pause music.
   await page.locator("#music-dialog .close").click();
