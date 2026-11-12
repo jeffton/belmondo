@@ -75,33 +75,8 @@ for (const config of TRACKS) {
   });
 }
 
-test("expanded courses use higher-resolution skies; original paintings stay unchanged", () => {
-  const legacyHashes = new Map([
-    [
-      "KAISEKI COAST",
-      "519571b3afa57df7af5c738bec2c57753ce064cebc3a2d239cd1fcd77fab40a4",
-    ],
-    [
-      "SOLAR ARRAY",
-      "bc33d298e0254a321ca5f10b3938fe1c45eeb9de96196f4f1df11e072b479345",
-    ],
-    [
-      "NOCTILUCENT",
-      "4329a7826f54576023c3f61b23bb1fbf7831a57c56e90759c0d9b1ab77287fc1",
-    ],
-  ]);
-  for (const config of TRACKS) {
-    const image = paintSky(config, config.fog, 256, 128);
-    const hash = createHash("sha256").update(image.data).digest("hex");
-    if (legacyHashes.has(config.name))
-      assert.equal(
-        hash,
-        legacyHashes.get(config.name),
-        `${config.name} output`,
-      );
-  }
-
-  for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
+test("all seven course skies use the same filtered panorama budget", () => {
+  for (const name of TRACKS.map((course) => course.name)) {
     const config = TRACKS.find((course) => course.name === name);
     const texture = createSky(config, config.fog);
     assert.equal(texture.image.width, 2048, `${name} width`);
@@ -137,14 +112,34 @@ test("expanded courses use higher-resolution skies; original paintings stay unch
     texture.dispose();
     assert.equal(disposed, 1);
   }
+});
 
-  for (const config of TRACKS.filter((course) =>
-    legacyHashes.has(course.name),
-  )) {
-    const texture = createSky(config, config.fog);
-    assert.equal(texture.image.width, 1024, `${config.name} width`);
-    assert.equal(texture.image.height, 512, `${config.name} height`);
-    texture.dispose();
+test("Cinderline shallow distant ridge does not jump a full contrast row", () => {
+  const config = TRACKS.find((course) => course.name === "CINDERLINE");
+  const image = paintSky(config, 0x998888, 2048, 1024);
+  // Shallow descending far ridge, away from the sun, clouds and works. This
+  // reproduces the long horizontal stairs visible in the user's chase view.
+  // A hard silhouette row cutoff produces a 53-level jump in this region.
+  for (const [layer, x0, x1, y0, y1, limit] of [
+    ["far", 205, 320, 532, 546, 20],
+    // Near ridge climbing under the far ridge: hard cutoffs jump 43 levels.
+    ["near", 1050, 1120, 533, 541, 8],
+  ]) {
+    let largestStep = 0;
+    for (let x = x0; x < x1; x++) {
+      for (let y = y0; y < y1; y++) {
+        const offset = (y * image.width + x) * 4;
+        for (let channel = 0; channel < 3; channel++) {
+          largestStep = Math.max(
+            largestStep,
+            Math.abs(
+              image.data[offset + channel] - image.data[offset - 4 + channel],
+            ),
+          );
+        }
+      }
+    }
+    assert(largestStep < limit, `${layer} ridge contrast step: ${largestStep}`);
   }
 });
 

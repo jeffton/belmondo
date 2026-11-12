@@ -244,6 +244,11 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
   const sunAngle = Math.atan2(sun.z, sun.x),
     sunHeight = Math.asin(sun.y);
   const data = new Uint8Array(width * height * 4);
+  // Approximate silhouette coverage over a latitude texel. Hard row cutoffs turn
+  // shallow distant ridges into long stair steps even with linear GPU filtering.
+  const halfTexel = Math.PI / (height - 1) / 2;
+  const coverage = (edge, latitude) =>
+    1 - smooth(edge - halfTexel, edge + halfTexel, latitude);
   const rows = Array.from({ length: height }, (_, y) => {
     const latitude = (y / (height - 1) - 0.5) * Math.PI;
     const color =
@@ -324,7 +329,8 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
             );
         }
         const haze = smooth(0.002, 0.055, latitude);
-        if (latitude < farHeight) {
+        const farCoverage = coverage(farHeight, latitude);
+        if (farCoverage > 0) {
           const ridgeColor = snowColor
             ? blend(
                 farColor,
@@ -332,17 +338,23 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
                 smooth(farHeight * 0.6, farHeight * 0.9, latitude) * 0.7,
               )
             : farColor;
-          pixel = blend(pixel, ridgeColor, haze * 0.82);
+          pixel = blend(pixel, ridgeColor, haze * 0.82 * farCoverage);
         }
-        if (latitude < nearHeight) {
+        const nearCoverage = coverage(nearHeight, latitude);
+        if (nearCoverage > 0) {
           const bedding =
             config.name === "SOLAR ARRAY" && latitude > nearHeight * 0.68
               ? 0.12
               : 0;
-          pixel = blend(pixel, blend(nearColor, farColor, bedding), haze);
+          pixel = blend(
+            pixel,
+            blend(nearColor, farColor, bedding),
+            haze * nearCoverage,
+          );
         }
-        if (latitude < cityHeight) {
-          pixel = blend(pixel, cityColor, haze);
+        const cityCoverage = coverage(cityHeight, latitude);
+        if (city && cityCoverage > 0) {
+          pixel = blend(pixel, cityColor, haze * cityCoverage);
           // Small, irregularly occupied window clusters, not a neon grid.
           const seed = (((x % (width - 1)) * 73856093) ^ (y * 19349663)) >>> 0;
           if (
@@ -355,7 +367,7 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
             pixel = blend(
               pixel,
               seed % 2 ? [151, 171, 171] : [181, 151, 115],
-              0.55 * haze,
+              0.55 * haze * cityCoverage,
             );
           if (
             night &&
@@ -363,7 +375,7 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
             Math.abs(latitude - cityHeight * 0.74) < 0.004 &&
             seed % 4 === 0
           )
-            pixel = blend(pixel, [116, 164, 176], 0.5 * haze);
+            pixel = blend(pixel, [116, 164, 176], 0.5 * haze * cityCoverage);
         }
       }
       const offset = (y * width + x) * 4;
@@ -378,14 +390,9 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
 
 /** One static, world-oriented sky; no extra scenery meshes or per-frame work. */
 export function createSky(config, fogHex) {
-  const expansionCourse = [
-    "WHITEOUT",
-    "MONSOON",
-    "CINDERLINE",
-    "VESPER CIRCUIT",
-  ].includes(config.name);
-  const [width, height] = expansionCourse ? [2048, 1024] : [1024, 512];
-  const image = paintSky(config, fogHex, width, height);
+  // One active course at a time: all seven paintings share the same budget.
+  // LOW RES controls the scene framebuffer, not a second coarse horizon source.
+  const image = paintSky(config, fogHex, 2048, 1024);
   const texture = new THREE.DataTexture(image.data, image.width, image.height);
   texture.name = `${config.name} distant world`;
   texture.mapping = THREE.EquirectangularReflectionMapping;
