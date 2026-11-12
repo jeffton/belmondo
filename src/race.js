@@ -287,9 +287,7 @@ export class Race {
         const u = mod(r.contactS, track.length) / track.length;
         const [forkStart, forkEnd] = track.config.split;
         const choosingFork =
-          (track.config.night || track.config.fork) &&
-          u > forkStart - 0.04 &&
-          u < forkStart + (forkEnd - forkStart) * 0.3;
+          u > forkStart - 0.04 && u < forkStart + (forkEnd - forkStart) * 0.3;
         const intendedBranch =
           choosingFork &&
           (!r.branch || track.bounds(r.contactS, r.branch).connected)
