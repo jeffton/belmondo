@@ -483,6 +483,20 @@ footer {
 .shield {
   width: 170px;
 }
+.shield.critical .hud-label,
+#shield-warning {
+  color: #ff8c60;
+}
+#shield-warning {
+  display: block;
+  margin-top: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+#shield-warning[hidden] {
+  display: none;
+}
 .bar {
   height: 6px;
   background: #1b2c38dd;

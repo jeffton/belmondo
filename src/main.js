@@ -212,6 +212,8 @@ async function start(event) {
   $("results").hidden = true;
   $("pause-panel").close();
   updateWeaponHUD(race.player.weapon);
+  $("shield-warning").hidden = true;
+  $("shield-warning").parentElement.classList.remove("critical");
   $("hud").hidden = false;
   $("hud-track").textContent =
     `${TRACKS[selectedTrack].name} / ${race.classSpec.id.toUpperCase()}`;
@@ -468,6 +470,7 @@ function drawMap() {
   ctx.closePath();
   ctx.stroke();
   for (const r of [...race.racers].reverse()) {
+    if (r.eliminated) continue;
     const [x, y] = xy(track.frame(r.s, r.branch).p);
     ctx.fillStyle = r.id === 0 ? "#ff782b" : "#a2ceda";
     ctx.beginPath();
@@ -484,13 +487,15 @@ function showResults() {
   sound.stopCrowd();
   $("results").hidden = false;
   const key = recordKey(race.mode, race.speedClass);
-  const isRecord = !records[key] || race.time < records[key];
+  const isRecord =
+    race.player.finished && (!records[key] || race.resultTime < records[key]);
   if (isRecord) {
-    records[key] = race.time;
+    records[key] = race.resultTime;
     localStorage.setItem("nv-records", JSON.stringify(records));
   }
-  $("result-title").textContent =
-    race.mode === "trial"
+  $("result-title").textContent = race.player.eliminated
+    ? `ELIMINATED / ${race.position}`
+    : race.mode === "trial"
       ? "RUN COMPLETE."
       : race.position === 1
         ? "FIRST PLACE"
@@ -498,7 +503,10 @@ function showResults() {
   $("result-data").replaceChildren();
   const lines = [
     ["CLASS", `${race.classSpec.id.toUpperCase()} / ${LAPS} LAPS`],
-    ["TOTAL TIME", formatTime(race.time)],
+    [
+      race.player.eliminated ? "ELAPSED / DNF" : "TOTAL TIME",
+      formatTime(race.resultTime),
+    ],
     ...race.laps.map((v, i) => [`LAP / ${i + 1}`, formatTime(v)]),
     ["BEST LAP", formatTime(race.bestLap)],
     ["LOCAL RECORD", isRecord ? "NEW RECORD" : formatTime(records[key])],
@@ -541,7 +549,14 @@ function updateHUD(now) {
   $("lap-times").innerHTML = timingRows.join("");
   $("shield-num").textContent = Math.ceil(p.shield);
   $("shield-bar").style.width = `${p.shield}%`;
-  $("shield-bar").style.background = p.shield < 25 ? "#ff642a" : "#d4f53c";
+  $("shield-bar").style.background = race.criticalShield
+    ? "#ff642a"
+    : "#d4f53c";
+  $("shield-warning").hidden = !race.criticalShield;
+  $("shield-warning").parentElement.classList.toggle(
+    "critical",
+    race.criticalShield,
+  );
   updateWeaponHUD(p.weapon);
   if (race.countdown > 0) {
     $("race-message").className = "";
@@ -632,7 +647,17 @@ function animate(now) {
         updateHUD(now);
         hudTick = 0;
       }
-      if (race.finished) showResults();
+      if (race.finished) {
+        updateHUD(now);
+        showResults();
+      }
+    } else if (state === "results" && !race.complete) {
+      accumulator += dt;
+      while (accumulator >= 1 / 120) {
+        race.update(1 / 120, {});
+        accumulator -= 1 / 120;
+      }
+      race.events.length = 0;
     }
     world.draw(race, paused ? 0 : dt, false, controls.steeringKind);
   }

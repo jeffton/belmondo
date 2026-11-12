@@ -676,15 +676,21 @@ test("grid racers behind the start retain negative physical progression", () => 
   assert(race.racers.slice(1).every((r) => r.s < 0));
 });
 
-test("exhausted wall shields trigger a stationary reboot, not zero-shield wall riding", () => {
+test("exhausted wall shields permanently eliminate, never reboot or ride walls", () => {
   const race = setup(),
     p = race.player;
   p.shield = 0;
   p.velocity.set(0, 0, 60);
   race.update(1 / 120, neutral);
-  assert.equal(p.shield, 65);
+  assert.equal(p.shield, 0);
   assert.equal(p.velocity.length(), 0);
-  assert.equal(p.protect, 2);
+  assert.equal(p.protect, 0);
+  assert.equal(p.eliminated, true);
+  const position = p.position.clone();
+  for (let step = 0; step < 120; step++)
+    race.update(1 / 120, { throttle: true });
+  assert(p.position.equals(position));
+  assert.equal(p.shield, 0);
 });
 
 test("production road projection includes actual ramp height", () => {

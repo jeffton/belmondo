@@ -51,6 +51,7 @@ export const CRAFT = [
 ];
 export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
 export const LAPS = 5;
+export const CRITICAL_SHIELD = 25;
 
 export class Race {
   constructor(track, craft = 0, mode = "race", speedClass = 0, terrain = null) {
@@ -64,6 +65,12 @@ export class Race {
     this.countdown = GRID_APPROACH_SECONDS + LAUNCH_COUNTDOWN_SECONDS;
     this.launch = new Launch();
     this.finished = false;
+    this.complete = false;
+    this.resultPosition = null;
+    this.resultTime = null;
+    this.criticalShield = false;
+    this.finishers = [];
+    this.eliminations = [];
     this.events = [];
     this.shots = [];
     this.mines = [];
@@ -81,6 +88,9 @@ export class Race {
       vy: 0,
       branch: 0,
       shield: 100,
+      eliminated: false,
+      finished: false,
+      finalPosition: null,
       protect: 0,
       surge: 0,
       boost: 0,
@@ -113,22 +123,64 @@ export class Race {
   emit(kind, text) {
     this.events.push({ kind, text });
   }
+  updateCriticalShield() {
+    const critical =
+      !this.finished &&
+      this.player.shield > 0 &&
+      this.player.shield <= CRITICAL_SHIELD;
+    if (critical === this.criticalShield) return;
+    this.criticalShield = critical;
+    this.emit(
+      critical ? "critical" : "critical-clear",
+      critical ? "SHIELD CRITICAL" : "",
+    );
+  }
+  settlePlayerResult() {
+    if (this.resultPosition !== null || this.player.finalPosition === null)
+      return;
+    this.resultPosition = this.player.finalPosition;
+    this.resultTime = this.player.eliminated
+      ? this.player.eliminationTime
+      : this.player.finishTime;
+    this.finished = true;
+    this.updateCriticalShield();
+    this.emit(
+      "finish",
+      this.player.eliminated ? "ELIMINATED" : "RACE COMPLETE",
+    );
+  }
+  eliminate(r) {
+    if (r.eliminated || r.finished) return;
+    r.eliminated = true;
+    r.eliminationTime = this.time;
+    r.finalPosition = this.racers.length - this.eliminations.length;
+    this.eliminations.push(r);
+    r.shield = 0;
+    r.weapon = null;
+    r.protect = r.boost = r.surge = r.pulseHit = r.speed = 0;
+    r.velocity.set(0, 0, 0);
+    this.complete = this.racers.every(
+      (racer) => racer.eliminated || racer.finished,
+    );
+    this.settlePlayerResult();
+  }
   damage(r, amount, weapon = null) {
-    if (r.protect > 0) return;
+    if (r.eliminated || r.finished || r.protect > 0) return;
     if (weapon === "PULSE") r.pulseHit = 0.65;
     r.shield -= amount / CRAFT[r.craft].armor;
     r.velocity.multiplyScalar(0.78);
     r.speed = Math.hypot(r.velocity.x, r.velocity.z);
     r.stun = 0.6;
     if (r.id === 0) this.emit("hit", "IMPACT");
-    if (r.shield <= 0) {
-      r.shield = 65;
-      this.recover(r);
-      r.protect = 2;
-      if (r.id === 0) this.emit("hit", "EMERGENCY REBOOT");
-    }
+    if (r.shield <= 0) this.eliminate(r);
+    this.updateCriticalShield();
   }
   recover(r) {
+    if (r.eliminated || r.finished) return;
+    if (r.shield <= 0) {
+      this.eliminate(r);
+      return;
+    }
     const { s, branch, gate } = r.checkpoint;
     r.gate = gate;
     const f = this.track.frame(s, branch);
@@ -181,7 +233,14 @@ export class Race {
     return !this.terrain?.sweepSurface(source.position, target.position, 0);
   }
   fire(r = this.player) {
-    if (!r.weapon || this.countdown > 0 || this.finished) return;
+    if (
+      !r.weapon ||
+      r.eliminated ||
+      r.finished ||
+      this.countdown > 0 ||
+      this.complete
+    )
+      return;
     const weapon = r.weapon;
     r.weapon = null;
     if (r.id === 0) this.emit("fire", weapon);
@@ -203,7 +262,7 @@ export class Race {
       const forward = new THREE.Vector3(Math.sin(r.yaw), 0, Math.cos(r.yaw));
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       const targets = this.racers
-        .filter((t) => t.id !== r.id)
+        .filter((t) => t.id !== r.id && !t.eliminated && !t.finished)
         .map((t) => {
           const offset = t.position.clone().sub(r.position);
           return {
@@ -255,7 +314,10 @@ export class Race {
     }
   }
   update(dt, input) {
-    if (this.finished) return;
+    if (this.complete) return;
+    for (const r of this.racers) if (r.shield <= 0) this.eliminate(r);
+    this.updateCriticalShield();
+    if (this.complete) return;
     if (this.countdown > 0) {
       const countdownStep = Math.min(dt, this.countdown);
       this.launch.observe(input.throttle, input.launchIntent);
@@ -280,14 +342,17 @@ export class Race {
     // A class traverses the same physical envelope in less real time.
     // Race/countdown clocks stay real; mechanical effects use class time.
     const classDt = dt * pace;
+    const active = this.racers.filter((r) => !r.eliminated && !r.finished);
+    const finishCrossings = [];
     const previousPositions = new Map(
-      this.racers.map((r) => {
+      active.map((r) => {
         r.recoveredThisStep = false;
         return [r, r.position.clone()];
       }),
     );
-    const previousYaw = new Map(this.racers.map((r) => [r, r.yaw]));
-    for (const r of this.racers) {
+    const previousYaw = new Map(active.map((r) => [r, r.yaw]));
+    for (const r of active) {
+      if (r.eliminated) continue;
       r.wallTouched = r.contactMoved = false;
       r.contactSound = Math.max(0, r.contactSound - classDt);
       const spec = CRAFT[r.craft];
@@ -422,7 +487,7 @@ export class Race {
       r.position.addScaledVector(r.velocity, dt);
     }
     const roads = new Map(
-      this.racers.map((r) => [
+      active.map((r) => [
         r,
         projectRoad(track, r.position, r.contactS, r.branch),
       ]),
@@ -488,22 +553,33 @@ export class Race {
       r.wallSide = sign;
     };
     // Resolve static barriers before hover contact as well as between pair iterations.
-    for (const r of this.racers) {
+    for (const r of active) {
+      if (r.eliminated) continue;
       constrainWall(r);
       r.contactMoved = r.wallTouched;
     }
-    solveContacts(this.racers, constrainWall, (a, b, closing) => {
-      closing /= pace;
-      for (const r of [a, b]) {
-        if (closing > 12 && r.protect <= 0)
-          r.shield -= ((closing - 12) * 0.1) / CRAFT[r.craft].armor;
-        if (closing > 4 && r.contactSound === 0) {
-          if (r.id === 0) this.emit(closing > 18 ? "hit" : "scrape", "CONTACT");
-          r.contactSound = 0.25;
+    solveContacts(
+      active.filter((r) => !r.eliminated),
+      constrainWall,
+      (a, b, closing) => {
+        closing /= pace;
+        for (const r of [a, b]) {
+          if (closing > 12 && r.protect <= 0)
+            r.shield -= ((closing - 12) * 0.1) / CRAFT[r.craft].armor;
+          if (closing > 4 && r.contactSound === 0) {
+            if (r.id === 0)
+              this.emit(closing > 18 ? "hit" : "scrape", "CONTACT");
+            r.contactSound = 0.25;
+          }
         }
+      },
+    );
+    for (const r of active) {
+      if (r.eliminated) continue;
+      if (r.shield <= 0) {
+        this.eliminate(r);
+        continue;
       }
-    });
-    for (const r of this.racers) {
       const previous = previousPositions.get(r);
       const ai = r.id !== 0;
       const road = r.contactMoved
@@ -571,8 +647,8 @@ export class Race {
         !r.grounded &&
         this.terrain?.sweepSurface(previous, r.position, 1.1)
       ) {
-        this.recover(r);
         r.shield = Math.max(10, r.shield - 24);
+        this.recover(r);
         if (!ai) this.emit("hit", "GROUND IMPACT");
         // A checkpoint return cannot sweep through gates or pickups.
         continue;
@@ -612,16 +688,15 @@ export class Race {
             if ((r.gate - 1) % GATES === 0 && (r.gate - 1) / GATES >= r.lap) {
               r.lap++;
               if (!ai) {
-                const lapTime = this.time - this.lapStart;
+                const crossingTime = this.time - dt + fraction * dt;
+                const lapTime = crossingTime - this.lapStart;
                 this.laps.push(lapTime);
                 this.bestLap = Math.min(this.bestLap, lapTime);
-                this.lapStart = this.time;
-                this.emit("lap", "LAP " + Math.min(LAPS, r.lap) + " / " + LAPS);
-                if (r.lap > LAPS) {
-                  this.finished = true;
-                  this.emit("finish", "RACE COMPLETE");
-                }
+                this.lapStart = crossingTime;
+                if (r.lap <= LAPS)
+                  this.emit("lap", "LAP " + r.lap + " / " + LAPS);
               }
+              if (r.lap > LAPS) finishCrossings.push({ r, fraction });
             }
           }
         }
@@ -689,12 +764,14 @@ export class Race {
         r.x = clamp(settledX, settled.min, settled.max);
       }
       if (!r.grounded) r.offroad += classDt;
-      if (height < -18 || r.offroad > 3 || r.shield <= 0) {
-        const destroyed = r.shield <= 0;
+      if (r.shield <= 0) {
+        this.eliminate(r);
+        continue;
+      }
+      if (height < -18 || r.offroad > 3) {
+        r.shield = Math.max(10, r.shield - 24);
         this.recover(r);
-        r.shield = destroyed ? 65 : Math.max(10, r.shield - 24);
-        if (destroyed) r.protect = 2;
-        if (!ai) this.emit("hit", destroyed ? "EMERGENCY REBOOT" : "RESCUE");
+        if (!ai) this.emit("hit", "RESCUE");
         continue;
       }
       r.h = Math.max(0, r.position.y - roadHeight(road, r.position) - HOVER);
@@ -732,7 +809,11 @@ export class Race {
       shot.life -= classDt;
       if (shot.type !== "MISSILE") continue;
       const previous = shot.position.clone();
-      const target = this.racers[shot.target];
+      const candidate = this.racers[shot.target];
+      const target =
+        candidate && !candidate.eliminated && !candidate.finished
+          ? candidate
+          : null;
       if (target) {
         const desired = target.position.clone().sub(shot.position).normalize();
         shot.velocity
@@ -760,15 +841,45 @@ export class Race {
     for (const mine of this.mines) {
       mine.life -= classDt;
       for (const r of this.racers)
-        if (r.id !== mine.owner && r.position.distanceTo(mine.position) < 5) {
+        if (
+          !r.eliminated &&
+          !r.finished &&
+          r.id !== mine.owner &&
+          r.position.distanceTo(mine.position) < 5
+        ) {
           this.damage(r, 24);
           mine.life = 0;
           break;
         }
     }
     this.mines = this.mines.filter((m) => m.life > 0);
+    // Crossing fraction resolves racers crossing in the same physics step.
+    // A lethal impact in that step takes precedence over a pending finish.
+    finishCrossings.sort((a, b) => a.fraction - b.fraction || a.r.id - b.r.id);
+    for (const { r, fraction } of finishCrossings) {
+      if (r.eliminated) continue;
+      r.finished = true;
+      r.finishTime = this.time - dt + fraction * dt;
+      r.finalPosition = this.finishers.length + 1;
+      this.finishers.push(r);
+      r.weapon = null;
+      r.speed = r.boost = r.surge = 0;
+      r.velocity.set(0, 0, 0);
+    }
+    this.complete = this.racers.every((r) => r.eliminated || r.finished);
+    this.settlePlayerResult();
+    this.updateCriticalShield();
   }
   get position() {
-    return 1 + this.racers.filter((r) => r.s > this.player.s).length;
+    if (this.resultPosition !== null) return this.resultPosition;
+    return (
+      1 +
+      this.racers.filter(
+        (r) =>
+          r !== this.player &&
+          !r.eliminated &&
+          (r.finished || r.s > this.player.s),
+      ).length
+    );
   }
 }
