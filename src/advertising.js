@@ -1,12 +1,19 @@
 import * as THREE from "three";
 import { createPierreAdvertising } from "./pierre-advertising.js";
+import { advertisingCellUV, ROADSIDE_ART } from "./advertising-art.js";
 
 const ATLAS =
   "/art/openai-image-2026-11-11T16-25-29-514Z-ig_0a4106913d49f121016af496c5017087d286f627a074fae0ad.png";
 
 // Four original tenants share one image atlas. Spatial batches keep facade ads
 // in the ordinary camera frustum; no per-frame updates or transparent glow layers.
-export function createAdvertising(scene, atlas = ATLAS, columns = 2, rows = 2) {
+export function createAdvertising(
+  scene,
+  atlas = ATLAS,
+  columns = 2,
+  rows = 2,
+  region = [0, 0, 1, 1],
+) {
   const root = new THREE.Group();
   root.name = "district-advertising";
   scene.add(root);
@@ -40,16 +47,7 @@ export function createAdvertising(scene, atlas = ATLAS, columns = 2, rows = 2) {
       corner(size / 2, height / 2, 0.35),
       corner(-size / 2, height / 2, 0.35),
     ];
-    // Inset UVs exclude adjacent atlas cells at minified mip levels.
-    const inset = 0.002;
-    const u = (brand % columns) / columns;
-    const v = 1 - (Math.floor(brand / columns) + 1) / rows;
-    const uv = [
-      [u + inset, v + inset],
-      [u + 1 / columns - inset, v + inset],
-      [u + 1 / columns - inset, v + 1 / rows - inset],
-      [u + inset, v + 1 / rows - inset],
-    ];
+    const uv = advertisingCellUV(brand, columns, rows, region);
     for (const i of [0, 1, 2, 0, 2, 3]) {
       chunk.positions.push(...corners[i].toArray());
       chunk.uv.push(...uv[i]);
@@ -62,9 +60,11 @@ export function createAdvertising(scene, atlas = ATLAS, columns = 2, rows = 2) {
       chunk.details.push({ matrix: transform.matrix.clone(), material });
     };
     detail(0, 0, 0, size + 0.7, height + 0.7, 0.6, housingMaterial);
-    // Asymmetric light rails are physical fixtures, not floating holograms.
+    // Campaign-specific light rails keep the same two instances per panel.
+    const railSide = brand % 2 === 0 ? -1 : 1;
+    const railEdge = brand % 3 === 0 ? 1 : -1;
     detail(
-      -size / 2 - 0.6,
+      railSide * (size / 2 + 0.6),
       0,
       0.2,
       0.2,
@@ -74,7 +74,7 @@ export function createAdvertising(scene, atlas = ATLAS, columns = 2, rows = 2) {
     );
     detail(
       0,
-      -height / 2 - 0.6,
+      railEdge * (height / 2 + 0.6),
       0.2,
       size + 1.5,
       0.2,
@@ -185,53 +185,53 @@ export function getTrackAdvertisingLayout(track) {
     "KAISEKI COAST": [
       [0.195, -1, 0],
       [0.485, 1, 2],
-      [0.655, -1, 5],
-      [0.9, -1, 7],
+      [0.655, -1, 6],
+      [0.9, -1, 1],
       [0.25, 1, -1],
       [0.91, 1, -2],
     ],
     "SOLAR ARRAY": [
       [0.105, -1, 1],
-      [0.31, -1, 3],
-      [0.49, 1, 4],
-      [0.79, -1, 6],
+      [0.31, -1, 2],
+      [0.49, 1, 5],
+      [0.79, -1, 7],
       [0.175, 1, -1],
       [0.92, 1, -2],
     ],
     WHITEOUT: [
       [0.105, -1, 4],
-      [0.235, 1, 7],
-      [0.53, -1, 0],
-      [0.9, 1, 6],
+      [0.235, 1, 0],
+      [0.53, -1, 3],
+      [0.9, 1, 7],
       [0.695, 1, -1],
       [0.94, -1, -2],
     ],
     MONSOON: [
-      [0.09, 1, 2],
-      [0.37, -1, 3],
-      [0.575, -1, 5],
-      [0.88, 1, 6],
+      [0.09, 1, 1],
+      [0.37, -1, 6],
+      [0.575, -1, 4],
+      [0.88, 1, 2],
       [0.645, -1, -1],
       [0.94, 1, -2],
     ],
     "VESPER CIRCUIT": [
-      [0.115, -1, 0],
+      [0.115, -1, 3],
       [0.34, 1, 4],
-      [0.61, -1, 7],
+      [0.61, -1, 5],
       [0.89, 1, -1],
     ],
     CINDERLINE: [
-      [0.1, -1, 1],
-      [0.41, 1, 4],
-      [0.695, -1, 6],
-      [0.925, 1, 7],
+      [0.1, -1, 5],
+      [0.41, 1, 2],
+      [0.695, -1, 7],
+      [0.925, 1, 3],
       [0.61, -1, -1],
       [0.945, 1, -2],
     ],
     NOCTILUCENT: [
       [0.12, 1, 0],
       [0.3, -1, 3],
-      [0.65, 1, 5],
+      [0.65, 1, 4],
       [0.815, -1, 6],
       [0.46, 1, -1],
       [0.93, 1, -2],
@@ -282,9 +282,10 @@ export function getTrackAdvertisingLayout(track) {
 export function buildTrackAdvertising(scene, track, environment) {
   const advertising = createAdvertising(
     scene,
-    "/art/belmondo-roadside-landscape-atlas.png",
-    4,
-    2,
+    ROADSIDE_ART.url,
+    ROADSIDE_ART.columns,
+    ROADSIDE_ART.rows,
+    ROADSIDE_ART.region,
   );
   const pierre = createPierreAdvertising(scene);
   const layout = getTrackAdvertisingLayout(track);
