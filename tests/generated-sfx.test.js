@@ -272,11 +272,12 @@ test("spoken lap entry follows earned player gates, including final lap and fini
   await audio.start();
   const track = makeTrack(0);
   const placeBeforeGate = (racer, lap) => {
-    const s = lap * track.length - 1;
+    const s = track.finishS + lap * track.length - 1;
     const frame = track.frame(s);
     racer.lap = lap;
     racer.s = racer.contactS = s;
     racer.gate = lap * 32;
+    racer.checkpoint = { s, branch: 0, gate: racer.gate };
     racer.position.copy(frame.p);
     racer.position.y += 2.2;
     racer.velocity.copy(frame.tangent).multiplyScalar(50);

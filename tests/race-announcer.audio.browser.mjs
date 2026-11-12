@@ -52,11 +52,12 @@ try {
         const race = new Race(track, 0, "trial");
         race.countdown = 0;
         const player = race.player;
-        const s = lap * track.length - 1;
+        const s = track.finishS + lap * track.length - 1;
         const frame = track.frame(s);
         player.lap = lap;
         player.s = player.contactS = s;
         player.gate = lap * 32;
+        player.checkpoint = { s, branch: 0, gate: player.gate };
         player.position.copy(frame.p);
         player.position.y += 2.2;
         player.velocity.copy(frame.tangent).multiplyScalar(50);
@@ -79,7 +80,9 @@ try {
         player.position.y += 2.2;
         player.velocity.set(0, 0, 0);
         player.s = player.contactS = pad.s;
-        player.gate = Math.floor((pad.s / track.length) * 32) + 1;
+        player.gate =
+          Math.floor(((pad.s - track.finishS) / track.length) * 32) + 1;
+        player.checkpoint = { s: pad.s, branch: 0, gate: player.gate };
         player.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
         race.update(1 / 120, {});
         for (const event of race.events) audio.raceEvent(event, race, LAPS);
