@@ -2,8 +2,8 @@
 
 Original seventh course: a nocturnal, inhabited metropolitan race above a street
 datum. Dense apartment/lift facades enclose the lower city; the upper course runs
-on occupied rooftop foundations. The two return galleries trade a shorter armed
-line for a longer, 48 m higher boost line. This is not Noctilucent's freight loop.
+on occupied rooftop foundations. The two return galleries trade a shorter covered
+neon-market line for a longer, open 48 m higher rooftop boost line. This is not Noctilucent's freight loop.
 
 ## Contract
 

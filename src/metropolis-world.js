@@ -174,6 +174,75 @@ export function buildMetropolis(
     }
   }
 
+  // The lower fork is a covered, inhabited market gallery; the raised fork
+  // remains an open skyline roof run. Roof loads go to street-rooted columns,
+  // not a floating tunnel tube. Only the already separated middle is enclosed.
+  const arcadeParts = [];
+  const [splitStart, splitEnd] = track.config.split;
+  const arcadeStart = splitStart + (splitEnd - splitStart) * 0.23;
+  const arcadeEnd = splitStart + (splitEnd - splitStart) * 0.77;
+  const bays = Math.ceil(((arcadeEnd - arcadeStart) * track.length) / 24);
+  for (let bay = 0; bay < bays; bay++) {
+    const u = arcadeStart + ((arcadeEnd - arcadeStart) * (bay + 0.5)) / bays;
+    const f = track.frame(u * track.length, -1);
+    const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
+    const right = new THREE.Vector3(forward.z, 0, -forward.x);
+    const yaw = Math.atan2(forward.x, forward.z);
+    const depth = ((arcadeEnd - arcadeStart) * track.length) / bays + 1;
+    const top = f.p.y + 35;
+    const roof = {
+      center: f.p.clone(),
+      right,
+      forward,
+      width: f.width * 2 + 38,
+      depth,
+      bottom: top - 4,
+      top,
+      u,
+      branch: -1,
+      kind: "market-roof",
+    };
+    if (!clearsMetropolisRoad(roof, samples)) continue;
+    const columns = [-1, 1].map((side) => {
+      const center = f.p.clone().addScaledVector(right, side * (f.width + 16));
+      return {
+        center,
+        right,
+        forward,
+        width: 2.5,
+        depth: 3,
+        bottom: environment.heightAt(center.x, center.z) - 1,
+        top,
+        u,
+        branch: -1,
+        kind: "market-column",
+      };
+    });
+    if (!columns.every((column) => clearsMetropolisRoad(column, samples)))
+      continue;
+    box(
+      "facade",
+      f.p.clone().setY(top - 2),
+      yaw,
+      [roof.width, 4, depth],
+      0x34465c,
+    );
+    arcadeParts.push(roof);
+    for (const [index, column] of columns.entries()) {
+      const center = column.center.clone().setY((column.bottom + top) / 2);
+      box(
+        "facade",
+        center,
+        yaw,
+        [column.width, top - column.bottom, column.depth],
+        0x6a6470,
+      );
+      const glow = column.center.clone().setY(f.p.y + 26);
+      box("neon", glow, yaw, [1.6, 1, depth - 2], index ? 0xf4b274 : 0x50dbe5);
+      arcadeParts.push(column);
+    }
+  }
+
   const positions = [];
   const gleams = [],
     gleamColors = [];
@@ -381,6 +450,7 @@ export function buildMetropolis(
     }
   }
   root.userData.volumes = volumes;
+  root.userData.arcadeParts = arcadeParts;
   root.userData.supports = supports;
   root.userData.sceneryInstances = [...batches.values()].reduce(
     (n, b) => n + b.parts.length,
