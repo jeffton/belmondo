@@ -50,6 +50,15 @@ let state = "menu",
   last = performance.now(),
   messageUntil = 0,
   previousCount = 4;
+function updateRaceCursor() {
+  document.body.classList.toggle(
+    "race-active",
+    state === "race" && !paused && document.hasFocus() && !document.hidden,
+  );
+}
+window.addEventListener("blur", updateRaceCursor);
+window.addEventListener("focus", updateRaceCursor);
+document.addEventListener("visibilitychange", updateRaceCursor);
 let demoDistance = 50,
   renderFrames = 0,
   renderTime = 0;
@@ -192,6 +201,7 @@ async function start(event) {
   state = "race";
   music.setMenu(false);
   paused = false;
+  updateRaceCursor();
   accumulator = 0;
   previousCount = 4;
   messageUntil = 0;
@@ -208,6 +218,7 @@ async function start(event) {
 function setPaused(value) {
   if (state !== "race" || race.finished || paused === value) return;
   paused = value;
+  updateRaceCursor();
   clearInput();
   if (paused) $("pause-panel").showModal();
   else $("pause-panel").close();
@@ -220,6 +231,7 @@ function quit() {
   ++startGeneration;
   state = "menu";
   paused = false;
+  updateRaceCursor();
   clearInput();
   $("menu").hidden = false;
   $("hud").hidden = true;
@@ -461,6 +473,7 @@ function drawMap() {
 }
 function showResults() {
   state = "results";
+  updateRaceCursor();
   music.setMenu(true);
   music.setTunnel(false);
   sound.stopEngine();
