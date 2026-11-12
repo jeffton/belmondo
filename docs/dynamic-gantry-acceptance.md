@@ -14,9 +14,13 @@ Recorded canvas operations verify dark-panel contrast, synchronized countdown th
 
 `SOURCE_URL=http://127.0.0.1:5233 node tests/dynamic-gantry.browser.mjs`
 
-The prior current-lap stage passed six profiles: all three courses at desktop 1280×720 and mobile 390×844, with 48 chase/close-up screenshots and no page/asset errors. The upcoming-lap follow-up, repeated-render resource loop and explicit LAP 5 view await an exclusive GPU slot. Its revised harness drives actual Race bodies from seeded 100 m approaches through every lap crossing, checks recorded board lettering and AI independence, and renders each resource-test state. It loads local fonts and uses a real mobile viewport. These fixtures are not human-driven full laps.
+Frozen source `f2f9356` passed six profiles: all three courses at desktop 1280×720 and mobile 390×844. Each profile exercised 17 states: synchronized countdown, initial LAP 1, all five incoming approaches and earned crossings, demo and reset. The harness drives actual Race bodies from seeded 100 m approaches through each timing gate and records the board's canvas lettering. Upcoming LAP 2–5 changes NEXT to CURRENT after crossing; final FINISH / LINE has `finished=false`, and the earned final crossing changes it to RACE / COMPLETE with `finished=true`. An AI leader cannot change the player's board.
 
-Artifacts: `test-artifacts/dynamic-gantry/report.json` and adjacent PNG files. Owned browser/server were closed after acceptance; the shared Batty browser was untouched.
+Ninety-six chase/close-up screenshots were captured. Inspected approach/pass, daylight/night and mobile views preserve the central label without clipping, including upcoming LAP 5 and FINISH. At 100 m, low-res chase lettering is small; the close-ups confirm glyph readability and the passing view enlarges the board. Each lap/demo state in the five-cycle resource loop was rendered, not merely updated. Geometry/texture counts before and after matched in every profile: desktop 151/19, 159/23, 107/19; mobile 87/15, 78/15, 54/16. No page or asset errors occurred.
+
+The fixture loads local fonts and uses a real mobile viewport. These are bounded seeded fixtures, not human-driven full laps.
+
+Committed evidence: `docs/dynamic-gantry-browser-evidence.json`. Full local artifacts: `test-artifacts/dynamic-gantry/report.json` and adjacent PNG files. Owned browser/server were closed after acceptance; the shared Batty browser was untouched.
 
 Capture matrix:
 
