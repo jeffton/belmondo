@@ -296,7 +296,7 @@ export class Race {
               : 1
             : r.branch;
         const look = track.frame(
-          r.contactS + Math.max(18, (r.speed * 0.65) / pace),
+          r.contactS + Math.max(18, (r.speed * 0.5) / pace),
           intendedBranch,
         );
         const desiredYaw = Math.atan2(
@@ -332,13 +332,19 @@ export class Race {
               )
             : 0;
         const cornerSpeed = Math.min(
-          Math.sqrt((82 * pace2) / Math.max(curve, 0.0001)),
+          Math.sqrt((110 * pace2) / Math.max(curve, 0.0001)),
+          (0.9 * spec.handling * pace) / Math.max(curve, 0.0001),
           Math.sqrt((25 * pace2) / Math.max(crest, 0.0001)),
         );
+        // Heading correction requests yaw, not a craft-independent stick angle.
+        // Use airbrakes only for rotation that the ordinary stick cannot supply;
+        // releasing that residual promptly avoids dragging through the whole turn.
+        const yawDemand = error * 6 - (r.yawRate * 0.25) / pace;
+        const steer = clamp(yawDemand / (0.9 * spec.handling), -1, 1);
         controls = {
           throttle: true,
-          steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
-          air: clamp(error * 0.8, -1, 1),
+          steer,
+          air: clamp((yawDemand - steer * 0.9 * spec.handling) / 0.5, -1, 1),
           brake: Math.max(
             clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
             Math.abs(error) > 0.7 ? 1 : 0,

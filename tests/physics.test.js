@@ -830,6 +830,9 @@ test("player side pressure pushes a rival into the real barrier without wall byp
   const p = race.player,
     rival = race.racers[1],
     right = new THREE.Vector3(1, 0, 0);
+  // This is a contact/rail test, not a contest against the NPC's evasive input.
+  // Give both hulls the explicit neutral controls supplied below.
+  rival.id = 0;
   rival.position.set(width - hullExtent(rival, right) - 1.5, 32.2, 0);
   p.position.set(rival.position.x - 7, 32.2, 0);
   p.contactS = p.s = rival.contactS = rival.s = 0;
