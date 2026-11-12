@@ -52,13 +52,26 @@ export const NEW_COURSE_RECIPES = {
     districts: [
       { name: "CALDERA EXCHANGE", u: 0.23, side: -1, kind: "geothermal" },
       { name: "SULFUR CUT", u: 0.435, side: 1, kind: "basalt" },
-      { name: "CONDENSER FIELD", u: 0.78, side: -1, kind: "condenser" },
+      {
+        name: "CONDENSER FIELD",
+        u: 0.78,
+        side: -1,
+        branch: -1,
+        kind: "condenser",
+      },
     ],
     approaches: [
       { name: "RIDGE STEAM MAINS", u: 0.1, side: 1, kind: "pipe-yard" },
       { name: "COLUMNAR CUT", u: 0.31, side: -1, kind: "basalt" },
-      { name: "LOWER CALDERA MAINS", u: 0.55, side: 1, kind: "pipe-yard" },
+      { name: "LOWER CALDERA MAINS", u: 0.6, side: 1, kind: "pipe-yard" },
       { name: "RIM BASALT FACE", u: 0.675, side: -1, kind: "basalt" },
+      {
+        name: "LOWER BASALT CUT",
+        u: 0.845,
+        side: 1,
+        branch: -1,
+        kind: "basalt",
+      },
       { name: "RETURN HEAT EXCHANGE", u: 0.91, side: 1, kind: "pipe-yard" },
     ],
   },

@@ -122,7 +122,7 @@ const layouts = {
   ],
   CINDERLINE: [
     [0.065, 0, 2, "weapon", "Accessible geothermal approach armament"],
-    [0.145, 0, -8, "weapon", "Inside setup before the first continuous wave"],
+    [0.145, 0, -8, "weapon", "Inside setup before the compound valley bends"],
     [
       0.4,
       0,
@@ -130,16 +130,34 @@ const layouts = {
       "boost",
       "Compression-valley exit acceleration, not a blind crest pad",
     ],
-    [0.49, 0, 8, "weapon", "Outer caldera line before the long ridge climb"],
-    [0.7, 0, -2, "weapon", "Accessible valley armament after the second wave"],
+    [
+      0.49,
+      0,
+      8,
+      "weapon",
+      "Outer runway line with time to align for the ballistic gap",
+    ],
+    [
+      0.7,
+      0,
+      -2,
+      "weapon",
+      "Accessible armament after the downhill landing and release",
+    ],
     [0.79, -1, -7, "weapon", "Inner geothermal return-fork armament"],
-    [0.83, 1, 7, "weapon", "Outer basalt-ridge fork reward"],
+    [
+      0.83,
+      1,
+      7,
+      "boost",
+      "Wide upper rim acceleration instead of lower-cut armament",
+    ],
     [
       0.965,
       0,
       -7,
       "boost",
-      "Plateau acceleration after the final wave and merge",
+      "Plateau acceleration after the vertical fork merges",
     ],
   ],
   NOCTILUCENT: [
