@@ -1,8 +1,11 @@
 import * as THREE from "three";
 import { celestialDirection } from "./track-lighting.js";
+import { COURSE_LIGHTING } from "./course-lighting.js";
+import { EXPANSION_SKIES } from "./expansion-skies.js";
 
 const TAU = Math.PI * 2;
 const stories = {
+  ...EXPANSION_SKIES,
   "KAISEKI COAST": {
     dusk: 0xa28c98,
     cloud: 0xb5a0aa,
@@ -197,6 +200,24 @@ function cityAt(groups, u) {
       const jib = bay > 0.2 && bay < 0.82;
       return { height: height * (mast ? 1 : jib ? 0.75 : 0.24), kind, p };
     }
+    if (kind === "observatory") {
+      const bay = (p * 3) % 1;
+      const dome = Math.sqrt(Math.max(0, 1 - ((bay - 0.5) / 0.38) ** 2));
+      return {
+        height:
+          height * (0.22 + dome * 0.6 + (bay > 0.47 && bay < 0.51 ? 0.18 : 0)),
+        kind,
+        p,
+      };
+    }
+    if (kind === "works") {
+      const bay = (p * 4) % 1;
+      return {
+        height: height * (bay < 0.13 ? 1 : bay < 0.8 ? 0.35 : 0.16),
+        kind,
+        p,
+      };
+    }
     const blocks = [
       0.35, 0.55, 0.47, 0.76, 0.5, 1, 0.9, 0.43, 0.68, 0.38, 0.26,
     ];
@@ -216,6 +237,9 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
   const farColor = rgb(story.ridge),
     nearColor = rgb(story.foreground),
     cityColor = rgb(story.skyline);
+  const [glowColor, glowStrength] = COURSE_LIGHTING[config.name].skyGlow;
+  const snowColor = story.snow ? rgb(story.snow) : null;
+  const plumeColor = story.plume ? rgb(story.plume.color) : null;
   const sun = celestialDirection(config.name);
   const sunAngle = Math.atan2(sun.z, sun.x),
     sunHeight = Math.asin(sun.y);
@@ -239,7 +263,7 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
     const pocket = 1 - smooth(0.13, 0.32, sunDistance);
     const limit = sunHeight - 0.075;
     const farHeight = Math.min(
-      profile(story.far, u, true),
+      profile(story.far, u, story.ridgeStyle !== "angular"),
       0.3 * (1 - pocket) + limit * pocket,
     );
     const nearHeight = Math.min(
@@ -265,20 +289,29 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
       const { latitude, color } = rows[y];
       let pixel = color;
       if (latitude > 0) {
-        const glow = night
-          ? 0
-          : Math.exp(
-              -(
-                (sunDistance / 0.65) ** 2 +
-                ((latitude - sunHeight) / 0.2) ** 2
-              ),
-            ) * 0.17;
-        if (glow)
-          pixel = blend(
-            pixel,
-            config.name === "SOLAR ARRAY" ? [232, 165, 128] : [228, 183, 160],
-            glow,
-          );
+        const glow =
+          Math.exp(
+            -((sunDistance / 0.65) ** 2 + ((latitude - sunHeight) / 0.2) ** 2),
+          ) * glowStrength;
+        if (glow) pixel = blend(pixel, glowColor, glow);
+        if (
+          story.plume &&
+          latitude > story.plume.base &&
+          latitude < story.plume.top
+        ) {
+          const h =
+            (latitude - story.plume.base) /
+            (story.plume.top - story.plume.base);
+          const center = story.plume.bearing + h * story.plume.drift;
+          const span = story.plume.width * (0.2 + h * 1.5);
+          const d = distance(angle, (center - 0.5) * TAU) / (span * TAU);
+          if (d < 1)
+            pixel = blend(
+              pixel,
+              plumeColor,
+              (1 - d * d) * Math.sin(h * Math.PI) * 0.32,
+            );
+        }
         for (const cloud of cloudBands) {
           const edge = Math.abs(latitude - cloud.middle) / cloud.half;
           const clearMoon =
@@ -291,7 +324,16 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
             );
         }
         const haze = smooth(0.002, 0.055, latitude);
-        if (latitude < farHeight) pixel = blend(pixel, farColor, haze * 0.82);
+        if (latitude < farHeight) {
+          const ridgeColor = snowColor
+            ? blend(
+                farColor,
+                snowColor,
+                smooth(farHeight * 0.6, farHeight * 0.9, latitude) * 0.7,
+              )
+            : farColor;
+          pixel = blend(pixel, ridgeColor, haze * 0.82);
+        }
         if (latitude < nearHeight) {
           const bedding =
             config.name === "SOLAR ARRAY" && latitude > nearHeight * 0.68

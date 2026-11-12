@@ -40,13 +40,15 @@ for (const [index, config] of TRACKS.entries()) {
       close / total > 0.85,
       "most of the real course must sit on land, not stilts",
     );
-    const jump = track.frame(
-      (config.jump + config.gapLength / 2) * track.length,
-    );
-    assert(
-      jump.p.y - terrain.heightAt(jump.p.x, jump.p.z) > 35,
-      "jump crosses a genuine open ravine",
-    );
+    if (config.jump !== null) {
+      const jump = track.frame(
+        (config.jump + config.gapLength / 2) * track.length,
+      );
+      assert(
+        jump.p.y - terrain.heightAt(jump.p.x, jump.p.z) > 35,
+        "jump crosses a genuine open ravine",
+      );
+    }
     terrain.geometries.forEach((g) => g.dispose());
   });
 

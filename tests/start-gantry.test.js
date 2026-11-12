@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { buildStartGantry } from "../src/start-gantry.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACKS } from "../src/track.js";
 import { Race, LAPS } from "../src/race.js";
 
 function luminance(hex) {
@@ -116,7 +116,7 @@ test("physical start signal stays dark and legible across real countdown boundar
     assert.ok(operations.find((op) => op.kind === "text" && op.text === "B/"));
     // Production Race objects, seeded just before a timing gate: these are
     // bounded CPU transition fixtures, not claims of complete human-driven laps.
-    for (let course = 0; course < 3; course++) {
+    for (let course = 0; course < TRACKS.length; course++) {
       const race = new Race(makeTrack(course), 0, "trial");
       race.countdown = 0;
       race.time = 10;

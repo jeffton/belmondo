@@ -164,6 +164,10 @@ h1.wordmark {
   display: flex;
   gap: 5px;
 }
+#tracks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .choice {
   flex: 1;
   min-width: 0;
@@ -1284,6 +1288,9 @@ body.touch .shield {
   }
 }
 @media (max-width: 480px) {
+  #tracks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .hud-track {
     width: 140px;
   }
@@ -1317,7 +1324,7 @@ body.touch .shield {
 }
 @media (max-width: 360px) {
   #tracks {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   #tracks .choice {
     display: flex;

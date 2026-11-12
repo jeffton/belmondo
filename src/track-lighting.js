@@ -1,39 +1,22 @@
 import * as THREE from "three";
 import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
+import { COURSE_LIGHTING } from "./course-lighting.js";
 
 export function celestialDirection(course) {
-  return new THREE.Vector3(
-    ...(course === "NOCTILUCENT"
-      ? [-0.4, 0.12, -0.7]
-      : course === "SOLAR ARRAY"
-        ? [0.75, 0.18, -0.6]
-        : [-0.8, 0.16, 0.55]),
-  ).normalize();
+  return new THREE.Vector3(...COURSE_LIGHTING[course].direction).normalize();
 }
 
 // A single directional key, not a bank of per-pixel lights. Night projector pools
 // are baked into the deck vertices; their physical luminaires sit over each pool.
 export function buildTrackLighting(scene, track) {
   const night = track.config.name === "NOCTILUCENT";
-  const desert = track.config.name === "SOLAR ARRAY";
+  const palette = COURSE_LIGHTING[track.config.name];
   const direction = celestialDirection(track.config.name);
-  scene.add(
-    new THREE.HemisphereLight(
-      night ? 0x819ccf : 0xb6c9ec,
-      night ? 0x151b32 : 0x393349,
-      0.85,
-    ),
-  );
-  const key = new THREE.DirectionalLight(
-    night ? 0xa2bcf0 : desert ? 0xffb071 : 0xffc29b,
-    night ? 1.05 : 2.5,
-  );
+  scene.add(new THREE.HemisphereLight(...palette.hemisphere, 0.85));
+  const key = new THREE.DirectionalLight(...palette.key);
   key.position.copy(direction).multiplyScalar(1000);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(
-    night ? 0x536eaa : 0x748ec3,
-    night ? 0.28 : 0.32,
-  );
+  const fill = new THREE.DirectionalLight(...palette.fill);
   fill.position.copy(direction).multiplyScalar(-1000);
   fill.position.y = 200;
   scene.add(fill);
@@ -62,9 +45,9 @@ export function buildTrackLighting(scene, track) {
     surface.height = 128;
     const paint = surface.getContext("2d");
     const atmosphere = paint.createLinearGradient(0, 0, 0, 128);
-    atmosphere.addColorStop(0, "#fff1c5");
-    atmosphere.addColorStop(0.45, "#ffdc8c");
-    atmosphere.addColorStop(1, "#ed8549");
+    atmosphere.addColorStop(0, palette.sun[0]);
+    atmosphere.addColorStop(0.45, palette.sun[1]);
+    atmosphere.addColorStop(1, palette.sun[2]);
     paint.fillStyle = atmosphere;
     paint.fillRect(0, 0, 128, 128);
     sunMap = new THREE.CanvasTexture(surface);
@@ -93,9 +76,9 @@ export function buildTrackLighting(scene, track) {
   const halo = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: glowMap,
-      color: night ? 0xadcfff : 0xffba80,
+      color: palette.halo[0],
       transparent: true,
-      opacity: night ? 0.14 : 0.32,
+      opacity: palette.halo[1],
       depthWrite: false,
       fog: false,
       blending: THREE.AdditiveBlending,
@@ -104,7 +87,7 @@ export function buildTrackLighting(scene, track) {
   halo.scale.setScalar(night ? 140 : 245);
   celestial.add(halo);
   let flare;
-  if (!night) {
+  if (palette.flare) {
     // Three's flare samples depth occlusion at its actual world-space source.
     // It vanishes behind track architecture and never follows the screen centre.
     flare = new Lensflare();

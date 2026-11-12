@@ -39,6 +39,109 @@ const layouts = {
     [0.75, 0, -7, "weapon", "Post-landing inside recovery line"],
     [0.91, 0, 5, "weapon", "Outside armament before the final sector"],
   ],
+  WHITEOUT: [
+    [
+      0.065,
+      0,
+      -2,
+      "weapon",
+      "Accessible armament leaving the observatory plateau",
+    ],
+    [
+      0.17,
+      0,
+      6,
+      "boost",
+      "Outer glacier approach with room to settle before the basin",
+    ],
+    [
+      0.25,
+      0,
+      8,
+      "weapon",
+      "Outside preparation line before the descending spiral",
+    ],
+    [
+      0.515,
+      0,
+      -2,
+      "boost",
+      "Accessible basin exit acceleration into the return valley",
+    ],
+    [0.63, 0, -8, "weapon", "Inside valley armament before the fork decision"],
+    [0.785, -1, -6, "boost", "Inner return-fork exit reward"],
+    [0.81, 1, 7, "weapon", "Outer weather-station route armament"],
+    [0.905, 0, 2, "weapon", "Accessible armament after the uphill merge"],
+    [
+      0.935,
+      0,
+      -7,
+      "boost",
+      "Outer plateau run-in acceleration toward the finish",
+    ],
+  ],
+  MONSOON: [
+    [
+      0.07,
+      0,
+      2,
+      "weapon",
+      "Accessible city approach armament before the long descent",
+    ],
+    [
+      0.26,
+      0,
+      6,
+      "weapon",
+      "Outside descent line with time to prepare for the lock",
+    ],
+    [
+      0.43,
+      0,
+      -2,
+      "weapon",
+      "Accessible armament inside the curving dry chamber",
+    ],
+    [0.585, 0, 2, "boost", "Lock exit acceleration toward the pump island"],
+    [0.735, -1, -7, "weapon", "Short technical pump-service fork armament"],
+    [0.775, 1, 7, "boost", "Faster outer spillway fork acceleration"],
+    [
+      0.89,
+      0,
+      -2,
+      "boost",
+      "Accessible uphill merge recovery toward the high city",
+    ],
+    [
+      0.94,
+      0,
+      8,
+      "weapon",
+      "Outside armament before the terraced home straight",
+    ],
+  ],
+  CINDERLINE: [
+    [0.065, 0, 2, "weapon", "Accessible geothermal approach armament"],
+    [0.145, 0, -8, "weapon", "Inside setup before the first continuous wave"],
+    [
+      0.4,
+      0,
+      2,
+      "boost",
+      "Compression-valley exit acceleration, not a blind crest pad",
+    ],
+    [0.49, 0, 8, "weapon", "Outer caldera line before the long ridge climb"],
+    [0.7, 0, -2, "weapon", "Accessible valley armament after the second wave"],
+    [0.79, -1, -7, "weapon", "Inner geothermal return-fork armament"],
+    [0.83, 1, 7, "weapon", "Outer basalt-ridge fork reward"],
+    [
+      0.965,
+      0,
+      -7,
+      "boost",
+      "Plateau acceleration after the final wave and merge",
+    ],
+  ],
   NOCTILUCENT: [
     [0.065, 0, 7, "weapon", "Safer outside line through the opening left"],
     [0.15, 0, 2, "boost", "Accessible right-kink exit before the next left"],
@@ -64,29 +167,26 @@ const layouts = {
 };
 
 export function getTrackPickups(track) {
-  return Object.entries(layouts)
-    .filter(([name]) => name === track.config.name)
-    .flatMap(([name, records]) =>
-      records.map(([u, branch, lateral, type, purpose], index) => {
-        const pad = {
-          id: `${name}:${index}`,
-          u,
-          s: u * track.length,
-          branch,
-          lateral,
-          type,
-          width: 8,
-          length: type === "boost" ? 22 : 8,
-          purpose,
-        };
-        pad.outline = pickupOutline(pad).map(([x, z]) =>
-          pickupPoint(track, pad, x, z),
-        );
-        pad.center = pickupPoint(track, pad, 0, 0);
-        pad.up = track.frame(pad.s, pad.branch).up;
-        return pad;
-      }),
+  const name = track.config.name;
+  return layouts[name].map(([u, branch, lateral, type, purpose], index) => {
+    const pad = {
+      id: `${name}:${index}`,
+      u,
+      s: u * track.length,
+      branch,
+      lateral,
+      type,
+      width: 8,
+      length: type === "boost" ? 22 : 8,
+      purpose,
+    };
+    pad.outline = pickupOutline(pad).map(([x, z]) =>
+      pickupPoint(track, pad, x, z),
     );
+    pad.center = pickupPoint(track, pad, 0, 0);
+    pad.up = track.frame(pad.s, pad.branch).up;
+    return pad;
+  });
 }
 
 export function pickupPoint(track, pad, x, z, height = 0) {
