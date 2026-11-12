@@ -124,6 +124,22 @@ export class AudioEngine {
       this.sampleVoices.delete(voice);
     };
     source.start();
+    return voice;
+  }
+
+  announce(key, priority) {
+    // Latest inventory replaces older inventory. Lap calls take precedence;
+    // countdown takes precedence over both. Nothing waits in a stale queue.
+    for (const voice of this.sampleVoices)
+      if (voice.announcementPriority > priority) return;
+    for (const voice of this.sampleVoices)
+      if (voice.announcementPriority !== undefined) this.stopSamples(voice.key);
+    this.playSample(key).announcementPriority = priority;
+  }
+
+  stopAnnouncements() {
+    for (const voice of this.sampleVoices)
+      if (voice.announcementPriority !== undefined) this.stopSamples(voice.key);
   }
 
   stopSamples(key) {
@@ -166,7 +182,7 @@ export class AudioEngine {
   }
 
   launchCue(stage) {
-    this.playSample(`voice:${stage}`);
+    this.announce(`voice:${stage}`, 3);
   }
 
   loopBed(buffer, type, frequency) {
@@ -254,17 +270,33 @@ export class AudioEngine {
       loop.gain.gain.setTargetAtTime(0, t, 0.025);
   }
 
+  raceEvent(event, race, lapCount) {
+    if (event.kind === "lap") {
+      if (!race.finished)
+        this.effect(
+          "lap",
+          race.player.lap === lapCount ? "final" : race.player.lap,
+        );
+    } else this.effect(event.kind, event.text);
+  }
+
   effect(kind, weapon = "") {
     if (!this.started || this.muted || this.paused || this.hidden) return;
     const now = this.context.currentTime;
     const cooldown = kind === "scrape" ? 0.16 : kind === "hit" ? 0.08 : 0;
     if (now - (this.lastEffect.get(kind) ?? -Infinity) < cooldown) return;
     this.lastEffect.set(kind, now);
+    if (kind === "lap") {
+      this.announce(`voice:lap:${weapon}`, 2);
+      return;
+    }
+    if (kind === "pickup") {
+      this.announce(`voice:${weapon}`, 1);
+      return;
+    }
     const key = kind === "fire" ? `fire:${weapon.toUpperCase()}` : kind;
     if (Object.hasOwn(SFX_CUES, key)) {
-      // The final gate emits lap then finish in one frame; only the finish cue
-      // should speak, rather than stacking both announcements.
-      if (kind === "finish") this.stopSamples("lap");
+      if (kind === "finish") this.stopAnnouncements();
       this.playSample(key);
       return;
     }

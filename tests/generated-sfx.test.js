@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { AudioEngine } from "../src/audio.js";
 import { SFX_CUES } from "../src/generated-sfx.js";
+import { Race, LAPS } from "../src/race.js";
+import { makeTrack } from "../src/track.js";
 
 globalThis.window = undefined;
 globalThis.document = undefined;
@@ -110,6 +112,48 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
     );
     audio.stopSamples();
   }
+  const active = () => [...audio.sampleVoices].map((voice) => voice.key);
+  for (const weapon of ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"]) {
+    const sourceCount = audio.context.sources.length;
+    audio.effect("pickup", weapon);
+    assert.deepEqual(active(), [`voice:${weapon}`]);
+    assert.equal(audio.context.sources.length, sourceCount + 1);
+  }
+  audio.effect("lap", 2);
+  assert.deepEqual(
+    active(),
+    ["voice:lap:2"],
+    "lap interrupts inventory speech",
+  );
+  audio.effect("pickup", "MISSILE");
+  assert.deepEqual(active(), ["voice:lap:2"], "lap has priority over pickup");
+  audio.effect("countdown", 3);
+  assert.deepEqual(active(), ["voice:3"], "start signal has highest priority");
+  audio.effect("lap", 3);
+  assert.deepEqual(active(), ["voice:3"]);
+  const completed = [...audio.sampleVoices][0].source;
+  completed.stop();
+  completed.onended();
+  audio.effect("lap", 4);
+  assert.deepEqual(
+    active(),
+    ["voice:lap:4"],
+    "completed speech releases priority",
+  );
+  audio.effect("lap", "final");
+  assert.deepEqual(
+    active(),
+    ["voice:lap:final"],
+    "final lap replaces numbered lap",
+  );
+  audio.setPaused(true);
+  audio.setPaused(false);
+  assert.deepEqual(
+    active(),
+    [],
+    "pause discards announcements with no stale queue",
+  );
+
   audio.effect("voice:3");
   const spoken = [...audio.sampleVoices][0];
   assert.equal(spoken.gain.gain.value, 0.9);
@@ -140,12 +184,12 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   assert.equal(audio.sampleVoices.size, 0);
   assert.equal(first.source.playing, false);
   assert.equal(first.gain.connected, false);
-  audio.effect("lap");
+  audio.effect("lap", 2);
   assert.equal(audio.sampleVoices.size, 0);
   audio.setPaused(false);
   assert.equal(audio.sampleVoices.size, 0, "resume cannot replay stale tails");
 
-  audio.effect("lap");
+  audio.effect("lap", 2);
   audio.effect("finish");
   assert.deepEqual(
     [...audio.sampleVoices].map((voice) => voice.key),
@@ -153,10 +197,10 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   );
   env.window.dispatchEvent(new Event("blur"));
   assert.equal(audio.sampleVoices.size, 0);
-  audio.effect("pickup");
+  audio.effect("pickup", "MISSILE");
   assert.equal(audio.sampleVoices.size, 0);
   env.window.dispatchEvent(new Event("focus"));
-  audio.effect("pickup");
+  audio.effect("pickup", "MISSILE");
   audio.setMuted(true);
   assert.equal(audio.sampleVoices.size, 0);
   audio.setMuted(false);
@@ -214,6 +258,71 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   assert.equal(audio.context, null);
 });
 
+test("spoken lap entry follows earned player gates, including final lap and finish", async (t) => {
+  const env = environment();
+  t.mock.property(globalThis, "window", env.window);
+  t.mock.property(globalThis, "document", env.document);
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async (url) =>
+      new Response(await readFile(new URL(`../public${url}`, import.meta.url))),
+  );
+  const audio = new Engine();
+  await audio.start();
+  const track = makeTrack(0);
+  const placeBeforeGate = (racer, lap) => {
+    const s = lap * track.length - 1;
+    const frame = track.frame(s);
+    racer.lap = lap;
+    racer.s = racer.contactS = s;
+    racer.gate = lap * 32;
+    racer.position.copy(frame.p);
+    racer.position.y += 2.2;
+    racer.velocity.copy(frame.tangent).multiplyScalar(50);
+    racer.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+  };
+  for (const lap of [1, 2, 3, 4, 5]) {
+    const race = new Race(track, 0, "trial");
+    race.countdown = 0;
+    const player = race.player;
+    placeBeforeGate(player, lap);
+    assert.equal(race.events.length, 0, "no pre-crossing announcement");
+    for (let step = 0; step < 120 && player.lap === lap; step++)
+      race.update(1 / 120, {});
+    assert.equal(player.lap, lap + 1);
+    for (const event of race.events) audio.raceEvent(event, race, LAPS);
+    const spoken = [...audio.sampleVoices].filter(
+      (voice) => voice.announcementPriority !== undefined,
+    );
+    if (lap === LAPS) {
+      assert.equal(
+        spoken.length,
+        0,
+        "finish never announces a sixth or repeated final lap",
+      );
+      assert([...audio.sampleVoices].some((voice) => voice.key === "finish"));
+    } else {
+      assert.deepEqual(
+        spoken.map((voice) => voice.key),
+        [lap + 1 === LAPS ? "voice:lap:final" : `voice:lap:${lap + 1}`],
+      );
+    }
+    audio.stopSamples();
+  }
+  const aiRace = new Race(track);
+  aiRace.countdown = 0;
+  placeBeforeGate(aiRace.racers[1], 1);
+  for (let step = 0; step < 120 && aiRace.racers[1].lap === 1; step++)
+    aiRace.update(1 / 120, {});
+  assert.equal(aiRace.racers[1].lap, 2);
+  assert(
+    !aiRace.events.some((event) => event.kind === "lap"),
+    "AI laps never announce",
+  );
+  await audio.dispose();
+});
+
 test("missing generated asset rejects startup rather than synthesizing a substitute", async (t) => {
   const env = environment();
   t.mock.property(globalThis, "window", env.window);
@@ -238,18 +347,25 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "fire:SHIELD",
       "fire:TURBO",
       "boost",
-      "pickup",
       "hit",
       "scrape",
       "jump",
       "land",
       "incoming",
-      "lap",
       "finish",
       "voice:3",
       "voice:2",
       "voice:1",
       "voice:0",
+      "voice:lap:2",
+      "voice:lap:3",
+      "voice:lap:4",
+      "voice:lap:final",
+      "voice:MISSILE",
+      "voice:PULSE",
+      "voice:MINE",
+      "voice:SHIELD",
+      "voice:TURBO",
     ].sort(),
   );
   for (const cue of Object.values(SFX_CUES)) {

@@ -152,6 +152,18 @@ test("Race grants the aimed pickup once per earned lap, preserving miss and bran
     race.update(1 / 120, {});
     assert.equal(r.collectedPickups.size, 1);
     assert(type === "boost" ? r.surge > 0 : r.weapon !== null);
+    assert.deepEqual(
+      race.events.filter(
+        (event) => event.kind === type || event.kind === "pickup",
+      ),
+      [
+        {
+          kind: type === "weapon" ? "pickup" : "boost",
+          text: type === "weapon" ? r.weapon : "BOOST",
+        },
+      ],
+      "only actual acquired player inventory/boost emits its notification",
+    );
     r.shield = 50;
     race.update(1 / 120, {});
     assert.equal(r.collectedPickups.size, 1);
@@ -164,6 +176,25 @@ test("Race grants the aimed pickup once per earned lap, preserving miss and bran
     race.update(1 / 120, {});
     assert.equal(r.collectedPickups.size, 2);
   }
+});
+
+test("AI inventory pickups never emit player weapon announcements", () => {
+  const track = makeTrack(0);
+  const race = new Race(track);
+  race.countdown = 0;
+  const ai = race.racers[1];
+  const pad = race.pickups.find((p) => p.type === "weapon" && p.branch === 0);
+  const frame = track.frame(pad.s);
+  ai.position.copy(hoverPoint(track, pad, 0, 0));
+  ai.velocity.set(0, 0, 0);
+  ai.s = ai.contactS = pad.s;
+  ai.gate = Math.floor((pad.s / track.length) * 32) + 1;
+  ai.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+  ai.branch = 0;
+  ai.grounded = true;
+  race.update(1 / 120, {});
+  assert(ai.weapon);
+  assert(!race.events.some((event) => event.kind === "pickup"));
 });
 
 test("lethal AI PULSE recovery cannot sweep an unvisited pickup between old position and checkpoint", () => {
