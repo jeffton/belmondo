@@ -74,7 +74,7 @@ export class World {
     this.time = 0;
     this.cameraReady = false;
     this.view = "chase";
-    this.quality = "clean";
+    this.quality = "retro";
     this.resize();
   }
   setView(view) {

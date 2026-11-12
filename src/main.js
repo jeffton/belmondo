@@ -121,7 +121,7 @@ $("speed-class").onchange = () => {
   updateRecord();
 };
 const qualityToggle = $("quality");
-qualityToggle.checked = localStorage.getItem("nv-render") === "retro";
+qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
 function applyQuality() {
   world.quality = qualityToggle.checked ? "retro" : "clean";
   world.resize();
@@ -143,12 +143,28 @@ function clearInput() {
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
 }
-async function start() {
+let startGeneration = 0;
+async function start(event) {
+  const generation = ++startGeneration;
+  const button = event.currentTarget;
+  button.disabled = true;
   music.setTunnel(false);
   const audioStart = sound.start();
   const musicStart = musicEnabled ? music.play() : Promise.resolve();
   sound.setMuted($("mute").checked);
   sound.setPaused(false);
+  try {
+    await Promise.all([audioStart, musicStart]);
+  } catch (error) {
+    if (generation !== startGeneration) return;
+    music.pause();
+    sound.setPaused(true);
+    window.alert(`Could not load audio: ${error.message}`);
+    return;
+  } finally {
+    button.disabled = false;
+  }
+  if (generation !== startGeneration) return;
   race = new Race(
     track,
     selectedCraft,
@@ -172,11 +188,7 @@ async function start() {
   $("hud").hidden = false;
   $("hud-track").textContent =
     `${TRACKS[selectedTrack].name} / ${race.classSpec.id.toUpperCase()}`;
-  try {
-    await Promise.all([audioStart, musicStart]);
-  } catch (error) {
-    showMessage(`AUDIO: ${error.message}`, 3);
-  }
+  if (document.hidden || !document.hasFocus()) setPaused(true);
 }
 function setPaused(value) {
   if (state !== "race" || race.finished || paused === value) return;
@@ -189,6 +201,7 @@ function setPaused(value) {
   else if (musicEnabled) music.play();
 }
 function quit() {
+  ++startGeneration;
   state = "menu";
   paused = false;
   clearInput();
