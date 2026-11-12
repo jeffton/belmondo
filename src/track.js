@@ -2,44 +2,114 @@ import * as THREE from "three";
 import { RAIL_PROFILE } from "./rail-profile.js";
 import { NEW_COURSES } from "./course-layouts.js";
 
-// Authored plan/elevation signatures, with broad physical turns rather than
-// uniformly stretched copies of one circuit. The night loop crosses itself
-// at two different elevations; route continuity never follows screen proximity.
+// The old three circuits have individually authored plan/elevation profiles.
+// Long approaches expose the tightening counterturns before their apexes;
+// the final runway/home-straight shaping remains shared with the other courses.
 function layoutPoints(course) {
-  return Array.from({ length: 72 }, (_, i) => {
-    const theta = (i / 72) * Math.PI * 2;
-    if (course === "coast") {
-      const r =
-        900 * (1 + 0.07 * Math.cos(3 * theta) + 0.04 * Math.sin(2 * theta));
-      return [
-        r * Math.cos(theta) * 1.12 - 1000,
-        55 + 25 * (1 - Math.cos(theta)) + 15 * Math.sin(2 * theta),
-        r * Math.sin(theta) * 0.88,
-      ];
-    }
-    if (course === "solar") {
-      const r =
-        950 * (1 + 0.13 * Math.cos(2 * theta) - 0.06 * Math.sin(3 * theta));
-      return [
-        r * Math.cos(theta) * 1.092 - 1000,
-        120 + 65 * Math.sin(theta - 0.4) + 30 * Math.sin(2 * theta),
-        r * Math.sin(theta) * 1.029,
-      ];
-    }
-    const phase = theta + Math.PI / 2;
-    const loopScale = Math.sin(phase) < 0 ? 1.15 : 1;
-    return [
-      936 * Math.sin(phase) * loopScale - 936,
-      105 + 62 * Math.cos(phase) + 15 * Math.sin(3 * phase),
-      457.6 * Math.sin(2 * phase) * loopScale,
-    ];
-  });
+  return {
+    coast: [
+      [0, 90, 0],
+      [0, 100, 450],
+      [-180, 160, 850],
+      [80, 230, 1100],
+      [-60, 290, 1370],
+      [-430, 260, 1500],
+      [-800, 160, 1420],
+      [-1000, 90, 1120],
+      [-1150, 70, 760],
+      [-1550, 180, 700],
+      [-1750, 260, 1000],
+      [-2000, 310, 1300],
+      [-2400, 240, 1300],
+      [-2530, 210, 1241.42],
+      [-2600.71, 190, 1170.71],
+      [-2622.39, 180, 1138.27],
+      [-2630, 170, 1100],
+      [-2622.39, 160, 1061.73],
+      [-2600.71, 150, 1029.29],
+      [-2530, 130, 958.58],
+      [-2459.29, 115, 887.87],
+      [-2388.58, 105, 817.16],
+      [-2180, 100, 580],
+      [-2090, 190, 250],
+      [-2350, 310, -50],
+      [-2540, 360, -370],
+      [-2440, 300, -730],
+      [-2110, 210, -900],
+      [-1920, 160, -1200],
+      [-1550, 115, -1450],
+      [-1100, 80, -1500],
+      [-650, 90, -1420],
+      [-220, 90, -1150],
+      [0, 90, -700],
+      [0, 90, -350],
+    ],
+    solar: [
+      [0, 130, 0],
+      [0, 160, 450],
+      [-280, 240, 800],
+      [-650, 350, 780],
+      [-800, 420, 1100],
+      [-1150, 450, 1320],
+      [-1530, 350, 1200],
+      [-1700, 260, 850],
+      [-2050, 200, 650],
+      [-2450, 250, 700],
+      [-2800, 350, 900],
+      [-3150, 400, 800],
+      [-3300, 330, 430],
+      [-3060, 240, 100],
+      [-2750, 160, -100],
+      [-2700, 100, -420],
+      [-2420, 150, -850],
+      [-1950, 220, -1100],
+      [-1500, 280, -1220],
+      [-1000, 300, -1150],
+      [-600, 220, -900],
+      [-350, 140, -550],
+      [0, 180, -650],
+      [300, 260, -950],
+      [650, 300, -800],
+      [740, 230, -450],
+      [450, 150, -180],
+      [0, 130, -350],
+    ],
+    night: [
+      [550, 65, 0],
+      [470, 95, -400],
+      [180, 180, -720],
+      [-220, 280, -800],
+      [-470, 340, -620],
+      [-480, 310, -340],
+      [-650, 230, -160],
+      [-936, 90, 0],
+      [-1200, 90, 350],
+      [-1500, 140, 700],
+      [-1900, 230, 900],
+      [-2250, 320, 850],
+      [-2490, 390, 550],
+      [-2530, 420, 100],
+      [-2320, 370, -260],
+      [-2500, 280, -600],
+      [-2370, 200, -950],
+      [-2000, 150, -1100],
+      [-1640, 180, -850],
+      [-1300, 250, -450],
+      [-936, 350, 0],
+      [-550, 400, 450],
+      [-180, 450, 780],
+      [180, 430, 900],
+      [550, 350, 850],
+      [820, 270, 550],
+      [650, 220, 150],
+    ],
+  }[course];
 }
 
 export const TRACKS = [
   {
     name: "KAISEKI COAST",
-    curveType: "catmullrom",
+    curveType: "centripetal",
     subtitle: "01 / Coastal megastructure",
     color: 0x13d9e7,
     sky: 0x1e3859,
@@ -47,18 +117,21 @@ export const TRACKS = [
     sea: 0x143b57,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "coast-3",
+    layoutId: "coast-4",
     points: layoutPoints("coast"),
-    rhythm: [
-      { start: 0.12, end: 0.28, offset: 75 },
-      { start: 0.46, end: 0.7, offset: -130 },
+    banks: [
+      [0.07, 0.27, 0.025],
+      [0.46, 0.69, 0.025],
     ],
-    ramp: { start: 0.802, height: 14, length: 0.018 },
-    gapLength: 0.018,
+    ramp: { start: 0.811, height: 14, length: 0.009 },
+    gapLength: 0.009,
     sections: {
       finishStraight: [0.955, 1.045],
       runway: [0.77, 0.9],
-      longJump: [0.802, 0.9],
+      longJump: [0.811, 0.9],
+      cliffClimb: [0.065, 0.17],
+      ravineTurns: [0.43, 0.5],
+      headlandClimb: [0.53, 0.69],
     },
     split: [0.285, 0.445],
     jump: 0.82,
@@ -66,7 +139,7 @@ export const TRACKS = [
   },
   {
     name: "SOLAR ARRAY",
-    curveType: "catmullrom",
+    curveType: "centripetal",
     subtitle: "02 / High desert transmission",
     color: 0xff853a,
     sky: 0x825c76,
@@ -74,18 +147,22 @@ export const TRACKS = [
     sea: 0x79645f,
     width: 19,
     branchWidths: [17, 19],
-    layoutId: "solar-3",
+    layoutId: "solar-4",
     points: layoutPoints("solar"),
-    rhythm: [
-      { start: 0.1, end: 0.29, offset: -100 },
-      { start: 0.34, end: 0.53, offset: 100 },
+    banks: [
+      [0.08, 0.19, 0.02],
+      [0.48, 0.55, 0.02],
+      [0.77, 0.94, 0.025],
     ],
-    ramp: { start: 0.622, height: 8, length: 0.018 },
-    gapLength: 0.014,
+    ramp: { start: 0.631, height: 8, length: 0.009 },
+    gapLength: 0.0075,
     sections: {
       finishStraight: [0.955, 1.045],
       runway: [0.59, 0.72],
       mountainTunnel: [0.2, 0.28],
+      rockcutClimb: [0.07, 0.19],
+      refinery: [0.28, 0.46],
+      transmissionTurns: [0.77, 0.9],
     },
     split: [0.28, 0.46],
     jump: 0.64,
@@ -93,7 +170,7 @@ export const TRACKS = [
   },
   {
     name: "NOCTILUCENT",
-    curveType: "catmullrom",
+    curveType: "centripetal",
     subtitle: "03 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x101b35,
@@ -101,11 +178,15 @@ export const TRACKS = [
     sea: 0x14314d,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "noctilucent-3",
+    layoutId: "noctilucent-4",
     night: true,
     points: layoutPoints("night"),
-    ramp: { start: 0.462, height: 8, length: 0.018 },
-    gapLength: 0.014,
+    banks: [
+      [0.07, 0.25, 0.025],
+      [0.56, 0.83, 0.025],
+    ],
+    ramp: { start: 0.471, height: 8, length: 0.009 },
+    gapLength: 0.008,
     sections: {
       finishStraight: [0.955, 1.045],
       runway: [0.46, 0.555],
@@ -113,6 +194,9 @@ export const TRACKS = [
       mountainTunnel: [0.34, 0.39],
       hillOverpass: [0.31, 0.425],
       descent: [0.84, 0.955],
+      freightClimb: [0.065, 0.18],
+      westTerraces: [0.28, 0.425],
+      upperApproach: [0.57, 0.81],
     },
     split: [0.28, 0.45],
     jump: 0.48,
