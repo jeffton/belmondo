@@ -51,7 +51,7 @@ try {
         ]);
       const world = new World(document.querySelector("canvas"));
       world.quality = "retro";
-      let race, track;
+      let race, track, labels;
       const errors = [];
       THREE.DefaultLoadingManager.onError = (path) => errors.push(path);
       const loaded = () =>
@@ -71,6 +71,27 @@ try {
             document.fonts.load('600 20px "Archivo"'),
           ]);
           await new Promise((resolve) => requestAnimationFrame(resolve));
+          labels = [];
+          const canvas = world.startGantry.assembly.getObjectByName(
+            "grid-signal-display",
+          ).material.map.image;
+          const ctx = canvas.getContext("2d");
+          const fillText = ctx.fillText.bind(ctx),
+            fillRect = ctx.fillRect.bind(ctx);
+          ctx.fillText = (text, ...args) => {
+            labels.push(String(text));
+            fillText(text, ...args);
+          };
+          ctx.fillRect = (...args) => {
+            if (
+              args[0] === 0 &&
+              args[1] === 0 &&
+              args[2] === 1024 &&
+              args[3] === 256
+            )
+              labels = [];
+            fillRect(...args);
+          };
           world.draw(race, 0);
           return { course: track.config.name, errors };
         },
@@ -81,12 +102,10 @@ try {
               race.update(Math.min(1 / 120, race.countdown - stage), {});
           } else if (stage === "lap") {
             while (race.time < 1.3) race.update(1 / 120, {});
-          } else if (stage === "last") {
-            race.player.lap = LAPS;
-          } else if (stage === "next" || stage === "finish") {
-            const lap = stage === "next" ? 1 : LAPS;
+          } else if (String(stage).startsWith("approach:")) {
+            const lap = Number(stage.split(":")[1]);
             const p = race.player,
-              s = lap * track.length - 1,
+              s = lap * track.length - 100,
               frame = track.frame(s);
             p.lap = lap;
             p.s = p.contactS = s;
@@ -95,9 +114,12 @@ try {
             p.position.y += 2.2;
             p.velocity.copy(frame.tangent).multiplyScalar(50);
             p.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
-            for (let i = 0; i < 120 && p.lap === lap; i++)
-              race.update(1 / 120, {});
-            if (p.lap !== lap + 1 || race.finished !== (stage === "finish"))
+          } else if (String(stage).startsWith("cross:")) {
+            const lap = Number(stage.split(":")[1]),
+              p = race.player;
+            for (let i = 0; i < 600 && p.lap === lap; i++)
+              race.update(1 / 120, { throttle: true });
+            if (p.lap !== lap + 1 || race.finished !== (lap === LAPS))
               throw new Error("Timing crossing failed");
           }
           world.draw(race, 0, stage === "demo");
@@ -105,11 +127,37 @@ try {
             "grid-signal-display",
           );
           const version = display.material.map.version;
+          if (String(stage).startsWith("approach:")) {
+            race.racers.push({ lap: LAPS + 1, s: (LAPS + 1) * track.length });
+            world.startGantry.update(race);
+            race.racers.pop();
+            if (display.material.map.version !== version)
+              throw new Error("AI changed player timing board");
+          }
           world.startGantry.update(race, stage === "demo");
           if (display.material.map.version !== version)
             throw new Error("Unchanged state uploaded a texture");
+          const expected =
+            typeof stage === "number"
+              ? stage
+                ? String(stage)
+                : "GO"
+              : stage === "lap"
+                ? "LAP 1"
+                : stage === "demo"
+                  ? "B/"
+                  : stage === "reset"
+                    ? "READY"
+                    : Number(stage.split(":")[1]) === LAPS
+                      ? "FINISH"
+                      : `LAP ${Number(stage.split(":")[1]) + 1}`;
+          if (!labels.includes(expected))
+            throw new Error(`Expected ${expected}: ${labels.join(",")}`);
+          if (String(stage).startsWith("approach:") && race.finished)
+            throw new Error("Preview incorrectly finished race");
           return {
             stage,
+            labels: [...labels],
             lap: race.player.lap,
             finished: race.finished,
             countdown: race.countdown,
@@ -177,9 +225,10 @@ try {
         1,
         0,
         "lap",
-        "next",
-        "last",
-        "finish",
+        ...Array.from({ length: 5 }, (_, i) => [
+          `approach:${i + 1}`,
+          `cross:${i + 1}`,
+        ]).flat(),
         "demo",
         "reset",
       ]) {
@@ -189,7 +238,18 @@ try {
             stage,
           ),
         );
-        if ([3, 0, "lap", "last", "finish"].includes(stage)) {
+        if (
+          [
+            3,
+            0,
+            "lap",
+            "approach:1",
+            "cross:1",
+            "approach:4",
+            "approach:5",
+            "cross:5",
+          ].includes(stage)
+        ) {
           await page.screenshot({
             path: `${out}/${prefix}-${stage}-chase.png`,
           });

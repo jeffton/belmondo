@@ -121,21 +121,44 @@ test("physical start signal stays dark and legible across real countdown boundar
       race.countdown = 0;
       race.time = 10;
       const player = race.player;
+      const courseSignal = buildStartGantry(scene, race.track);
+      let painted = [];
       const draw = (expected, demo = false) => {
         operations.length = 0;
-        signal.update(race, demo);
+        courseSignal.update(race, demo);
+        if (operations.length) painted = [...operations];
         assert.ok(
-          operations.some((op) => op.text === expected),
+          painted.some((op) => op.text === expected),
           expected,
         );
       };
       draw("LAP 1");
-      // A leading rival cannot change either lap or finish for this player.
-      race.racers.push({ lap: LAPS + 1 });
-      signal.update(race);
-      assert.equal(operations.filter((op) => op.text === "FINISH").length, 0);
-      race.racers.pop();
-      for (const lap of [1, LAPS]) {
+      for (let lap = 1; lap <= LAPS; lap++) {
+        player.lap = lap;
+        player.s =
+          (lap - 1 + race.track.config.sections.finishStraight[0]) *
+            race.track.length -
+          1;
+        draw(`LAP ${lap}`);
+        player.s = lap * race.track.length - 100;
+        draw(lap === LAPS ? "FINISH" : `LAP ${lap + 1}`);
+        assert.equal(race.finished, false, "preview does not finish the race");
+        assert.ok(
+          painted.some((op) => op.text === (lap === LAPS ? "LINE" : "NEXT")),
+        );
+        assert.ok(!painted.some((op) => op.text === "COMPLETE"));
+        // AI progress cannot alter the player's upcoming lap/finish preview.
+        const version = courseSignal.assembly.getObjectByName(
+          "grid-signal-display",
+        ).material.map.version;
+        race.racers.push({ lap: LAPS + 1, s: race.track.length * (LAPS + 1) });
+        courseSignal.update(race);
+        assert.equal(
+          courseSignal.assembly.getObjectByName("grid-signal-display").material
+            .map.version,
+          version,
+        );
+        race.racers.pop();
         const s = lap * race.track.length - 1;
         const frame = race.track.frame(s);
         player.lap = lap;
@@ -154,12 +177,17 @@ test("physical start signal stays dark and legible across real countdown boundar
           `course ${course} timing gate advances player`,
         );
         assert.equal(race.finished, lap === LAPS);
-        draw(lap === LAPS ? "FINISH" : "LAP 2");
+        draw(lap === LAPS ? "FINISH" : `LAP ${lap + 1}`);
+        assert.ok(
+          painted.some(
+            (op) => op.text === (lap === LAPS ? "COMPLETE" : "CURRENT"),
+          ),
+        );
       }
       draw("B/", true);
       draw("FINISH");
       operations.length = 0;
-      signal.update(new Race(makeTrack(course), 0, "trial"));
+      courseSignal.update(new Race(makeTrack(course), 0, "trial"));
       assert.ok(operations.some((op) => op.text === "READY"));
     }
     assert.equal(signal.assembly.children.length, resources.length);

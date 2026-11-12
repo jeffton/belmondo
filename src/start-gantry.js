@@ -196,17 +196,28 @@ export function buildStartGantry(scene, track) {
   });
 
   const update = (race, demo = false) => {
-    const stage = demo
-      ? "idle"
-      : race.countdown > 3
-        ? "armed"
-        : race.countdown > 0
-          ? Math.ceil(race.countdown)
-          : race.finished
-            ? "FINISH"
-            : race.time < 1.2
-              ? "GO"
-              : `LAP ${race.player.lap}`;
+    let stage = "idle";
+    let approaching = false;
+    let displayedLap;
+    if (!demo) {
+      if (race.countdown > 3) stage = "armed";
+      else if (race.countdown > 0) stage = Math.ceil(race.countdown);
+      else if (race.finished) stage = "FINISH";
+      else if (race.time < 1.2) stage = "GO";
+      else {
+        const player = race.player;
+        // Announce the lap entered at this line throughout the authored home
+        // straight's incoming leg. Unwrapped, gate-earned progression keeps the
+        // initial grid and outgoing leg on lap 1, not prematurely on lap 2.
+        const straightStart = track.config.sections.finishStraight[0];
+        const lapEnd = player.lap * track.length;
+        approaching =
+          player.s >= (player.lap - 1 + straightStart) * track.length &&
+          player.s < lapEnd;
+        displayedLap = player.lap + (approaching ? 1 : 0);
+        stage = displayedLap > LAPS ? "FINISH" : `LAP ${displayedLap}`;
+      }
+    }
     const age =
       typeof stage === "number"
         ? stage - race.countdown
@@ -219,8 +230,9 @@ export function buildStartGantry(scene, track) {
       fin.rotation.z = side * ((stage === "GO" ? 0.48 : 0.08) + snap * 0.24);
       fin.position.y = 11.3 + snap * 0.3;
     });
-    if (stage === previousStage) return;
-    previousStage = stage;
+    const displayKey = `${stage}:${approaching}:${Boolean(race.finished)}`;
+    if (displayKey === previousStage) return;
+    previousStage = displayKey;
     const go = stage === "GO";
     const active = typeof stage === "number" || go;
     const running = typeof stage === "string" && stage.startsWith("LAP ");
@@ -275,9 +287,13 @@ export function buildStartGantry(scene, track) {
       active ? 220 : 177,
     );
     const status = running
-      ? ["CURRENT", "LAP", `${race.player.lap} / ${LAPS}`]
+      ? [approaching ? "NEXT" : "CURRENT", "LAP", `${displayedLap} / ${LAPS}`]
       : complete
-        ? ["RACE", "COMPLETE", `${LAPS} / ${LAPS}`]
+        ? [
+            race.finished ? "RACE" : "FINISH",
+            race.finished ? "COMPLETE" : "LINE",
+            `${LAPS} / ${LAPS}`,
+          ]
         : stage === "idle"
           ? ["GRID", "STANDBY", "B/"]
           : null;
