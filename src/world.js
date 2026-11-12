@@ -13,6 +13,7 @@ import { buildTrackLighting } from "./track-lighting.js";
 import { createSky } from "./sky.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
+import { buildVegetation } from "./vegetation.js";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
 import { createCraft, collectCraftResources } from "./craft.js";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.js";
@@ -588,6 +589,7 @@ export class World {
     );
     buildSplitMarkers(this.scene, track);
     buildTrackAdvertising(this.scene, track, environment);
+    buildVegetation(this.scene, track, environment);
     this.weaponEffects = new WeaponEffects(this.scene);
     this.effectMat = basic(0xff9730);
     this.sparks = new THREE.InstancedMesh(
