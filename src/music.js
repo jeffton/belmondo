@@ -6,6 +6,7 @@ export class MusicPlayer {
     this.audio.preload = "metadata";
     this.context = null;
     this.inTunnel = false;
+    this.inMenu = false;
     this.audio.addEventListener("ended", () => this.next());
     this.audio.addEventListener("play", () => this.#emit());
     this.audio.addEventListener("pause", () => this.#emit());
@@ -117,6 +118,7 @@ export class MusicPlayer {
       this.source.disconnect();
       this.echoNodes.forEach((node) => node.disconnect());
       this.output.disconnect();
+      this.sceneGain.disconnect();
       const context = this.context;
       this.context = null;
       return context.close();
@@ -129,6 +131,12 @@ export class MusicPlayer {
     if (this.context) this.#setEcho();
   }
 
+  setMenu(inside) {
+    if (this.inMenu === inside) return;
+    this.inMenu = inside;
+    if (this.context) this.#ramp(this.sceneGain.gain, inside ? 0.35 : 1, 0.35);
+  }
+
   #ensureGraph() {
     if (this.context) return;
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -137,7 +145,10 @@ export class MusicPlayer {
     this.output = this.context.createGain();
     this.output.gain.value = 0;
     this.source.connect(this.output); // Dry signal is never filtered.
-    this.output.connect(this.context.destination);
+    this.sceneGain = this.context.createGain();
+    this.sceneGain.gain.value = this.inMenu ? 0.35 : 1;
+    this.output.connect(this.sceneGain);
+    this.sceneGain.connect(this.context.destination);
     this.#buildEcho();
   }
 

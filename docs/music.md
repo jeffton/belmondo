@@ -25,7 +25,7 @@ await sound.dispose();
 
 The stereo beds are generated once per context (four seconds each at 24 kHz, about 1.54 MB total), then continuously resampled by native Web Audio buffer sources. No audio buffers are allocated per frame. `acceleration` can be omitted when only speed is available; its rate of change then supplies engine load. Omitted `slip` is zero and omitted `grounded` retains the ground-hover balance.
 
-`start()` creates/resumes the context directly in the gesture. Do not defer it behind rendering, asset loading or another awaited operation. Continuous effects begin with `update()`. Call `setPaused(true)` on pause and `setPaused(false)` on resume, or use the existing mute-on-pause integration. Blur and document visibility automatically gate effects; the game still owns its pause state. Music has its own volume and transport. The game starts it inside the Start gesture and pauses it with the race, on quit and on blur; resuming respects a manually paused music transport.
+`start()` creates/resumes the context directly in the gesture. Do not defer it behind rendering, asset loading or another awaited operation. Continuous effects begin with `update()`. Call `setPaused(true)` on pause and `setPaused(false)` on resume, or use the existing mute-on-pause integration. Blur and document visibility automatically gate effects; the game still owns its pause state. Music has its own volume and transport. The game starts it inside the Start gesture. Main, pause and results menus keep the same recording and playback position running at 35% of race level, with a 350 ms scene-gain fade. Starting, restarting, quitting and resuming do not reload the playlist or reset its shuffle bag. Manual transport pause and the selected user volume remain authoritative. Blur and hidden documents pause transport; race Resume or an explicit music Play resumes enabled music.
 
 `effect(kind, weapon)` accepts `countdown`, `go`, `pickup`, `fire`, `hit`, `scrape`, `boost`, `jump`, `land`, `incoming`, `lap` and `finish`. Fire distinguishes `MISSILE`, `PULSE`, `MINE`, `SHIELD` and `TURBO`. Pass race events unchanged rather than mapping landings and boosts to pickups. Repeated scrape/impact events are coalesced over their short sound tails. Continuous voices and the shared noise buffer are reused; short-lived voices disconnect when finished. A compressor controls combined peaks.
 
@@ -44,6 +44,7 @@ music.pause();
 await music.next();
 music.volume = 0.5;
 music.setTunnel(true); // Active grounded contact within track.isTunnel(s).
+music.setMenu(true); // Independent 35% menu gain; false restores race level.
 await music.dispose();
 ```
 
@@ -55,9 +56,9 @@ Import `MusicPlayer` from `src/music.js`.
 
 One lazy music-only AudioContext routes the existing media element through a dry path and a filtered 145 ms delay with 25% feedback. Both built-in and local tracks use this graph. Authored enclosed tunnels add an 11% wet layer, with 200 ms entrance/exit fades; the dry signal stays unfiltered and the wet path reaches exactly zero outside. The main loop uses the same `track.isTunnel(contactS)` helper as the tunnel meshes, while grounded. Solar Array's enclosed section is 20–28% around the circuit; Noctilucent's is 44–53%. Kaiseki's open interchange does not trigger echo.
 
-Music volume is applied through an output GainNode rather than the media element's hardware-dependent volume property. Pause/blur gate the complete output, including delay tails. Track changes discard the previous delay graph but retain one context and media source; disposal disconnects the graph and closes its context. SFX retain their separate, unchanged audio context. Context resume and native media play are both invoked directly inside the play gesture.
+Music volume is applied through an output GainNode rather than the media element's hardware-dependent volume property. A separate downstream scene GainNode applies menu attenuation to both dry and wet audio without changing user volume or transport. Transport pause/blur gate the complete output, including delay tails. Game pause opens the quiet music menu and clears tunnel echo. Track changes discard the previous delay graph but retain one context and media source; disposal disconnects the graph and closes its context. SFX retain their separate, unchanged audio context. Context resume and native media play are both invoked directly inside the play gesture.
 
-`node tests/music-tunnel.browser.mjs` measures native default/local wet output, dry outside, fades, pause/volume silence and context reuse without WebGL. `node tests/music-tunnel-game.browser.mjs` checks the production main-loop hook with fixed contact positions across all three circuits; it is an integration fixture, not a driving test.
+`node tests/music-menu.browser.mjs` exercises native menu/race gain ramps, measured output attenuation, track/time continuity, manual pause, local files and shuffle preservation without WebGL. `node tests/music.browser.mjs` checks the real game navigation hooks. `node tests/music-tunnel.browser.mjs` measures native default/local wet output, dry outside, fades, pause/volume silence and context reuse without WebGL. `node tests/music-tunnel-game.browser.mjs` checks the production main-loop hook with fixed contact positions across all three circuits; it is an integration fixture, not a driving test.
 
 ## Soundtrack credits
 
