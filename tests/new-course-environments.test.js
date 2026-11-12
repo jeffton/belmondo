@@ -12,13 +12,18 @@ import {
 
 function dispose(scene) {
   const geometries = new Set(),
-    materials = new Set();
+    materials = new Set(),
+    maps = new Set();
   scene.traverse((o) => {
     if (o.geometry) geometries.add(o.geometry);
-    if (o.material) materials.add(o.material);
+    if (o.material) {
+      materials.add(o.material);
+      if (o.material.map) maps.add(o.material.map);
+    }
   });
   geometries.forEach((g) => g.dispose());
   materials.forEach((m) => m.dispose());
+  maps.forEach((m) => m.dispose());
 }
 
 for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
@@ -94,6 +99,15 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
     buildCity(scene, track, textures, env);
     const root = scene.getObjectByName(`${track.config.biome}-districts`);
     assert(root && root.userData.footprints.length >= 6);
+    const ground = scene.getObjectByName("terrain-surface");
+    assert(
+      ground.children.every((mesh) => mesh.material.map === env.naturalMap),
+    );
+    assert.notEqual(
+      env.naturalMap,
+      textures.concrete,
+      "natural hills never use facade/concrete panels",
+    );
     for (const f of root.userData.footprints) {
       for (const p of f.contacts) assert(p.y >= f.bottom && p.y < f.deck);
       // Interior peaks and rotated edges are enclosed by the actual foundation,
@@ -141,6 +155,51 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           );
         }
       }
+    }
+    let naturalColumns = 0;
+    for (const mesh of meshes) {
+      if (
+        mesh.isInstancedMesh &&
+        mesh.geometry.parameters?.radialSegments === 6
+      ) {
+        const positions = mesh.geometry.attributes.position;
+        for (let i = 0; i < mesh.count; i++) {
+          const matrix = new THREE.Matrix4();
+          mesh.getMatrixAt(i, matrix);
+          matrix.premultiply(mesh.matrixWorld);
+          const gaps = [];
+          for (let j = 0; j < positions.count; j++)
+            if (positions.getY(j) < -0.49) {
+              const p = new THREE.Vector3()
+                .fromBufferAttribute(positions, j)
+                .applyMatrix4(matrix);
+              gaps.push(p.y - env.heightAt(p.x, p.z));
+            }
+          assert(
+            Math.max(...gaps) < -1.19 && Math.max(...gaps) > -1.21,
+            "actual lower natural-column vertices root directly into existing land",
+          );
+          naturalColumns++;
+        }
+      }
+    }
+    if (name !== "MONSOON") assert(naturalColumns > 0);
+    for (const f of root.userData.footprints.filter((f) => !f.foundation)) {
+      assert(
+        !root.userData.parts.some((part) => {
+          const p = new THREE.Vector3(),
+            q = new THREE.Quaternion(),
+            scale = new THREE.Vector3();
+          part.matrix.decompose(p, q, scale);
+          return (
+            part.shape === "box" &&
+            Math.hypot(p.x - f.center.x, p.z - f.center.z) < 0.01 &&
+            Math.abs(scale.x - f.width) < 0.01 &&
+            Math.abs(scale.z - f.depth) < 0.01
+          );
+        }),
+        "natural formations do not sit on rectangular full-footprint podiums",
+      );
     }
     let triangles = 0;
     for (const mesh of meshes) {

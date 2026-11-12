@@ -9,12 +9,12 @@ export const NEW_COURSE_RECIPES = {
     accent: 0xdf7b34,
     vegetation: 0x648a99,
     districts: [
-      { name: "ICE CORE OBSERVATORY", u: 0.335, side: -1, kind: "observatory" },
+      { name: "ICE CORE OBSERVATORY", u: 0.315, side: -1, kind: "observatory" },
       { name: "BASIN SURVEY", u: 0.445, side: 1, kind: "survey" },
-      { name: "VALLEY WEATHER STATION", u: 0.77, side: -1, kind: "weather" },
+      { name: "VALLEY WEATHER STATION", u: 0.68, side: -1, kind: "weather" },
     ],
     approaches: [
-      { name: "EXPEDITION STORES", u: 0.13, side: 1, kind: "cold-store" },
+      { name: "EXPEDITION STORES", u: 0.1, side: -1, kind: "cold-store" },
       { name: "GLACIAL ENTRY FACE", u: 0.28, side: 1, kind: "iceface" },
       { name: "BASIN BLUE ICE", u: 0.39, side: -1, kind: "iceface" },
       { name: "VALLEY CORE DEPOT", u: 0.62, side: -1, kind: "cold-store" },
@@ -37,7 +37,7 @@ export const NEW_COURSE_RECIPES = {
     approaches: [
       { name: "HEADWATER GARDENS", u: 0.12, side: -1, kind: "terraces" },
       { name: "DESCENT PRESSURE WORKS", u: 0.245, side: 1, kind: "pipe-yard" },
-      { name: "LOWER LOCK SERVICES", u: 0.5, side: -1, kind: "pumps" },
+      { name: "LOWER LOCK SERVICES", u: 0.5, side: 1, kind: "pumps" },
       { name: "HIGH INTAKE TERRACES", u: 0.88, side: 1, kind: "terraces" },
     ],
   },
@@ -50,7 +50,7 @@ export const NEW_COURSE_RECIPES = {
     accent: 0xd4ce49,
     vegetation: 0x8b8b56,
     districts: [
-      { name: "CALDERA EXCHANGE", u: 0.21, side: -1, kind: "geothermal" },
+      { name: "CALDERA EXCHANGE", u: 0.23, side: -1, kind: "geothermal" },
       { name: "SULFUR CUT", u: 0.435, side: 1, kind: "basalt" },
       { name: "CONDENSER FIELD", u: 0.78, side: -1, kind: "condenser" },
     ],
