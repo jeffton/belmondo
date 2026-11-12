@@ -169,7 +169,11 @@ export function buildCourseGeography(scene, track, textures, environment) {
     root.add(mountain);
     mountain.userData.range = tunnel;
     mountain.userData.branch = track.config.night ? -1 : 0;
-    mountain.userData.voidHalfWidth = track.config.width + 4;
+    mountain.userData.voidHalfWidth =
+      track.frame(
+        ((tunnel[0] + tunnel[1]) / 2) * track.length,
+        mountain.userData.branch,
+      ).width + 4;
     mountain.userData.voidHeight = 22;
     mountain.userData.groundingContacts = profiles.flatMap(({ points }) => [
       points[0],

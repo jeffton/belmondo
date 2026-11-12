@@ -431,6 +431,14 @@ export function makeTrack(index) {
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
     const split = u > start && u < end;
+    const mainWidth = config.widthSections
+      ? config.widthSections.reduce((width, section) => {
+          const envelope =
+            THREE.MathUtils.smoothstep(u, section.start, section.fullStart) *
+            (1 - THREE.MathUtils.smoothstep(u, section.fullEnd, section.end));
+          return width + (section.width - config.width) * envelope;
+        }, config.width)
+      : config.width;
     const phase = clamp((u - start) / (end - start), 0, 1);
     const narrowing = THREE.MathUtils.smoothstep(
       Math.sin(phase * Math.PI) ** 2,
@@ -457,10 +465,9 @@ export function makeTrack(index) {
       u,
       width:
         split && branch !== 0
-          ? config.width -
-            (config.width - config.branchWidths[branch === -1 ? 0 : 1]) *
-              narrowing
-          : config.width,
+          ? mainWidth -
+            (mainWidth - config.branchWidths[branch === -1 ? 0 : 1]) * narrowing
+          : mainWidth,
       metric: a.metric + (b.metric - a.metric) * (n % 1),
     };
   }
