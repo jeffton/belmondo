@@ -1,8 +1,9 @@
-import { test } from "node:test";
+import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { TRACKS, makeTrack } from "../src/track.js";
 import { Race } from "../src/race.js";
+import { createTerrain } from "../src/terrain.js";
 import { getJumpMarkingLayout } from "../src/jump-markings.js";
 import { projectRoad } from "../src/road-projection.js";
 
@@ -37,6 +38,8 @@ for (let index = 0; index < 3; index++) {
 
 for (const index of [3, 4, 5]) {
   const config = TRACKS[index];
+  const terrain = createTerrain(makeTrack(index));
+  after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
   test(`${config.name}: continuous deck, broad turns and no invented jump/tunnel`, () => {
     const track = makeTrack(index);
     assert.equal(
@@ -103,7 +106,7 @@ for (const index of [3, 4, 5]) {
       ]) {
         test(`${config.name}: class ${speedClass + 1}, fork ${branch}, ${boostAt === null ? "ordinary" : `TURBO at ${boostAt}`} earns a whole lap`, () => {
           const track = makeTrack(index);
-          const race = new Race(track, 0, "trial", speedClass);
+          const race = new Race(track, 0, "trial", speedClass, terrain);
           race.countdown = 0;
           const r = race.player;
           // Use the real AI's input through the same body physics. Odd/even AI
