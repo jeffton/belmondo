@@ -215,9 +215,8 @@ export class World {
       ...new Set([
         ...Array.from({ length: steps + 1 }, (_, i) => i / steps),
         ...cfg.split,
-        cfg.ramp.start,
-        cfg.jump,
-        cfg.jump + cfg.gapLength,
+        ...(cfg.ramp ? [cfg.ramp.start] : []),
+        ...(cfg.jump === null ? [] : [cfg.jump, cfg.jump + cfg.gapLength]),
       ]),
     ].sort((a, b) => a - b);
     const connectedAt = (u) => {
@@ -525,7 +524,8 @@ export class World {
       { length: Math.ceil(track.length / 38) },
       (_, i) => {
         const u = i / Math.ceil(track.length / 38);
-        if (u > cfg.jump - 0.025 && u < cfg.jump + 0.04) return [];
+        if (cfg.jump !== null && u > cfg.jump - 0.025 && u < cfg.jump + 0.04)
+          return [];
         return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0])
           .filter(
             (branch) =>
