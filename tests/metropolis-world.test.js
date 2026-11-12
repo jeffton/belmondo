@@ -85,7 +85,8 @@ test("VESPER architecture grounds on actual rendered terrain and clears banked h
     );
   }
   assert(
-    arcadeParts.filter((part) => part.kind === "market-roof").length > 20,
+    arcadeParts.filter((part) => part.kind === "market-roof").length * 24 >
+      (track.config.split[1] - track.config.split[0]) * track.length * 0.35,
     "lower route has an enclosed market experience, not just a parallel road",
   );
   for (const part of arcadeParts) {

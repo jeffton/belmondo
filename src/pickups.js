@@ -24,14 +24,14 @@ const layouts = {
       "Descent approach: choose armament or the tighter entry",
     ],
     [
-      0.35,
+      0.315,
       -1,
       -6,
       "weapon",
       "Short lower gallery trades raw speed for armament",
     ],
     [
-      0.385,
+      0.335,
       1,
       6,
       "boost",
