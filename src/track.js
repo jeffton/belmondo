@@ -123,7 +123,7 @@ export const TRACKS = [
       [0.07, 0.27, 0.025],
       [0.46, 0.69, 0.025],
     ],
-    ramp: { start: 0.811, height: 14, length: 0.009 },
+    ramp: { start: 0.811, height: 12, length: 0.009 },
     gapLength: 0.009,
     sections: {
       finishStraight: [0.955, 1.045],
