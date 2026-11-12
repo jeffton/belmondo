@@ -18,7 +18,9 @@ Coast has a compact early waterfront sequence and a longer climbing reversal aft
 
 CPU tests cover opposite steering demand, actual surface displacement, preserved finish/jump geometry, jump-marking clearance, the existing all-route radius guard, real AI through forks in all classes, all craft/pitch/class jumps, terrain sweeps, tunnel roof clearance and Night's crossing levels.
 
-Browser/GPU acceptance requires a coordinator grant. These bounded commands exercise a synthetic test driver through actual keyboard events, CDP multitouch and simulated gamepad input; they do not modify Race state or add steering assistance to the game:
+Five clean scripted single laps finished at 100 shield: Coast C1/C3 and Solar C2/C3 through keyboard events, and Night C3 through simulated gamepad input. Real CDP touch traversed both new Solar corner sequences at 100 shield. Clean full-touch-lap and analog-feel acceptance were not obtained: external-driver attempts failed on the unchanged jump approach. The cause is not established. See the local [QA summary](file:///var/tmp/belmondo-rhythm-gpu-summary.json) and [failed touch trace](file:///var/tmp/rhythm-solar-c2-touch-failed-slow-polling.json).
+
+The following are diagnostic commands, not a passing-case matrix. Browser/GPU runs require a coordinator grant. The synthetic driver uses keyboard events, CDP multitouch or simulated gamepad input without modifying Race state or adding steering assistance:
 
 ```sh
 INTEGRATED_SCOPE=drive INTEGRATED_COURSE=0 INTEGRATED_CLASS=0 INTEGRATED_INPUT=keyboard INTEGRATED_LAPS=1 node tests/integrated.browser.mjs
