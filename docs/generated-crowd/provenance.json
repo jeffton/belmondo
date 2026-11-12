@@ -1,0 +1,21 @@
+{
+  "project": "BELMONDO",
+  "model": "elevenlabs/sound-effects/v3",
+  "requestId": "01a1cf07-57c8-7381-905d-415c558517e8",
+  "generatedAtUtc": "2026-11-12T09:12:13.773454+00:00",
+  "input": {
+    "text": "Seamless steady outdoor racing spectator ambience from medium-distant trackside grandstands. A modest crowd murmuring, scattered serious cheers, clapping and occasional wordless whoops as racers pass. Restrained believable sports atmosphere with open-air distance, not a deafening stadium roar. No intelligible words, announcer, music, engines, vehicles, horns or whistles. Consistent texture and level, no intro or ending.",
+    "duration_seconds": 8,
+    "loop": true,
+    "prompt_influence": 0.6,
+    "output_format": "mp3_44100_192",
+    "enable_safety_checker": true
+  },
+  "sourceSha256": "6e8d2bca289c1ceb4a2713c5c60a8e9117f7aeae1515c0fd5de805cbb155488b",
+  "listedEstimateUsd": 0.016,
+  "listedUsdPerOutputSecond": 0.002,
+  "billing": "8 requested seconds at listed price, not verified invoice",
+  "commercialUseSource": "https://fal.ai/models/elevenlabs/sound-effects/v3",
+  "creativeProvenance": "Original text prompt; no third-party samples or named sound replicas.",
+  "audition": "Technical validation only; no human/audio-understanding listening available."
+}

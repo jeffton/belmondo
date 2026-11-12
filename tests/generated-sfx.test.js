@@ -39,6 +39,16 @@ class Context {
   createGain() {
     return new Node();
   }
+  createStereoPanner() {
+    const panner = new Node();
+    panner.pan = {
+      value: 0,
+      setTargetAtTime(value) {
+        this.value = value;
+      },
+    };
+    return panner;
+  }
   async decodeAudioData(bytes) {
     return { bytes, duration: 1 };
   }
@@ -82,7 +92,7 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   const loads = globalThis.fetch.mock.callCount();
   assert.equal(
     loads,
-    Object.values(SFX_CUES).reduce((n, cue) => n + cue.files.length, 0),
+    Object.values(SFX_CUES).reduce((n, cue) => n + cue.files.length, 1),
   );
   await audio.start();
   assert.equal(globalThis.fetch.mock.callCount(), loads);
@@ -136,6 +146,37 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
     audio.sampleVoices.size,
     hitCount,
     "existing collision cooldown remains",
+  );
+  audio.updateCrowd({ gain: 0.4, pan: -0.3 });
+  const crowd = audio.crowd;
+  assert(crowd.source.loop);
+  assert.equal(crowd.volume.gain.value, 0.4);
+  assert.equal(crowd.panner.pan.value, -0.3);
+  audio.updateCrowd({ gain: 0, pan: 0 });
+  audio.updateCrowd({ gain: 0.35, pan: 0.2 });
+  assert.equal(
+    audio.crowd.source,
+    crowd.source,
+    "passing a lap seam never retriggers the loop",
+  );
+  audio.setPaused(true);
+  assert.equal(audio.master.gain.value, 0);
+  audio.updateCrowd({ gain: 0.5, pan: 0 });
+  assert.equal(
+    crowd.volume.gain.value,
+    0.35,
+    "paused updates cannot alter the mix",
+  );
+  audio.stopCrowd();
+  assert.equal(audio.crowd, null);
+  assert.equal(crowd.source.playing, false);
+  assert.equal(crowd.panner.connected, false);
+  audio.setPaused(false);
+  audio.updateCrowd({ gain: 0.3, pan: 0 });
+  assert.notEqual(
+    audio.crowd.source,
+    crowd.source,
+    "a new race gets one fresh loop",
   );
   const context = audio.context;
   await audio.dispose();

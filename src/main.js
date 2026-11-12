@@ -1,8 +1,10 @@
 import "./style.css";
+import { Vector3 } from "three";
 import { TRACKS, makeTrack, clamp, mod } from "./track.js";
 import { Race, CRAFT, SPEED_CLASSES, LAPS } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine } from "./audio.js";
+import { getCrowdMix } from "./crowd.js";
 import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
@@ -16,6 +18,7 @@ const updateWeaponHUD = createWeaponHUD(
 );
 updateWeaponHUD(null);
 const sound = new AudioEngine();
+const crowdRight = new Vector3();
 const music = new MusicPlayer((state) => {
   $("music-status").textContent =
     state.error ||
@@ -211,6 +214,7 @@ function quit() {
   $("results").hidden = true;
   $("start").focus();
   sound.setPaused(true);
+  sound.stopCrowd();
   music.pause();
   music.setTunnel(false);
   world.cameraReady = false;
@@ -443,6 +447,7 @@ function showResults() {
   state = "results";
   music.setTunnel(false);
   sound.stopEngine();
+  sound.stopCrowd();
   $("results").hidden = false;
   const key = recordKey(race.mode, race.speedClass);
   const isRecord = !records[key] || race.time < records[key];
@@ -578,6 +583,14 @@ function animate(now) {
           slip: race.player.vx,
           grounded: race.player.grounded,
         },
+      );
+      crowdRight.setFromMatrixColumn(world.camera.matrixWorld, 0);
+      sound.updateCrowd(
+        getCrowdMix(
+          race.player.position,
+          crowdRight,
+          world.finishDistrict.foundations,
+        ),
       );
       hudTick += dt;
       if (hudTick > 0.05) {

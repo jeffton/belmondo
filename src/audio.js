@@ -17,6 +17,8 @@ export class AudioEngine {
     this.sampleVoices = new Set();
     this.sampleIndices = new Map();
     this.ready = null;
+    this.crowdBuffer = null;
+    this.crowd = null;
     this.onBlur = () => {
       this.hidden = true;
       this.applyVolume();
@@ -52,22 +54,55 @@ export class AudioEngine {
     }
   }
 
+  async loadBuffer(url) {
+    const response = await fetch(url);
+    if (!response.ok)
+      throw new Error(`Sound effect ${url}: HTTP ${response.status}`);
+    return this.context.decodeAudioData(await response.arrayBuffer());
+  }
+
   async loadSamples() {
-    const context = this.context;
-    const buffers = await Promise.all(
-      Object.entries(SFX_CUES).map(async ([key, cue]) => {
-        const variants = await Promise.all(
-          cue.files.map(async (url) => {
-            const response = await fetch(url);
-            if (!response.ok)
-              throw new Error(`Sound effect ${url}: HTTP ${response.status}`);
-            return context.decodeAudioData(await response.arrayBuffer());
-          }),
-        );
-        return [key, variants];
-      }),
-    );
+    const [buffers, crowd] = await Promise.all([
+      Promise.all(
+        Object.entries(SFX_CUES).map(async ([key, cue]) => [
+          key,
+          await Promise.all(cue.files.map((url) => this.loadBuffer(url))),
+        ]),
+      ),
+      this.loadBuffer("/audio/sfx/crowd-grandstands.wav"),
+    ]);
     this.sampleBuffers = new Map(buffers);
+    this.crowdBuffer = crowd;
+  }
+
+  updateCrowd({ gain, pan }) {
+    if (!this.started || this.paused || this.muted || this.hidden) return;
+    if (!this.crowd && gain > 0) {
+      const source = this.context.createBufferSource();
+      source.buffer = this.crowdBuffer;
+      source.loop = true;
+      const volume = this.context.createGain();
+      volume.gain.value = 0;
+      const panner = this.context.createStereoPanner();
+      source.connect(volume);
+      volume.connect(panner);
+      panner.connect(this.master);
+      source.start();
+      this.crowd = { source, volume, panner };
+    }
+    if (!this.crowd) return;
+    const t = this.context.currentTime;
+    this.crowd.volume.gain.setTargetAtTime(gain, t, 0.18);
+    this.crowd.panner.pan.setTargetAtTime(pan, t, 0.12);
+  }
+
+  stopCrowd() {
+    if (!this.crowd) return;
+    this.crowd.source.stop();
+    this.crowd.source.disconnect();
+    this.crowd.volume.disconnect();
+    this.crowd.panner.disconnect();
+    this.crowd = null;
   }
 
   playSample(key) {
@@ -421,6 +456,7 @@ export class AudioEngine {
     window.removeEventListener("focus", this.onFocus);
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.stopSamples();
+    this.stopCrowd();
     this.sources.forEach((source) => {
       source.stop();
       source.disconnect();
@@ -431,6 +467,7 @@ export class AudioEngine {
     this.sources = [];
     this.lastEffect.clear();
     this.sampleBuffers.clear();
+    this.crowdBuffer = null;
     this.sampleIndices.clear();
     this.ready = null;
     this.started = false;

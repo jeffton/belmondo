@@ -1,0 +1,8 @@
+{
+  "text": "Seamless steady outdoor racing spectator ambience from medium-distant trackside grandstands. A modest crowd murmuring, scattered serious cheers, clapping and occasional wordless whoops as racers pass. Restrained believable sports atmosphere with open-air distance, not a deafening stadium roar. No intelligible words, announcer, music, engines, vehicles, horns or whistles. Consistent texture and level, no intro or ending.",
+  "duration_seconds": 8,
+  "loop": true,
+  "prompt_influence": 0.6,
+  "output_format": "mp3_44100_192",
+  "enable_safety_checker": true
+}

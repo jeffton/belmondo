@@ -1,0 +1,59 @@
+{
+  "project": "BELMONDO",
+  "assetCount": 1,
+  "model": "elevenlabs/sound-effects/v3",
+  "requestedLoop": true,
+  "requestId": "01a1cf07-57c8-7381-905d-415c558517e8",
+  "successCount": 1,
+  "rejectedCount": 0,
+  "listedEstimateUsd": 0.016,
+  "billing": "8 requested seconds at listed price, not verified invoice",
+  "commercialUseSource": "https://fal.ai/models/elevenlabs/sound-effects/v3",
+  "sourceSha256": "6e8d2bca289c1ceb4a2713c5c60a8e9117f7aeae1515c0fd5de805cbb155488b",
+  "source": {
+    "file": "docs/generated-crowd/original.mp3",
+    "sampleRate": 44100,
+    "channels": 2,
+    "encoding": "mp3",
+    "decodedDurationSeconds": 8.0
+  },
+  "asset": {
+    "id": "crowd-grandstands",
+    "file": "public/audio/sfx/crowd-grandstands.wav",
+    "sha256": "cdd2532ccc84f155995c6478a2dd1bba40f1be4ac898990d9b02e6a87dfc4169",
+    "durationSeconds": 7.75,
+    "bytes": 1367144,
+    "sampleRate": 44100,
+    "channels": 2,
+    "encoding": "16-bit PCM WAV decoded from generated MP3192; not lossless generation",
+    "loop": true,
+    "metrics": {
+      "peakDbfs": -9.237442956688707,
+      "rmsDbfs": -24.00026485960028,
+      "finite": true,
+      "clippedSampleCount": 0
+    }
+  },
+  "processing": {
+    "highpassHz": 100,
+    "lowpassHz": 6500,
+    "circularCosineCrossfadeSeconds": 0.25,
+    "gainDb": 15.88134413572837,
+    "targetRmsDbfs": -24,
+    "peakCeilingDbfs": -6,
+    "fadeToSilence": false
+  },
+  "loopValidation": {
+    "boundaryDeltaMax": 0.000885009765625,
+    "internalDeltaMax": 0.083251953125,
+    "wrapRmsToBodyRatio": 0.782876019126522,
+    "description": "Circular overlap preserves adjacent source samples at wrap; no global fade-to-zero or periodic silence dip. Decode and sample continuity measured, not subjective listening."
+  },
+  "integration": {
+    "event": "proximity ambience around actual authored grandstands",
+    "spatial": "Use distance to stand positions and smooth gain in/out; no global persistent crowd away from stands. Keep conservative against engine/music.",
+    "lifecycle": "Single looping source routed through effects volume, pause/mute/blur gating; cleanup on quit/dispose. Preserve current SFX release and integrate as separate crowd stage.",
+    "repoState": "Read-only src/audio.js search found no crowd/spectator/ambience; spectators exist only as finish-district geometry."
+  },
+  "audition": "No human or audio-understanding listening available. Prompt asks for distant cheering/claps without announcer/music/engines; semantic content not independently auditioned."
+}
