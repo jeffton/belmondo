@@ -22,7 +22,16 @@ try {
     await page.addInitScript(() => {
       const NativeContext = window.AudioContext;
       window.voiceStarts = [];
+      window.outputTaps = [];
       window.AudioContext = class extends NativeContext {
+        createDynamicsCompressor() {
+          const compressor = super.createDynamicsCompressor();
+          const analyser = this.createAnalyser();
+          analyser.fftSize = 2048;
+          compressor.connect(analyser);
+          window.outputTaps.push({ analyser, context: this });
+          return compressor;
+        }
         createBufferSource() {
           const source = super.createBufferSource();
           const start = source.start.bind(source);
@@ -51,6 +60,18 @@ try {
     await page.locator("#start").click();
     await page.waitForFunction(() => window.voiceStarts.length === 1);
     await page.locator("#pause").click();
+    const outputRms = async () => {
+      await page.waitForTimeout(250);
+      return page.evaluate(() => {
+        const pcm = new Float32Array(2048);
+        window.outputTaps[0].analyser.getFloatTimeDomainData(pcm);
+        return Math.sqrt(pcm.reduce((sum, x) => sum + x * x, 0) / pcm.length);
+      });
+    };
+    assert(
+      (await outputRms()) < 0.0001,
+      "pause silences actual effects output",
+    );
     const frozen = await page.evaluate(
       () => window.nullVector.telemetry.countdown,
     );
@@ -81,6 +102,19 @@ try {
       all.map((entry) => Math.ceil(entry.countdown)),
       [3, 2, 1, 0, 3, 2, 1, 0],
     );
+    assert((await outputRms()) > 0.001, "gesture produces audible effects PCM");
+    await page.evaluate(() => {
+      const mute = document.querySelector("#mute");
+      mute.checked = true;
+      mute.dispatchEvent(new Event("change"));
+    });
+    assert((await outputRms()) < 0.0001, "mute silences actual effects output");
+    await page.evaluate(() => {
+      const mute = document.querySelector("#mute");
+      mute.checked = false;
+      mute.dispatchEvent(new Event("change"));
+    });
+    assert((await outputRms()) > 0.001, "unmute restores effects output");
     await writeFile(
       `${directory}/${mobile ? "mobile" : "desktop"}.json`,
       JSON.stringify(all, null, 2),
