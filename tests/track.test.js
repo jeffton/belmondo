@@ -24,17 +24,13 @@ test("all courses expose wider main decks and keep both split routes clear", () 
   }
 });
 
-const minimumRadiusByLayout = {
-  "coast-3": 150,
-  "solar-3": 150,
-  "noctilucent-3": 150,
-  "whiteout-1": 150,
-  "monsoon-3": 95,
-  "cinderline-1": 150,
+const legacyRadius = {
+  "coast-4": 79.18256462241654,
+  "solar-4": 94.08613815383424,
+  "noctilucent-4": 102.80189052236103,
 };
-
 for (let index = 0; index < TRACKS.length; index++) {
-  test(`${TRACKS[index].name}: authored corner radii and any jump's aligned ballistic landing`, () => {
+  test(`${TRACKS[index].name}: authored bend radius and any jump's aligned ballistic landing`, () => {
     const track = makeTrack(index);
     let minimumRadius = Infinity;
     for (const branch of [-1, 0, 1]) {
@@ -48,13 +44,17 @@ for (let index = 0; index < TRACKS.length; index++) {
         }
       }
     }
-    // Monsoon-3 adds ~103/116 m braking corners (minimum horizontal projection
-    // ~98 m); the unchanged layouts retain their broader bend contract. These are authored facts,
-    // not an engine restriction on physically feasible technical routes.
-    assert.ok(
-      minimumRadius >= minimumRadiusByLayout[track.config.layoutId],
-      `Tight road kink: radius ${minimumRadius} m`,
-    );
+    const acceptedRadius = legacyRadius[track.config.layoutId];
+    if (acceptedRadius !== undefined)
+      assert(
+        Math.abs(minimumRadius - acceptedRadius) < 0.01,
+        `v4 sampled radius changed from accepted ${acceptedRadius} m to ${minimumRadius} m`,
+      );
+    else
+      assert.ok(
+        minimumRadius >= (track.config.layoutId === "monsoon-3" ? 95 : 150),
+        `Tight road kink: radius ${minimumRadius} m`,
+      );
     if (track.config.jump !== null) {
       const launch = track.frame(track.config.jump * track.length);
       for (const offset of [0.014, 0.03, 0.055, 0.075]) {

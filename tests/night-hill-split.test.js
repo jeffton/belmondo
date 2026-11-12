@@ -10,7 +10,7 @@ import { projectRoad } from "../src/road-projection.js";
 test("Night hill routes cross at two physical levels and return on opposite sides", () => {
   const track = makeTrack(2),
     L = track.length;
-  assert.equal(track.config.layoutId, "noctilucent-3");
+  assert.equal(track.config.layoutId, "noctilucent-4");
   for (const u of [0.3, 0.43]) {
     const delta = track.frame(u * L, 1).p.sub(track.frame(u * L, -1).p);
     assert.equal(
@@ -44,7 +44,7 @@ test("Night hill routes cross at two physical levels and return on opposite side
   assert.equal(track.config.sections.crossings.length, 1);
   assert(track.config.sections.crossings[0].clearance > 100);
   assert.deepEqual(track.config.sections.runway, [0.46, 0.555]);
-  assert.equal(track.config.ramp.start, 0.462);
+  assert.equal(track.config.ramp.start, 0.471);
   assert.equal(track.config.jump, 0.48);
 });
 
@@ -149,8 +149,9 @@ test("actual physics earns both hill forks and following jump in every class, or
               branch,
               "fork choice and identity remain physical",
             );
-          if (u > 0.48 && u < 0.494 && !r.grounded) airborne++;
-          if (u > 0.494 && !previousGrounded && r.grounded) landings++;
+          const gapEnd = track.config.jump + track.config.gapLength;
+          if (track.gap(u) && !r.grounded) airborne++;
+          if (u >= gapEnd && !previousGrounded && r.grounded) landings++;
           previousGrounded = r.grounded;
         }
         assert(

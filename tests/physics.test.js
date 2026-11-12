@@ -195,12 +195,13 @@ test("held pitch changes a real jump's height, range and landing without pose te
         p.position.distanceTo(previous) < 2,
         "pitch only changes integrated velocity, never position directly",
       );
-      if (step === 71) climbingSpeed = p.speed;
       apex = Math.max(apex, p.position.y);
       if (wasGrounded && !p.grounded) {
         flew = true;
         takeoff = step / 120;
       }
+      if (flew && climbingSpeed === undefined && step / 120 - takeoff >= 0.2)
+        climbingSpeed = p.speed;
       if (flew && p.grounded) {
         landing = { time: step / 120 - takeoff, range: p.contactS - s, impact };
         break;

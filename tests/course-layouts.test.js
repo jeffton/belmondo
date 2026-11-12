@@ -5,13 +5,14 @@ import { makeTrack } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 
-const baselinePhysical = [4406.410575, 4924.153825, 4222.402006];
+// Authored v4 world routes, including Coast's accepted 12 m launch lip.
+const authoredPhysical = [11032.065614, 11325.463411, 11203.418633];
 for (let index = 0; index < 3; index++)
   test(`course ${index} gains real length, hills and a continuous finish straight`, () => {
     const track = makeTrack(index);
     assert.equal(
       track.config.layoutId,
-      ["coast-3", "solar-3", "noctilucent-3"][index],
+      ["coast-4", "solar-4", "noctilucent-4"][index],
     );
     let length = 0,
       last = track.frame(0).p,
@@ -25,8 +26,8 @@ for (let index = 0; index < 3; index++)
       high = Math.max(high, f.p.y);
     }
     assert(
-      length / baselinePhysical[index] >= 1.3 &&
-        length / baselinePhysical[index] <= 1.5,
+      Math.abs(length - authoredPhysical[index]) < 4,
+      "measured world distance matches the frozen authored v4 course",
     );
     assert(
       Math.abs(length - track.physicalLength) < 4,
@@ -105,7 +106,7 @@ test("Night has an authored steep fall with a smooth low landing/runout", () => 
       -Math.atan2(f.tangent.y, Math.hypot(f.tangent.x, f.tangent.z)),
     );
   }
-  assert(steepest > (25 * Math.PI) / 180 && steepest < (35 * Math.PI) / 180);
+  assert(steepest > (43 * Math.PI) / 180 && steepest < (44 * Math.PI) / 180);
   for (let u = 0.905; u < 0.955; u += 0.005)
     assert(Math.abs(track.frame(u * track.length).tangent.y) < 0.01);
 });

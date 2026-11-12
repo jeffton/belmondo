@@ -7,12 +7,12 @@ import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 
-// Baseline ab0109e: protects the original courses' emitted geometry, instance
-// transforms, materials and generated textures, rather than only recipe data.
+// Legacy-v4 world acceptance: d3f8eb8 routes, 0d0509a Coast launch and exact
+// gallery basement grading. Covers emitted geometry, instances and materials.
 const BASELINE = [
-  "df485a9c8a046147d96db5632f3ef3c0a417aa76d7c6f351f4ad29e6facc50e9",
-  "a8818e919a65b48210a4659c5a4ede70b8554b59cca4b8dedb03562af7825100",
-  "adb951a857697a59c936f299be8a0c03c6dee81f32072a0f6c7aeb5bae1fc5fc",
+  "65584c2696e2012a7ccf16f1a68114a9c9e84c4a779c77ea5aae179d1d9291ac",
+  "cc401ac64a7277f281ab3dbafbb9926670b913321c710d4dd77c26c6120aba52",
+  "944fa0b05065fe72b9c466282690d6baa25212031a667e3d0e4d85fca2f2147c",
 ];
 export function environmentDigest(index) {
   const scene = new THREE.Scene();
@@ -72,6 +72,6 @@ export function environmentDigest(index) {
   return hash.digest("hex");
 }
 for (let index = 0; index < 3; index++)
-  test(`legacy course ${index}: exact environment output matches ab0109e`, () => {
+  test(`legacy-v4 course ${index}: exact environment output matches world acceptance`, () => {
     assert.equal(environmentDigest(index), BASELINE[index]);
   });

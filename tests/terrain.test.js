@@ -63,7 +63,7 @@ for (const [index, config] of TRACKS.entries()) {
       const x = -1600 + ((i * 197) % 1900) + 0.37,
         z = -900 + ((i * 331) % 1800) + 0.61;
       const y = terrain.heightAt(x, z);
-      ray.set(new THREE.Vector3(x, 400, z), down);
+      ray.set(new THREE.Vector3(x, y + 100, z), down);
       const hit = ray.intersectObjects(meshes)[0];
       assert(hit, "every sampled surface exists in the actual scene mesh");
       assert(

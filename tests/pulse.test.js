@@ -13,6 +13,7 @@ const track = {
     p: new THREE.Vector3(0, 30, s),
     tangent: new THREE.Vector3(0, 0, 1),
     right: new THREE.Vector3(1, 0, 0),
+    up: new THREE.Vector3(0, 1, 0),
     width: 30,
     metric: 1,
     u: s / 100_000,
