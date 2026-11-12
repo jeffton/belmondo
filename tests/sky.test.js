@@ -75,7 +75,7 @@ for (const config of TRACKS) {
   });
 }
 
-test("all seven course skies use the same filtered panorama budget", () => {
+test("all course skies use the same filtered panorama budget", () => {
   for (const name of TRACKS.map((course) => course.name)) {
     const config = TRACKS.find((course) => course.name === name);
     const texture = createSky(config, config.fog);
