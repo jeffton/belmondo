@@ -167,26 +167,29 @@ const layouts = {
 };
 
 export function getTrackPickups(track) {
-  const name = track.config.name;
-  return layouts[name].map(([u, branch, lateral, type, purpose], index) => {
-    const pad = {
-      id: `${name}:${index}`,
-      u,
-      s: u * track.length,
-      branch,
-      lateral,
-      type,
-      width: 8,
-      length: type === "boost" ? 22 : 8,
-      purpose,
-    };
-    pad.outline = pickupOutline(pad).map(([x, z]) =>
-      pickupPoint(track, pad, x, z),
+  return Object.entries(layouts)
+    .filter(([name]) => name === track.config.name)
+    .flatMap(([name, records]) =>
+      records.map(([u, branch, lateral, type, purpose], index) => {
+        const pad = {
+          id: `${name}:${index}`,
+          u,
+          s: u * track.length,
+          branch,
+          lateral,
+          type,
+          width: 8,
+          length: type === "boost" ? 22 : 8,
+          purpose,
+        };
+        pad.outline = pickupOutline(pad).map(([x, z]) =>
+          pickupPoint(track, pad, x, z),
+        );
+        pad.center = pickupPoint(track, pad, 0, 0);
+        pad.up = track.frame(pad.s, pad.branch).up;
+        return pad;
+      }),
     );
-    pad.center = pickupPoint(track, pad, 0, 0);
-    pad.up = track.frame(pad.s, pad.branch).up;
-    return pad;
-  });
 }
 
 export function pickupPoint(track, pad, x, z, height = 0) {
