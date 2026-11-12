@@ -198,6 +198,22 @@ export function createTerrain(track) {
       );
     }
   };
+  if (recipe?.biome === "hydraulic") {
+    // Excavate the full authored flume beneath its visible water mesh. Apply
+    // the cut through lowerCell so heightAt and the rendered terrain triangles
+    // share the same earthworks; the gravity path and water elevation stay put.
+    const [start, end] = track.config.sections.spillwayDive;
+    const count = Math.ceil(((end - start) * track.length) / 12);
+    for (let i = 0; i <= count; i++) {
+      const u = start + ((end - start) * i) / count;
+      const f = track.frame(u * track.length);
+      const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
+      for (let offset = f.width + 6; offset <= f.width + 59; offset += 3) {
+        const p = f.p.clone().addScaledVector(right, offset);
+        lowerCell(p.x, p.z, f.p.y - 3.5);
+      }
+    }
+  }
   for (const f of samples) {
     const bounds = track.bounds(f.u * track.length, f.branch);
     // Grade against the actual sloped/banked deck plane at each CELL CORNER.
