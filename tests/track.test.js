@@ -29,6 +29,7 @@ const minimumRadiusByLayout = {
   "solar-3": 150,
   "noctilucent-3": 150,
   "whiteout-1": 150,
+  "whiteout-2": 150,
   "monsoon-3": 95,
   "cinderline-1": 150,
 };

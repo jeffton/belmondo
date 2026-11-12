@@ -339,6 +339,7 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       d.kind === "reservoir" ? 144 : 72,
       d.kind,
       d.name,
+      d.branch ?? 0,
     );
   }
   for (const batch of batches.values()) {

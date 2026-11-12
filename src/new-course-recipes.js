@@ -19,6 +19,8 @@ export const NEW_COURSE_RECIPES = {
       { name: "BASIN BLUE ICE", u: 0.39, side: -1, kind: "iceface" },
       { name: "VALLEY CORE DEPOT", u: 0.62, side: -1, kind: "cold-store" },
       { name: "UPPER PASS RELAY", u: 0.9, side: -1, kind: "weather" },
+      { name: "RIDGE ARRAY", u: 0.805, branch: -1, side: -1, kind: "weather" },
+      { name: "BLUE ICE CUT", u: 0.8, branch: 1, side: 1, kind: "iceface" },
     ],
   },
   MONSOON: {
@@ -89,12 +91,15 @@ export function biomeLandHeight(recipe, x, z, context) {
     const basinRadius = Math.hypot(x / 530, z / 530);
     const rim = Math.exp(-(((basinRadius - 1) / 0.29) ** 2));
     const inland = 1 - Math.min(1, Math.max(0, (basinRadius - 1.3) / 0.65));
-    return (
+    const basin =
       -32 +
       inland * 77 +
       rim * (185 + 70 * Math.sin(x * 0.0041 + z * 0.0023) ** 2) +
-      14 * Math.sin(x * 0.003 + z * 0.005)
-    );
+      14 * Math.sin(x * 0.003 + z * 0.005);
+    // One broad glacial shoulder carries the exposed ridge pass. The shared
+    // road excavation cuts the lower branch into this same physical landform.
+    const pass = Math.exp(-(((x - 1780) / 520) ** 4 + ((z - 1790) / 310) ** 4));
+    return basin + (205 - basin) * pass;
   }
   if (recipe.biome === "hydraulic") {
     // Continuous rounded uplands: quantized heights made each lit grid cell
