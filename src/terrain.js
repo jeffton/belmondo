@@ -161,6 +161,14 @@ export function createTerrain(track) {
     let y = THREE.MathUtils.lerp(base, fill, grade);
     // Higher ground outside the shoulder forms real cuttings, not floating rock walls.
     if (distance > f.width + 38) y = Math.max(y, base);
+    // The outer Coast fork follows a sea cliff, beyond the existing occupied
+    // waterfront galleries. The inner fork retains its sheltered rock shelf.
+    if (!recipe && !desert && !harbor && f.branch === 1) {
+      const along = smooth(0.315, 0.34, f.u) * (1 - smooth(0.405, 0.435, f.u));
+      const outside = (x - f.p.x) * f.right.x + (z - f.p.z) * f.right.z;
+      const inlet = along * smooth(f.width + 65, f.width + 125, outside);
+      y = THREE.MathUtils.lerp(y, Math.min(y, -25), inlet);
+    }
     const cut = Math.max(waterway(x, z), ravine(x, z));
     y = THREE.MathUtils.lerp(y, desert ? 15 : -25, cut);
     if (recipe?.biome === "hydraulic") {

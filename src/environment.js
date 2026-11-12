@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createTerrain } from "./terrain.js";
+import { buildForkEnvironments } from "./fork-environments.js";
 import { buildCourseGeography } from "./course-geography.js";
 import { newCourseRecipe } from "./new-course-recipes.js";
 import { buildNewTerrainSurface } from "./new-course-environments.js";
@@ -164,6 +165,12 @@ export function buildEnvironment(scene, track, textures) {
     track,
     { ...textures, rock: groundMap },
     { heightAt, supportClearAt: terrain.supportClearAt },
+  );
+  buildForkEnvironments(
+    group,
+    track,
+    { ...textures, rock: groundMap },
+    terrain,
   );
   return {
     heightAt,

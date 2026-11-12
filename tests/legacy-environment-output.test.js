@@ -7,11 +7,11 @@ import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 
-// Legacy-v4 world acceptance: d3f8eb8 routes, 0d0509a Coast launch and exact
-// gallery basement grading. Covers emitted geometry, instances and materials.
+// Legacy-v4 routes with Coast/Solar branch identity. CPU output regression;
+// visual acceptance is performed separately before release.
 const BASELINE = [
-  "65584c2696e2012a7ccf16f1a68114a9c9e84c4a779c77ea5aae179d1d9291ac",
-  "cc401ac64a7277f281ab3dbafbb9926670b913321c710d4dd77c26c6120aba52",
+  "26d19da6c22128e94c8d21030435b7c04f83b88fe5b4ca4b0202a4ab2d0fc8b5",
+  "dbafedf8b1d13095c81bf70281ced5ab156aa7a5c8af47bcae81966bbadb7166",
   "944fa0b05065fe72b9c466282690d6baa25212031a667e3d0e4d85fca2f2147c",
 ];
 export function environmentDigest(index) {
