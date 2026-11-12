@@ -25,7 +25,7 @@ const track = makeTrack(4);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 test("spillway is a steep continuous dry descent with a low curved lock and climbing fork", () => {
-  assert.equal(track.config.layoutId, "monsoon-2");
+  assert.equal(track.config.layoutId, "monsoon-3");
   assert.equal(track.config.jump, null);
   let steepest = 0;
   for (let i = 0; i < 12000; i++) {
@@ -36,7 +36,7 @@ test("spillway is a steep continuous dry descent with a low curved lock and clim
         f.p.y - Math.abs(f.right.y * f.width) >= 5,
         "both banked deck edges stay clear of the ocean plane",
       );
-      assert(Math.abs(track.curvature(u * track.length, branch)) <= 1 / 150);
+      assert(Math.abs(track.curvature(u * track.length, branch)) <= 1 / 80);
       assert.equal(track.gap(u), false);
       if (u >= 0.12 && u <= 0.2)
         steepest = Math.max(steepest, -Math.asin(f.tangent.y));
@@ -57,16 +57,18 @@ test("spillway is a steep continuous dry descent with a low curved lock and clim
   assert(track.frame(0.1 * track.length).p.y > 190);
   assert(track.frame(0.2 * track.length).p.y < 10);
   assert(
-    Math.abs(track.curvature(0.5 * track.length)) > 1 / 500,
+    track
+      .frame(0.4 * track.length)
+      .tangent.angleTo(track.frame(0.55 * track.length).tangent) > 0.8,
     "lock is a physical bend, not a straight trench",
   );
   for (const branch of [-1, 1]) {
     assert(
-      track.frame(0.86 * track.length, branch).p.y -
-        track.frame(0.68 * track.length, branch).p.y >
-        130,
+      track.frame(track.config.split[1] * track.length, branch).p.y -
+        track.frame(track.config.split[0] * track.length, branch).p.y >
+        65,
     );
-    assert(Math.abs(track.frame(0.8 * track.length, branch).bank) > 0.02);
+    assert(Math.abs(track.frame(0.83 * track.length, branch).bank) > 0.02);
   }
 });
 
@@ -100,7 +102,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
     );
   });
   for (const branch of [-1, 1]) {
-    for (const turboAt of [null, 0.1, 0.15, 0.22, 0.68, 0.8]) {
+    for (const turboAt of [null, 0.1, 0.15, 0.22, 0.63, 0.68, 0.8]) {
       test(`class ${speedClass + 1}, fork ${branch}, TURBO ${turboAt}: real-terrain full lap`, (t) => {
         const race = new Race(track, 0, "trial", speedClass, terrain);
         race.countdown = 0;
@@ -132,8 +134,8 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
           if (!r.grounded) airborne++;
           const u = r.contactS / track.length;
           if (
-            u > 0.68 &&
-            u < 0.86 &&
+            u > track.config.split[0] &&
+            u < track.config.split[1] &&
             !track.bounds(r.contactS, branch).connected
           ) {
             assert.equal(r.branch, branch);

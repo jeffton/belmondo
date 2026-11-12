@@ -65,8 +65,8 @@ for (const index of [3, 4, 5]) {
           "no discontinuity or fake launch lip",
         );
         assert(
-          Math.abs(track.curvature(s, branch)) <= 1 / 150,
-          `radius below 150m at ${u}, branch ${branch}`,
+          Math.abs(track.curvature(s, branch)) <= 1 / (index === 4 ? 80 : 150),
+          `radius below authored minimum at ${u}, branch ${branch}`,
         );
         assert.equal(track.isTunnel(s, branch), false);
         if (i % 100 === 0) {
