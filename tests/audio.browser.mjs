@@ -94,11 +94,19 @@ try {
     new URL("../src/audio.js", import.meta.url),
     "utf8",
   );
+  const engineSource = await readFile(
+    new URL("../src/engine-sound.js", import.meta.url),
+    "utf8",
+  );
   await synthesis.addScriptTag({
     content:
       `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
+      // Keep module scopes separate: both modules have their own clamp helper.
+      "const { createEngineBed, updateEngineSound } = (() => {\n" +
+      engineSource.replaceAll("export function ", "function ") +
+      "\nreturn { createEngineBed, updateEngineSound }; })();\n" +
       source
-        .replace(/^import[^\n]*\n/, "")
+        .replace(/^import[^\n]*\n/gm, "")
         .replaceAll("export class ", "class ") +
       "\nwindow.AudioEngineUnderTest = AudioEngine;",
   });
@@ -222,8 +230,8 @@ try {
     "Finish must drain both engine channels",
   );
   assert(
-    sequence[2].bassCentroid > sequence[0].bassCentroid * 1.15,
-    "Actual rotor pitch must rise from idle to cruise",
+    sequence[2].centroid > sequence[0].centroid * 1.5,
+    "Turbine spectrum must open from idle to cruise",
   );
   const cruiseStart = Math.round(4.4 * recording.rate);
   const cruiseEnd = Math.round(5.3 * recording.rate);
@@ -463,5 +471,13 @@ function measure(pcm, rate) {
     }
   }
   const bassCentroid = bassEnergy > 0 ? bassWeighted / bassEnergy : 0;
-  return { rms, peak, bands, bassCentroid };
+  const spectralEnergy = energy.reduce((sum, value) => sum + value, 0);
+  const centroid =
+    spectralEnergy > 0
+      ? energy.reduce(
+          (sum, value, bin) => sum + value * ((bin * rate) / size),
+          0,
+        ) / spectralEnergy
+      : 0;
+  return { rms, peak, bands, bassCentroid, centroid };
 }
