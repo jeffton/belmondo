@@ -1,11 +1,15 @@
 import * as THREE from "three";
 import { createTerrain } from "./terrain.js";
 import { buildCourseGeography } from "./course-geography.js";
+import { newCourseRecipe } from "./new-course-recipes.js";
+import { buildNewTerrainSurface } from "./new-course-environments.js";
 
 const SEA_LEVEL = -16;
 
 /** Authored land, earthworks and ground infrastructure share the visible surface. */
 export function buildEnvironment(scene, track, textures) {
+  if (newCourseRecipe(track))
+    return buildNewTerrainSurface(scene, track, textures, createTerrain(track));
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
   const terrain = createTerrain(track);

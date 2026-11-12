@@ -1,14 +1,22 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import {
+  newCourseRecipe,
+  assertKnownEnvironment,
+} from "./new-course-recipes.js";
 
 const DISTRICTS = {
   "KAISEKI COAST": ["civic-terrace", "transit-gallery"],
   "SOLAR ARRAY": ["sandstone-bank", "test-apron"],
   NOCTILUCENT: ["terminal-quay", "loading-balcony"],
+  WHITEOUT: ["expedition-grandstand", "observatory-gallery"],
+  MONSOON: ["lockside-grandstand", "intake-gallery"],
+  CINDERLINE: ["caldera-grandstand", "exchange-gallery"],
 };
 
 /** Footprints reserve the final sector, not the jumping/landing district. */
 export function getFinishDistrictLayout(track) {
+  assertKnownEnvironment(track);
   const [start, end] = track.config.sections.finishStraight;
   const sections = Math.ceil(((end - start) * track.length) / 48);
   const span = ((end - start) * track.length) / sections;
@@ -177,6 +185,7 @@ export function buildFinishMarkings(root, track, textures) {
 
 /** Scenery only: never writes track, racer, gate or collision state. */
 export function buildFinishDistrict(scene, track, textures, environment) {
+  const recipe = newCourseRecipe(track);
   const root = new THREE.Group();
   root.name = "finish-district";
   scene.add(root);
@@ -186,13 +195,16 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     new THREE.MeshLambertMaterial({ color, map, flatShading: true });
   const materials = {
     foundation: surface(
-      desert ? 0xa3795c : harbor ? 0x536775 : 0x969c97,
+      recipe ? recipe.wall : desert ? 0xa3795c : harbor ? 0x536775 : 0x969c97,
       textures.concrete,
     ),
-    pale: surface(desert ? 0xd1ad80 : 0xd3d3bd, textures.paint),
+    pale: surface(
+      recipe ? recipe.pale : desert ? 0xd1ad80 : 0xd3d3bd,
+      textures.paint,
+    ),
     dark: surface(0x253743, textures.paint),
     accent: surface(
-      desert ? 0xba5734 : harbor ? 0x924a67 : 0x417a83,
+      recipe ? recipe.accent : desert ? 0xba5734 : harbor ? 0x924a67 : 0x417a83,
       textures.paint,
     ),
     glazing: surface(harbor ? 0x204657 : 0x316b77, textures.facade),
@@ -376,7 +388,33 @@ export function buildFinishDistrict(scene, track, textures, environment) {
         }
       }
       const outer = side * (width / 2 - 1.4);
-      if (desert) {
+      if (recipe) {
+        // Four posts carry a deep, opaque weather canopy; the polar viewing
+        // gallery, lockside shelter and caldera roof use their own materials.
+        for (const z of [-length / 2 + 3, length / 2 - 3])
+          for (const x of [outer, outer - side * 7])
+            box(group, materials.foundation, x, 5.5, z, 0.8, 11, 0.8);
+        box(
+          group,
+          materials.pale,
+          outer - side * 3.5,
+          11.4,
+          0,
+          11,
+          0.8,
+          length,
+        );
+        box(
+          group,
+          materials.accent,
+          outer + side * 1.5,
+          11.7,
+          0,
+          1,
+          1.2,
+          length,
+        );
+      } else if (desert) {
         // Sandstone spectator shelves backed by a test apron, not a stadium roof.
         for (let rib = 0; rib < 4; rib++) {
           const z = ((rib - 1.5) * length) / 4;

@@ -1,10 +1,18 @@
 import * as THREE from "three";
 import { groundedGeometryOffset } from "./terrain.js";
 import { buildRouteDistricts } from "./route-districts.js";
+import {
+  newCourseRecipe,
+  assertKnownEnvironment,
+} from "./new-course-recipes.js";
+import { buildNewCourseDistricts } from "./new-course-environments.js";
 
 // Authored districts, not a scatter of interchangeable apartment towers. Each
 // cluster has a clear footprint outside every route, including the flight lane.
 export function buildCity(scene, track, textures, environment) {
+  assertKnownEnvironment(track);
+  if (newCourseRecipe(track))
+    return buildNewCourseDistricts(scene, track, textures, environment);
   const root = new THREE.Group();
   root.name = "waterfront-city";
   scene.add(root);
