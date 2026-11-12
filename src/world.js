@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
 import { RAIL_PROFILE } from "./rail-profile.js";
-import { railPoint, railBackDepth } from "./rail-geometry.js";
+import { railPoint, railBackDepth, railHeight } from "./rail-geometry.js";
+import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
 import { buildTrackPads } from "./track-pads.js";
 import { buildStartGantry } from "./start-gantry.js";
 import { buildFinishDistrict } from "./finish-district.js";
@@ -130,6 +131,7 @@ export class World {
     const textures = circuitTextures(
       "#" + new THREE.Color(cfg.color).getHexString(),
     );
+    textures.rail = createRailFaceTexture(cfg.name);
     this.textures = textures;
     const skyCanvas = document.createElement("canvas");
     skyCanvas.width = 4;
@@ -321,22 +323,44 @@ export class World {
               ],
               color,
               kind,
-              uv: [
-                [(a.u * track.length) / 8, low / 3],
-                [(b.u * track.length) / 8, low / 3],
-                [(b.u * track.length) / 8, high / 3],
-                [(a.u * track.length) / 8, high / 3],
-              ],
+              uv:
+                kind === "rail"
+                  ? [
+                      railFaceUV(
+                        a.u,
+                        Math.min(low, railHeight(a, side)),
+                        track.length,
+                      ),
+                      railFaceUV(
+                        b.u < a.u ? b.u + 1 : b.u,
+                        Math.min(low, railHeight(b, side)),
+                        track.length,
+                      ),
+                      railFaceUV(
+                        b.u < a.u ? b.u + 1 : b.u,
+                        Math.min(high, railHeight(b, side)),
+                        track.length,
+                      ),
+                      railFaceUV(
+                        a.u,
+                        Math.min(high, railHeight(a, side)),
+                        track.length,
+                      ),
+                    ]
+                  : [
+                      [(a.u * track.length) / 8, low / 3],
+                      [(b.u * track.length) / 8, low / 3],
+                      [(b.u * track.length) / 8, high / 3],
+                      [(a.u * track.length) / 8, high / 3],
+                    ],
             });
           };
           const joint = i % 3 === 0;
-          face(0, 0.38, 0x464d58);
-          face(
-            0.38,
-            H - 0.25,
-            nose ? (i % 2 ? 0xe5ce89 : 0x6b4d3e) : joint ? 0x717c8a : 0xc9c4b4,
-          );
-          face(H - 0.25, H, joint ? 0x7b858d : 0xbebdb4);
+          // Mineral-paint light/dark panels cover the physical slope itself;
+          // there is no added banner, curb or luminous strip.
+          face(0, 0.38, 0xffffff, 0, "rail");
+          face(0.38, H - 0.25, 0xffffff, 0, "rail");
+          face(H - 0.25, H, 0xffffff, 0, "rail");
           face(0, H, 0x737e84, back);
           quads.push({
             p: [
@@ -345,8 +369,22 @@ export class World {
               wallPoint(b, edgeB, H, backB),
               wallPoint(a, edgeA, H, backA),
             ],
-            color: joint ? 0x737e84 : 0xb5b7b1,
-            kind: "edge",
+            color: 0xffffff,
+            kind: "rail",
+            uv: [
+              railFaceUV(a.u, railHeight(a, side), track.length),
+              railFaceUV(
+                b.u < a.u ? b.u + 1 : b.u,
+                railHeight(b, side),
+                track.length,
+              ),
+              railFaceUV(
+                b.u < a.u ? b.u + 1 : b.u,
+                railHeight(b, side),
+                track.length,
+              ),
+              railFaceUV(a.u, railHeight(a, side), track.length),
+            ],
           });
           // Substantial cast impact blocks project OUT of the physical boundary.
           // The continuous inner face/height remains exactly the collision wall.
@@ -418,7 +456,7 @@ export class World {
         }
       }
     }
-    for (const kind of ["road", "concrete", "paint", "edge", "light"]) {
+    for (const kind of ["road", "concrete", "paint", "edge", "rail", "light"]) {
       const material =
         flagship && kind === "road"
           ? new THREE.MeshPhongMaterial({
