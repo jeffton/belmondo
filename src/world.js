@@ -4,6 +4,7 @@ import { RAIL_PROFILE } from "./rail-profile.js";
 import { railPoint, railBackDepth, railHeight } from "./rail-geometry.js";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
 import { buildTrackPads } from "./track-pads.js";
+import { buildJumpMarkings } from "./jump-markings.js";
 import { buildStartGantry } from "./start-gantry.js";
 import { buildFinishDistrict } from "./finish-district.js";
 import { WeaponEffects } from "./weapon-effects.js";
@@ -597,6 +598,7 @@ export class World {
     });
     this.scene.add(supports, trusses);
     buildTrackPads(this.scene, track, textures);
+    buildJumpMarkings(this.scene, track, this.lighting);
     this.startGantry = buildStartGantry(this.scene, track);
     this.finishDistrict = buildFinishDistrict(
       this.scene,
