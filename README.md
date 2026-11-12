@@ -4,7 +4,7 @@ Original browser-based anti-gravity combat racer. Three circuits, eight pilots, 
 
 ## Play
 
-https://antigrav.roybot.se
+https://belmondo.roybot.se
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes (Q/E also work), I nose down / K nose up, S/↓ brake, Space fire, V camera, P/Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, B brake, Y camera, Start pause.
@@ -27,6 +27,8 @@ Grandstands and road-integrated checkerboard line each complete home straight. B
 The twelve-track original soundtrack plays shuffled bags without back-to-back repeats. Music follows race pause/resume and has a separate volume from synthesized turbines and original generated weapon, impact and race cues. Sound-effect provenance is documented in [generated SFX](docs/generated-sfx/README.md). Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
 
 ## Development
+
+Repository: https://github.com/jeffton/belmondo. Local checkout: `/home/roy/github/belmondo`.
 
 ```sh
 npm ci
@@ -53,7 +55,7 @@ OpenAI Image design boards are in `public/art/`; **Design study** opens the Japa
 
 ## Deployment
 
-`scripts/deploy.sh` builds and atomically points `/var/www/antigrav/current` at a new static release. Existing releases are retained. Nginx serves only this domain; no application service or database is required. See `deploy/nginx.conf` for HTTPS configuration.
+`scripts/deploy.sh` builds and atomically points `/var/www/belmondo/current` at a new static release. Existing releases are retained. Nginx serves only this domain; no application service or database is required. See `deploy/nginx.conf` for HTTPS configuration. The retired `antigrav.roybot.se` hostname returns HTTP 410 without redirecting.
 
 ## Verification
 
