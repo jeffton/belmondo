@@ -82,6 +82,8 @@ try {
       "voice:result:8",
       "jump",
       "land",
+      "critical",
+      "critical-clear",
     ]) {
       const context = new OfflineAudioContext(2, 48000, 48000);
       context.resume = () => Promise.resolve();
@@ -101,7 +103,10 @@ try {
         audio.effect("pickup", stage.slice(7));
       else if (typeof stage === "string" && stage.startsWith("finish:"))
         audio.effect("finish", stage.slice(7));
-      else if (stage === "jump" || stage === "land") audio.effect(stage);
+      else if (stage === "critical" || stage === "critical-clear") {
+        audio.effect("critical");
+        if (stage === "critical-clear") audio.effect("critical-clear");
+      } else if (stage === "jump" || stage === "land") audio.effect(stage);
       else if (stage === 0) audio.effect("go");
       else if (typeof stage === "number") audio.effect("countdown", stage);
       else audio.effect("countdown");
@@ -126,9 +131,14 @@ try {
     const rms = Math.sqrt(
       samples.reduce((sum, x) => sum + x * x, 0) / samples.length,
     );
-    const silent = ["muted", "paused", "hidden", "jump", "land"].includes(
-      stage,
-    );
+    const silent = [
+      "muted",
+      "paused",
+      "hidden",
+      "jump",
+      "land",
+      "critical-clear",
+    ].includes(stage);
     assert(samples.every(Number.isFinite), `${stage}: finite PCM`);
     assert(peak < 0.98, `${stage}: no clipping`);
     assert(

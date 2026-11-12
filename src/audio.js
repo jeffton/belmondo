@@ -281,6 +281,10 @@ export class AudioEngine {
   }
 
   effect(kind, weapon = "") {
+    if (kind === "critical-clear") {
+      this.stopSamples("critical");
+      return;
+    }
     if (!this.started || this.muted || this.paused || this.hidden) return;
     const now = this.context.currentTime;
     const cooldown = kind === "scrape" ? 0.16 : kind === "hit" ? 0.08 : 0;
