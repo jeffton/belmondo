@@ -11,6 +11,7 @@
     "test:steering": "node tests/steering.browser.mjs",
     "test:audio": "node tests/audio.browser.mjs",
     "test:music": "node tests/music.browser.mjs",
+    "music:stage": "node scripts/stage-soundtrack.mjs",
     "format:check": "prettier --check src tests index.html README.md docs package.json"
   },
   "dependencies": {

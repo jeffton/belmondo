@@ -4,7 +4,9 @@ import { soundtrack } from "../src/soundtrack.js";
 
 // Native media integration without constructing a WebGL scene.
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
-const browser = await chromium.launch({ args: ["--no-sandbox"] });
+const browser = await chromium.launch({
+  args: ["--no-sandbox", "--disable-gpu"],
+});
 try {
   const page = await browser.newPage();
   const errors = [];
@@ -42,13 +44,13 @@ try {
     }
     return results;
   }, soundtrack);
-  assert.equal(decoded.length, 12);
+  assert.equal(decoded.length, 8);
   assert(
     decoded.every(({ duration }) => Number.isFinite(duration) && duration > 30),
   );
 
   const seen = new Set([await page.evaluate(() => player.audio.src)]);
-  for (let i = 1; i <= 12; i++) {
+  for (let i = 1; i <= soundtrack.length; i++) {
     const previous = await page.evaluate(() => player.audio.src);
     if (i === 1) {
       await page.evaluate(() => {
@@ -63,23 +65,23 @@ try {
       previous,
     );
     const current = await page.evaluate(() => player.audio.src);
-    if (i < 12) {
+    if (i < soundtrack.length) {
       assert(!seen.has(current), "Default bag must not repeat a track");
       seen.add(current);
     } else {
       assert.notEqual(current, previous, "Bag boundary must not repeat");
     }
   }
-  assert.equal(seen.size, 12);
+  assert.equal(seen.size, 8);
 
-  await page.evaluate(async () => {
-    const bytes = await (await fetch("/music/phase-index.mp3")).arrayBuffer();
+  await page.evaluate(async (url) => {
+    const bytes = await (await fetch(url)).arrayBuffer();
     await player.loadFiles([
       new File([bytes], "second.mp3", { type: "audio/mpeg" }),
       new File([bytes], "first.mp3", { type: "audio/mpeg" }),
     ]);
     await player.play();
-  });
+  }, soundtrack[0].url);
   await page.waitForFunction(() => player.audio.currentTime > 0.05);
   assert.equal(await page.evaluate(() => musicState.name), "second.mp3");
   assert.equal(
@@ -98,7 +100,7 @@ try {
     await player.play();
   });
   await page.waitForFunction(() => player.audio.currentTime > 0.05);
-  assert.equal(await page.evaluate(() => musicState.count), 12);
+  assert.equal(await page.evaluate(() => musicState.count), 8);
   assert.equal(
     await page.evaluate(() => player.audio.src.includes("/music/")),
     true,
@@ -134,7 +136,7 @@ try {
         checks: [
           "native playback",
           "native ended advancement",
-          "12 unique tracks per bag",
+          "8 unique tracks per bag",
           "no seam repeat",
           "ordered local override",
           "OST restore",

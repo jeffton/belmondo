@@ -1,6 +1,6 @@
 # Audio and music
 
-The engine mixes two original stereo PCM beds: a vibrating hover chamber with low rotor modes, and a phase-modulated turbine with inharmonic casing resonances and turbulent airflow. Playback rate follows world speed; acceleration changes turbine load, while braking, sideways slip and flight alter the air/body balance. Weapons and race signals use separate synthesized voices. The built-in soundtrack contains twelve original generative compositions; local music is never uploaded. Spotify streams cannot be integrated into games under its [Developer Policy](https://developer.spotify.com/policy).
+The engine mixes two original stereo PCM beds: a vibrating hover chamber with low rotor modes, and a phase-modulated turbine with inharmonic casing resonances and turbulent airflow. Playback rate follows world speed; acceleration changes turbine load, while braking, sideways slip and flight alter the air/body balance. Weapons and race signals use separate synthesized voices. The built-in soundtrack contains eight original generative compositions; local music is never uploaded. Spotify streams cannot be integrated into games under its [Developer Policy](https://developer.spotify.com/policy).
 
 ## AudioEngine
 
@@ -49,7 +49,7 @@ await music.dispose();
 
 Import `MusicPlayer` from `src/music.js`.
 
-`loadFiles(files)` accepts browser-readable MP3, M4A, AAC, Ogg/Opus, WAV, FLAC, WebM and other `audio/*` files without uploading them. Playback starts after `play()` or `next()`; `next()` loops through local files in selection order. The callback receives `{ name, count, playing, error }`, including browser playback failures. Replacing or disposing the playlist pauses playback and revokes its object URLs. `loadTracks(tracks)` accepts named URLs and replaces the playlist without starting playback. The built-in playlist uses shuffled bags: all twelve tracks play once before reshuffling, with no immediate repeat at a bag boundary. Loading/restoring the OST starts a fresh bag. Local files replace the built-in playlist without shuffling; BELMONDO OST restores all twelve default tracks. Effects mute and volume do not change music settings.
+`loadFiles(files)` accepts browser-readable MP3, M4A, AAC, Ogg/Opus, WAV, FLAC, WebM and other `audio/*` files without uploading them. Playback starts after `play()` or `next()`; `next()` loops through local files in selection order. The callback receives `{ name, count, playing, error }`, including browser playback failures. Replacing or disposing the playlist pauses playback and revokes its object URLs. `loadTracks(tracks)` accepts named URLs and replaces the playlist without starting playback. The built-in playlist uses shuffled bags: all eight tracks play once before reshuffling, with no immediate repeat at a bag boundary. Loading/restoring the OST starts a fresh bag. Local files replace the built-in playlist without shuffling; BELMONDO OST restores all eight default tracks. Effects mute and volume do not change music settings.
 
 ### Tunnel acoustics
 
@@ -61,44 +61,38 @@ Music volume is applied through an output GainNode rather than the media element
 
 ## Soundtrack credits
 
-Original BELMONDO instrumentals generated with Google Lyria 3 Pro through fal.ai on 11 November 2026, without artist-name prompts or uploaded samples. MP3 masters are 44.1 kHz stereo, 320 kbps, with matched loudness.
+Eight original instrumentals generated with Eleven Music v2.5 (`elevenlabs/music/v2.5`) through fal.ai on 12 November 2026. The briefs explore the underground progressive, trance, techno, electro, breakbeat and jungle vocabulary of 1994–1999 racing soundtracks. No artist/song names, uploaded recordings or samples were used in generation. Musical descriptions are briefs, not claims of subjective listening.
 
-| Track          | Duration | Musical brief                                  |
-| -------------- | -------- | ---------------------------------------------- |
-| Phase Index    | 2:51     | progressive trance / house and breaks          |
-| Glass Current  | 2:59     | progressive breakbeat                          |
-| Ion Drift      | 2:57     | big beat / atmospheric breaks                  |
-| Vector Bloom   | 2:58     | melodic progressive trance / breaks            |
-| Arc Relay      | 2:52     | electro / machine funk techno                  |
-| Chrome Tension | 2:57     | dub techno / resonant progressive              |
-| Static Orchard | 2:50     | atmospheric jungle / intelligent drum and bass |
-| Signal Teeth   | 2:55     | melodic atmospheric breaks                     |
-| Lattice Runner | 2:48     | tribal techno / polyrhythmic breaks            |
-| Deep Circuit   | 2:54     | dark progressive house / progressive breaks    |
-| Helix Pressure | 3:01     | techstep / futuristic drum and bass            |
-| Afterimage     | 2:50     | dub-influenced progressive breakbeat           |
+| Track            | Duration | Musical brief                        |
+| ---------------- | -------- | ------------------------------------ |
+| Slipstream Glass | 3:00     | hypnotic progressive trance / house  |
+| Recursive Blue   | 2:58     | weightless progressive trance        |
+| Torque Syntax    | 3:00     | big beat / progressive breaks        |
+| Delta Pressure   | 3:00     | warehouse acid techno                |
+| Spectral Lattice | 3:00     | atmospheric jungle                   |
+| Tidal Memory     | 3:00     | dub-inflected deep progressive house |
+| Relay Bloom      | 3:00     | melodic early trance / techno        |
+| Ceramic Phase    | 3:00     | electro / intelligent breaks         |
 
-Total duration is 34:51. Musical labels describe the generation briefs, not independent listening assessments. All masters decode fully and have matched integrated loudness around −16.6 LUFS, with peak headroom. The original three masters are unchanged.
+Total duration: 23:58. The approved Slipstream Glass composition is retained; each master has only constant playback-gain adjustment, targeting −16 LUFS without dynamic compression. Published MP3s are 48 kHz stereo, 320 kbps. All eight decode fully; measured true peaks range from −5.7 to −2.3 dBFS. `src/soundtrack.js` records their exact SHA-256 hashes. The twelve Lyria masters and their credits remain in [the archive](../archive/music/lyria-2026-11-11/README.md), outside the build. Deployment also retains their original `/music/*.mp3` URLs for cached game bundles; they are absent from the active playlist.
 
-### Generation and terms
+### Asset setup
 
-Google Lyria 3 Pro (`fal-ai/lyria3/pro`) generated these original instrumentals through fal.ai on 11 November 2026. Prompts use musical genre, arrangement and instrumentation descriptions; no artist/song names, uploaded samples or third-party audio inputs were used. Nine additional successful outputs expanded the approved three-track soundtrack to twelve. Five expansion requests were rejected without audio. No generation is performed by the game, and no API credentials are distributed.
+The public repository contains metadata and code, not the Eleven Music audio. With authorized masters available:
 
-The [model page](https://fal.ai/models/fal-ai/lyria3/pro) displayed **Commercial use** and **$0.08 per output** when checked on 11 November 2026; nine successful expansion outputs therefore have an advertised cost of $0.72. Actual account charges were not available. Use is subject to [fal terms](https://fal.ai/legal/terms-of-service); the commercial-use label is not an exclusive-copyright or indemnity guarantee. SynthID provenance was not intentionally removed. Source outputs, prompts, request metadata and measured masters are retained in the private generation archive `/var/tmp/belmondo-soundtrack-lyria/`; published files are level-adjusted 44.1 kHz stereo, 320 kbps MP3s.
-
-Published MP3 SHA-256:
-
-```text
-phase-index.mp3 832001f1d36405e4a0d9ae59b0358d55955af3dc48b345281c4fa9cb3af138e1
-glass-current.mp3 8bc2d82c22cde17348e72bea43b04b0ce5fdae16363c84c1d43643f724a991d4
-ion-drift.mp3 e3cb1faed3580436dac5622c04e6d9126973fa001ea3dd89be14c6ff936ae667
-vector-bloom.mp3 33d398af20c0232193ef232466bf540790c23176a28b67f4f65ef0e49eb5d5b1
-arc-relay.mp3 6c0c1326d6538ec8e0c33b984b9808691262722befeb2d2705a1c96c2ad6a501
-chrome-tension.mp3 869a05c610afed22b162144ea7b3d6fcf880263c965813d9004d9ff5a032ace6
-static-orchard.mp3 26dec35c76b3b9edd58190d1417579f594aa0100faa10cb93d0acdc33578ef3f
-signal-teeth.mp3 7bd119ef7a8d2c2f5627835bf2b7f11d4e35f945f8ff47845e05d6083d5e1ff7
-lattice-runner.mp3 90f8f5c30f3b897cd8d1e3ab9c6b18d24118f4c876591eeade842ab1ed1b0426
-deep-circuit.mp3 a47cf9b70463768e89687e594fe813e44d3d2100a4a64a8692e90aa293e4be45
-helix-pressure.mp3 208758a8d62e46141a34db5b4d49ad3efc903d8d80b75702b0cd3c9f60b8988b
-afterimage.mp3 591f9d7116fc2f0d5269465eb9f4cf3c2e2498ed4011803d73f97edb5fe46e3c
+```sh
+npm run music:stage -- /path/to/authorized/masters
+npm run build
 ```
+
+Staging verifies all eight hashes before copying anything into ignored `public/music/eleven-v2.5/`. Missing or changed masters fail explicitly. Deployments use the private server directory `/home/roy/audio-assets/belmondo/eleven-v2.5`; `scripts/deploy.sh` stages these assets before building. Local music selection works independently and never uploads files.
+
+Private generation records, original output bytes, prompts, request IDs, source snapshots and loudness measurements are retained outside Git. Seven additional three-minute generations have an advertised cost of $12.60 at FAL's $0.60 per output minute, rounded up to whole minutes; Slipstream Glass was a separate trial. Account-level billing is not exposed by the inference key. The [direct ElevenLabs API](https://elevenlabs.io/pricing/api) lists $0.15/minute; this release used the existing FAL integration. No generation API or credentials are shipped to players.
+
+### Music rights
+
+The eight Eleven Music soundtrack tracks are excluded from any repository software license. They are provided solely for playback within BELMONDO. No permission is granted to redistribute them separately, sublicense them, or reuse them in other projects or music libraries.
+
+[Eleven Music terms](https://elevenlabs.io/eleven-music-model-specific-terms), dated 9 October 2026, permit media use in indie games. The definition requires game lifetime net revenue below $500,000 and developer/publisher game revenue below $1 million in the preceding financial year. Section 4.2 prohibits making a music library available for others' reuse without written authorization. The game serves ordinary browser audio assets; it does not offer a soundtrack download library or a license for reuse. Browser fetching and caching for game playback are part of delivering the game, not an offer of a reusable music collection.
+
+FAL labels [the model](https://fal.ai/models/elevenlabs/music/v2.5) **Commercial use / Partner**. [FAL terms](https://fal.ai/legal/terms-of-service) also preserve applicable third-party restrictions. Neither that label nor these credits grants an exclusive copyright or a broad right to sublicense generated music. FAL's public materials do not specify a separate partner entitlement for stock-music libraries; no such entitlement is relied upon here.
