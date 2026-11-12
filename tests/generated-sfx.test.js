@@ -340,6 +340,56 @@ test("spoken lap entry follows earned player gates, including final lap and fini
   await audio.dispose();
 });
 
+test("real jump and landing retain simulation events without event audio", async (t) => {
+  const env = environment();
+  t.mock.property(globalThis, "window", env.window);
+  t.mock.property(globalThis, "document", env.document);
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async (url) =>
+      new Response(await readFile(new URL(`../public${url}`, import.meta.url))),
+  );
+  const audio = new Engine();
+  await audio.start();
+  const track = makeTrack(0);
+  const race = new Race(track, 1, "trial");
+  race.countdown = 0;
+  const player = race.player;
+  const s = (track.config.jump - 0.01) * track.length;
+  const frame = track.frame(s);
+  player.position.copy(frame.p);
+  player.position.y += 2.2;
+  player.velocity.copy(frame.tangent).multiplyScalar(160);
+  player.s = player.contactS = s;
+  player.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+  player.gate = Math.floor((s / track.length) * 32) + 1;
+  const seen = new Set();
+  for (let step = 0; step < 360 && !seen.has("land"); step++) {
+    race.update(1 / 120, { throttle: true, steer: 0, air: 0, brake: false });
+    for (const event of race.events) {
+      if (event.kind !== "jump" && event.kind !== "land") continue;
+      seen.add(event.kind);
+      const sourceCount = audio.context.sources.length;
+      audio.raceEvent(event, race, LAPS);
+      assert.equal(audio.context.sources.length, sourceCount);
+      assert.equal(audio.sampleVoices.size, 0);
+    }
+    race.events.length = 0;
+  }
+  assert.deepEqual([...seen], ["jump", "land"]);
+  assert(player.grounded);
+  assert.equal(player.shield, 100);
+  audio.effect("fire", "MISSILE");
+  audio.effect("hit");
+  audio.effect("boost");
+  assert.deepEqual(
+    [...audio.sampleVoices].map((voice) => voice.key),
+    ["fire:MISSILE", "hit", "boost"],
+  );
+  await audio.dispose();
+});
+
 test("missing generated asset rejects startup rather than synthesizing a substitute", async (t) => {
   const env = environment();
   t.mock.property(globalThis, "window", env.window);
@@ -366,8 +416,6 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "boost",
       "hit",
       "scrape",
-      "jump",
-      "land",
       "incoming",
       "voice:result:1",
       "voice:result:2",

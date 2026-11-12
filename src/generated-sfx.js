@@ -34,14 +34,6 @@ export const SFX_CUES = {
     files: ["/audio/sfx/incoming-1.wav", "/audio/sfx/incoming-2.wav"],
     gain: 0.6,
   },
-  jump: {
-    files: ["/audio/sfx/jump-1.wav", "/audio/sfx/jump-2.wav"],
-    gain: 0.5,
-  },
-  land: {
-    files: ["/audio/sfx/land-1.wav", "/audio/sfx/land-2.wav"],
-    gain: 0.75,
-  },
   "fire:MINE": {
     files: ["/audio/sfx/mine-1.wav", "/audio/sfx/mine-2.wav"],
     gain: 0.7,
