@@ -3,7 +3,9 @@ import * as THREE from "three";
 /** Low-contrast stone/ice grain without architectural seams, holes or panels. */
 export function biomeGroundTexture(biome) {
   const pixels = new Uint8Array(64 * 64 * 4);
-  let seed = { polar: 4417, hydraulic: 7187, volcanic: 9173 }[biome];
+  let seed = { polar: 4417, hydraulic: 7187, volcanic: 9173, metropolis: 6197 }[
+    biome
+  ];
   for (let y = 0; y < 64; y++)
     for (let x = 0; x < 64; x++) {
       seed = (seed * 16807) % 2147483647;

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { buildMetropolis, METROPOLIS_SIGN_ATLAS } from "./metropolis-world.js";
 import { groundedGeometryOffset } from "./terrain.js";
 import { buildRouteDistricts } from "./route-districts.js";
 import {
@@ -11,6 +12,11 @@ import { buildNewCourseDistricts } from "./new-course-environments.js";
 // cluster has a clear footprint outside every route, including the flight lane.
 export function buildCity(scene, track, textures, environment) {
   assertKnownEnvironment(track);
+  if (track.config.biome === "metropolis") {
+    const signMap = new THREE.TextureLoader().load(METROPOLIS_SIGN_ATLAS);
+    signMap.colorSpace = THREE.SRGBColorSpace;
+    return buildMetropolis(scene, track, textures, environment, signMap);
+  }
   if (newCourseRecipe(track))
     return buildNewCourseDistricts(scene, track, textures, environment);
   const root = new THREE.Group();

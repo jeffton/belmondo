@@ -8,6 +8,7 @@ export const RAIL_FACE_PATTERN = Object.freeze({
 });
 
 const PALETTES = {
+  "VESPER CIRCUIT": { light: 0xb3d6dc, dark: 0x313c66 },
   "KAISEKI COAST": { light: 0xe3e1cc, dark: 0x314b5b },
   "SOLAR ARRAY": { light: 0xe7d5b0, dark: 0x61483f },
   NOCTILUCENT: { light: 0xd1d2e7, dark: 0x3e3c59 },

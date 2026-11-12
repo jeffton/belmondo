@@ -229,7 +229,7 @@ function cityAt(groups, u) {
 /** Original full-sphere matte painting; rows run south-to-north for DataTexture. */
 export function paintSky(config, fogHex, width = 1024, height = 512) {
   const story = stories[config.name],
-    night = config.name === "NOCTILUCENT";
+    night = config.name === "NOCTILUCENT" || config.biome === "metropolis";
   const fog = rgb(fogHex),
     dusk = rgb(story.dusk),
     clouds = rgb(story.cloud);
@@ -378,9 +378,12 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
 
 /** One static, world-oriented sky; no extra scenery meshes or per-frame work. */
 export function createSky(config, fogHex) {
-  const expansionCourse = ["WHITEOUT", "MONSOON", "CINDERLINE"].includes(
-    config.name,
-  );
+  const expansionCourse = [
+    "WHITEOUT",
+    "MONSOON",
+    "CINDERLINE",
+    "VESPER CIRCUIT",
+  ].includes(config.name);
   const [width, height] = expansionCourse ? [2048, 1024] : [1024, 512];
   const image = paintSky(config, fogHex, width, height);
   const texture = new THREE.DataTexture(image.data, image.width, image.height);

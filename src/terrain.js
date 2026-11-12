@@ -152,9 +152,10 @@ export function createTerrain(track) {
       base = -27 + island * 76 + headland + 8 * Math.sin(z * 0.006) * island;
     }
     // Broad graded land carries the course, rather than a thin ribbon on columns.
-    const grade = onUpperBridge(f.u)
-      ? 0
-      : 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
+    const grade =
+      recipe?.biome === "metropolis" || onUpperBridge(f.u)
+        ? 0
+        : 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
     const fill =
       f.p.y - (f.up.x * (x - f.p.x) + f.up.z * (z - f.p.z)) / f.up.y - 4.5;
     let y = THREE.MathUtils.lerp(base, fill, grade);
