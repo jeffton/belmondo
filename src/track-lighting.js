@@ -9,7 +9,8 @@ export function celestialDirection(course) {
 // A single directional key, not a bank of per-pixel lights. Night projector pools
 // are baked into the deck vertices; their physical luminaires sit over each pool.
 export function buildTrackLighting(scene, track) {
-  const night = track.config.name === "NOCTILUCENT";
+  const night =
+    track.config.name === "NOCTILUCENT" || track.config.biome === "metropolis";
   const palette = COURSE_LIGHTING[track.config.name];
   const direction = celestialDirection(track.config.name);
   scene.add(new THREE.HemisphereLight(...palette.hemisphere, 0.85));
@@ -104,7 +105,7 @@ export function buildTrackLighting(scene, track) {
   scene.add(celestial);
 
   const pools = [];
-  if (night) {
+  if (night && track.config.biome !== "metropolis") {
     const housing = new THREE.MeshLambertMaterial({ color: 0x3b485b });
     const lamp = new THREE.MeshBasicMaterial({ color: 0xd8eaff });
     const mastGeometry = new THREE.BoxGeometry(0.55, 1, 0.55);
@@ -213,7 +214,7 @@ export function buildTrackLighting(scene, track) {
   }
   return {
     shade(point, color) {
-      if (!night) return color;
+      if (!night || track.config.biome === "metropolis") return color;
       let strength = 0;
       for (const pool of pools) {
         const delta = point.clone().sub(pool.p);

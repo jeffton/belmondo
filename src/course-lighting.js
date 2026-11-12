@@ -1,5 +1,15 @@
 // One world-space key per course; colours describe the local atmosphere.
 export const COURSE_LIGHTING = {
+  "VESPER CIRCUIT": {
+    direction: [0.25, 0.2, -0.8],
+    skyGlow: [[100, 158, 186], 0.025],
+    hemisphere: [0x9bb6d5, 0x232738],
+    key: [0xacc7eb, 1.1],
+    fill: [0x716891, 0.4],
+    sun: null,
+    halo: [0x9fc9e1, 0.08],
+    flare: false,
+  },
   "KAISEKI COAST": {
     direction: [-0.8, 0.16, 0.55],
     skyGlow: [[228, 183, 160], 0.17],

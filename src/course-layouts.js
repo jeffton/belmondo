@@ -1,3 +1,5 @@
+import { METROPOLIS_COURSE } from "./metropolis-course.js";
+
 // Original route plans/elevations. Stations are fractions of the closed base
 // curve, not physical metres after the finish-straight treatment.
 const whiteoutPoints = [
@@ -183,4 +185,5 @@ export const NEW_COURSES = [
       calderaBend: [0.37, 0.5],
     },
   },
+  METROPOLIS_COURSE,
 ];

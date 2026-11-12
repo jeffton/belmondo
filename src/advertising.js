@@ -214,6 +214,12 @@ export function getTrackAdvertisingLayout(track) {
       [0.645, -1, -1],
       [0.94, 1, -2],
     ],
+    "VESPER CIRCUIT": [
+      [0.115, -1, 0],
+      [0.34, 1, 4],
+      [0.61, -1, 7],
+      [0.89, 1, -1],
+    ],
     CINDERLINE: [
       [0.1, -1, 1],
       [0.41, 1, 4],

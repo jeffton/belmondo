@@ -6,6 +6,7 @@ import {
 } from "./new-course-recipes.js";
 
 const DISTRICTS = {
+  "VESPER CIRCUIT": ["neon-boulevard-grandstand", "transit-concourse-gallery"],
   "KAISEKI COAST": ["civic-terrace", "transit-gallery"],
   "SOLAR ARRAY": ["sandstone-bank", "test-apron"],
   NOCTILUCENT: ["terminal-quay", "loading-balcony"],

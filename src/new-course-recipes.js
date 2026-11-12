@@ -1,5 +1,16 @@
 /** Explicit environments; unknown courses must never become a coastal city. */
 export const NEW_COURSE_RECIPES = {
+  "VESPER CIRCUIT": {
+    biome: "metropolis",
+    ground: [0.61, 0.2, 0.16],
+    rock: 0x243345,
+    wall: 0x334559,
+    pale: 0x8ea4b3,
+    accent: 0x51dbe8,
+    vegetation: 0x3b6264,
+    districts: [],
+    approaches: [],
+  },
   WHITEOUT: {
     biome: "polar",
     ground: [0.54, 0.25, 0.68],
@@ -84,6 +95,11 @@ export function biomeLandHeight(recipe, x, z, context) {
   const nx = (x - centerX) / radiusX;
   const nz = (z - centerZ) / radiusZ;
   const r = Math.hypot(nx, nz);
+  if (recipe.biome === "metropolis") {
+    // City street datum: the elevated course is carried by real architecture,
+    // never an earth berm raised into the rooftop skyline.
+    return 12;
+  }
   if (recipe.biome === "polar") {
     // Asymmetric enclosing ice ridges; the distant outer shelf drops to ocean.
     const basinRadius = Math.hypot(x / 530, z / 530);

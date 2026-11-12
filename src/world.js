@@ -259,7 +259,21 @@ export class World {
           f.branch = branch;
         }
         const shared = split && a.connected && b.connected;
-        addStrip(a, b, -w, w, 0, i % 9 < 2 ? 0xb6bdc4 : 0xc1c3c3, "road");
+        addStrip(
+          a,
+          b,
+          -w,
+          w,
+          0,
+          cfg.biome === "metropolis"
+            ? i % 9 < 2
+              ? 0x526578
+              : 0x46586c
+            : i % 9 < 2
+              ? 0xb6bdc4
+              : 0xc1c3c3,
+          "road",
+        );
         addStrip(a, b, -w, w, -2, 0x7a8589, "concrete");
         // Recessed service shoulders, not car-racing curbs or painted lanes.
         // Chevrons belong exclusively to real boost pads.

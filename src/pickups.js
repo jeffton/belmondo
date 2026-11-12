@@ -1,6 +1,65 @@
 // Deliberate racing-line choices, not random spawns. Lateral metres are relative
 // to the authored route; each fork offers a different reward and approach line.
 const layouts = {
+  "VESPER CIRCUIT": [
+    [
+      0.06,
+      0,
+      2,
+      "weapon",
+      "Accessible boulevard armament before the rooftop climb",
+    ],
+    [
+      0.155,
+      0,
+      8,
+      "weapon",
+      "Outside setup through the linked upper city corners",
+    ],
+    [
+      0.285,
+      0,
+      -7,
+      "weapon",
+      "Descent approach: choose armament or the tighter entry",
+    ],
+    [
+      0.35,
+      -1,
+      -6,
+      "weapon",
+      "Short lower gallery trades raw speed for armament",
+    ],
+    [
+      0.385,
+      1,
+      6,
+      "boost",
+      "Long roof route exit reward after the elevated crest",
+    ],
+    [
+      0.45,
+      0,
+      7,
+      "boost",
+      "Release after the merge before the market braking zone",
+    ],
+    [0.59, 0, -8, "weapon", "Market exit outside line; not the chicane apex"],
+    [
+      0.77,
+      0,
+      7,
+      "weapon",
+      "Canyon setup armament before the lower-city reversal",
+    ],
+    [
+      0.94,
+      0,
+      -2,
+      "boost",
+      "Boulevard acceleration after the final technical corner",
+    ],
+  ],
   "KAISEKI COAST": [
     [
       0.065,

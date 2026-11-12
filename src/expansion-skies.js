@@ -1,6 +1,40 @@
 // Original authored panoramas: open ocean, inhabited terrain and signature
 // landforms occupy different bearings rather than repeating around the sphere.
 export const EXPANSION_SKIES = {
+  "VESPER CIRCUIT": {
+    dusk: 0x27374f,
+    cloud: 0x47536b,
+    ridge: 0x283b52,
+    foreground: 0x1b2a42,
+    skyline: 0x344a63,
+    far: [
+      [0, 0.012],
+      [0.25, 0.018],
+      [0.5, 0.012],
+      [0.75, 0.02],
+      [1, 0.012],
+    ],
+    near: [
+      [0, 0.005],
+      [0.3, 0.008],
+      [0.7, 0.006],
+      [1, 0.005],
+    ],
+    clouds: [
+      [0.18, 0.24, 0.42, 0.04],
+      [0.63, 0.3, 0.36, 0.06],
+      [0.88, 0.17, 0.24, 0.035],
+    ],
+    cities: [
+      [0.025, 0.13, 0.25, "towers"],
+      [0.13, 0.27, 0.37, "towers"],
+      [0.27, 0.4, 0.21, "towers"],
+      [0.4, 0.55, 0.32, "towers"],
+      [0.55, 0.7, 0.24, "towers"],
+      [0.7, 0.86, 0.42, "towers"],
+      [0.86, 0.975, 0.28, "towers"],
+    ],
+  },
   WHITEOUT: {
     dusk: 0xc3d0d6,
     cloud: 0xb2c5d1,
