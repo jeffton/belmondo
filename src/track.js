@@ -586,10 +586,13 @@ export function roadBounds(track, s, branch = 0) {
   if (!result.connected) {
     if (!seamRegion) return result;
     const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
-    const innerHeight = Math.min(
-      RAIL_PROFILE.height,
-      gap / ((2 * RAIL_PROFILE.topOutset) / RAIL_PROFILE.height),
-    );
+    const slope = RAIL_PROFILE.topOutset / RAIL_PROFILE.height;
+    const expansion = track.config.fork
+      ? left.up.dot(axis) -
+        right.up.dot(axis) +
+        slope * (left.right.dot(axis) + right.right.dot(axis))
+      : 2 * slope;
+    const innerHeight = Math.min(RAIL_PROFILE.height, gap / expansion);
     if (ownIsLeft) result.railMaxHeight = innerHeight;
     else result.railMinHeight = innerHeight;
     return result;

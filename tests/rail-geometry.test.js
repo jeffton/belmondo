@@ -9,7 +9,38 @@ function frameAt(track, u, branch) {
   return Object.assign(f, track.bounds(u * track.length, branch), { branch });
 }
 
+const risingForkProbes = {
+  WHITEOUT: 0.76496,
+  MONSOON: 0.70862,
+  CINDERLINE: 0.77895,
+};
+
 for (const [index, config] of TRACKS.entries()) {
+  if (config.fork) {
+    test(`${config.name}: rising fork faces clear before any cap extrusion`, () => {
+      const track = makeTrack(index);
+      const u = risingForkProbes[config.name];
+      const a = frameAt(track, u, -1);
+      const b = frameAt(track, u, 1);
+      const axis = track.frame(u * track.length).right;
+      assert.equal(a.connected, false);
+      assert.equal(a.innerSide, 1);
+      assert.equal(b.innerSide, -1);
+      assert(
+        Math.abs(a.up.dot(axis) - b.up.dot(axis)) > 0.01,
+        "the probe exercises normals leaning towards the median",
+      );
+      for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+        const height = RAIL_PROFILE.height * fraction;
+        const left = railPoint(a, a.clipMax, 1, height);
+        const right = railPoint(b, b.clipMin, -1, height);
+        assert(
+          right.sub(left).dot(axis) >= -1e-7,
+          "physical sloped faces themselves cannot overlap; hiding cap depth is insufficient",
+        );
+      }
+    });
+  }
   test(`${config.name}: sloped rendered faces use the physical banked collision plane`, () => {
     const track = makeTrack(index);
     let banked = 0;
