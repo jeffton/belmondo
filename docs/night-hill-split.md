@@ -22,12 +22,21 @@ AI selects an intended fork while its entry is still connected. Upper-fork AI re
 
 Geometry tests raycast the complete hill/truss meshes across both road widths, verify land clearance and grounded mountain/support feet, and test wrong-level projection, reversed seam ordering, separate rails and branch-specific tunnel membership. Existing whole-course crossing and descent tests remain applicable.
 
-## GPU acceptance (pending)
+## Browser acceptance
 
-Use a frozen build, LOW-RES default, desktop keyboard and actual CDP touch input. Do not replace input driving with AI, direct body placement, progression writes or model-only proofs.
+Frozen source `bad0f9cdd8750cb54da8f13db7e8177b4d850201`; built JS SHA-256 `26bfe0d23acb0141e6cacfe89bc7c928a410c8521effca37f799e7eccd109c4e`. LOW-RES remained the default.
 
-1. Drive Night C1 with keyboard through each fork, from the common approach, beyond merge and the following jump. Repeat the upper route at C3 with a boosted approach, using normal braking. Record input and per-frame position/contact/branch/shield/recovery telemetry.
-2. Repeat both fork choices at C2 with real touch controls. Require sustained movement, correct route identity until the physical merge, gap flight and landing.
-3. Inspect chase and first-person views for the lower portal, tunnel interior, undercrossing, upper crest/supports, opposite-sided merge and jump run-up. Check full-width clearances and nearby scenery, not just centerline snapshots.
-4. Confirm tunnel music echo and roof/ribs only on the lower fork; upper road stays open to the sky. Check pause/resume and both sides of the tunnel boundary.
-5. Verify the original whole-course crossing/descent, start/finish, mobile UI and render budget against the accepted baseline. Inspect the physical seam and rail transitions in motion.
+| Actual input | Class | Fork         | Minimum shield | End progress |
+| ------------ | ----- | ------------ | -------------- | ------------ |
+| Keyboard     | C1    | Lower tunnel | 100            | .53665       |
+| Keyboard     | C3    | Upper hill   | 100            | .53845       |
+| CDP touch    | C2    | Lower tunnel | 87.7           | .54287       |
+| CDP touch    | C2    | Upper hill   | 93.9           | .53904       |
+
+All four runs started at the grid in the actual application. An external feedback pilot sent keyboard or real CDP touch events using read-only telemetry; it did not assign bodies, progression, controls or internal AI. Every-frame checks confirm earned fork identity through the separated section, forward progression, zero recovery snaps, physical flight through the following gap and a grounded landing. First-person view was activated through input during each run. All four runs had zero JavaScript/HTTP errors. The controlled ordinary/boosted all-class matrix is CPU coverage, not a claim of six browser matrix cells.
+
+### Visual fixtures and retained evidence
+
+The 36 stationary seeded captures comprise 24 desktop and 12 mobile chase/first-person views of both routes, covering tunnel entry/interior, upper crossing, crest and reversed merge. These are geometry/camera inspection, not driving proof. The lower route has tunnel skin; the upper route remains open to the sky. Branch-specific acoustics were checked through predicate tests and caller inspection, not a subjective browser listening test.
+
+Private traces, input/frame logs, captures and `acceptance-summary.json` are retained under `/var/tmp/belmondo-night-split-qa/`. Failed external-pilot runs are retained separately: a start-input synchronization failure, stale CDP brake release, and upper-route landing failures before pilot gain/pace correction. No product geometry or physics changed during browser QA. Each owned browser and the QA servers were closed; the shared Batty browser was untouched.
