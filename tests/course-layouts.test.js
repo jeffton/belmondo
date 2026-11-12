@@ -9,7 +9,10 @@ const baselinePhysical = [4406.410575, 4924.153825, 4222.402006];
 for (let index = 0; index < 3; index++)
   test(`course ${index} gains real length, hills and a continuous finish straight`, () => {
     const track = makeTrack(index);
-    assert(track.config.layoutId.endsWith("-2"));
+    assert.equal(
+      track.config.layoutId,
+      ["coast-3", "solar-3", "noctilucent-2"][index],
+    );
     let length = 0,
       last = track.frame(0).p,
       low = Infinity,

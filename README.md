@@ -16,8 +16,8 @@ Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equippe
 
 ## Circuits
 
-- **Kaiseki Coast — 5.8 km:** rising coastal loop and a long ravine jump with an aligned landing straight.
-- **Solar Array — 6.5 km:** mountain pass with a rock-cut tunnel and broad climbing bends.
+- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a climbing reversal and a long ravine jump with an aligned landing straight.
+- **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
 - **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.

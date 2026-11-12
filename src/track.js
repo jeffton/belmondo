@@ -45,8 +45,12 @@ export const TRACKS = [
     sea: 0x143b57,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "coast-2",
+    layoutId: "coast-3",
     points: layoutPoints("coast"),
+    rhythm: [
+      { start: 0.12, end: 0.28, offset: 75 },
+      { start: 0.46, end: 0.7, offset: -130 },
+    ],
     ramp: { start: 0.802, height: 14, length: 0.018 },
     gapLength: 0.018,
     sections: {
@@ -67,8 +71,12 @@ export const TRACKS = [
     sea: 0x79645f,
     width: 19,
     branchWidths: [17, 19],
-    layoutId: "solar-2",
+    layoutId: "solar-3",
     points: layoutPoints("solar"),
+    rhythm: [
+      { start: 0.1, end: 0.29, offset: -100 },
+      { start: 0.34, end: 0.53, offset: 100 },
+    ],
     ramp: { start: 0.622, height: 8, length: 0.018 },
     gapLength: 0.014,
     sections: {
@@ -169,7 +177,7 @@ export function makeTrack(index) {
     // A genuine home straight spans the finish line, with generous transitions.
     const homeU = u < 0.5 ? u + 1 : u;
     const [homeStart, homeEnd] = config.sections.finishStraight;
-    const homeFade = config.layoutId === "solar-2" ? 0.06 : 0.055;
+    const homeFade = config.name === "SOLAR ARRAY" ? 0.06 : 0.055;
     const homeOutFade = config.layoutId === "noctilucent-2" ? 0.075 : 0.1;
     const homeA = curve.getPointAt(homeStart);
     const homeB = curve.getPointAt(homeEnd - 1);
@@ -199,7 +207,7 @@ export function makeTrack(index) {
     } else if (homeU >= homeStart - homeFade && homeU < homeStart) {
       const outer = curve.getPointAt(homeStart - homeFade);
       const direction =
-        config.layoutId === "coast-2"
+        config.name === "KAISEKI COAST"
           ? runwayDirection.clone()
           : curve.getTangentAt(homeStart - homeFade).multiplyScalar(length);
       if (config.layoutId === "noctilucent-2") {
@@ -234,15 +242,40 @@ export function makeTrack(index) {
         ),
       );
     }
+    // Authored coastal esses and desert outcrop turns displace the real deck,
+    // not the steering. Zero first/second derivatives blend into existing
+    // signatures; runway and home-straight windows remain untouched.
+    const tangent = curve.getTangentAt(i / count).normalize();
+    const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
+    for (const bend of config.rhythm ?? []) {
+      const t = (u - bend.start) / (bend.end - bend.start);
+      if (t > 0 && t < 1)
+        p.addScaledVector(
+          right,
+          bend.offset * Math.sin(Math.PI * t) ** 2 * Math.sin(2 * Math.PI * t),
+        );
+    }
     if (u >= config.ramp.start && u < config.jump)
       p.y +=
         ((u - config.jump + config.ramp.length) / config.ramp.length) *
         config.ramp.height;
-    const tangent = curve.getTangentAt(i / count).normalize();
-    const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     return { p, tangent, right, up };
   });
+  // Fork offsets must follow the authored deck, including the added bends.
+  if (config.rhythm)
+    for (let i = 0; i <= count; i++) {
+      const f = base[i];
+      const u = i / count;
+      if (!config.rhythm.some((bend) => u > bend.start && u < bend.end))
+        continue;
+      f.tangent = base[(i + 1) % count].p
+        .clone()
+        .sub(base[mod(i - 1, count)].p)
+        .normalize();
+      f.right.set(f.tangent.z, 0, -f.tangent.x).normalize();
+      f.up.crossVectors(f.tangent, f.right).normalize();
+    }
   const routes = {};
   for (const branch of [-1, 0, 1]) {
     const points = base.map((f, i) => {

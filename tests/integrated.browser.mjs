@@ -665,12 +665,12 @@ async function finishFixture() {
     const features = await page.evaluate(() => {
       const f = window.finishFixture,
         c = f.track.config;
-      if (c.layoutId === "coast-2")
+      if (c.name === "KAISEKI COAST")
         return [
           { name: "coast-ads", u: 0.187 },
           { name: "coast-sloped-ramp", u: c.jump - c.ramp.length / 2 },
         ];
-      if (c.layoutId === "solar-2")
+      if (c.name === "SOLAR ARRAY")
         return [
           { name: "solar-portal", u: c.sections.mountainTunnel[0] - 0.006 },
           {
@@ -1041,6 +1041,8 @@ async function drive() {
       worldPosition: t.worldPosition,
       velocity: t.velocity,
       lateralPosition: t.lateralPosition,
+      controls: t.controls,
+      commanded: { steer, braking },
     });
     if (
       !t.grounded &&
@@ -1121,6 +1123,34 @@ async function drive() {
     }
     return { metadata: crossing, levels };
   });
+  // A real-input synthetic driver, never production assistance: prove the
+  // authored esses require opposite steering through the browser's own input
+  // pipeline, rather than passing merely because the AI earns a lap.
+  const cornerSequences = (track.config.rhythm || []).map((bend) => {
+    const sequence = samples.filter(
+      (s) => s.lap === 1 && s.progress >= bend.start && s.progress <= bend.end,
+    );
+    expect(
+      sequence.length,
+      "actually traverse the new corner sequence",
+    ).toBeGreaterThan(8);
+    expect(
+      sequence.some((s) => s.controls.steer > 0.05),
+      "positive real steering in the esses",
+    ).toBe(true);
+    expect(
+      sequence.some((s) => s.controls.steer < -0.05),
+      "negative real steering in the esses",
+    ).toBe(true);
+    return {
+      bend,
+      input: device,
+      samples: sequence,
+      braking: sequence.filter((s) => s.commanded.braking).length,
+      shieldBefore: sequence[0].shield,
+      shieldAfter: sequence.at(-1).shield,
+    };
+  });
   const descent = track.config.sections.descent;
   const drop = descent
     ? samples.filter(
@@ -1173,7 +1203,10 @@ async function drive() {
     await page.locator("#result-quit").click();
     await page.locator("#tracks button").first().click();
     await chooseClass(page, 1, device);
-    await expect(page.locator("#best")).toHaveText("LOCAL RECORD / 03:42.22");
+    const otherRecord = records[recordKey(TRACKS[0].layoutId, "c2")];
+    await expect(page.locator("#best")).toHaveText(
+      `LOCAL RECORD / ${otherRecord ? `${String(Math.floor(otherRecord / 60)).padStart(2, "0")}:${(otherRecord % 60).toFixed(2).padStart(5, "0")}` : "—"}`,
+    );
   } else
     await page.screenshot({
       path: `test-artifacts/integrated-${tag}-one-lap.png`,
@@ -1193,8 +1226,9 @@ async function drive() {
     motionTrace: await page.evaluate(() => window.qaMotion),
     jumps,
     crossings,
+    cornerSequences,
     drop,
-    method: `Actual ${device} input; ${targetLaps} natural laps, observed routes in samples; no Race state injection`,
+    method: `Synthetic test driver using actual ${device} input; ${targetLaps} natural laps, read-only telemetry; no Race state injection or production steering assistance`,
   });
   await context.close();
 }
