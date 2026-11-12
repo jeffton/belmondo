@@ -9,6 +9,7 @@ const neutral = { throttle: true, steer: 0, air: 0, brake: 0 };
 function straight(width = 100) {
   return {
     length: 1_000_000,
+    finishS: 0,
     config: { split: [0.9, 0.95], jump: 0.99 },
     curvature: () => 0,
     gap: () => false,
@@ -39,10 +40,10 @@ test("class pace accelerates physical motion, not the race/countdown clocks", ()
   for (let c = 0; c < 3; c++) {
     const race = new Race(straight(), 0, "trial", c);
     race.update(1, { ...neutral, launchIntent: false });
-    near(race.countdown, 2.2);
+    near(race.countdown, 4.2);
     assert.equal(race.time, 0);
     assert.equal(race.player.speed, 0);
-    race.update(2.2, neutral);
+    race.update(4.2, neutral);
     assert.equal(race.launch.success, false);
     matchedDrive(race, 12);
     const pace = SPEED_CLASSES[c].pace;

@@ -14,6 +14,7 @@ function circuit({ gap = false, split = false } = {}) {
   const config = { split: split ? [0.25, 0.45] : [0.9, 0.9], jump: 0.7 };
   return {
     length,
+    finishS: 0,
     config,
     curvature: () => 1 / radius,
     gap: (u) => gap && u >= 0.7 && u < 0.72,
@@ -44,6 +45,7 @@ function circuit({ gap = false, split = false } = {}) {
 function straight(width = 15) {
   return {
     length: 1_000_000,
+    finishS: 0,
     config: { split: [0.9, 0.95], jump: 0.99 },
     curvature: () => 0,
     gap: () => false,
@@ -98,10 +100,11 @@ function driver(race) {
 test("passive throttle cannot rotate around a curve; a yaw controller can race it", () => {
   const passive = setup(),
     active = setup();
+  const initialYaw = passive.player.yaw;
   drive(passive, 5);
   assert.equal(
     passive.player.yaw,
-    0,
+    initialYaw,
     "wall response does not align the ship heading",
   );
   drive(passive, 15);
@@ -306,9 +309,10 @@ test("both airbrakes add drag while their yaw moments cancel", () => {
   assert(braked.player.speed < free.player.speed - 6);
   const left = setup(),
     right = setup();
+  const initialYaw = left.player.yaw;
   drive(left, 0.3, { ...neutral, air: 1, airLeft: 1, airRight: 0 });
   drive(right, 0.3, { ...neutral, air: -1, airLeft: 0, airRight: 1 });
-  assert(left.player.yaw > 0 && right.player.yaw < 0);
+  assert(left.player.yaw > initialYaw && right.player.yaw < initialYaw);
 });
 
 test("late steering incurs a real wall penalty compared to a planned line", () => {

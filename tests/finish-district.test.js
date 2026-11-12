@@ -99,21 +99,14 @@ for (const [index, config] of TRACKS.entries()) {
             );
         }
     }
-    const portal = scene.getObjectByName("finish-line-portal");
-    assert(
-      portal.position.distanceTo(track.frame(0).p) < 1e-9,
-      "finish portal cannot shift the timing line",
+    assert.equal(
+      scene.getObjectByName("finish-line-portal"),
+      undefined,
+      "the dynamic board is the only finish arch",
     );
-    const portalBodies = district.bodies.filter(
-      (body) => body.group === portal,
-    );
-    assert(portalBodies.length > 0, "timing portal architecture remains");
-    assert(
-      portalBodies.every((body) => {
-        const scale = new THREE.Vector3().setFromMatrixScale(body.matrix);
-        return scale.y >= 0.5;
-      }),
-      "timing portal has no second pixel-letter FINISH sign",
+    assert.equal(
+      scene.getObjectByName("timing-line-stripe").userData.finishS,
+      track.finishS,
     );
     assert(
       district.root.userData.spectators > 0,

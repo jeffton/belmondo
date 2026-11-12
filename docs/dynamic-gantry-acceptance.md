@@ -1,16 +1,18 @@
 # Dynamic timing board acceptance
 
-One downstream physical board shows READY → 3 → 2 → 1 → GO, then announces the lap the player enters at the line. On the incoming leg of the authored home straight it shows the next lap; after crossing it shows that lap as current. The final approach shows FINISH / LINE, and only the earned final crossing changes the detail to RACE / COMPLETE. The timing-line portal retains its structure and checkers without a separate FINISH sign. Menu/demo shows standby; countdown timing and race mechanics are unchanged.
+One physical board at `track.finishS` shows READY → 3 → 2 → 1 → GO, then announces the lap the player enters at the line. On the incoming leg of the authored home straight it shows the next lap; after crossing it shows that lap as current. The final approach shows FINISH / LINE, and only the earned final crossing changes the detail to RACE / COMPLETE. The board and crisp timing stripe occupy the downstream endpoint of the complete spectator/checker straight. Menu/demo shows standby. A two-second camera approach precedes the launch countdown.
 
-The announcement window begins at `track.config.sections.finishStraight[0]`: the existing straight/checkerboard approach, roughly 250–300 m before the line, with the board 42 m beyond it. It is an authored physical visibility district, not a new gameplay distance/quota. Gate-earned unwrapped player progression identifies the incoming leg for each lap; the initial grid/outgoing leg stays on LAP 1, and AI progress is irrelevant.
+The announcement window begins at `track.config.sections.finishStraight[0]`: the complete authored straight/checkerboard approach. The board sits on the actual timing plane at the straight’s downstream endpoint. It is an authored physical visibility district, not a new gameplay distance/quota. Gate-earned unwrapped player progression identifies the incoming leg for each lap; the initial grid/outgoing leg stays on LAP 1, and AI progress is irrelevant.
 
 ## CPU coverage
 
 `node --test tests/start-gantry.test.js tests/finish-district.test.js`
 
-Recorded canvas operations verify dark-panel contrast, synchronized countdown thresholds, current player lap, finish, demo and restart. Actual `Race` instances seeded before timing gates exercise the approach before every lap crossing and the earned crossing on all three courses. They cover initial LAP 1, the home-straight window boundary, upcoming LAP 2–5, final FINISH / LINE before completion, post-line current lap or RACE / COMPLETE, reset/demo and an AI leader that cannot change the display. These are bounded state fixtures, not human-driven gameplay. Geometry, materials and the single canvas texture are reused. Finish-district checks retain the grounded portal, spectators and checkerboard without a second lettered sign.
+Recorded canvas operations verify dark-panel contrast, synchronized countdown thresholds, current player lap, finish, demo and restart. Actual `Race` instances seeded before timing gates exercise the approach before every lap crossing and the earned crossing on all seven courses. They cover initial LAP 1, the home-straight window boundary, upcoming LAP 2–5, final FINISH / LINE before completion, post-line current lap or RACE / COMPLETE, reset/demo and an AI leader that cannot change the display. These are bounded state fixtures, not human-driven gameplay. Geometry, materials and the single canvas texture are reused. Finish-district checks retain spectators and full-straight checker coverage with one timing arch.
 
-## Browser acceptance
+## Historical browser acceptance
+
+This evidence covers the earlier board placement. Endpoint relocation and camera-approach GPU acceptance are tracked in [finish-origin-acceptance.md](finish-origin-acceptance.md).
 
 `SOURCE_URL=http://127.0.0.1:5233 node tests/dynamic-gantry.browser.mjs`
 
@@ -28,7 +30,7 @@ Capture matrix:
 - Mobile 390×844: Coast daylight and Noctilucent night, actual chase approach and fixed board close-up.
 - For each course, record real Race countdown 3 → 2 → 1 → GO, then LAP 1; capture upcoming LAP 2 before the line and LAP 2 after crossing, upcoming LAP 5 and final approach FINISH / LINE, then final crossing RACE / COMPLETE. Bounded seeded near-gate fixtures must be labeled separately from actual keyboard/touch input.
 - Give a rival a later lap while the player remains on lap 1: board stays LAP 1 and cannot show FINISH. Demo after a finish returns to standby; a fresh race returns to READY/countdown without stale lap or finish.
-- Frame the timing-line portal and downstream board together: exactly one lettered timing display, with stands, ads and road checkers intact. Check FINISH and LAP 5 at distance and close-up for clipping/readability, especially night/mobile.
+- Frame the endpoint board and timing stripe together: exactly one timing arch, with stands, ads and road checkers intact. Check FINISH and LAP 5 at distance and close-up for clipping/readability, especially night/mobile.
 - Compare renderer geometry/texture counts before and after repeated lap/demo/restart transitions; no accumulating board resources. Record console errors. Do not describe scripted fixtures as human gameplay.
 
-Stage scope: start-gantry rendering and narrow removal of the separate finish sign; no track, world, sky or race-mechanics changes.
+Endpoint acceptance must cover all seven courses, actual approaches/passages, both camera modes and the two-second pre-countdown approach.

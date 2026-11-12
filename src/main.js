@@ -755,6 +755,9 @@ window.nullVector = {
         track.frame(race.player.s, race.player.branch).p.project(world.camera)
           .x,
       progress: mod(race.player.s, track.length) / track.length,
+      raceProgress:
+        mod(race.player.s - track.finishS, track.length) / track.length,
+      finishS: track.finishS,
       lap: race.player.lap,
       laps: LAPS,
       speedClass: race.speedClass,

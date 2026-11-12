@@ -6,6 +6,7 @@ import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
 import { buildTrackPads } from "./track-pads.js";
 import { buildJumpMarkings } from "./jump-markings.js";
 import { buildStartGantry } from "./start-gantry.js";
+import { gridApproachBlend } from "./start-sequence.js";
 import { buildFinishDistrict } from "./finish-district.js";
 import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
@@ -676,6 +677,10 @@ export class World {
       .clone()
       .addScaledVector(this.cameraForward, -10.5 - player.speed * 0.006)
       .addScaledVector(UP, 3.8);
+    const approach = demo ? 0 : gridApproachBlend(race.countdown);
+    desired
+      .addScaledVector(this.cameraForward, -30 * approach)
+      .addScaledVector(UP, 12 * approach);
     const ahead = focus.clone().addScaledVector(this.cameraForward, 28);
     if (demo) {
       desired
@@ -701,7 +706,8 @@ export class World {
     for (const r of race.racers) {
       const ship = this.ships[r.id];
       if (!ship) continue;
-      ship.visible = demo || r !== player || this.view !== "first-person";
+      ship.visible =
+        demo || r !== player || this.view !== "first-person" || approach > 0;
       const rf = track.frame(r.contactS, r.branch);
       ship.position.copy(r.position);
       const pitch = r.pitch;
@@ -732,11 +738,12 @@ export class World {
       const ship = this.ships[player.id];
       const up = UP.clone().applyQuaternion(ship.quaternion);
       const gaze = new THREE.Vector3(0, 0, 1).applyQuaternion(ship.quaternion);
-      this.camera.position
-        .copy(player.position)
+      const cockpit = player.position
+        .clone()
         .add(new THREE.Vector3(0, 1.15, 0.6).applyQuaternion(ship.quaternion));
-      this.camera.up.copy(up);
-      this.camera.lookAt(this.camera.position.clone().add(gaze));
+      this.camera.position.copy(cockpit).lerp(desired, approach);
+      this.camera.up.copy(up).lerp(UP, approach).normalize();
+      this.camera.lookAt(cockpit.clone().add(gaze).lerp(focus, approach));
     }
     this.weaponEffects.update(race, dt, this.time);
     const sparkTransform = new THREE.Object3D();

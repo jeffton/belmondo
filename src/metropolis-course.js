@@ -87,7 +87,7 @@ export const METROPOLIS_COURSE = {
   name: "VESPER CIRCUIT",
   subtitle: "07 / Vertical neon metropolis",
   biome: "metropolis",
-  layoutId: "vesper-1",
+  layoutId: "vesper-1-finish-end",
   curveType: "centripetal",
   color: 0xbba3ff,
   sky: 0x12172f,

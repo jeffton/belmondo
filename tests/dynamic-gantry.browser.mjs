@@ -105,7 +105,7 @@ try {
           } else if (String(stage).startsWith("approach:")) {
             const lap = Number(stage.split(":")[1]);
             const p = race.player,
-              s = lap * track.length - 100,
+              s = track.finishS + lap * track.length - 100,
               frame = track.frame(s);
             p.lap = lap;
             p.s = p.contactS = s;
@@ -209,7 +209,10 @@ try {
         },
       };
     });
-    for (let course = 0; course < 3; course++) {
+    const courseCount = await page.evaluate(
+      async () => (await import("/src/track.js")).TRACKS.length,
+    );
+    for (let course = 0; course < courseCount; course++) {
       const prefix = `${mobile ? "mobile" : "desktop"}-course${course}`;
       const data = {
         profile: prefix,

@@ -117,7 +117,7 @@ export const TRACKS = [
     sea: 0x143b57,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "coast-4",
+    layoutId: "coast-4-finish-end",
     points: layoutPoints("coast"),
     banks: [
       [0.07, 0.27, 0.025],
@@ -147,7 +147,7 @@ export const TRACKS = [
     sea: 0x79645f,
     width: 19,
     branchWidths: [17, 19],
-    layoutId: "solar-4",
+    layoutId: "solar-4-finish-end",
     points: layoutPoints("solar"),
     banks: [
       [0.08, 0.19, 0.02],
@@ -178,7 +178,7 @@ export const TRACKS = [
     sea: 0x14314d,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "noctilucent-4",
+    layoutId: "noctilucent-4-finish-end",
     night: true,
     points: layoutPoints("night"),
     banks: [
@@ -627,9 +627,13 @@ export function makeTrack(index) {
     config.sections.crossings = intersections;
     config.sections.upperBridge = intersections[0].upperSpan;
   }
+  // Authored stations stay fixed: scenery, forks and physical geometry do not
+  // rotate when the timing origin moves to the downstream end of the straight.
+  const finishS = (config.sections.finishStraight[1] - 1) * length;
   const track = {
     config,
     length,
+    finishS,
     physicalLengths,
     physicalLength: physicalLengths[0],
     frame,

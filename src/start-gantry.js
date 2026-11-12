@@ -113,14 +113,20 @@ function drawPip(ctx, stage) {
   ctx.restore();
 }
 
-// The timing/checker line stays at s=0. This signal is ahead in the drivers' view.
+// Shared by the physical display and countdown voice dispatch.
+export function countdownBoardStage(race) {
+  if (race.countdown > 3) return "armed";
+  if (race.countdown > 0) return Math.ceil(race.countdown);
+  return race.time < 1.2 ? "GO" : "idle";
+}
+
+// The display, stripe and timing plane share the authored straight endpoint.
 export function buildStartGantry(scene, track) {
-  const grid = track.frame(0);
-  const signal = track.frame(42);
+  const signal = track.frame(track.finishS);
   const assembly = new THREE.Group();
   assembly.name = "grid-signal";
   assembly.position.copy(signal.p);
-  assembly.rotation.y = Math.atan2(grid.tangent.x, grid.tangent.z);
+  assembly.rotation.y = Math.atan2(signal.tangent.x, signal.tangent.z);
   scene.add(assembly);
 
   const shell = new THREE.MeshLambertMaterial({
@@ -215,7 +221,7 @@ export function buildStartGantry(scene, track) {
         // straight's incoming leg. Unwrapped, gate-earned progression keeps the
         // initial grid and outgoing leg on lap 1, not prematurely on lap 2.
         const straightStart = track.config.sections.finishStraight[0];
-        const lapEnd = player.lap * track.length;
+        const lapEnd = track.finishS + player.lap * track.length;
         approaching =
           player.s >= (player.lap - 1 + straightStart) * track.length &&
           player.s < lapEnd;
