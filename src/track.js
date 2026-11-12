@@ -569,10 +569,12 @@ export function makeTrack(index) {
   }
   function isTunnel(s, branch = 0) {
     const u = mod(s, length) / length;
+    const enclosedBranch = config.tunnelBranches
+      ? config.tunnelBranches.includes(branch)
+      : config.name !== "KAISEKI COAST" && (!config.night || branch === -1);
     return (
       config.tunnel !== null &&
-      config.name !== "KAISEKI COAST" &&
-      (!config.night || branch === -1) &&
+      enclosedBranch &&
       u > config.tunnel[0] &&
       u < config.tunnel[1]
     );

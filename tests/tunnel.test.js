@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACKS } from "../src/track.js";
 
 test("tunnel metadata matches enclosed courses, not Kaiseki's open canopy", () => {
   const coast = makeTrack(0);
@@ -19,5 +19,35 @@ test("tunnel metadata matches enclosed courses, not Kaiseki's open canopy", () =
         track.isTunnel((lap + (start + end) / 2) * track.length, branch),
         true,
       );
+    if (index === 2) {
+      for (const otherBranch of [0, 1])
+        assert.equal(
+          track.isTunnel(((start + end) / 2) * track.length, otherBranch),
+          false,
+        );
+    }
+  }
+});
+
+test("explicit tunnel branches classify only the authored branches", () => {
+  const original = TRACKS[4];
+  try {
+    TRACKS[4] = {
+      ...original,
+      tunnel: [0.2, 0.3],
+      tunnelBranches: [1],
+    };
+    const track = makeTrack(4);
+    const middle = 0.25 * track.length;
+
+    assert.equal(track.isTunnel(middle), false);
+    assert.equal(track.isTunnel(middle, -1), false);
+    assert.equal(track.isTunnel(middle, 1), true);
+    assert.equal(track.isTunnel(0.2 * track.length, 1), false);
+    assert.equal(track.isTunnel(0.3 * track.length, 1), false);
+    assert.equal(track.isTunnel(-0.75 * track.length, 1), true);
+    assert.equal(track.isTunnel(0.35 * track.length, 1), false);
+  } finally {
+    TRACKS[4] = original;
   }
 });
