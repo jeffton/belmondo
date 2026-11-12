@@ -168,7 +168,7 @@ try {
               });
             else if (!finished) {
               audio.stopEngine();
-              audio.effect("finish");
+              audio.effect("finish", 1);
               finished = true;
             }
             if (t >= 13.2) {
@@ -278,12 +278,25 @@ try {
         "incoming",
         "lap",
         "finish",
-      ].map((kind) => [kind, (a) => a.effect(kind)]),
+      ].map((kind) => [
+        kind,
+        (a) =>
+          a.effect(
+            kind,
+            kind === "finish"
+              ? 1
+              : kind === "lap"
+                ? 2
+                : kind === "pickup"
+                  ? "MISSILE"
+                  : undefined,
+          ),
+      ]),
       [
         "finish-transition",
         (a) => {
           a.update(1, false);
-          a.effect("finish");
+          a.effect("finish", 1);
           a.stopEngine();
         },
       ],

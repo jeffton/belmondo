@@ -1,6 +1,6 @@
 # Countdown voice acceptance
 
-The start signal plays only THREE, TWO, ONE, GO. No countdown tone, start chord or turbine-sweep cue is layered with speech. Launch boost, engine, music and later boost effects are unchanged. No finish-line relocation or two-second GO work is included in this branch.
+The start signal plays only THREE, TWO, ONE, GO. No countdown tone, start chord, turbine-sweep cue, lap/pickup effect or finish effect is layered with speech. Launch boost, engine, music and later boost effects are unchanged. No finish-line relocation or two-second GO work is included in this branch.
 
 ## Voice-only candidate
 
@@ -9,6 +9,10 @@ Lap announcements say LAP TWO, LAP THREE and LAP FOUR on entry, and FINAL LAP on
 CPU tests exercise real countdown/GO effects and require exactly one speech source per crossing. The offline browser fixture compares each countdown/GO output sample-for-sample with the corresponding standalone spoken word, proving the absence of layered tones. Build and formatting are checked before integration.
 
 Voice-only browser/audio acceptance is pending a serialized GPU grant. The private `test-artifacts/countdown-launch.wav` from the previous QA session contains layered launch sounds and is not this candidate's listening sample.
+
+## Result voice
+
+Earned finishes at ranks 1–8 are covered by CPU tests. The result is captured after all racers finish the same update, including a test where an AI crosses in the player’s finish step and changes the provisional rank. The results display and voice share this immutable rank. Duplicate result dispatch cannot repeat speech; muted results do not replay. AI-only finishes remain silent. Trial applies the same rank-one YOU WON rule. Offline tests compare each result with the standalone speech clip; native acceptance remains pending combined browser ownership.
 
 ## Completed synchronization checks
 

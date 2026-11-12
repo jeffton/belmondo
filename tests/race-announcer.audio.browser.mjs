@@ -133,7 +133,7 @@ try {
     );
     assert.equal(calls[4].key, `voice:${acquired}`);
     assert(calls.every((call) => call.context === "running"));
-    assert.equal(calls.at(-1).key, "finish");
+    assert.equal(calls.at(-1).key, "voice:result:1");
     assert(!calls.some((call) => call.key === "lap" || call.key === "pickup"));
     await writeFile(
       `${directory}/${mobile ? "mobile" : "desktop"}.json`,

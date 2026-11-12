@@ -13,6 +13,7 @@ export class AudioEngine {
     this.started = false;
     this.hidden = false;
     this.lastEffect = new Map();
+    this.announcedResults = new WeakSet();
     this.sources = [];
     this.sampleBuffers = new Map();
     this.sampleVoices = new Set();
@@ -135,11 +136,6 @@ export class AudioEngine {
     for (const voice of this.sampleVoices)
       if (voice.announcementPriority !== undefined) this.stopSamples(voice.key);
     this.playSample(key).announcementPriority = priority;
-  }
-
-  stopAnnouncements() {
-    for (const voice of this.sampleVoices)
-      if (voice.announcementPriority !== undefined) this.stopSamples(voice.key);
   }
 
   stopSamples(key) {
@@ -271,7 +267,11 @@ export class AudioEngine {
   }
 
   raceEvent(event, race, lapCount) {
-    if (event.kind === "lap") {
+    if (event.kind === "finish") {
+      if (!race.finished || this.announcedResults.has(race)) return;
+      this.announcedResults.add(race);
+      this.effect("finish", race.position);
+    } else if (event.kind === "lap") {
       if (!race.finished)
         this.effect(
           "lap",
@@ -286,6 +286,10 @@ export class AudioEngine {
     const cooldown = kind === "scrape" ? 0.16 : kind === "hit" ? 0.08 : 0;
     if (now - (this.lastEffect.get(kind) ?? -Infinity) < cooldown) return;
     this.lastEffect.set(kind, now);
+    if (kind === "finish") {
+      this.announce(`voice:result:${weapon}`, 4);
+      return;
+    }
     if (kind === "lap") {
       this.announce(`voice:lap:${weapon}`, 2);
       return;
@@ -296,7 +300,6 @@ export class AudioEngine {
     }
     const key = kind === "fire" ? `fire:${weapon.toUpperCase()}` : kind;
     if (Object.hasOwn(SFX_CUES, key)) {
-      if (kind === "finish") this.stopAnnouncements();
       this.playSample(key);
       return;
     }

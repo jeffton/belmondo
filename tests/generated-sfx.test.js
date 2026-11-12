@@ -154,6 +154,20 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
     "pause discards announcements with no stale queue",
   );
 
+  for (let rank = 1; rank <= 8; rank++) {
+    audio.effect("finish", rank);
+    assert.deepEqual(active(), [`voice:result:${rank}`]);
+    audio.effect("countdown", 3);
+    audio.effect("lap", "final");
+    audio.effect("pickup", "MISSILE");
+    assert.deepEqual(
+      active(),
+      [`voice:result:${rank}`],
+      "finish has highest priority",
+    );
+  }
+  audio.stopSamples();
+
   audio.effect("voice:3");
   const spoken = [...audio.sampleVoices][0];
   assert.equal(spoken.gain.gain.value, 0.9);
@@ -190,10 +204,10 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   assert.equal(audio.sampleVoices.size, 0, "resume cannot replay stale tails");
 
   audio.effect("lap", 2);
-  audio.effect("finish");
+  audio.effect("finish", 1);
   assert.deepEqual(
     [...audio.sampleVoices].map((voice) => voice.key),
-    ["finish"],
+    ["voice:result:1"],
   );
   env.window.dispatchEvent(new Event("blur"));
   assert.equal(audio.sampleVoices.size, 0);
@@ -297,12 +311,14 @@ test("spoken lap entry follows earned player gates, including final lap and fini
       (voice) => voice.announcementPriority !== undefined,
     );
     if (lap === LAPS) {
-      assert.equal(
-        spoken.length,
-        0,
-        "finish never announces a sixth or repeated final lap",
+      assert.deepEqual(
+        spoken.map((voice) => voice.key),
+        ["voice:result:1"],
+        "finish replaces lap speech without repeating final lap",
       );
-      assert([...audio.sampleVoices].some((voice) => voice.key === "finish"));
+      assert(
+        [...audio.sampleVoices].some((voice) => voice.key === "voice:result:1"),
+      );
     } else {
       assert.deepEqual(
         spoken.map((voice) => voice.key),
@@ -353,7 +369,14 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "jump",
       "land",
       "incoming",
-      "finish",
+      "voice:result:1",
+      "voice:result:2",
+      "voice:result:3",
+      "voice:result:4",
+      "voice:result:5",
+      "voice:result:6",
+      "voice:result:7",
+      "voice:result:8",
       "voice:3",
       "voice:2",
       "voice:1",
