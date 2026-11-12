@@ -711,7 +711,8 @@ test("reversed ship fires forward in body space and leaves a stationary mine beh
     ahead = race.racers[2];
   behind.position.copy(p.position).add(new THREE.Vector3(0, 0, 25));
   ahead.position.copy(p.position).add(new THREE.Vector3(0, 0, -25));
-  behind.s = ahead.s = p.s + 25;
+  behind.s = behind.contactS = p.s + 25;
+  ahead.s = ahead.contactS = p.s - 25;
   p.weapon = "PULSE";
   race.fire();
   assert.equal(behind.shield, 100, "track-forward is behind the reversed ship");

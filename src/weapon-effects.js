@@ -133,7 +133,14 @@ export class WeaponEffects {
     );
     // Every resource is attached to a hidden reusable slot, so the world's scene
     // disposal owns it even on courses where a weapon has not yet been fired.
-    for (const kind of ["MISSILE", "PULSE", "MINE", "TURBO", "BLAST"])
+    for (const kind of [
+      "MISSILE",
+      "PULSE",
+      "PULSE_HIT",
+      "MINE",
+      "TURBO",
+      "BLAST",
+    ])
       this.allocate(kind);
   }
 
@@ -178,6 +185,14 @@ export class WeaponEffects {
         );
         ring.scale.setScalar(2 + i * 1.5);
         ring.rotation.z = i * Math.PI * 0.7;
+      }
+    } else if (kind === "PULSE_HIT") {
+      // Broken electrical bands wrap the struck hull, rather than an explosion
+      // at the firing position. Each racer keeps a reusable slot.
+      for (let i = 0; i < 4; i++) {
+        const arc = mesh(this.arcGeometry, glow(i % 2 ? 0xb5faff : 0xfb4db2));
+        arc.position.z = (i - 1.5) * 1.8;
+        arc.scale.set(2.8, 1.1, 1);
       }
     } else if (kind === "TURBO") {
       for (const side of [-1, 1]) {
@@ -310,6 +325,24 @@ export class WeaponEffects {
     }
     this.blasts = this.blasts.filter((b) => b.busy);
     for (const [i, racer] of race.racers.entries()) {
+      const hitPool = this.pools.get("PULSE_HIT");
+      const hit = hitPool[i] || this.allocate("PULSE_HIT");
+      hit.root.visible = racer.pulseHit > 0;
+      if (hit.root.visible) {
+        hit.root.position.copy(racer.position);
+        hit.root.rotation.set(
+          racer.pitch,
+          racer.yaw,
+          -racer.yawRate * 0.45,
+          "YXZ",
+        );
+        const strength = racer.pulseHit / 0.65;
+        for (const [j, arc] of hit.root.children.entries()) {
+          arc.rotation.z = time * (j % 2 ? -19 : 23) + j * 1.7;
+          arc.material.opacity =
+            strength * (0.55 + 0.3 * Math.sin(time * 47 + j));
+        }
+      }
       const pool = this.pools.get("TURBO");
       const slot = pool[i] || this.allocate("TURBO");
       slot.root.visible = racer.boost > 0.1;

@@ -81,6 +81,7 @@ export class Race {
       surge: 0,
       boost: 0,
       stun: 0,
+      pulseHit: 0,
       weapon: null,
       collectedPickups: new Set(),
       lap: 1,
@@ -108,8 +109,9 @@ export class Race {
   emit(kind, text) {
     this.events.push({ kind, text });
   }
-  damage(r, amount) {
+  damage(r, amount, weapon = null) {
     if (r.protect > 0) return;
+    if (weapon === "PULSE") r.pulseHit = 0.65;
     r.shield -= amount / CRAFT[r.craft].armor;
     r.velocity.multiplyScalar(0.78);
     r.speed = Math.hypot(r.velocity.x, r.velocity.z);
@@ -139,8 +141,40 @@ export class Race {
     r.speed = r.x = r.vx = r.h = r.vy = r.offroad = 0;
     r.grounded = true;
     r.flight = false;
-    r.boost = r.surge = 0;
+    r.boost = r.surge = r.pulseHit = 0;
     r.recoveredThisStep = true;
+  }
+  pulsePathClear(source, target) {
+    const { track } = this;
+    let branch = source.branch || target.branch;
+    if (source.branch && target.branch && source.branch !== target.branch) {
+      if (roadBounds(track, source.contactS, source.branch).connected)
+        branch = target.branch;
+      else if (!roadBounds(track, target.contactS, target.branch).connected)
+        return false;
+    }
+    // Follow the local road interval, not a nearby deck on another part of the
+    // circuit. Sample at the same 4m resolution as physical road projection.
+    const distance =
+      mod(target.contactS - source.contactS + track.length / 2, track.length) -
+      track.length / 2;
+    const steps = Math.max(1, Math.ceil(Math.abs(distance) / 4));
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const s = source.contactS + distance * t;
+      const f = track.frame(s, branch);
+      const bounds = roadBounds(track, s, branch);
+      const point = source.position.clone().lerp(target.position, t);
+      const offset = point.sub(f.p);
+      const lateral = offset.dot(f.right);
+      if (
+        lateral < bounds.wallMin ||
+        lateral > bounds.wallMax ||
+        Math.abs(offset.dot(f.tangent)) > 4
+      )
+        return false;
+    }
+    return !this.terrain?.sweepSurface(source.position, target.position, 0);
   }
   fire(r = this.player) {
     if (!r.weapon || this.countdown > 0 || this.finished) return;
@@ -183,7 +217,12 @@ export class Race {
         .sort((a, b) => a.d - b.d)[0];
       if (weapon === "PULSE") {
         for (const target of targets)
-          if (target.d < 90 && target.side < 10) this.damage(target.r, 18);
+          if (
+            target.d < 90 &&
+            target.side < 10 &&
+            this.pulsePathClear(r, target.r)
+          )
+            this.damage(target.r, 18, "PULSE");
         this.shots.push({
           s: r.s,
           x: r.x,
@@ -280,6 +319,7 @@ export class Race {
       r.protect = Math.max(0, r.protect - classDt);
       r.surge = Math.max(0, r.surge - classDt);
       r.stun = Math.max(0, r.stun - classDt);
+      r.pulseHit = Math.max(0, r.pulseHit - classDt);
       const left = controls.airLeft ?? Math.max(0, controls.air || 0);
       const right = controls.airRight ?? Math.max(0, -(controls.air || 0));
       const air = controls.air ?? left - right;
@@ -306,7 +346,11 @@ export class Race {
         (boostTarget - r.boost) *
         (1 - Math.exp(-classDt / (boostTarget ? 0.35 : 1.1)));
       const thrust =
-        ((controls.throttle ? spec.thrust : 0) + r.boost * 65) * pace2;
+        ((controls.throttle ? spec.thrust : 0) + r.boost * 65) *
+        pace2 *
+        // Electrical disruption briefly attenuates engine force, not momentum
+        // direction. Control and thrust return continuously; no lateral shove.
+        (1 - (r.pulseHit / 0.65) * 0.6);
       const drag =
         0.02 * pace +
         Math.hypot(r.velocity.x, r.velocity.z) * 0.0024 +
