@@ -168,6 +168,42 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   }
   audio.stopSamples();
 
+  const beforeWarning = audio.context.sources.length;
+  audio.raceEvent({ kind: "critical", text: "SHIELD CRITICAL" }, {}, LAPS);
+  const warning = [...audio.sampleVoices][0];
+  assert.equal(warning.key, "critical");
+  assert.equal(
+    warning.source.loop,
+    undefined,
+    "warning is one-shot, not an alarm loop",
+  );
+  audio.raceEvent({ kind: "critical-clear", text: "" }, {}, LAPS);
+  assert.equal(warning.source.playing, false);
+  assert.deepEqual(
+    active(),
+    [],
+    "healing/terminal clear cancels active warning",
+  );
+  assert.equal(
+    audio.context.sources.length,
+    beforeWarning + 1,
+    "clear never starts audio",
+  );
+  audio.raceEvent({ kind: "critical", text: "SHIELD CRITICAL" }, {}, LAPS);
+  assert.deepEqual(active(), ["critical"], "a subsequent entry can warn again");
+  audio.setPaused(true);
+  audio.setPaused(false);
+  assert.deepEqual(
+    active(),
+    [],
+    "pause discards warning, with no delayed restart",
+  );
+  audio.setMuted(true);
+  audio.raceEvent({ kind: "critical", text: "SHIELD CRITICAL" }, {}, LAPS);
+  audio.raceEvent({ kind: "critical-clear", text: "" }, {}, LAPS);
+  assert.deepEqual(active(), []);
+  audio.setMuted(false);
+
   audio.effect("voice:3");
   const spoken = [...audio.sampleVoices][0];
   assert.equal(spoken.gain.gain.value, 0.9);
@@ -414,6 +450,7 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "fire:TURBO",
       "boost",
       "hit",
+      "critical",
       "scrape",
       "incoming",
       "voice:result:1",

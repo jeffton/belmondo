@@ -1,5 +1,6 @@
 // Original ElevenLabs SFX V3 one-shots: docs/generated-sfx/.
 // Local synthetic race speech: docs/countdown-voice.md.
+// Local one-shot shield warning: docs/shield-warning.md.
 export const SFX_CUES = {
   "voice:3": { files: ["/audio/voice/three.wav"], gain: 0.9 },
   "voice:2": { files: ["/audio/voice/two.wav"], gain: 0.9 },
@@ -26,6 +27,7 @@ export const SFX_CUES = {
   "voice:result:6": { files: ["/audio/voice/sixth-place.wav"], gain: 0.9 },
   "voice:result:7": { files: ["/audio/voice/seventh-place.wav"], gain: 0.9 },
   "voice:result:8": { files: ["/audio/voice/you-lost.wav"], gain: 0.9 },
+  critical: { files: ["/audio/sfx/shield-critical.wav"], gain: 0.65 },
   hit: {
     files: ["/audio/sfx/hit-1.wav", "/audio/sfx/hit-2.wav"],
     gain: 0.9,
