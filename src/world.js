@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
+import { steeringBank, updateShipBank } from "./ship-bank.js";
 import { RAIL_PROFILE } from "./rail-profile.js";
 import { railPoint, railBackDepth, railHeight } from "./rail-geometry.js";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
@@ -656,7 +657,7 @@ export class World {
         .addScaledVector(f.up, Math.random() * 12);
     }
   }
-  draw(race, dt, demo = false) {
+  draw(race, dt, demo = false, steeringKind = "analog") {
     this.time += dt;
     this.city.update(this.time);
     this.startGantry.update(race, demo);
@@ -705,10 +706,17 @@ export class World {
       const rf = track.frame(r.contactS, r.branch);
       ship.position.copy(r.position);
       const pitch = r.pitch;
+      const targetBank = steeringBank(r.yawRate);
+      ship.userData.steeringBank = updateShipBank(
+        ship.userData.steeringBank ?? targetBank,
+        targetBank,
+        dt,
+        !demo && r === player && steeringKind === "digital",
+      );
       ship.rotation.set(
         pitch,
         r.yaw,
-        -rf.bank + clamp(-r.yawRate * 0.45, -0.5, 0.5),
+        -rf.bank + ship.userData.steeringBank,
         "YXZ",
       );
       const shield = ship.userData.shield;
