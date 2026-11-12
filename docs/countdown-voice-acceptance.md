@@ -4,6 +4,8 @@ The start signal plays only THREE, TWO, ONE, GO. No countdown tone, start chord 
 
 ## Voice-only candidate
 
+Lap announcements say LAP TWO, LAP THREE and LAP FOUR on entry, and FINAL LAP on entry to the last lap. Weapon pickup announcements say the acquired item’s name. Player-only Race gate and pickup tests cover these events, final-lap timing, finish suppression and AI silence. Announcer tests cover priority, replacement, mute/pause and source cleanup. Native lap/pickup audio acceptance is pending serialized browser ownership.
+
 CPU tests exercise real countdown/GO effects and require exactly one speech source per crossing. The offline browser fixture compares each countdown/GO output sample-for-sample with the corresponding standalone spoken word, proving the absence of layered tones. Build and formatting are checked before integration.
 
 Voice-only browser/audio acceptance is pending a serialized GPU grant. The private `test-artifacts/countdown-launch.wav` from the previous QA session contains layered launch sounds and is not this candidate's listening sample.

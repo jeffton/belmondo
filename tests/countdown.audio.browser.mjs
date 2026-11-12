@@ -46,6 +46,24 @@ try {
       "voice:2",
       "voice:1",
       "voice:0",
+      "lap:2",
+      "lap:3",
+      "lap:4",
+      "lap:final",
+      "pickup:MISSILE",
+      "pickup:PULSE",
+      "pickup:MINE",
+      "pickup:SHIELD",
+      "pickup:TURBO",
+      "voice:lap:2",
+      "voice:lap:3",
+      "voice:lap:4",
+      "voice:lap:final",
+      "voice:MISSILE",
+      "voice:PULSE",
+      "voice:MINE",
+      "voice:SHIELD",
+      "voice:TURBO",
     ]) {
       const context = new OfflineAudioContext(2, 48000, 48000);
       context.resume = () => Promise.resolve();
@@ -59,6 +77,10 @@ try {
       if (stage === "hidden") audio.hidden = true;
       if (typeof stage === "string" && stage.startsWith("voice:"))
         audio.effect(stage);
+      else if (typeof stage === "string" && stage.startsWith("lap:"))
+        audio.effect("lap", stage.slice(4));
+      else if (typeof stage === "string" && stage.startsWith("pickup:"))
+        audio.effect("pickup", stage.slice(7));
       else if (stage === 0) audio.effect("go");
       else if (typeof stage === "number") audio.effect("countdown", stage);
       else audio.effect("countdown");
@@ -114,6 +136,16 @@ try {
       results[i].channels,
       results[i + 8].channels,
       "signal mix contains exactly the voice, with no extra tone or start chord",
+    );
+  }
+  for (const result of results.slice(12, 21)) {
+    const voiceKey = result.stage.startsWith("lap:")
+      ? `voice:${result.stage}`
+      : `voice:${result.stage.slice(7)}`;
+    assert.deepEqual(
+      result.channels,
+      results.find((item) => item.stage === voiceKey).channels,
+      `${result.stage}: speech only, with no old lap or pickup sound`,
     );
   }
   const frames = 48000 * 4;
