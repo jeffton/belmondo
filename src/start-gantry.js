@@ -5,6 +5,8 @@ const PAPER = "#f3f5e7";
 const MINT = "#9bffd9";
 const CORAL = "#ff654d";
 const LILAC = "#bcafff";
+const PANEL = "#0b1420";
+const INSET = "#172738";
 
 // PIP is an original lab-courier character: capsule, visor, aerial and two fins.
 // Its expression follows the real signal stage; it is never a HUD overlay.
@@ -141,7 +143,7 @@ export function buildStartGantry(scene, track) {
     box(ceramic, side * (halfSpan - 2), 13.3, 0, 4.4, 0.7, 1.8);
   }
   box(shell, 0, 13.8, 0, halfSpan * 2 + 1.1, 0.75, 2);
-  box(ceramic, 0, 10.5, 0, 23.5, 6.3, 1.3);
+  box(shell, 0, 10.5, 0, 23.5, 6.3, 1.3);
   box(coral, 0, 7.43, -0.12, 23.5, 0.25, 1.5);
   box(shell, 0, 10.5, -0.75, 22.9, 5.7, 0.3);
   box(lilac, -12.2, 12.5, -0.2, 1, 2.2, 1.8);
@@ -223,32 +225,37 @@ export function buildStartGantry(scene, track) {
       const on = go || (typeof stage === "number" && index <= 3 - stage);
       lamp.material.color.set(on ? accent : "#394b54");
     });
-    ctx.fillStyle = PAPER;
+    ctx.fillStyle = PANEL;
     ctx.fillRect(0, 0, 1024, 256);
-    ctx.fillStyle = MINT;
+    ctx.fillStyle = INSET;
     ctx.fillRect(0, 0, 1024, 38);
-    if (labelReady) ctx.drawImage(startLabel, 28, 6, 112, 26);
-    ctx.fillStyle = INK;
+    if (labelReady) {
+      ctx.save();
+      ctx.filter = "brightness(0) invert(1)";
+      ctx.drawImage(startLabel, 28, 6, 112, 26);
+      ctx.restore();
+    }
+    ctx.fillStyle = MINT;
     ctx.font = '600 20px "Archivo"';
     ctx.textAlign = "right";
     ctx.fillText("BELMONDO / GRID 01", 994, 27);
     drawPip(ctx, stage);
-    ctx.fillStyle = INK;
+    ctx.fillStyle = LILAC;
     ctx.textAlign = "center";
     ctx.font = '600 17px "Archivo"';
     ctx.fillText("PIP / 01", 136, 239);
 
-    ctx.fillStyle = go ? MINT : active ? CORAL : LILAC;
+    ctx.fillStyle = INSET;
     ctx.fillRect(283, 49, 438, 191);
     // A clipped upper corner is a registration detail, not a glowing frame.
-    ctx.fillStyle = PAPER;
+    ctx.fillStyle = PANEL;
     ctx.beginPath();
     ctx.moveTo(691, 49);
     ctx.lineTo(721, 49);
     ctx.lineTo(721, 79);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = INK;
+    ctx.fillStyle = go ? MINT : active ? CORAL : LILAC;
     ctx.textAlign = "center";
     ctx.font = active
       ? `700 ${go ? 190 : 208}px "Belmondo Circuit"`
@@ -260,9 +267,9 @@ export function buildStartGantry(scene, track) {
     );
     for (let index = 0; index < 3; index++) {
       const on = go || (typeof stage === "number" && index <= 3 - stage);
-      ctx.fillStyle = on ? accent : "#d9ddd7";
+      ctx.fillStyle = on ? accent : INSET;
       ctx.fillRect(765, 58 + index * 59, 227, 46);
-      ctx.fillStyle = INK;
+      ctx.fillStyle = on ? INK : LILAC;
       ctx.font = '700 36px "Belmondo Circuit"';
       ctx.textAlign = "left";
       ctx.fillText(`0${3 - index}`, 781, 94 + index * 59);
