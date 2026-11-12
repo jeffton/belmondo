@@ -1,18 +1,22 @@
 import * as THREE from "three";
 import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
 
+export function celestialDirection(course) {
+  return new THREE.Vector3(
+    ...(course === "NOCTILUCENT"
+      ? [-0.4, 0.12, -0.7]
+      : course === "SOLAR ARRAY"
+        ? [0.75, 0.18, -0.6]
+        : [-0.8, 0.16, 0.55]),
+  ).normalize();
+}
+
 // A single directional key, not a bank of per-pixel lights. Night projector pools
 // are baked into the deck vertices; their physical luminaires sit over each pool.
 export function buildTrackLighting(scene, track) {
   const night = track.config.name === "NOCTILUCENT";
   const desert = track.config.name === "SOLAR ARRAY";
-  const direction = new THREE.Vector3(
-    ...(night
-      ? [-0.4, 0.12, -0.7]
-      : desert
-        ? [0.75, 0.18, -0.6]
-        : [-0.8, 0.16, 0.55]),
-  ).normalize();
+  const direction = celestialDirection(track.config.name);
   scene.add(
     new THREE.HemisphereLight(
       night ? 0x819ccf : 0xb6c9ec,
