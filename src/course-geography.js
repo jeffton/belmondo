@@ -57,6 +57,7 @@ export function buildCourseGeography(scene, track, textures, environment) {
     for (let i = 0; i <= count; i++) {
       const f = track.frame(
         (tunnel[0] + ((tunnel[1] - tunnel[0]) * i) / count) * track.length,
+        track.config.night ? -1 : 0,
       );
       const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
       const outerGround = (x) => {
@@ -64,19 +65,33 @@ export function buildCourseGeography(scene, track, textures, environment) {
         return environment.heightAt(p.x, p.z) - f.p.y - 1;
       };
       const width = f.width + 4;
-      const profile = [
-        [-180, outerGround(-180)],
-        [-130, Math.max(42, outerGround(-130) + 24)],
-        [-65, 72 + 8 * Math.sin(i * 0.35)],
-        [0, 99 + 13 * Math.sin(i * 0.19)],
-        [70, 77 + 9 * Math.sin(i * 0.27)],
-        [135, Math.max(36, outerGround(135) + 22)],
-        [180, outerGround(180)],
-        [width, -4],
-        [width, 22],
-        [-width, 22],
-        [-width, -4],
-      ];
+      const profile = track.config.night
+        ? [
+            [-180, outerGround(-180)],
+            [-130, 18],
+            [-65, 29],
+            [0, 32],
+            [70, 29],
+            [135, 18],
+            [180, outerGround(180)],
+            [width, -4],
+            [width, 22],
+            [-width, 22],
+            [-width, -4],
+          ]
+        : [
+            [-180, outerGround(-180)],
+            [-130, Math.max(42, outerGround(-130) + 24)],
+            [-65, 72 + 8 * Math.sin(i * 0.35)],
+            [0, 99 + 13 * Math.sin(i * 0.19)],
+            [70, 77 + 9 * Math.sin(i * 0.27)],
+            [135, Math.max(36, outerGround(135) + 22)],
+            [180, outerGround(180)],
+            [width, -4],
+            [width, 22],
+            [-width, 22],
+            [-width, -4],
+          ];
       const fraction = i / count;
       const entry = 1 - THREE.MathUtils.smoothstep(fraction, 0, 0.18);
       const exit = THREE.MathUtils.smoothstep(fraction, 0.82, 1);
@@ -94,7 +109,10 @@ export function buildCourseGeography(scene, track, textures, environment) {
           f.p
             .clone()
             .addScaledVector(right, x)
-            .addScaledVector(forward, ledges[j] * (entry - exit))
+            .addScaledVector(
+              forward,
+              track.config.night ? 0 : ledges[j] * (entry - exit),
+            )
             .add(new THREE.Vector3(0, y, 0)),
         ),
       });
@@ -150,6 +168,7 @@ export function buildCourseGeography(scene, track, textures, environment) {
     mountain.name = "bored-mountain-mass";
     root.add(mountain);
     mountain.userData.range = tunnel;
+    mountain.userData.branch = track.config.night ? -1 : 0;
     mountain.userData.voidHalfWidth = track.config.width + 4;
     mountain.userData.voidHeight = 22;
     mountain.userData.groundingContacts = profiles.flatMap(({ points }) => [
@@ -157,8 +176,19 @@ export function buildCourseGeography(scene, track, textures, environment) {
       points[6],
     ]);
   }
-  const bridge = track.config.sections.upperBridge;
-  if (bridge) {
+  const bridges = [
+    {
+      range: track.config.sections.upperBridge,
+      branch: 0,
+      name: "upper-crossing-truss",
+    },
+    {
+      range: track.config.sections.hillOverpass,
+      branch: 1,
+      name: "hill-route-truss",
+    },
+  ].filter(({ range }) => range);
+  for (const { range: bridge, branch, name } of bridges) {
     const material = new THREE.MeshLambertMaterial({
       color: 0x687d85,
       map: textures.edge,
@@ -175,14 +205,17 @@ export function buildCourseGeography(scene, track, textures, environment) {
       transform.updateMatrix();
       matrices.push(transform.matrix.clone());
     }
+    const groundingContacts = [];
     const count = Math.ceil(((bridge[1] - bridge[0]) * track.length) / 35);
     for (let i = 0; i < count; i++) {
       const a = track.frame(
         (bridge[0] + ((bridge[1] - bridge[0]) * i) / count) * track.length,
+        branch,
       );
       const b = track.frame(
         (bridge[0] + ((bridge[1] - bridge[0]) * (i + 1)) / count) *
           track.length,
+        branch,
       );
       for (const side of [-1, 1]) {
         const point = (f, y) =>
@@ -190,6 +223,15 @@ export function buildCourseGeography(scene, track, textures, environment) {
             .clone()
             .addScaledVector(f.right, side * (f.width + 3))
             .add(new THREE.Vector3(0, y, 0));
+        if (branch && environment.supportClearAt(a.u, branch)) {
+          const top = point(a, -12);
+          const foot = top.clone();
+          foot.y = environment.heightAt(foot.x, foot.z) - 1;
+          if (foot.y < top.y) {
+            beam(foot, top, 3.2, 3.2);
+            groundingContacts.push(foot);
+          }
+        }
         beam(point(a, -3), point(b, -3), 1.4, 1.4);
         beam(point(a, -12), point(b, -12), 1.6, 1.6);
         beam(point(a, -3), point(a, -12), 1.2, 1.2);
@@ -201,7 +243,8 @@ export function buildCourseGeography(scene, track, textures, environment) {
       material,
       matrices.length,
     );
-    mesh.name = "upper-crossing-truss";
+    mesh.name = name;
+    mesh.userData.groundingContacts = groundingContacts;
     matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
     mesh.computeBoundingSphere();
     root.add(mesh);

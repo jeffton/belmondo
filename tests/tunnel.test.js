@@ -9,13 +9,14 @@ test("tunnel metadata matches enclosed courses, not Kaiseki's open canopy", () =
   for (const index of [1, 2]) {
     const track = makeTrack(index),
       [start, end] = track.config.tunnel;
-    assert.equal(track.isTunnel((start - 0.001) * track.length), false);
-    assert.equal(track.isTunnel((start + 0.001) * track.length), true);
-    assert.equal(track.isTunnel((end - 0.001) * track.length), true);
-    assert.equal(track.isTunnel((end + 0.001) * track.length), false);
+    const branch = index === 2 ? -1 : 0;
+    assert.equal(track.isTunnel((start - 0.001) * track.length, branch), false);
+    assert.equal(track.isTunnel((start + 0.001) * track.length, branch), true);
+    assert.equal(track.isTunnel((end - 0.001) * track.length, branch), true);
+    assert.equal(track.isTunnel((end + 0.001) * track.length, branch), false);
     for (const lap of [-2, 0, 3])
       assert.equal(
-        track.isTunnel((lap + (start + end) / 2) * track.length),
+        track.isTunnel((lap + (start + end) / 2) * track.length, branch),
         true,
       );
   }

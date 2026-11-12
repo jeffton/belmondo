@@ -284,9 +284,22 @@ export class Race {
       let controls = input;
       if (ai) {
         // A look-ahead driver, not a second movement model.
+        const u = mod(r.contactS, track.length) / track.length;
+        const [forkStart, forkEnd] = track.config.split;
+        const choosingFork =
+          track.config.night &&
+          u > forkStart - 0.04 &&
+          u < forkStart + (forkEnd - forkStart) * 0.3;
+        const intendedBranch =
+          choosingFork &&
+          (!r.branch || track.bounds(r.contactS, r.branch).connected)
+            ? r.id % 2
+              ? -1
+              : 1
+            : r.branch;
         const look = track.frame(
           r.contactS + Math.max(18, (r.speed * 0.65) / pace),
-          r.branch,
+          intendedBranch,
         );
         const desiredYaw = Math.atan2(
           look.p.x - r.position.x,
@@ -296,11 +309,34 @@ export class Race {
         const curve = Math.max(
           ...[0.25, 0.6, 1].map((t) =>
             Math.abs(
-              track.curvature(r.contactS + (r.speed * t) / pace, r.branch),
+              track.curvature(
+                r.contactS + (r.speed * t) / pace,
+                intendedBranch,
+              ),
             ),
           ),
         );
-        const cornerSpeed = Math.sqrt((82 * pace2) / Math.max(curve, 0.0001));
+        // Read crests as well as plan curvature: the same body must brake
+        // before negative vertical curvature exceeds its gravity/contact load.
+        const crest =
+          track.config.night &&
+          intendedBranch === 1 &&
+          u > forkStart - 0.04 &&
+          u < forkEnd
+            ? Math.max(
+                0,
+                ...[0.25, 0.6, 1].map((t) => {
+                  const s = r.contactS + (r.speed * t) / pace;
+                  const a = track.frame(s - 6, intendedBranch);
+                  const b = track.frame(s + 6, intendedBranch);
+                  return (a.tangent.y - b.tangent.y) / a.p.distanceTo(b.p);
+                }),
+              )
+            : 0;
+        const cornerSpeed = Math.min(
+          Math.sqrt((82 * pace2) / Math.max(curve, 0.0001)),
+          Math.sqrt((25 * pace2) / Math.max(crest, 0.0001)),
+        );
         controls = {
           throttle: true,
           steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
@@ -380,7 +416,7 @@ export class Race {
       if (road.connected || !road.branch) return false;
       const previous = roadBounds(track, r.contactS, road.branch);
       if (!previous.connected) {
-        const side = road.branch === -1 ? 1 : -1;
+        const side = road.innerSide;
         const previousHeight =
           side === 1 ? previous.railMaxHeight : previous.railMinHeight;
         const nextHeight = side === 1 ? road.railMaxHeight : road.railMinHeight;

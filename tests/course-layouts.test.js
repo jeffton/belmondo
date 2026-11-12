@@ -11,7 +11,7 @@ for (let index = 0; index < 3; index++)
     const track = makeTrack(index);
     assert.equal(
       track.config.layoutId,
-      ["coast-3", "solar-3", "noctilucent-2"][index],
+      ["coast-3", "solar-3", "noctilucent-3"][index],
     );
     let length = 0,
       last = track.frame(0).p,

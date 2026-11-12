@@ -159,7 +159,7 @@ export function buildEnvironment(scene, track, textures) {
     group,
     track,
     { ...textures, rock: groundMap },
-    { heightAt },
+    { heightAt, supportClearAt: terrain.supportClearAt },
   );
   return {
     heightAt,

@@ -22,7 +22,7 @@ for (const [index, config] of TRACKS.entries()) {
         const f = frameAt(track, u, branch);
         if (Math.abs(f.right.y) > 0.02) banked++;
         for (const side of [-1, 1]) {
-          if (f.connected && side === -branch) continue;
+          if (f.connected && side === f.innerSide) continue;
           const edge = side < 0 ? f.clipMin : f.clipMax;
           const height = railHeight(f, side),
             normal = railFaceNormal(f, side);
@@ -45,8 +45,11 @@ for (const [index, config] of TRACKS.entries()) {
       [start, end] = config.split;
     for (let i = 0; i <= 1000; i++) {
       const u = start + ((end - start) * i) / 1000;
-      const a = frameAt(track, u, -1),
-        b = frameAt(track, u, 1);
+      const first = frameAt(track, u, -1),
+        second = frameAt(track, u, 1);
+      if (Math.abs(first.p.y - second.p.y) > 0.05) continue;
+      const a = first.innerSide === 1 ? first : second,
+        b = first.innerSide === 1 ? second : first;
       const axis = track.frame(u * track.length).right;
       const left = railPoint(
         a,

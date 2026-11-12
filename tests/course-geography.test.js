@@ -12,6 +12,7 @@ function geography(index) {
   const textures = { rock: new THREE.Texture(), edge: new THREE.Texture() };
   const root = buildCourseGeography(scene, track, textures, {
     heightAt: terrain.heightAt,
+    supportClearAt: terrain.supportClearAt,
   });
   root.updateMatrixWorld(true);
   return { track, terrain, root };

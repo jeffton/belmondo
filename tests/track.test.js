@@ -72,10 +72,14 @@ test("joined fork halves have a level seam and expose common visual/physical bou
     }
     for (let i = 1; i < 100; i++) {
       const s = (start + ((end - start) * i) / 100) * track.length;
-      const left = track.frame(s, -1),
-        right = track.frame(s, 1);
-      const a = track.bounds(s, -1),
-        b = track.bounds(s, 1);
+      const first = track.frame(s, -1),
+        second = track.frame(s, 1);
+      const firstBounds = track.bounds(s, -1),
+        secondBounds = track.bounds(s, 1);
+      const left = firstBounds.innerSide === 1 ? first : second,
+        right = firstBounds.innerSide === 1 ? second : first;
+      const a = firstBounds.innerSide === 1 ? firstBounds : secondBounds,
+        b = firstBounds.innerSide === 1 ? secondBounds : firstBounds;
       if (a.connected || b.connected) {
         assert.equal(a.connected, b.connected);
         assert(

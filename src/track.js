@@ -97,7 +97,8 @@ export const TRACKS = [
     sea: 0x14314d,
     width: 18,
     branchWidths: [16, 18],
-    layoutId: "noctilucent-2",
+    layoutId: "noctilucent-3",
+    night: true,
     points: layoutPoints("night"),
     ramp: { start: 0.462, height: 8, length: 0.018 },
     gapLength: 0.014,
@@ -105,11 +106,13 @@ export const TRACKS = [
       finishStraight: [0.955, 1.045],
       runway: [0.46, 0.555],
       upperBridge: [0.7, 0.8],
+      mountainTunnel: [0.34, 0.39],
+      hillOverpass: [0.31, 0.425],
       descent: [0.84, 0.955],
     },
     split: [0.28, 0.45],
     jump: 0.48,
-    tunnel: [0.33, 0.42],
+    tunnel: [0.34, 0.39],
   },
 ];
 export const mod = (n, m) => ((n % m) + m) % m;
@@ -178,10 +181,10 @@ export function makeTrack(index) {
     const homeU = u < 0.5 ? u + 1 : u;
     const [homeStart, homeEnd] = config.sections.finishStraight;
     const homeFade = config.name === "SOLAR ARRAY" ? 0.06 : 0.055;
-    const homeOutFade = config.layoutId === "noctilucent-2" ? 0.075 : 0.1;
+    const homeOutFade = config.night ? 0.075 : 0.1;
     const homeA = curve.getPointAt(homeStart);
     const homeB = curve.getPointAt(homeEnd - 1);
-    if (config.layoutId === "noctilucent-2") {
+    if (config.night) {
       // A compact ~28-degree gravity drop has smooth entry and a long low runout.
       const top = curve.getPointAt(0.845).y;
       if (u >= 0.845)
@@ -210,7 +213,7 @@ export function makeTrack(index) {
         config.name === "KAISEKI COAST"
           ? runwayDirection.clone()
           : curve.getTangentAt(homeStart - homeFade).multiplyScalar(length);
-      if (config.layoutId === "noctilucent-2") {
+      if (config.night) {
         outer.y = 65;
         direction.y = 0;
       }
@@ -234,9 +237,7 @@ export function makeTrack(index) {
           outer,
           homeDirection
             .clone()
-            .multiplyScalar(
-              homeOutFade * (config.layoutId === "noctilucent-2" ? 1.25 : 1),
-            ),
+            .multiplyScalar(homeOutFade * (config.night ? 1.25 : 1)),
           direction.multiplyScalar(homeOutFade),
           (homeU - homeEnd) / homeOutFade,
         ),
@@ -288,6 +289,22 @@ export function makeTrack(index) {
       const p = f.p
         .clone()
         .addScaledVector(f.right, branch * (branch === 1 ? 44 : 23) * blend);
+      if (config.night && branch) {
+        // Identity survives the crossover: +1 is always the hill route.
+        // Flat entry/exit derivatives meet the common deck without a step.
+        const envelope = Math.sin(Math.PI * phase) ** 2;
+        const lateral =
+          branch === -1
+            ? -88 * envelope * Math.cos(Math.PI * phase)
+            : 92 * envelope * Math.cos(Math.PI * phase);
+        p.copy(f.p).addScaledVector(f.right, lateral);
+        if (branch === 1)
+          p.y +=
+            45 *
+            THREE.MathUtils.smoothstep(phase, 0.16, 0.4) *
+            (1 - THREE.MathUtils.smoothstep(phase, 0.6, 0.84));
+        return p;
+      }
       // The fork is one level deck until its two carriageways separate.
       // Raising one half earlier creates a vertical step along the open seam.
       if (branch === 1) p.y += THREE.MathUtils.smoothstep(blend, 0.6, 1) * 12;
@@ -371,7 +388,7 @@ export function makeTrack(index) {
       window(0.05, 0.22, 0.035),
       config.name === "SOLAR ARRAY"
         ? window(0.78, 0.94, 0.04)
-        : config.layoutId === "noctilucent-2"
+        : config.night
           ? window(0.76, 0.82, 0.02)
           : window(0.48, 0.69, 0.04),
     );
@@ -417,10 +434,11 @@ export function makeTrack(index) {
       b = frame(s + 6, branch).tangent;
     return Math.atan2(a.z * b.x - a.x * b.z, a.dot(b)) / 12;
   }
-  function isTunnel(s) {
+  function isTunnel(s, branch = 0) {
     const u = mod(s, length) / length;
     return (
       config.name !== "KAISEKI COAST" &&
+      (!config.night || branch === -1) &&
       u > config.tunnel[0] &&
       u < config.tunnel[1]
     );
@@ -433,7 +451,7 @@ export function makeTrack(index) {
         .reduce((sum, f, i) => sum + f.p.distanceTo(frames[i + 1].p), 0),
     ]),
   );
-  if (config.layoutId === "noctilucent-2") {
+  if (config.night) {
     const candidates = routes[0]
       .slice(0, count)
       .map((f, i) => ({ f, i }))
@@ -496,6 +514,7 @@ export function roadBounds(track, s, branch = 0) {
     wallMax: f.width,
     connected: false,
     seam: null,
+    innerSide: -branch,
     railMinHeight: RAIL_PROFILE.height,
     railMaxHeight: RAIL_PROFILE.height,
   };
@@ -508,21 +527,29 @@ export function roadBounds(track, s, branch = 0) {
   )
     return result;
   const other = track.frame(s, -branch);
-  const left = branch === -1 ? f : other;
-  const right = branch === 1 ? f : other;
+  const axis = track.frame(s, 0).right;
+  const ownIsLeft = other.p.clone().sub(f.p).dot(axis) >= 0;
+  const left = ownIsLeft ? f : other;
+  const right = ownIsLeft ? other : f;
+  result.innerSide = ownIsLeft ? 1 : -1;
   const leftInner = left.p.clone().addScaledVector(left.right, left.width);
   const rightInner = right.p.clone().addScaledVector(right.right, -right.width);
-  const axis = track.frame(s, 0).right;
+  const phase =
+    (f.u - track.config.split[0]) /
+    (track.config.split[1] - track.config.split[0]);
+  const seamRegion = !track.config.night || phase < 0.18 || phase > 0.82;
   result.connected =
+    seamRegion &&
     leftInner.clone().sub(rightInner).dot(axis) >= 0 &&
     Math.abs(leftInner.y - rightInner.y) <= 0.05;
   if (!result.connected) {
+    if (!seamRegion) return result;
     const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
     const innerHeight = Math.min(
       RAIL_PROFILE.height,
       gap / ((2 * RAIL_PROFILE.topOutset) / RAIL_PROFILE.height),
     );
-    if (branch === -1) result.railMaxHeight = innerHeight;
+    if (ownIsLeft) result.railMaxHeight = innerHeight;
     else result.railMinHeight = innerHeight;
     return result;
   }
@@ -532,7 +559,7 @@ export function roadBounds(track, s, branch = 0) {
   const seamX = result.seam.clone().sub(f.p).dot(f.right);
   const offset = other.p.clone().sub(f.p).dot(f.right);
   const projectedWidth = other.width * other.right.dot(f.right);
-  if (branch === -1) {
+  if (ownIsLeft) {
     result.clipMax = Math.min(f.width, seamX);
     result.wallMax = offset + projectedWidth;
   } else {

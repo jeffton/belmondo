@@ -1,7 +1,7 @@
 import { RAIL_PROFILE } from "./rail-profile.js";
 
 export function railHeight(frame, side) {
-  if (frame.connected && side === -frame.branch) return 0;
+  if (frame.connected && side === frame.innerSide) return 0;
   return side < 0 ? frame.railMinHeight : frame.railMaxHeight;
 }
 
@@ -10,8 +10,8 @@ export function railPoint(frame, edge, side, height, depth = 0) {
   const h = height < 0 ? height : Math.min(height, railHeight(frame, side));
   const seam =
     frame.seam &&
-    ((frame.branch === -1 && edge === frame.clipMax) ||
-      (frame.branch === 1 && edge === frame.clipMin));
+    ((frame.innerSide === 1 && edge === frame.clipMax) ||
+      (frame.innerSide === -1 && edge === frame.clipMin));
   const base = seam
     ? frame.seam.clone()
     : frame.p.clone().addScaledVector(frame.right, edge);
@@ -27,9 +27,16 @@ export function railPoint(frame, edge, side, height, depth = 0) {
 
 /** Opposed median faces meet without extending their caps into the other route. */
 export function railBackDepth(track, frame, side) {
-  if (!frame.branch || side === frame.branch) return 1.1;
-  const a = track.frame(frame.u * track.length, -1),
-    b = track.frame(frame.u * track.length, 1);
+  if (!frame.branch || side !== frame.innerSide) return 1.1;
+  const a = track.frame(
+      frame.u * track.length,
+      frame.innerSide === 1 ? frame.branch : -frame.branch,
+    ),
+    b = track.frame(
+      frame.u * track.length,
+      frame.innerSide === 1 ? -frame.branch : frame.branch,
+    );
+  if (Math.abs(a.p.y - b.p.y) > 0.05) return 1.1;
   const axis = track.frame(frame.u * track.length).right;
   const gap = Math.max(
     0,

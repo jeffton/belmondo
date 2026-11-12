@@ -340,13 +340,13 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
   for (let index = 0; index < 3; index++) {
     const track = makeTrack(index);
     const [start, end] = track.config.split;
-    for (const phase of [0.2, 0.8]) {
+    for (const phase of track.config.night ? [0.125, 0.875] : [0.2, 0.8]) {
       for (const branch of [-1, 1]) {
         const race = setup(track),
           p = race.player;
         const s = (start + (end - start) * phase) * track.length;
         const f = track.frame(s, branch);
-        const inward = -branch;
+        const inward = track.bounds(s, branch).innerSide;
         p.yaw = Math.atan2(f.right.x * inward, f.right.z * inward);
         const x = inward * (f.width - hullExtent(p, f.right) - 0.3);
         p.position.copy(f.p).addScaledVector(f.right, x);
@@ -420,7 +420,7 @@ test("route selection follows the connected fork, but separated routes retain th
   for (let index = 0; index < 3; index++) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
-    for (const phase of [0.2, 0.8]) {
+    for (const phase of track.config.night ? [0.125, 0.875] : [0.2, 0.8]) {
       const s = (start + (end - start) * phase) * track.length;
       for (const branch of [-1, 1]) {
         const f = track.frame(s, -branch);

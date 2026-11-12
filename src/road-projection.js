@@ -56,6 +56,16 @@ export function projectRoad(track, position, anchor, branch) {
       if (best && distance >= best.distance) continue;
       const tangent = b.p.clone().sub(a.p).normalize();
       const contactS = s + t * (sampleEnd - s);
+      // A search segment may straddle the merge boundary. Its midpoint being
+      // connected does not permit a result on the other, disconnected deck.
+      if (
+        branch &&
+        route &&
+        route !== branch &&
+        (!roadBounds(track, anchor, branch).connected ||
+          !roadBounds(track, contactS, route).connected)
+      )
+        continue;
       const frame = track.frame(contactS, route);
       const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
       const bank = Math.atan2(

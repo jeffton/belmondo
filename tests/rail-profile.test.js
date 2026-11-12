@@ -131,11 +131,16 @@ test("inner split faces taper in the shared median instead of intersecting the o
     let tapered = false;
     for (let i = 0; i <= 1500; i++) {
       const s = (start + ((end - start) * i) / 1500) * track.length;
-      const left = track.frame(s, -1),
-        right = track.frame(s, 1),
-        lb = track.bounds(s, -1),
-        rb = track.bounds(s, 1);
-      if (lb.connected) continue;
+      const first = track.frame(s, -1),
+        second = track.frame(s, 1);
+      const firstBounds = track.bounds(s, -1),
+        secondBounds = track.bounds(s, 1);
+      if (firstBounds.connected || Math.abs(first.p.y - second.p.y) > 0.05)
+        continue;
+      const left = firstBounds.innerSide === 1 ? first : second,
+        right = firstBounds.innerSide === 1 ? second : first,
+        lb = firstBounds.innerSide === 1 ? firstBounds : secondBounds,
+        rb = firstBounds.innerSide === 1 ? secondBounds : firstBounds;
       const gap = right.p
         .clone()
         .addScaledVector(right.right, -right.width)

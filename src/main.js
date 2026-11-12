@@ -577,7 +577,8 @@ function animate(now) {
         accumulator -= 1 / 120;
       }
       music.setTunnel(
-        race.player.grounded && track.isTunnel(race.player.contactS),
+        race.player.grounded &&
+          track.isTunnel(race.player.contactS, race.player.branch),
       );
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))

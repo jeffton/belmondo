@@ -16,7 +16,10 @@ for (const [index, config] of TRACKS.entries()) {
     );
     const env = buildEnvironment(scene, track, textures);
     for (let i = 0; i < 300; i++)
-      for (const branch of [-1, 0, 1]) {
+      for (const branch of i / 300 > config.split[0] &&
+      i / 300 < config.split[1]
+        ? [-1, 1]
+        : [0]) {
         const f = track.frame((i / 300) * track.length, branch);
         assert(
           env.heightAt(f.p.x, f.p.z) < f.p.y - 3.5,

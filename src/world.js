@@ -172,8 +172,8 @@ export class World {
     const roadPoint = (frame, x, y) => {
       const inner =
         frame.seam &&
-        ((frame.branch === -1 && x === frame.clipMax) ||
-          (frame.branch === 1 && x === frame.clipMin));
+        ((frame.innerSide === 1 && x === frame.clipMax) ||
+          (frame.innerSide === -1 && x === frame.clipMin));
       return (
         inner
           ? frame.seam.clone()
@@ -284,17 +284,17 @@ export class World {
         addStrip(a, b, -w, w, -2, 0x7a8589, "concrete");
         // Recessed service shoulders, not car-racing curbs or painted lanes.
         // Chevrons belong exclusively to real boost pads.
-        if (!shared || branch === -1)
+        if (!shared || a.innerSide === 1)
           addStrip(a, b, -w, -w + 1.65, 0.025, 0x697176, "edge");
-        if (!shared || branch === 1)
+        if (!shared || a.innerSide === -1)
           addStrip(a, b, w - 1.65, w, 0.025, 0x697176, "edge");
         for (const side of [-1, 1]) {
-          if (shared && side === -branch) continue;
+          if (shared && side === a.innerSide) continue;
           const edgeA = clamp(a.width * side, a.clipMin, a.clipMax),
             edgeB = clamp(b.width * side, b.clipMin, b.clipMax);
           const lowerA = roadPoint(a, edgeA, -2);
           const lowerB = roadPoint(b, edgeB, -2);
-          const nose = split && side === -branch && u < cfg.split[0] + 0.07;
+          const nose = split && side === a.innerSide && u < cfg.split[0] + 0.07;
           quads.push({
             p: [lowerA, lowerB, roadPoint(b, edgeB, 0), roadPoint(a, edgeA, 0)],
             color: 0xbac0b0,
@@ -389,7 +389,7 @@ export class World {
           });
           // Substantial cast impact blocks project OUT of the physical boundary.
           // The continuous inner face/height remains exactly the collision wall.
-          if (joint && (branch === 0 || side === branch)) {
+          if (joint && (branch === 0 || side !== a.innerSide)) {
             face(-2, H, 0x7e8a91, 2.6);
             quads.push({
               p: [
@@ -420,7 +420,7 @@ export class World {
             face(0.65, 0.82, nose ? 0xffa348 : 0xc3c6a0, -0.018, "light");
         }
         // Repeating overhead ribs and tunnel skin create near-field motion cues.
-        if (track.isTunnel(u * track.length)) {
+        if (track.isTunnel(u * track.length, branch)) {
           addStrip(
             a,
             b,
@@ -518,7 +518,7 @@ export class World {
         Object.assign(a, track.bounds(u * track.length, branch), { branch });
         Object.assign(b, track.bounds(next * track.length, branch), { branch });
         for (const side of [-1, 1]) {
-          if (a.connected && b.connected && side === -branch) continue;
+          if (a.connected && b.connected && side === a.innerSide) continue;
           const pa = roadPoint(a, side < 0 ? a.clipMin : a.clipMax, -2);
           const pb = roadPoint(b, side < 0 ? b.clipMin : b.clipMax, -2);
           const fa = pa.clone().setY(environment.heightAt(pa.x, pa.z) - 0.7);
