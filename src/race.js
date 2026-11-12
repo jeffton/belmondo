@@ -287,7 +287,7 @@ export class Race {
         const u = mod(r.contactS, track.length) / track.length;
         const [forkStart, forkEnd] = track.config.split;
         const choosingFork =
-          track.config.night &&
+          (track.config.night || track.config.fork) &&
           u > forkStart - 0.04 &&
           u < forkStart + (forkEnd - forkStart) * 0.3;
         const intendedBranch =
@@ -544,7 +544,9 @@ export class Race {
         if (!wasGrounded && r.id === 0) this.emit("land", "TOUCHDOWN");
         r.offroad = 0;
         if (
-          (u < track.config.jump - 0.025 || u > track.config.jump + 0.025) &&
+          (track.config.jump === null ||
+            u < track.config.jump - 0.025 ||
+            u > track.config.jump + 0.025) &&
           road.s >= ((r.gate - 1) * track.length) / GATES &&
           road.s < (r.gate * track.length) / GATES
         )

@@ -16,6 +16,7 @@ export function offsetAlongDeck(track, station, metres) {
 }
 
 export function getJumpMarkingLayout(track) {
+  if (track.config.jump === null) return [];
   const launch = track.config.jump * track.length - 0.000001;
   const landing = (track.config.jump + track.config.gapLength) * track.length;
   const patches = [];
@@ -92,6 +93,7 @@ function paintTexture() {
 
 /** Printed directly onto the deck; no collider, raised pad, arrow or light. */
 export function buildJumpMarkings(scene, track, lighting) {
+  if (track.config.jump === null) return { mesh: null, layout: [] };
   const positions = [],
     colors = [],
     uv = [];
