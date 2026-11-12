@@ -21,6 +21,19 @@ function deckDistance(track, start, end) {
 }
 
 for (const [index, config] of TRACKS.entries()) {
+  if (config.jump === null) {
+    test(`${config.name}: continuous deck has no jump paint or paint resources`, () => {
+      const track = makeTrack(index);
+      const scene = new THREE.Scene();
+      assert.deepEqual(getJumpMarkingLayout(track), []);
+      assert.deepEqual(buildJumpMarkings(scene, track, null), {
+        mesh: null,
+        layout: [],
+      });
+      assert.equal(scene.children.length, 0);
+    });
+    continue;
+  }
   test(`${config.name}: approach and landing paint follows real jump edges and deck metres`, () => {
     const track = makeTrack(index),
       layout = getJumpMarkingLayout(track);

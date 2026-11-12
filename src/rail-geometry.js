@@ -37,22 +37,34 @@ export function railBackDepth(track, frame, side) {
       frame.innerSide === 1 ? -frame.branch : frame.branch,
     );
   if (Math.abs(a.p.y - b.p.y) > 0.05) return 1.1;
-  const axis = track.frame(frame.u * track.length).right;
-  const gap = Math.max(
-    0,
-    b.p
-      .clone()
-      .addScaledVector(b.right, -b.width)
-      .sub(a.p.clone().addScaledVector(a.right, a.width))
-      .dot(axis),
-  );
-  return Math.min(
-    1.1,
-    Math.max(
+  const station = frame.u * track.length;
+  const axis = track.frame(station).right;
+  if (!track.config.fork) {
+    const gap = Math.max(
       0,
-      gap / 2 -
-        (railHeight(frame, side) * RAIL_PROFILE.topOutset) /
-          RAIL_PROFILE.height,
-    ),
-  );
+      b.p
+        .clone()
+        .addScaledVector(b.right, -b.width)
+        .sub(a.p.clone().addScaledVector(a.right, a.width))
+        .dot(axis),
+    );
+    return Math.min(
+      1.1,
+      Math.max(
+        0,
+        gap / 2 -
+          (railHeight(frame, side) * RAIL_PROFILE.topOutset) /
+            RAIL_PROFILE.height,
+      ),
+    );
+  }
+  const leftBranch = frame.innerSide === 1 ? frame.branch : -frame.branch;
+  Object.assign(a, track.bounds(station, leftBranch));
+  Object.assign(b, track.bounds(station, -leftBranch));
+  // Height follows each road normal, not world vertical. On a rising fork the
+  // two normals lean towards the median, consuming some of the cap clearance.
+  const left = railPoint(a, a.clipMax, 1, RAIL_PROFILE.height);
+  const right = railPoint(b, b.clipMin, -1, RAIL_PROFILE.height);
+  const clearance = right.sub(left).dot(axis);
+  return Math.min(1.1, Math.max(0, clearance / (2 * frame.right.dot(axis))));
 }

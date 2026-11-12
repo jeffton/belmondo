@@ -11,6 +11,9 @@ const PALETTES = {
   "KAISEKI COAST": { light: 0xe3e1cc, dark: 0x314b5b },
   "SOLAR ARRAY": { light: 0xe7d5b0, dark: 0x61483f },
   NOCTILUCENT: { light: 0xd1d2e7, dark: 0x3e3c59 },
+  WHITEOUT: { light: 0xdbe6e5, dark: 0x385c75 },
+  MONSOON: { light: 0xc9d6b4, dark: 0x285b53 },
+  CINDERLINE: { light: 0xdfd8bd, dark: 0x46444e },
 };
 
 /** Original mineral-paint panels, with the rhythm on the actual impact face. */

@@ -26,29 +26,32 @@ for (const [index, config] of TRACKS.entries()) {
           "terrain cannot occlude the racing deck",
         );
       }
-    for (let i = 0; i < 30; i++) {
-      const f = track.frame((i / 30) * track.length),
-        candidate = f.p
-          .clone()
-          .addScaledVector(f.right, (i % 2 ? -1 : 1) * 150);
-      const p = env.buildingPosition(candidate);
-      for (const dx of [-30, 30])
-        for (const dz of [-30, 30]) {
-          const ground = env.heightAt(p.x + dx, p.z + dz);
-          assert(
-            ground >= 0 && ground <= p.y,
-            "foundation footprint is on land, below tower bottom",
-          );
-        }
-      for (let j = 0; j < 300; j++)
-        for (const branch of [-1, 1]) {
-          const q = track.frame((j / 300) * track.length, branch).p;
-          assert(
-            Math.hypot(p.x - q.x, p.z - q.z) > 70,
-            "building footprint clears all racing routes",
-          );
-        }
-    }
+    // The legacy tower locator is not used by the authored biome districts.
+    // Their real foundations/forks/triangles are covered by the new-course tests.
+    if (["KAISEKI COAST", "SOLAR ARRAY", "NOCTILUCENT"].includes(config.name))
+      for (let i = 0; i < 30; i++) {
+        const f = track.frame((i / 30) * track.length),
+          candidate = f.p
+            .clone()
+            .addScaledVector(f.right, (i % 2 ? -1 : 1) * 150);
+        const p = env.buildingPosition(candidate);
+        for (const dx of [-30, 30])
+          for (const dz of [-30, 30]) {
+            const ground = env.heightAt(p.x + dx, p.z + dz);
+            assert(
+              ground >= 0 && ground <= p.y,
+              "foundation footprint is on land, below tower bottom",
+            );
+          }
+        for (let j = 0; j < 300; j++)
+          for (const branch of [-1, 1]) {
+            const q = track.frame((j / 300) * track.length, branch).p;
+            assert(
+              Math.hypot(p.x - q.x, p.z - q.z) > 70,
+              "building footprint clears all racing routes",
+            );
+          }
+      }
     scene.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
       o.geometry?.dispose();

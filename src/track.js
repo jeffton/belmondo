@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { RAIL_PROFILE } from "./rail-profile.js";
+import { NEW_COURSES } from "./course-layouts.js";
 
 // Authored plan/elevation signatures, with broad physical turns rather than
 // uniformly stretched copies of one circuit. The night loop crosses itself
@@ -38,6 +39,7 @@ function layoutPoints(course) {
 export const TRACKS = [
   {
     name: "KAISEKI COAST",
+    curveType: "catmullrom",
     subtitle: "01 / Coastal megastructure",
     color: 0x13d9e7,
     sky: 0x1e3859,
@@ -64,6 +66,7 @@ export const TRACKS = [
   },
   {
     name: "SOLAR ARRAY",
+    curveType: "catmullrom",
     subtitle: "02 / High desert transmission",
     color: 0xff853a,
     sky: 0x825c76,
@@ -90,6 +93,7 @@ export const TRACKS = [
   },
   {
     name: "NOCTILUCENT",
+    curveType: "catmullrom",
     subtitle: "03 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x101b35,
@@ -114,6 +118,7 @@ export const TRACKS = [
     jump: 0.48,
     tunnel: [0.34, 0.39],
   },
+  ...NEW_COURSES,
 ];
 export const mod = (n, m) => ((n % m) + m) % m;
 export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -123,14 +128,16 @@ export function makeTrack(index) {
   const curve = new THREE.CatmullRomCurve3(
     config.points.map((p) => new THREE.Vector3(...p)),
     true,
-    "catmullrom",
+    config.curveType,
     0.45,
   );
   const length = curve.getLength();
   const count = Math.ceil(length / 3);
-  const [runwayStart, runwayEnd] = config.sections.runway;
-  const approachPoint = curve.getPointAt(runwayStart);
-  const landingPoint = curve.getPointAt(runwayEnd);
+  const runway = config.sections.runway;
+  const runwayStart = runway?.[0];
+  const runwayEnd = runway?.[1];
+  const approachPoint = runway && curve.getPointAt(runwayStart);
+  const landingPoint = runway && curve.getPointAt(runwayEnd);
   const base = Array.from({ length: count + 1 }, (_, i) => {
     const u = i / count;
     const p = curve.getPointAt(u);
@@ -142,17 +149,19 @@ export function makeTrack(index) {
         .addScaledVector(da, t * t * t - 2 * t * t + t)
         .addScaledVector(b, -2 * t * t * t + 3 * t * t)
         .addScaledVector(db, t * t * t - t * t);
-    const runwayDirection = landingPoint
-      .clone()
-      .sub(approachPoint)
-      .divideScalar(runwayEnd - runwayStart);
+    const runwayDirection =
+      runway &&
+      landingPoint
+        .clone()
+        .sub(approachPoint)
+        .divideScalar(runwayEnd - runwayStart);
     const runwayFade = 0.07;
-    if (u >= runwayStart && u <= runwayEnd) {
+    if (runway && u >= runwayStart && u <= runwayEnd) {
       p.copy(approachPoint).lerp(
         landingPoint,
         (u - runwayStart) / (runwayEnd - runwayStart),
       );
-    } else if (u >= runwayStart - runwayFade && u < runwayStart) {
+    } else if (runway && u >= runwayStart - runwayFade && u < runwayStart) {
       p.copy(
         transition(
           curve.getPointAt(runwayStart - runwayFade),
@@ -164,7 +173,7 @@ export function makeTrack(index) {
           (u - runwayStart + runwayFade) / runwayFade,
         ),
       );
-    } else if (u > runwayEnd && u <= runwayEnd + runwayFade) {
+    } else if (runway && u > runwayEnd && u <= runwayEnd + runwayFade) {
       p.copy(
         transition(
           landingPoint,
@@ -256,7 +265,7 @@ export function makeTrack(index) {
           bend.offset * Math.sin(Math.PI * t) ** 2 * Math.sin(2 * Math.PI * t),
         );
     }
-    if (u >= config.ramp.start && u < config.jump)
+    if (config.ramp && u >= config.ramp.start && u < config.jump)
       p.y +=
         ((u - config.jump + config.ramp.length) / config.ramp.length) *
         config.ramp.height;
@@ -289,6 +298,15 @@ export function makeTrack(index) {
       const p = f.p
         .clone()
         .addScaledVector(f.right, branch * (branch === 1 ? 44 : 23) * blend);
+      if (config.fork && branch) {
+        const route = branch === -1 ? 0 : 1;
+        p.copy(f.p).addScaledVector(
+          f.right,
+          config.fork.offsets[route] * blend,
+        );
+        p.y += config.fork.rise[route] * blend;
+        return p;
+      }
       if (config.night && branch) {
         // Identity survives the crossover: +1 is always the hill route.
         // Flat entry/exit derivatives meet the common deck without a step.
@@ -314,8 +332,14 @@ export function makeTrack(index) {
       const previous = points[mod(i - 1, count)];
       const next = points[(i + 1) % count];
       const u = i / count;
-      const beforeLaunch = u < config.jump && (i + 1) / count >= config.jump;
-      const afterLaunch = u >= config.jump && (i - 1) / count < config.jump;
+      const beforeLaunch =
+        config.jump !== null &&
+        u < config.jump &&
+        (i + 1) / count >= config.jump;
+      const afterLaunch =
+        config.jump !== null &&
+        u >= config.jump &&
+        (i - 1) / count < config.jump;
       const tangent = (
         beforeLaunch
           ? p.clone().sub(previous)
@@ -384,14 +408,18 @@ export function makeTrack(index) {
     const window = (start, end, fade) =>
       THREE.MathUtils.smoothstep(u, start, start + fade) *
       (1 - THREE.MathUtils.smoothstep(u, end - fade, end));
-    const envelope = Math.max(
-      window(0.05, 0.22, 0.035),
-      config.name === "SOLAR ARRAY"
-        ? window(0.78, 0.94, 0.04)
-        : config.night
-          ? window(0.76, 0.82, 0.02)
-          : window(0.48, 0.69, 0.04),
-    );
+    const envelope = config.banks
+      ? Math.max(
+          ...config.banks.map(([start, end, fade]) => window(start, end, fade)),
+        )
+      : Math.max(
+          window(0.05, 0.22, 0.035),
+          config.name === "SOLAR ARRAY"
+            ? window(0.78, 0.94, 0.04)
+            : config.night
+              ? window(0.76, 0.82, 0.02)
+              : window(0.48, 0.69, 0.04),
+        );
     const bank = THREE.MathUtils.lerp(a.bank, b.bank, n % 1) * envelope;
     right.applyAxisAngle(tangent, -bank);
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
@@ -405,7 +433,11 @@ export function makeTrack(index) {
     );
     // The ramp is already in the authored points and their physical tangents.
     // Do not interpolate the last pre-lip sample down into the absent gap deck.
-    if (u < config.jump && (Math.floor(n) + 1) / count >= config.jump)
+    if (
+      config.jump !== null &&
+      u < config.jump &&
+      (Math.floor(n) + 1) / count >= config.jump
+    )
       p.copy(a.p).addScaledVector(
         a.tangent,
         (u - Math.floor(n) / count) * length * a.metric,
@@ -427,7 +459,11 @@ export function makeTrack(index) {
     };
   }
   function gap(u) {
-    return u >= config.jump && u < config.jump + config.gapLength;
+    return (
+      config.jump !== null &&
+      u >= config.jump &&
+      u < config.jump + config.gapLength
+    );
   }
   function curvature(s, branch = 0) {
     const a = frame(s - 6, branch).tangent,
@@ -437,6 +473,7 @@ export function makeTrack(index) {
   function isTunnel(s, branch = 0) {
     const u = mod(s, length) / length;
     return (
+      config.tunnel !== null &&
       config.name !== "KAISEKI COAST" &&
       (!config.night || branch === -1) &&
       u > config.tunnel[0] &&
@@ -528,7 +565,11 @@ export function roadBounds(track, s, branch = 0) {
     return result;
   const other = track.frame(s, -branch);
   const axis = track.frame(s, 0).right;
-  const ownIsLeft = other.p.clone().sub(f.p).dot(axis) >= 0;
+  const separation = other.p.clone().sub(f.p).dot(axis);
+  // Authored forks can meet at precisely identical centres. Keep one shared
+  // seam even when the branch tangents differ at that exact endpoint.
+  const ownIsLeft =
+    separation === 0 && track.config.fork ? branch === -1 : separation >= 0;
   const left = ownIsLeft ? f : other;
   const right = ownIsLeft ? other : f;
   result.innerSide = ownIsLeft ? 1 : -1;
@@ -545,10 +586,13 @@ export function roadBounds(track, s, branch = 0) {
   if (!result.connected) {
     if (!seamRegion) return result;
     const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
-    const innerHeight = Math.min(
-      RAIL_PROFILE.height,
-      gap / ((2 * RAIL_PROFILE.topOutset) / RAIL_PROFILE.height),
-    );
+    const slope = RAIL_PROFILE.topOutset / RAIL_PROFILE.height;
+    const expansion = track.config.fork
+      ? left.up.dot(axis) -
+        right.up.dot(axis) +
+        slope * (left.right.dot(axis) + right.right.dot(axis))
+      : 2 * slope;
+    const innerHeight = Math.min(RAIL_PROFILE.height, gap / expansion);
     if (ownIsLeft) result.railMaxHeight = innerHeight;
     else result.railMinHeight = innerHeight;
     return result;

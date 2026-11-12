@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, roadBounds } from "../src/track.js";
+import { makeTrack, roadBounds, TRACKS } from "../src/track.js";
 import { Race } from "../src/race.js";
 import {
   getTrackPickups,
@@ -14,7 +14,7 @@ import { buildTrackPads } from "../src/track-pads.js";
 const hoverPoint = (track, pad, x, z) =>
   pickupPoint(track, pad, x, z).add(new THREE.Vector3(0, 2.2, 0));
 
-for (let course = 0; course < 3; course++) {
+for (let course = 0; course < TRACKS.length; course++) {
   const track = makeTrack(course);
   const pads = getTrackPickups(track);
   test(`${track.config.name}: authored pickup lines fit the deck and offer accessible and edge rewards`, () => {

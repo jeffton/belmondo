@@ -1,6 +1,6 @@
 # BELMONDO
 
-Original browser-based anti-gravity combat racer. Three circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with Three.js and Vite. No account, backend, analytics or uploaded audio.
+Original browser-based anti-gravity combat racer. Six circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with Three.js and Vite. No account, backend, analytics or uploaded audio.
 
 ## Play
 
@@ -19,6 +19,9 @@ Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equippe
 - **Kaiseki Coast — 5.9 km:** linked waterfront esses, a climbing reversal and a long ravine jump with an aligned landing straight.
 - **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
 - **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
+- **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and an ascending valley fork.
+- **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
+- **Cinderline — 8.2 km:** three continuous-deck compression waves, a banked caldera and grounded geothermal works.
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
@@ -59,6 +62,6 @@ OpenAI Image design boards are in `public/art/`; **Design study** opens the Japa
 
 ## Verification
 
-`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps on all three production circuits. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `test:music` checks native MP3 playback, playlist advancement, local-file replacement, transport lifecycle and independent volume controls. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. `node tests/flagship.browser.mjs` checks authored scenery clearance, scene lifecycle, keyboard/touch driving and frame timings; landmark fixtures are separate from actual-play captures. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
+`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps across all six circuits, including authored terrain and class/fork/TURBO matrices. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `test:music` checks native MP3 playback, playlist advancement, local-file replacement, transport lifecycle and independent volume controls. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. `node tests/flagship.browser.mjs` checks authored scenery clearance, scene lifecycle, keyboard/touch driving and frame timings; landmark fixtures are separate from actual-play captures. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
 
 Headless software rendering validates functionality, not physical-phone GPU performance or subjective driving feel. Gamepad mappings are implemented but require a physical controller for hardware verification.

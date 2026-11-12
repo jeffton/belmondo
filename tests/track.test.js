@@ -25,7 +25,7 @@ test("all courses expose wider main decks and keep both split routes clear", () 
 });
 
 for (let index = 0; index < TRACKS.length; index++) {
-  test(`${TRACKS[index].name}: broad bends and aligned ballistic landing`, () => {
+  test(`${TRACKS[index].name}: broad bends and any jump's aligned ballistic landing`, () => {
     const track = makeTrack(index);
     let minimumRadius = Infinity;
     for (const branch of [-1, 0, 1]) {
@@ -44,20 +44,24 @@ for (let index = 0; index < TRACKS.length; index++) {
       minimumRadius >= 150,
       `Tight road kink: radius ${minimumRadius} m`,
     );
-    const launch = track.frame(track.config.jump * track.length);
-    for (const offset of [0.014, 0.03, 0.055, 0.075]) {
-      const landing = track.frame((track.config.jump + offset) * track.length);
-      const sideways = landing.p.sub(launch.p).dot(launch.right);
-      assert.ok(
-        Math.abs(sideways) < 0.05,
-        `Landing bends ${sideways} m away from launch`,
-      );
+    if (track.config.jump !== null) {
+      const launch = track.frame(track.config.jump * track.length);
+      for (const offset of [0.014, 0.03, 0.055, 0.075]) {
+        const landing = track.frame(
+          (track.config.jump + offset) * track.length,
+        );
+        const sideways = landing.p.sub(launch.p).dot(launch.right);
+        assert.ok(
+          Math.abs(sideways) < 0.05,
+          `Landing bends ${sideways} m away from launch`,
+        );
+      }
     }
   });
 }
 
 test("joined fork halves have a level seam and expose common visual/physical bounds", () => {
-  for (let index = 0; index < 3; index++) {
+  for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
     for (const u of [start, end]) {
