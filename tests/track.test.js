@@ -24,8 +24,17 @@ test("all courses expose wider main decks and keep both split routes clear", () 
   }
 });
 
+const minimumRadiusByLayout = {
+  "coast-3": 150,
+  "solar-3": 150,
+  "noctilucent-3": 150,
+  "whiteout-1": 150,
+  "monsoon-3": 95,
+  "cinderline-1": 150,
+};
+
 for (let index = 0; index < TRACKS.length; index++) {
-  test(`${TRACKS[index].name}: broad bends and any jump's aligned ballistic landing`, () => {
+  test(`${TRACKS[index].name}: authored corner radii and any jump's aligned ballistic landing`, () => {
     const track = makeTrack(index);
     let minimumRadius = Infinity;
     for (const branch of [-1, 0, 1]) {
@@ -39,9 +48,11 @@ for (let index = 0; index < TRACKS.length; index++) {
         }
       }
     }
-    // At ~130 m/s and 110 m/s² grip, a 150 m bend is already a braking corner.
+    // Monsoon-3 adds ~103/116 m braking corners (minimum horizontal projection
+    // ~98 m); the unchanged layouts retain their broader bend contract. These are authored facts,
+    // not an engine restriction on physically feasible technical routes.
     assert.ok(
-      minimumRadius >= 150,
+      minimumRadius >= minimumRadiusByLayout[track.config.layoutId],
       `Tight road kink: radius ${minimumRadius} m`,
     );
     if (track.config.jump !== null) {

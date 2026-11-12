@@ -11,7 +11,7 @@ function frameAt(track, u, branch) {
 
 const risingForkProbes = {
   WHITEOUT: 0.76496,
-  MONSOON: 0.70862,
+  MONSOON: 0.79274,
   CINDERLINE: 0.77895,
 };
 
