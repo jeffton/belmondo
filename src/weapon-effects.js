@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
+import { weaponTexture } from "./weapon-textures.js";
+
 const FORWARD = new THREE.Vector3(0, 0, 1);
 const glow = (color, opacity = 1) =>
   new THREE.MeshBasicMaterial({
@@ -35,6 +37,7 @@ function painted(parts) {
 function streakGeometry() {
   // Two crossed tapered ribbons keep the exhaust readable from both cameras.
   const positions = [];
+  const uvs = [];
   for (const vertical of [false, true]) {
     const points = [
       [-0.42, 0],
@@ -42,13 +45,23 @@ function streakGeometry() {
       [0.04, -1],
       [-0.04, -1],
     ].map(([width, z]) => (vertical ? [0, width, z] : [width, 0, z]));
-    for (const i of [0, 1, 2, 0, 2, 3]) positions.push(...points[i]);
+    const corners = [
+      [0, 1],
+      [1, 1],
+      [1, 0],
+      [0, 0],
+    ];
+    for (const i of [0, 1, 2, 0, 2, 3]) {
+      positions.push(...points[i]);
+      uvs.push(...corners[i]);
+    }
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(positions, 3),
   );
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
   return geometry;
 }
 
@@ -58,10 +71,16 @@ export class WeaponEffects {
     this.active = new Map();
     this.blasts = [];
     this.pools = new Map();
+    this.metalTexture = weaponTexture("metal");
+    this.exhaustTexture = weaponTexture("exhaust");
+    this.smokeTexture = weaponTexture("smoke");
     this.bodyMaterial = new THREE.MeshLambertMaterial({
+      map: this.metalTexture,
       vertexColors: true,
       flatShading: true,
     });
+    this.smokeGeometry = new THREE.PlaneGeometry(1, 1);
+    this.arcGeometry = new THREE.TorusGeometry(1, 0.09, 3, 12, Math.PI * 1.35);
     this.seekerGeometry = painted([
       [
         new THREE.CylinderGeometry(0.18, 0.42, 2.4, 6),
@@ -77,6 +96,13 @@ export class WeaponEffects {
       ],
       [new THREE.BoxGeometry(2.3, 0.12, 1), 0xec4c3c, [0, 0, -0.8]],
       [new THREE.BoxGeometry(0.12, 1.7, 1), 0x233747, [0, 0, -0.8]],
+      [
+        new THREE.CylinderGeometry(0.45, 0.45, 0.22, 6),
+        0x182630,
+        [0, 0, -1],
+        Math.PI / 2,
+      ],
+      [new THREE.BoxGeometry(0.3, 0.18, 0.7), 0xffe3a6, [0, 0.36, 0.3]],
     ]);
     this.mineGeometry = painted([
       [new THREE.CylinderGeometry(1.15, 1.65, 0.5, 6), 0x253644],
@@ -121,36 +147,68 @@ export class WeaponEffects {
     };
     if (kind === "MISSILE") {
       mesh(this.seekerGeometry, this.bodyMaterial);
-      const flame = mesh(this.streakGeometry, glow(0x49eaff, 0.8));
+      const exhaust = glow(0x55b9ed, 0.7);
+      exhaust.map = this.exhaustTexture;
+      const flame = mesh(this.streakGeometry, exhaust);
       flame.position.z = -1.3;
       const core = mesh(this.coreGeometry, glow(0xe9ffff));
       core.position.z = -1.2;
+      const hot = glow(0xffd39a, 0.85);
+      hot.map = this.exhaustTexture;
+      const inner = mesh(this.streakGeometry, hot);
+      inner.position.z = -1.25;
     } else if (kind === "MINE") {
       mesh(this.mineGeometry, this.bodyMaterial);
-      const ring = mesh(this.waveGeometry, glow(0xffa322, 0.8));
+      const ring = mesh(this.arcGeometry, glow(0xffa322, 0.8));
       ring.rotation.x = Math.PI / 2;
       ring.scale.setScalar(1.7);
       ring.position.y = 0.35;
       const beacon = mesh(this.coreGeometry, glow(0xffe7ab));
       beacon.position.y = 0.65;
-      beacon.scale.setScalar(0.6);
+      beacon.scale.set(0.3, 1.8, 0.3);
+      const antenna = mesh(this.arcGeometry, glow(0xfff0bf, 0.6));
+      antenna.rotation.x = Math.PI / 2;
+      antenna.scale.setScalar(2.15);
+      antenna.position.y = 0.35;
     } else if (kind === "PULSE") {
       for (let i = 0; i < 3; i++) {
         const ring = mesh(
-          this.waveGeometry,
-          glow(i === 1 ? 0xffffff : 0xfb4db2, 0.8),
+          this.arcGeometry,
+          glow(i === 1 ? 0xb5faff : 0xfb4db2, 0.8),
         );
         ring.scale.setScalar(2 + i * 1.5);
+        ring.rotation.z = i * Math.PI * 0.7;
       }
     } else if (kind === "TURBO") {
       for (const side of [-1, 1]) {
-        const wake = mesh(this.streakGeometry, glow(0x4c96ff, 0.5));
+        const material = glow(0x4c96ff, 0.5);
+        material.map = this.exhaustTexture;
+        const wake = mesh(this.streakGeometry, material);
         wake.position.set(side * 2.55, -0.08, -3.4);
       }
     } else {
       mesh(this.coreGeometry, glow(0xffc581, 0.9));
       mesh(this.waveGeometry, glow(0xff7d43, 0.9));
-      mesh(this.shardsGeometry, glow(0xffb26b, 0.9));
+      const debrisMaterial = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        map: this.metalTexture,
+        transparent: true,
+      });
+      mesh(this.shardsGeometry, debrisMaterial);
+      // Two crossed soot sheets, not a camera-facing opaque explosion ball.
+      for (const rotation of [0, Math.PI / 2]) {
+        const smoke = mesh(
+          this.smokeGeometry,
+          new THREE.MeshBasicMaterial({
+            color: 0x303541,
+            map: this.smokeTexture,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        smoke.rotation.y = rotation;
+      }
     }
     root.visible = false;
     this.scene.add(root);
@@ -183,6 +241,13 @@ export class WeaponEffects {
       this.active.delete(effect);
       if (effect.type === "PULSE") continue;
       const blast = this.acquire("BLAST");
+      blast.mine = !effect.type;
+      blast.root.children[0].material.color.setHex(
+        blast.mine ? 0xffefb0 : 0xdff6ff,
+      );
+      blast.root.children[1].material.color.setHex(
+        blast.mine ? 0xffac32 : 0xff6740,
+      );
       blast.root.position.copy(effect.position);
       blast.root.quaternion.copy(slot.root.quaternion);
       this.blasts.push(blast);
@@ -201,18 +266,23 @@ export class WeaponEffects {
           FORWARD,
           effect.velocity.clone().normalize(),
         );
-        root.children[1].scale.set(1, 1, 12 + Math.sin(time * 41) * 2);
+        const flutter = Math.sin(time * 41);
+        root.children[1].scale.set(1.2, 1.2, 12 + flutter * 2);
+        root.children[3].scale.set(0.4, 0.4, 5 + flutter);
+        root.children[2].scale.setScalar(0.6 + flutter * 0.1);
       } else if (kind === "PULSE") {
         root.quaternion.setFromUnitVectors(FORWARD, effect.direction);
         const age = 1 - effect.life / 0.35;
         for (const [i, ring] of root.children.entries()) {
           ring.position.z = 4 + age * 78 + i * 3;
           ring.scale.set(3 + age * 5 + i, 2 + age * 2 + i * 0.4, 1);
+          ring.rotation.z = i * Math.PI * 0.7 + age * (i % 2 ? -2 : 2);
           ring.material.opacity = (1 - age) * 0.85;
         }
       } else {
         root.rotation.set(0, time * 0.5, 0);
         root.children[1].material.opacity = 0.45 + Math.sin(time * 6) * 0.2;
+        root.children[3].rotation.z = -time * 1.7;
       }
     }
     for (const blast of this.blasts) {
@@ -220,11 +290,23 @@ export class WeaponEffects {
       const t = blast.age / 0.55;
       blast.root.visible = t < 1;
       blast.busy = t < 1;
-      blast.root.children[0].scale.setScalar(1 + t * 7);
+      blast.root.children[0].scale.setScalar(1 + Math.min(t * 8, 2));
+      blast.root.children[1].rotation.x = blast.mine ? Math.PI / 2 : 0;
       blast.root.children[1].scale.setScalar(2 + t * 13);
-      blast.root.children[2].scale.setScalar(2 + t * 18);
-      for (const mesh of blast.root.children)
-        mesh.material.opacity = Math.max(0, 1 - t);
+      blast.root.children[2].scale.set(
+        2 + t * 18,
+        2 + t * 12,
+        2 + t * (blast.mine ? 18 : 28),
+      );
+      blast.root.children[2].rotation.set(t * 2, t * 3, t);
+      for (const [i, mesh] of blast.root.children.entries()) {
+        mesh.material.opacity = Math.max(0, i === 0 ? 1 - t * 4 : 1 - t);
+        if (i >= 3) {
+          mesh.scale.setScalar(4 + t * 14);
+          mesh.position.y = t * 3;
+          mesh.material.opacity = Math.sin(t * Math.PI) * 0.5;
+        }
+      }
     }
     this.blasts = this.blasts.filter((b) => b.busy);
     for (const [i, racer] of race.racers.entries()) {
