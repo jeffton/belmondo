@@ -4,7 +4,7 @@ This candidate combines legacy-v4 routes and grounded worlds, Whiteout-2's origi
 
 ## Acceptance
 
-Completed CPU batches cover 683 distinct test cases, including the 108-run legacy terrain matrix, 72 single-NPC craft/class/fork cases, both Cinderline eight-ship five-lap packs, Vesper's terrain-aware routing, emitted architecture, fork seams, terrain sweeps, pickups and all ordinary expansion-course shield gates. Heavy matrices run by course/name filter within the 60-second job deadline. Build and formatting pass. Private soundtrack masters are staged from the external audio archive, not committed.
+Completed CPU batches cover all 757 distinct test cases, including the 108-run legacy terrain matrix, 72 single-NPC craft/class/fork cases, both Cinderline eight-ship five-lap packs, Vesper's terrain-aware routing, emitted architecture, fork seams, terrain sweeps, pickups and all ordinary expansion-course shield gates. Elimination/result tests preserve permanent zero-shield DNF, immutable finishing positions, continued surviving racers, player-only speech and critical-shield entry/clear behavior. Menu-demo rendering restores eliminated hulls without resurrecting their race bodies. Heavy matrices run by course/name filter within the 60-second job deadline. Build and formatting pass. Private soundtrack masters are staged from the external audio archive, not committed.
 
 Configuration and sampled-output fixtures describe the intentionally integrated layouts. Monsoon's steep crest, original deck/outlet, full-width clearance and pickup-targeted fairness contracts remain enforced. Whiteout's original base points and spiral remain exact.
 

@@ -197,7 +197,7 @@ test("AI inventory pickups never emit player weapon announcements", () => {
   assert(!race.events.some((event) => event.kind === "pickup"));
 });
 
-test("lethal AI PULSE recovery cannot sweep an unvisited pickup between old position and checkpoint", () => {
+test("lethal AI PULSE elimination cannot grant an unvisited pickup across the old checkpoint path", () => {
   const track = makeTrack(0);
   const race = new Race(track);
   race.countdown = 0;
@@ -227,7 +227,12 @@ test("lethal AI PULSE recovery cannot sweep an unvisited pickup between old posi
   shooter.weapon = "PULSE";
   shooter.aiFire = 0;
   race.update(1 / 120, {});
-  assert(victim.recoveredThisStep);
+  assert(victim.eliminated);
+  assert.equal(victim.shield, 0);
+  assert.equal(victim.recoveredThisStep, false);
+  const terminalPosition = victim.position.clone();
+  for (let step = 0; step < 10; step++) race.update(1 / 120, {});
+  assert(victim.position.equals(terminalPosition));
   assert.equal(victim.collectedPickups.size, 0);
   assert.equal(victim.weapon, null);
 });
