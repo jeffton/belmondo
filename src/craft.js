@@ -137,156 +137,258 @@ function loft(skin, sections, tile = 0, tint = WHITE, caps = true) {
   }
 }
 
-// The same collision envelope and exhaust hardpoints support three actual airframes.
+// Narrow central pressure shells, separate structural foils and short integrated
+// engine fairings. The exhaust hardpoints stay identical for all three racers.
 const AIRFRAMES = [
   {
     name: "STRIKER",
     hull: [
-      [5.65, 0, -0.1, 0.035, 0.025, -0.06],
-      [3.5, 0, -0.04, 0.3, 0.1, -0.17],
-      [1.6, 0, 0, 0.75, 0.18, -0.25],
-      [-0.3, 0, 0, 1.35, 0.26, -0.3],
-      [-2, 0, -0.04, 2.2, 0.31, -0.33],
-      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+      [5.65, 0, -0.06, 0.1, 0.08, -0.07],
+      [4.3, 0, -0.02, 0.34, 0.15, -0.15],
+      [2.2, 0, 0, 0.62, 0.24, -0.26],
+      [0.4, 0, 0, 0.83, 0.32, -0.34],
+      [-1.25, 0, 0, 0.72, 0.38, -0.32],
+      [-3.12, 0, -0.05, 0.45, 0.19, -0.22],
     ],
     canopy: [
-      [2.05, 0, 0.14, 0.12, 0.025, -0.04],
-      [0.25, 0, 0.24, 0.34, 0.37, -0.04],
-      [-0.83, 0, 0.25, 0.3, 0.3, -0.03],
-      [-1.38, 0, 0.23, 0.2, 0.05, -0.05],
+      [2.6, 0, 0.18, 0.12, 0.03, -0.03],
+      [1.1, 0, 0.3, 0.34, 0.48, -0.07],
+      [-0.65, 0, 0.36, 0.31, 0.39, -0.07],
+      [-1.12, 0, 0.34, 0.24, 0.06, -0.05],
     ],
+    // Root, swept leading edge, tip, cropped trailing edge, root.
+    wing: [
+      [0.64, 1.35],
+      [1.15, 0.7],
+      [3.0, -1.85],
+      [2.94, -2.57],
+      [1.4, -2.36],
+      [0.65, -1.35],
+    ],
+    wingY: -0.1,
+    engineFront: -1.25,
+    engineWidth: 0.47,
   },
   {
     name: "RAPTOR",
     hull: [
-      [4.9, 0, -0.06, 0.35, 0.055, -0.1],
-      [3.3, 0, -0.02, 0.68, 0.13, -0.19],
-      [1.8, 0, 0, 1.6, 0.22, -0.27],
-      [0, 0, 0, 1.15, 0.26, -0.3],
-      [-1.5, 0, -0.04, 1.2, 0.31, -0.33],
-      [-2.65, 0, -0.02, 2.9, 0.27, -0.4],
-      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+      [5.1, 0, -0.06, 0.28, 0.08, -0.1],
+      [3.8, 0, 0, 0.44, 0.17, -0.2],
+      [1.65, 0, 0, 0.71, 0.36, -0.36],
+      [-0.45, 0, 0, 0.62, 0.38, -0.33],
+      [-2.15, 0, -0.02, 0.56, 0.28, -0.27],
+      [-3.05, 0, -0.07, 0.32, 0.13, -0.15],
     ],
     canopy: [
-      [1.3, 0, 0.2, 0.18, 0.035, -0.04],
-      [0.5, 0, 0.25, 0.4, 0.36, -0.04],
-      [-0.55, 0, 0.26, 0.36, 0.32, -0.03],
-      [-1.05, 0, 0.25, 0.22, 0.08, -0.05],
+      [3.0, 0, 0.19, 0.19, 0.025, -0.04],
+      [1.85, 0, 0.34, 0.34, 0.39, -0.05],
+      [0.4, 0, 0.37, 0.3, 0.35, -0.05],
+      [-0.15, 0, 0.34, 0.22, 0.06, -0.04],
     ],
+    // Forward-swept clipped wing, with a visibly open waist behind it.
+    wing: [
+      [0.57, 0.15],
+      [2.67, 1.4],
+      [3.07, 1.08],
+      [2.93, 0.28],
+      [1.65, -1.08],
+      [0.57, -1.55],
+    ],
+    wingY: -0.1,
+    engineFront: -1.45,
+    engineWidth: 0.5,
   },
   {
     name: "WRAITH",
     hull: [
-      [5.65, 0, -0.1, 0.02, 0.025, -0.06],
-      [3.4, 0, -0.04, 0.35, 0.1, -0.17],
-      [1.2, 0, 0, 0.8, 0.18, -0.25],
-      [-0.9, 0, 0, 1.2, 0.26, -0.3],
-      [-2.2, 0, -0.04, 1.8, 0.31, -0.33],
-      [-2.8, 0, -0.02, 2.9, 0.27, -0.4],
-      [-3.18, 0, -0.02, 3.02, 0.26, -0.48],
+      [6.0, 0, -0.03, 0.07, 0.07, -0.08],
+      [4.35, 0, 0, 0.29, 0.17, -0.19],
+      [1.4, 0, 0, 0.5, 0.27, -0.3],
+      [-0.8, 0, 0.01, 0.59, 0.34, -0.31],
+      [-2.3, 0, -0.02, 0.48, 0.27, -0.24],
+      [-3.22, 0, -0.04, 0.28, 0.13, -0.15],
     ],
     canopy: [
-      [2.65, 0, 0.1, 0.09, 0.025, -0.04],
-      [0.1, 0, 0.24, 0.27, 0.32, -0.04],
-      [-1.2, 0, 0.25, 0.24, 0.25, -0.03],
-      [-1.7, 0, 0.23, 0.16, 0.05, -0.05],
+      [2.75, 0, 0.16, 0.09, 0.03, -0.03],
+      [0.6, 0, 0.29, 0.25, 0.43, -0.04],
+      [-0.95, 0, 0.34, 0.25, 0.31, -0.04],
+      [-1.5, 0, 0.31, 0.15, 0.05, -0.04],
     ],
+    // Double-cranked lifting foil; a long dart rather than a solid delta.
+    wing: [
+      [0.46, 0.6],
+      [1.33, -0.1],
+      [1.67, -1.18],
+      [2.94, -1.6],
+      [3.08, -2.48],
+      [1.35, -2.29],
+      [0.45, -1.65],
+    ],
+    wingY: -0.14,
+    engineFront: -1.8,
+    engineWidth: 0.44,
   },
 ];
+
+// Thin closed polygonal airfoil. Triangulation handles the cranked/concave
+// planforms without filling their negative space with a triangular fan.
+function foil(skin, outline, side, y, thickness, tile, tipRise = 0) {
+  const contour = outline.map(([x, z]) => new THREE.Vector2(x, z));
+  const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
+  const point = (index, top) => {
+    const [x, z] = outline[index];
+    return [
+      side * x,
+      y + (top ? thickness : -thickness) + Math.max(0, x - 1) * tipRise,
+      z,
+    ];
+  };
+  const uv = (p) => [p[0] / 6 + 0.5, (3 - p[2]) / 6];
+  for (const triangle of triangles) {
+    for (const top of [true, false]) {
+      const points = triangle.map((index) => point(index, top));
+      skin.face(
+        points,
+        top ? tile : 2,
+        points.map(uv),
+        WHITE,
+        new THREE.Vector3(0, top ? 1 : -1, 0),
+      );
+    }
+  }
+  for (let i = 0; i < outline.length; i++) {
+    const next = (i + 1) % outline.length;
+    const points = [
+      point(i, true),
+      point(next, true),
+      point(next, false),
+      point(i, false),
+    ];
+    const a = contour[i],
+      b = contour[next];
+    const signedArea = THREE.ShapeUtils.area(contour);
+    const outward =
+      signedArea > 0
+        ? new THREE.Vector3(side * (b.y - a.y), 0, -(b.x - a.x))
+        : new THREE.Vector3(-side * (b.y - a.y), 0, b.x - a.x);
+    skin.face(
+      points,
+      5,
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+      SLATE,
+      outward,
+    );
+  }
+}
 
 function buildHull(variant) {
   const airframe = AIRFRAMES[variant];
   const core = new Skin();
-  // One continuous monocoque wedge: shoulders, engines and prow share a hull.
-  // No separate outrigger noses or open watercraft-like structure.
-  const hullSections = airframe.hull;
-  loft(core, hullSections, 0, WHITE, "front");
-  const deckPoint = (z, across) => {
-    const i = hullSections.findIndex(
-      (section, index) =>
-        index < hullSections.length - 1 &&
-        z <= section[0] &&
-        z >= hullSections[index + 1][0],
-    );
-    const a = hullSections[i],
-      b = hullSections[i + 1];
-    const t = (a[0] - z) / (a[0] - b[0]);
-    return [
-      across * THREE.MathUtils.lerp(a[3], b[3], t),
-      THREE.MathUtils.lerp(a[2] + a[4], b[2] + b[4], t) + 0.012,
-      z,
-    ];
-  };
-  // Real rear apertures preserve sightlines into the original recessed engines.
-  const rear = ring(hullSections.at(-1));
-  const outline = rear.map(([x, y]) => new THREE.Vector2(x, y));
-  const holes = [-1, 1].map((side) =>
-    ring([-3.18, side * 2.55, -0.08, 0.33, 0.16, -0.2]).map(
-      ([x, y]) => new THREE.Vector2(x, y),
-    ),
-  );
-  const rearPoints = [outline, ...holes].flat();
-  for (const triangle of THREE.ShapeUtils.triangulateShape(outline, holes)) {
-    const points = triangle.map((index) => [
-      rearPoints[index].x,
-      rearPoints[index].y,
-      -3.18,
-    ]);
-    core.face(
-      points,
-      3,
-      points.map(([x, y]) => [x / 6.04 + 0.5, y + 0.5]),
-      WHITE,
-      new THREE.Vector3(0, 0, -1),
-    );
-  }
-  // A narrow exposed keel, rather than a second bulky hull.
+  const accent = new Skin();
+  const mechanical = new Skin();
+  const canopy = new Skin();
+  const uv = [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ];
+  loft(core, airframe.hull);
+  loft(canopy, airframe.canopy, 4);
+
+  // Narrow ventral battery keel makes the craft a volume in rear chase view.
   loft(
-    core,
+    mechanical,
     [
-      [2.35, 0, -0.21, 0.15, 0.03, -0.07],
-      [0.5, 0, -0.25, 0.32, 0.03, -0.13],
-      [-1.9, 0, -0.31, 0.4, 0.02, -0.12],
-      [-2.65, 0, -0.24, 0.35, 0.02, -0.08],
+      [2.1, 0, -0.26, 0.18, 0.04, -0.1],
+      [0.35, 0, -0.34, 0.32, 0.04, -0.15],
+      [-1.95, 0, -0.31, 0.28, 0.03, -0.1],
+      [-2.7, 0, -0.22, 0.17, 0.03, -0.06],
     ],
     2,
   );
 
-  const accent = new Skin();
-  const mechanical = new Skin();
   for (const side of [-1, 1]) {
-    const uv = [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-    ];
-    // Painted load-bearing shoulder panels follow the same continuous hull.
-    for (let i = 0; i < hullSections.length - 1; i++) {
-      const points = [hullSections[i], hullSections[i + 1]].flatMap(
-        ([z, , y, width, top], end) =>
-          (end ? [0.61, 0.29] : [0.29, 0.61]).map((across) => [
-            side * width * across,
-            y + top + 0.008,
-            z,
-          ]),
-      );
-      accent.face(points, 1, uv, WHITE, new THREE.Vector3(0, 1, 0));
-    }
-    // Unpainted thrust rings sit proud of the tapered composite pods.
+    foil(
+      core,
+      airframe.wing,
+      side,
+      airframe.wingY,
+      0.075,
+      0,
+      variant === 2 ? 0.05 : 0.015,
+    );
+    // Separate narrow painted inset follows the foil's outer half. It does not
+    // turn the entire central deck into a featureless livery triangle.
+    const panel = airframe.wing.map(([x, z]) => [
+      0.55 + (x - 0.55) * 0.84,
+      z * 0.86 - 0.15,
+    ]);
+    foil(
+      accent,
+      panel,
+      side,
+      airframe.wingY + 0.082,
+      0.012,
+      1,
+      variant === 2 ? 0.05 : 0.015,
+    );
+
+    // Transverse load path joins fuselage, wing and short engine fairing. On
+    // RAPTOR this swept rear spar is distinct from its forward lifting foil.
+    foil(
+      mechanical,
+      [
+        [0.46, -1.3],
+        [1.5, -1.55],
+        [2.66, -2.02],
+        [2.74, -2.55],
+        [1.45, -2.28],
+        [0.46, -2.05],
+      ],
+      side,
+      -0.13,
+      0.11,
+      5,
+    );
+
+    // Engine bodies occupy only the rear quarter, not long pontoon outriggers.
+    loft(
+      core,
+      [
+        [airframe.engineFront, side * 2.55, -0.1, 0.2, 0.18, -0.18],
+        [
+          airframe.engineFront - 0.42,
+          side * 2.55,
+          -0.08,
+          airframe.engineWidth,
+          0.32,
+          -0.34,
+        ],
+        [-2.65, side * 2.55, -0.08, 0.49, 0.3, -0.34],
+        [-3.18, side * 2.55, -0.08, 0.49, 0.28, -0.33],
+      ],
+      6,
+      WHITE,
+      "front",
+    );
     for (const z of [-2.66, -2.96]) {
       loft(
         mechanical,
         [
-          [z + 0.045, side * 2.55, -0.08, 0.5, 0.3, -0.34],
-          [z - 0.045, side * 2.55, -0.08, 0.5, 0.3, -0.34],
+          [z + 0.045, side * 2.55, -0.08, 0.51, 0.32, -0.35],
+          [z - 0.045, side * 2.55, -0.08, 0.51, 0.32, -0.35],
         ],
         5,
         WHITE,
         false,
       );
     }
-    // Recessed, chamfered engine mouths with dark inner walls and a backplate.
     const outer = ring([-3.25, side * 2.55, -0.08, 0.49, 0.28, -0.33]);
     const inner = ring([-3.29, side * 2.55, -0.08, 0.31, 0.14, -0.18]);
     const back = ring([-2.97, side * 2.55, -0.08, 0.28, 0.12, -0.15]);
@@ -314,44 +416,94 @@ function buildHull(variant) {
       WHITE,
       new THREE.Vector3(0, 0, -1),
     );
-    // Flush cooling slots belong to the integrated shoulders, not side pods.
+
+    // Cockpit-side ram-air shoulders: raised rim, recessed black mouth and a
+    // tapered duct visibly diving into the chassis, rather than painted vents.
+    const intakeZ = variant === 1 ? 0.2 : -0.2;
+    const intakeX = variant === 2 ? 0.5 : 0.67;
+    loft(
+      core,
+      [
+        [intakeZ + 0.55, side * intakeX, 0.28, 0.24, 0.31, -0.08],
+        [intakeZ - 0.1, side * (intakeX + 0.08), 0.3, 0.25, 0.29, -0.12],
+        [-2.28, side * 0.55, 0.16, 0.13, 0.07, -0.1],
+      ],
+      5,
+      WHITE,
+    );
     mechanical.face(
       [
-        deckPoint(0.9, side * 0.3),
-        deckPoint(0.9, side * 0.58),
-        deckPoint(-0.7, side * 0.58),
-        deckPoint(-0.7, side * 0.3),
+        [side * (intakeX - 0.16), 0.55, intakeZ + 0.56],
+        [side * (intakeX + 0.16), 0.55, intakeZ + 0.56],
+        [side * (intakeX + 0.16), 0.28, intakeZ + 0.56],
+        [side * (intakeX - 0.16), 0.28, intakeZ + 0.56],
       ],
-      7,
+      3,
       uv,
       WHITE,
-      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1),
+    );
+
+    // A low painted nose chine meets the cockpit frame, readable from chase.
+    loft(
+      accent,
+      [
+        [variant === 2 ? 4.4 : 3.9, side * 0.19, 0.1, 0.025, 0.025, -0.02],
+        [2.1, side * 0.43, 0.23, 0.055, 0.025, -0.03],
+        [0.0, side * (variant === 2 ? 0.47 : 0.6), 0.32, 0.045, 0.025, -0.03],
+      ],
+      1,
     );
   }
 
-  // Structural racing foils differ in planform as well as in height/profile.
   if (variant === 0) {
-    // STRIKER: paired outward-raked, swept tail blades on the delta shoulders.
+    // STRIKER: cropped swept wings and tall outward-raked twin rudders.
     for (const side of [-1, 1]) {
       loft(
         accent,
         [
-          [-0.65, side * 1.15, 0.22, 0.035, 0.02, -0.06],
-          [-1.9, side * 1.7, 0.25, 0.045, 0.4, -0.1],
-          [-2.85, side * 2.28, 0.23, 0.025, 0.2, -0.08],
+          [-1.35, side * 1.28, 0.0, 0.035, 0.08, -0.12],
+          [-2.15, side * 1.62, 0.08, 0.055, 0.95, -0.16],
+          [-2.95, side * 1.73, 0.06, 0.035, 0.48, -0.13],
         ],
         1,
       );
     }
   } else if (variant === 1) {
-    // RAPTOR: a clipped chisel prow, forward swept canards and a single spine fin.
+    // RAPTOR: forward-swept main wing, cropped nose, upright centre blade.
+    loft(
+      accent,
+      [
+        [-0.9, 0, 0.32, 0.045, 0.06, -0.07],
+        [-1.95, 0, 0.26, 0.065, 1.05, -0.07],
+        [-2.91, 0, 0.12, 0.035, 0.6, -0.08],
+      ],
+      1,
+    );
+    for (const side of [-1, 1]) {
+      foil(
+        accent,
+        [
+          [0.3, 3.72],
+          [0.9, 3.24],
+          [1.18, 2.55],
+          [0.38, 2.72],
+        ],
+        side,
+        0.02,
+        0.045,
+        1,
+      );
+    }
+  } else {
+    // WRAITH: needle fuselage, double-cranked wing and scimitar tip fins.
     for (const side of [-1, 1]) {
       loft(
         accent,
         [
-          [2.1, side * 0.83, 0.11, 0.08, 0.025, -0.04],
-          [1.3, side * 1.45, 0.13, 0.65, 0.035, -0.06],
-          [0.7, side * 1.05, 0.13, 0.08, 0.025, -0.04],
+          [-1.63, side * 2.72, 0.0, 0.03, 0.05, -0.09],
+          [-2.18, side * 3.02, 0.1, 0.04, 0.65, -0.12],
+          [-2.77, side * 3.07, 0.1, 0.025, 0.36, -0.1],
         ],
         1,
       );
@@ -359,37 +511,31 @@ function buildHull(variant) {
     loft(
       core,
       [
-        [-0.9, 0, 0.24, 0.025, 0.06, -0.05],
-        [-1.85, 0, 0.27, 0.035, 0.38, -0.06],
-        [-2.8, 0, 0.25, 0.025, 0.19, -0.06],
+        [-0.8, 0, 0.33, 0.09, 0.06, -0.03],
+        [-1.9, 0, 0.28, 0.12, 0.44, -0.03],
+        [-2.88, 0, 0.16, 0.06, 0.12, -0.03],
       ],
       6,
     );
-  } else {
-    // WRAITH: very low cranked trailing-edge winglets, no upright tail pair.
-    for (const side of [-1, 1]) {
-      loft(
-        accent,
-        [
-          [-1.2, side * 1.2, 0.15, 0.035, 0.025, -0.04],
-          [-2.15, side * 2.05, 0.17, 0.7, 0.04, -0.07],
-          [-3.05, side * 2.57, 0.19, 0.45, 0.04, -0.07],
-        ],
-        1,
-      );
-    }
   }
 
-  // Angular framed canopy grows out of the spine, and leans forward into the nose.
-  const canopy = new Skin();
-  loft(canopy, airframe.canopy, 4);
-
-  return {
+  const hull = {
     core: core.geometry(),
     accent: accent.geometry(),
     mechanical: mechanical.geometry(),
     canopy: canopy.geometry(),
   };
+  // Keep the needle noses within the 4.25m physical contact half-length.
+  // Aft stations and the established twin exhaust hardpoints remain unchanged.
+  for (const geometry of Object.values(hull)) {
+    const positions = geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+      if (positions.getZ(i) > 0) positions.setZ(i, positions.getZ(i) * 0.7);
+    }
+    geometry.computeVertexNormals();
+    geometry.computeBoundingSphere();
+  }
+  return hull;
 }
 
 function buildResources() {
