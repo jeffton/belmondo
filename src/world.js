@@ -10,6 +10,7 @@ import { buildFinishDistrict } from "./finish-district.js";
 import { WeaponEffects } from "./weapon-effects.js";
 import { circuitTextures } from "./materials.js";
 import { buildTrackLighting } from "./track-lighting.js";
+import { createSky } from "./sky.js";
 import { buildEnvironment } from "./environment.js";
 import { buildCity } from "./city.js";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
@@ -134,28 +135,7 @@ export class World {
     );
     textures.rail = createRailFaceTexture(cfg.name);
     this.textures = textures;
-    const skyCanvas = document.createElement("canvas");
-    skyCanvas.width = 4;
-    skyCanvas.height = 256;
-    const skyContext = skyCanvas.getContext("2d");
-    const gradient = skyContext.createLinearGradient(0, 0, 0, 256);
-    gradient.addColorStop(
-      0,
-      "#" + new THREE.Color(cfg.sky).multiplyScalar(0.65).getHexString(),
-    );
-    gradient.addColorStop(
-      0.65,
-      flagship ? "#666a85" : "#" + new THREE.Color(cfg.fog).getHexString(),
-    );
-    gradient.addColorStop(
-      0.88,
-      flagship ? "#a3939d" : "#" + new THREE.Color(cfg.fog).getHexString(),
-    );
-    gradient.addColorStop(1, "#" + new THREE.Color(fogColor).getHexString());
-    skyContext.fillStyle = gradient;
-    skyContext.fillRect(0, 0, 4, 256);
-    this.scene.background = new THREE.CanvasTexture(skyCanvas);
-    this.scene.background.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = createSky(cfg, fogColor);
     this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
     this.lighting = buildTrackLighting(this.scene, track);
     const sea = new THREE.Mesh(
