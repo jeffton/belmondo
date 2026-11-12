@@ -40,30 +40,38 @@ for (const index of [3, 4, 5]) {
   const config = TRACKS[index];
   const terrain = createTerrain(makeTrack(index));
   after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
-  test(`${config.name}: continuous deck, broad turns and no invented jump/tunnel`, () => {
+  test(`${config.name}: authored deck, broad turns and explicit jump/tunnel metadata`, () => {
     const track = makeTrack(index);
     assert.equal(
       new Set(TRACKS.map((course) => course.layoutId)).size,
       TRACKS.length,
     );
-    assert.equal(config.jump, null);
-    assert.equal(config.ramp, null);
     assert.equal(config.tunnel, null);
-    assert.equal(config.sections.runway, null);
-    assert.deepEqual(getJumpMarkingLayout(track), []);
+    if (index !== 5) {
+      assert.equal(config.jump, null);
+      assert.equal(config.ramp, null);
+      assert.equal(config.sections.runway, null);
+      assert.deepEqual(getJumpMarkingLayout(track), []);
+    } else {
+      assert(getJumpMarkingLayout(track).length > 0);
+    }
     for (let i = 0; i < 10000; i++) {
       const u = i / 10000;
       const s = u * track.length;
-      assert.equal(track.gap(u), false);
+      assert.equal(
+        track.gap(u),
+        index === 5 && u >= config.jump && u < config.jump + config.gapLength,
+      );
       for (const branch of u > config.split[0] && u < config.split[1]
         ? [-1, 1]
         : [0]) {
         const frame = track.frame(s, branch);
         const next = track.frame(s + 3, branch);
-        assert(
-          frame.p.distanceTo(next.p) < 4.5,
-          "no discontinuity or fake launch lip",
-        );
+        if (index !== 5 || Math.abs(u - config.jump) > 6 / track.length)
+          assert(
+            frame.p.distanceTo(next.p) < 4.5,
+            "continuous connected deck outside the physical gap",
+          );
         assert(
           Math.abs(track.curvature(s, branch)) <= 1 / 150,
           `radius below 150m at ${u}, branch ${branch}`,
@@ -72,10 +80,11 @@ for (const index of [3, 4, 5]) {
         if (i % 100 === 0) {
           const body = frame.p.clone().addScaledVector(frame.up, 2.2);
           const road = projectRoad(track, body, s, branch);
-          assert(
-            Math.abs(road.s - s) < 4,
-            "projection stays in its connected local route",
-          );
+          if (!track.gap(u))
+            assert(
+              Math.abs(road.s - s) < 4,
+              "projection stays in its connected local route",
+            );
         }
       }
     }
@@ -194,20 +203,16 @@ test("MONSOON: technical fork is physically shorter than the outside line", () =
     );
 });
 
-test("CINDERLINE: three separate continuous-deck crests have nearly straight tops", () => {
+test("CINDERLINE: the ballistic crest has a straight aligned downhill landing", () => {
   const track = makeTrack(5);
-  for (const [start, end] of [
-    [0.2, 0.35],
-    [0.5, 0.65],
-    [0.79, 0.93],
-  ]) {
+  for (const [start, end] of [[0.52, 0.538]]) {
     let top = { y: -Infinity, s: 0 };
     for (let u = start; u < end; u += 0.0005) {
       const s = u * track.length;
       const y = track.frame(s).p.y;
       if (y > top.y) top = { y, s };
     }
-    assert(top.y > 140);
+    assert(top.y > 110);
     assert(
       Math.abs(track.curvature(top.s)) < 1 / 600,
       "crest is not a blind tightening corner",
