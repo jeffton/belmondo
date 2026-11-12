@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, TRACKS } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
-import { buildFinishDistrict } from "../src/finish-district.js";
+import {
+  buildFinishDistrict,
+  getFinishDistrictLayout,
+} from "../src/finish-district.js";
+import { getWaterfrontDistricts } from "../src/course-geography.js";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: finish district is grounded, clears the racing corridor and culminates at the real line`, () => {
@@ -11,7 +15,10 @@ for (const [index, config] of TRACKS.entries()) {
     const terrain = createTerrain(track);
     const scene = new THREE.Scene();
     const textures = Object.fromEntries(
-      ["concrete", "paint", "facade"].map((key) => [key, new THREE.Texture()]),
+      ["concrete", "paint", "facade", "road"].map((key) => [
+        key,
+        new THREE.Texture(),
+      ]),
     );
     const district = buildFinishDistrict(scene, track, textures, {
       heightAt: terrain.heightAt,
@@ -62,14 +69,18 @@ for (const [index, config] of TRACKS.entries()) {
           );
           if (index === 0) {
             const side = Math.sign(p.clone().sub(frame.p).dot(frame.right));
-            assert(
-              !(side < 0 && frame.u >= 0.925 && frame.u <= 0.983),
-              "cannot duplicate the existing approach gallery",
-            );
-            assert(
-              !(side > 0 && frame.u >= 0.008 && frame.u <= 0.102),
-              "cannot duplicate the existing departure gallery",
-            );
+            for (const [
+              start,
+              end,
+              branch,
+              gallerySide,
+            ] of getWaterfrontDistricts(track)) {
+              if (branch !== 0) continue;
+              assert(
+                !(side === gallerySide && frame.u >= start && frame.u <= end),
+                "finish stands cannot duplicate an occupied waterfront gallery",
+              );
+            }
           }
         }
     }
@@ -103,8 +114,35 @@ for (const [index, config] of TRACKS.entries()) {
     });
     assert.equal(
       crowdBatches,
-      3,
-      "crowd rendering stays instanced per cullable structure",
+      getFinishDistrictLayout(track).length,
+      "crowd rendering stays instanced per cullable straight section",
+    );
+    const [start, end] = config.sections.finishStraight;
+    const checker = scene.getObjectByName("finish-straight-checker");
+    assert(checker, "checkers belong in the road, not only on finish signs");
+    const ray = new THREE.Raycaster();
+    for (let i = 0; i < 9; i++) {
+      const f = track.frame(
+        (start + ((i + 0.3) * (end - start)) / 9) * track.length,
+      );
+      ray.set(
+        f.p.clone().add(new THREE.Vector3(0, 10, 0)),
+        new THREE.Vector3(0, -1, 0),
+      );
+      const hit = ray.intersectObject(checker)[0];
+      assert(
+        hit && Math.abs(hit.point.y - f.p.y - 0.035) < 0.02,
+        "checkerboard must follow the entire actual finishing straight, including across the timing seam",
+      );
+    }
+    let crowdTriangles = 0;
+    scene.traverse((object) => {
+      if (object.name === "spectators")
+        crowdTriangles += (object.geometry.index.count / 3) * object.count;
+    });
+    assert(
+      crowdTriangles <= district.root.userData.spectators * 2,
+      "long-straight crowd density must not multiply box-body triangle cost",
     );
     const before = scene.getObjectByName("spectators").instanceMatrix.version;
     district.update(5);

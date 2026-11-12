@@ -4,6 +4,7 @@ import { projectRoad, roadHeight } from "./road-projection.js";
 import { solveContacts, hullExtent } from "./contacts.js";
 import { getTrackPickups, crossesPickup } from "./pickups.js";
 import { Launch } from "./launch.js";
+import { railBounds, respondToRail, RAIL_PROFILE } from "./rail-profile.js";
 import { SPEED_CLASSES } from "./speed-classes.js";
 
 export { SPEED_CLASSES } from "./speed-classes.js";
@@ -334,7 +335,21 @@ export class Race {
     const crossesSplitter = (r, road) => {
       if (road.connected || !road.branch) return false;
       const previous = roadBounds(track, r.contactS, road.branch);
-      if (!previous.connected) return false;
+      if (!previous.connected) {
+        const side = road.branch === -1 ? 1 : -1;
+        const previousHeight =
+          side === 1 ? previous.railMaxHeight : previous.railMinHeight;
+        const nextHeight = side === 1 ? road.railMaxHeight : road.railMinHeight;
+        const x = r.position.clone().sub(road.point).dot(road.wallAxis);
+        const edge = side === 1 ? road.wallMax : road.wallMin;
+        // A low median nose can rise into the hull as it travels forward. Its
+        // finite outward footprint matters; a remote car is never pulled in.
+        return (
+          nextHeight > previousHeight &&
+          side * (x - edge) <=
+            RAIL_PROFILE.topOutset + hullExtent(r, road.wallAxis)
+        );
+      }
       const f = track.frame(r.contactS, road.branch);
       const x = previousPositions.get(r).clone().sub(f.p).dot(f.right);
       const extent = hullExtent({ yaw: previousYaw.get(r) }, f.right);
@@ -346,12 +361,15 @@ export class Race {
     const constrainWall = (r) => {
       r.contactMoved = true;
       const road = roads.get(r);
-      const extent = hullExtent(r, road.wallAxis);
-      const min = road.wallMin + extent,
-        max = road.wallMax - extent;
-      const previousExtent = hullExtent(
+      const { min, max, intersectsMin, intersectsMax } = railBounds(
+        r,
+        road,
+        r.position,
+      );
+      const previousBounds = railBounds(
         { yaw: previousYaw.get(r) },
-        road.wallAxis,
+        road,
+        previousPositions.get(r),
       );
       const x = r.position.clone().sub(road.point).dot(road.wallAxis);
       const oldX = previousPositions
@@ -359,22 +377,18 @@ export class Race {
         .clone()
         .sub(road.point)
         .dot(road.wallAxis);
-      const height = r.position.y - roadHeight(road, r.position) - HOVER;
       if (
         track.gap(mod(road.s, track.length) / track.length) ||
-        height <= -3 ||
-        height >= 4 ||
+        (x < min ? !intersectsMin : !intersectsMax) ||
         (!crossesSplitter(r, road) &&
-          (oldX < road.wallMin + previousExtent - 0.05 ||
-            oldX > road.wallMax - previousExtent + 0.05)) ||
+          (oldX < previousBounds.min - 0.05 ||
+            oldX > previousBounds.max + 0.05)) ||
         (x >= min && x <= max)
       )
         return;
       const sign = x < min ? -1 : 1;
       r.position.addScaledVector(road.right, clamp(x, min, max) - x);
-      const outward = r.velocity.dot(road.right) * sign;
-      if (outward > 0)
-        r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
+      respondToRail(r, road, sign);
       r.wallTouched = true;
       r.wallSide = sign;
     };
@@ -409,12 +423,28 @@ export class Race {
       r.x = road.x;
       r.vx = r.velocity.dot(road.wallAxis);
       const gap = track.gap(u);
-      const height = r.position.y - roadHeight(road, r.position) - HOVER;
-      const extent = hullExtent(r, road.wallAxis);
-      const min = road.wallMin + extent,
-        max = road.wallMax - extent;
-      const onDeck = road.x >= min - 0.05 && road.x <= max + 0.05;
+      let height = r.position.y - roadHeight(road, r.position) - HOVER;
+      const { min, max } = railBounds(r, road, r.position);
+      let onDeck = road.x >= min - 0.05 && road.x <= max + 0.05;
       const wasGrounded = r.grounded;
+      // Resolve the actual deck crossing before endpoint classification. A fast
+      // descending hull cannot pass through a road between two physics samples.
+      const previousHeight = previous.y - roadHeight(road, previous) - HOVER;
+      if (!wasGrounded && !gap && previousHeight > 0 && height <= 0) {
+        const fraction = previousHeight / (previousHeight - height);
+        const contact = previous.clone().lerp(r.position, fraction);
+        const contactX = contact.clone().sub(road.point).dot(road.wallAxis);
+        const contactBounds = railBounds(r, road, contact);
+        if (contactX >= contactBounds.min && contactX <= contactBounds.max) {
+          r.position.copy(contact);
+          r.x = road.x = contactX;
+          onDeck = true;
+          const normalSpeed = r.velocity.dot(road.up);
+          if (normalSpeed < 0)
+            r.velocity.addScaledVector(road.up, -normalSpeed);
+          height = 0;
+        }
+      }
       r.grounded = !gap && onDeck && height < 1.2 && height > -3;
       if (wasGrounded && !r.grounded && onDeck) r.flight = true;
       if (r.grounded) {
@@ -458,19 +488,42 @@ export class Race {
           .clone()
           .sub(gateFrame.p)
           .dot(gateFrame.tangent);
-        if (before < 0 && after >= 0 && Math.abs(road.s - gateS) < 12) {
-          r.gate++;
-          if ((r.gate - 1) % GATES === 0 && (r.gate - 1) / GATES >= r.lap) {
-            r.lap++;
-            if (!ai) {
-              const lapTime = this.time - this.lapStart;
-              this.laps.push(lapTime);
-              this.bestLap = Math.min(this.bestLap, lapTime);
-              this.lapStart = this.time;
-              this.emit("lap", "LAP " + Math.min(LAPS, r.lap) + " / " + LAPS);
-              if (r.lap > LAPS) {
-                this.finished = true;
-                this.emit("finish", "RACE COMPLETE");
+        if (before < 0 && after >= 0) {
+          const fraction = before / (before - after);
+          const crossing = previous.clone().lerp(r.position, fraction);
+          const bounds = roadBounds(track, gateS, r.branch);
+          const lateral = crossing
+            .clone()
+            .sub(gateFrame.p)
+            .dot(gateFrame.right);
+          const normal = new THREE.Vector3()
+            .crossVectors(gateFrame.tangent, gateFrame.right)
+            .normalize();
+          const gateHeight =
+            crossing.clone().sub(gateFrame.p).dot(normal) - HOVER * normal.y;
+          const drop = track.config.sections?.descent;
+          const inDrop =
+            drop && gateFrame.u >= drop[0] && gateFrame.u <= drop[1];
+          const ceiling = r.flight ? (inDrop ? 140 : 48) : 4;
+          if (
+            lateral >= bounds.wallMin &&
+            lateral <= bounds.wallMax &&
+            gateHeight >= -3 &&
+            gateHeight <= ceiling
+          ) {
+            r.gate++;
+            if ((r.gate - 1) % GATES === 0 && (r.gate - 1) / GATES >= r.lap) {
+              r.lap++;
+              if (!ai) {
+                const lapTime = this.time - this.lapStart;
+                this.laps.push(lapTime);
+                this.bestLap = Math.min(this.bestLap, lapTime);
+                this.lapStart = this.time;
+                this.emit("lap", "LAP " + Math.min(LAPS, r.lap) + " / " + LAPS);
+                if (r.lap > LAPS) {
+                  this.finished = true;
+                  this.emit("finish", "RACE COMPLETE");
+                }
               }
             }
           }
@@ -484,9 +537,10 @@ export class Race {
         );
       }
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.
-      const previousExtent = hullExtent(
+      const previousBounds = railBounds(
         { yaw: previousYaw.get(r) },
-        road.wallAxis,
+        road,
+        previous,
       );
       const previousX =
         road.x -
@@ -497,10 +551,11 @@ export class Race {
         (!gap &&
           (road.x < min || road.x > max) &&
           (splitterEntry ||
-            (previousX >= road.wallMin + previousExtent - 0.05 &&
-              previousX <= road.wallMax - previousExtent + 0.05)) &&
-          height > -3 &&
-          height < 4)
+            (previousX >= previousBounds.min - 0.05 &&
+              previousX <= previousBounds.max + 0.05)) &&
+          (road.x < min
+            ? railBounds(r, road, r.position).intersectsMin
+            : railBounds(r, road, r.position).intersectsMax))
       ) {
         const sign = r.wallTouched ? r.wallSide : road.x < min ? -1 : 1;
         if (road.x < min || road.x > max)
@@ -508,9 +563,7 @@ export class Race {
             road.right,
             clamp(road.x, min, max) - road.x,
           );
-        const outward = r.velocity.dot(road.right) * sign;
-        if (outward > 0)
-          r.velocity.addScaledVector(road.right, -sign * outward * 1.25);
+        respondToRail(r, road, sign);
         r.velocity.x *= Math.exp(-3 * classDt);
         r.velocity.z *= Math.exp(-3 * classDt);
         if (r.protect <= 0) r.shield -= classDt * 10;
@@ -518,6 +571,25 @@ export class Race {
           r.stun = 0.3;
           if (!ai) this.emit("scrape", "IMPACT");
         }
+        // Banked corrections can move the closest centreline station slightly.
+        // Settle against the final rendered face, not the pre-contact plane.
+        const settledRoad = projectRoad(
+          track,
+          r.position,
+          r.contactS,
+          r.branch,
+        );
+        const settled = railBounds(r, settledRoad, r.position);
+        const settledX = r.position
+          .clone()
+          .sub(settledRoad.point)
+          .dot(settledRoad.wallAxis);
+        r.position.addScaledVector(
+          settledRoad.right,
+          clamp(settledX, settled.min, settled.max) - settledX,
+        );
+        r.contactS = settledRoad.s;
+        r.x = clamp(settledX, settled.min, settled.max);
       }
       if (!r.grounded) r.offroad += classDt;
       if (height < -18 || r.offroad > 3 || r.shield <= 0) {

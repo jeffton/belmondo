@@ -7,10 +7,12 @@
   color: #ebeee6;
   background: #17232d;
   font-size: 12px;
-  --orange: #ff6a20;
-  --lime: #d4f53c;
-  --ink: #111e27;
-  --paper: #e8ebe1;
+  --orange: #ff654d;
+  --lime: #d7ff88;
+  --mint: #9bffd9;
+  --lilac: #bcafff;
+  --ink: #142333;
+  --paper: #f3f5e7;
   --display: "Belmondo Circuit", "Archivo", sans-serif;
   --interface: "Archivo", sans-serif;
   --telemetry: var(--interface);
@@ -104,8 +106,17 @@ button:hover {
   color: var(--orange);
 }
 .edition {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-left: auto;
   text-align: right;
+}
+.lab-mascot {
+  display: block;
+  width: 1em;
+  height: 1em;
+  font-size: 36px;
 }
 .menu-body {
   padding: 28px 38px 22px;
@@ -162,7 +173,7 @@ h1.wordmark {
   position: relative;
 }
 .choice.active {
-  background: var(--paper);
+  background: var(--mint);
   color: var(--ink);
   border-color: var(--paper);
 }
@@ -290,6 +301,14 @@ select {
   font: 700 24px/1.2 var(--display);
   letter-spacing: 0.4px;
   margin-top: 20px;
+}
+.start::after {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: url("/art/pip-lab-mark.svg") center / contain no-repeat;
 }
 .start span {
   font-style: normal;
@@ -643,6 +662,7 @@ footer {
   backdrop-filter: none;
 }
 .panel {
+  position: relative;
   width: min(430px, 100%);
   min-width: 0;
   max-width: 100%;
@@ -661,6 +681,15 @@ footer {
   gap: 10px;
   font: 600 11px/1.2 var(--interface);
   letter-spacing: 1.6px;
+}
+.panel .eyebrow::after {
+  content: "";
+  position: absolute;
+  top: 21px;
+  right: 24px;
+  width: 30px;
+  height: 30px;
+  background: url("/art/pip-lab-mark.svg") center / contain no-repeat;
 }
 .panel .eyebrow::before {
   content: "";
@@ -996,6 +1025,9 @@ body.touch .shield {
   #menu .brand-symbol {
     font-size: 29px;
   }
+  #menu .lab-mascot {
+    font-size: 28px;
+  }
   #menu .menu-body {
     padding: 16px 28px;
   }
@@ -1214,6 +1246,9 @@ body.touch .shield {
   .brand-symbol {
     font-size: 25px;
   }
+  .lab-mascot {
+    font-size: 24px;
+  }
   .menu-body {
     width: 530px;
     padding: 14px 25px;
@@ -1288,14 +1323,64 @@ body.touch .shield {
   }
   body.touch .velocity {
     position: fixed;
-    left: 50%;
-    bottom: 22px;
-    transform: translateX(-50%);
-    width: 180px;
+    top: 82px;
+    left: 23px;
+    bottom: auto;
+    transform: none;
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    column-gap: 8px;
+    width: min(220px, calc((100vw - 180px) / 2 - 42px));
     text-align: center;
   }
+  body.touch .velocity strong {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: start;
+    margin-top: 2px;
+  }
+  body.touch .velocity > span {
+    position: absolute;
+    left: 0;
+    bottom: 1px;
+    width: 84px;
+    font-size: 9px;
+  }
+  body.touch .speed-instrument {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 0;
+  }
+  body.touch .thrust {
+    position: relative;
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 6px;
+  }
+  body.touch .instrument-label {
+    font-size: 10px;
+    line-height: 12px;
+  }
+  body.touch .instrument-bar {
+    height: 9px;
+    margin-top: 3px;
+  }
+  body.touch .launch-status {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    margin-top: 0;
+    font-size: 9px;
+    line-height: 12px;
+  }
   body.touch .shield {
+    position: fixed;
+    top: 142px;
+    left: 23px;
     width: 95px;
+  }
+  body.touch .shield .bar {
+    margin-top: 4px;
   }
   #race-message {
     top: 25%;

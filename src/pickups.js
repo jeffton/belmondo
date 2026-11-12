@@ -46,7 +46,13 @@ const layouts = {
     [0.34, -1, 6, "weapon", "Low-route outside cargo-lane reward"],
     [0.37, 1, -9, "boost", "High-route inside edge in the tightest bend"],
     [0.52, 0, 6, "weapon", "Right-kink armament after the merge"],
-    [0.58, 0, -9, "boost", "Inside left acceleration toward the harbor"],
+    [
+      0.62,
+      0,
+      -9,
+      "boost",
+      "Landing-runout acceleration toward the upper bridge",
+    ],
     [
       0.91,
       0,

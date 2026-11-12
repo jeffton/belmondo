@@ -1,10 +1,8 @@
 import * as THREE from "three";
+import { getWaterfrontDistricts } from "./course-geography.js";
 
 const smooth = (a, b, x) => THREE.MathUtils.smoothstep(x, a, b);
-const EXTENT = 2300;
-const CELLS = 200;
-const STEP = (EXTENT * 2) / CELLS;
-const STRIDE = CELLS + 1;
+const STEP = 23;
 
 /** Sink the transformed lower silhouette into the actual land, including slopes. */
 export function groundedGeometryOffset(
@@ -42,6 +40,23 @@ export function createTerrain(track) {
     for (const branch of branches)
       samples.push({ ...track.frame(u * track.length, branch), branch });
   }
+  const minX = Math.min(...samples.map((f) => f.p.x));
+  const maxX = Math.max(...samples.map((f) => f.p.x));
+  const minZ = Math.min(...samples.map((f) => f.p.z));
+  const maxZ = Math.max(...samples.map((f) => f.p.z));
+  const EXTENT =
+    Math.ceil((Math.max(-minX, maxX, -minZ, maxZ) + 350) / (STEP * 10)) *
+    STEP *
+    10;
+  const CELLS = (EXTENT * 2) / STEP;
+  const STRIDE = CELLS + 1;
+  const centerX = (minX + maxX) / 2,
+    centerZ = (minZ + maxZ) / 2;
+  const radiusX = (maxX - minX) / 2 + 300,
+    radiusZ = (maxZ - minZ) / 2 + 300;
+  const upperBridge = track.config.sections.upperBridge;
+  const onUpperBridge = (u) =>
+    upperBridge && u >= upperBridge[0] && u <= upperBridge[1];
   const crossings = (harbor ? [0.135, 0.5] : desert ? [] : [0.215]).map((u) => {
     const f = track.frame(u * track.length);
     return {
@@ -65,7 +80,10 @@ export function createTerrain(track) {
     }
     return cut;
   }
-  const jump = track.frame((track.config.jump + 0.007) * track.length);
+  const jump = track.frame(
+    (track.config.jump + track.config.gapLength / 2) * track.length,
+  );
+  const ravineHalfLength = (track.config.gapLength * track.length) / 2 + 12;
   const jumpForward = new THREE.Vector2(
     jump.tangent.x,
     jump.tangent.z,
@@ -77,7 +95,10 @@ export function createTerrain(track) {
     const across = Math.abs(
       (x - jump.p.x) * jumpForward.y - (z - jump.p.z) * jumpForward.x,
     );
-    return (1 - smooth(42, 100, along)) * (1 - smooth(100, 230, across));
+    return (
+      (1 - smooth(ravineHalfLength, ravineHalfLength + 60, along)) *
+      (1 - smooth(100, 230, across))
+    );
   }
   function nearest(x, z) {
     let best = samples[0],
@@ -93,7 +114,7 @@ export function createTerrain(track) {
   }
   function landHeight(x, z) {
     const { frame: f, distance } = nearest(x, z);
-    const r = Math.hypot((x + (desert ? 740 : 650)) / 1050, z / 1100);
+    const r = Math.hypot((x - centerX) / radiusX, (z - centerZ) / radiusZ);
     let base;
     if (desert) {
       const strata = 12 * Math.sin(z * 0.006 + x * 0.002);
@@ -108,7 +129,9 @@ export function createTerrain(track) {
       base = -27 + island * 76 + headland + 8 * Math.sin(z * 0.006) * island;
     }
     // Broad graded land carries the course, rather than a thin ribbon on columns.
-    const grade = 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
+    const grade = onUpperBridge(f.u)
+      ? 0
+      : 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
     const fill =
       f.p.y - (f.up.x * (x - f.p.x) + f.up.z * (z - f.p.z)) / f.up.y - 4.5;
     let y = THREE.MathUtils.lerp(base, fill, grade);
@@ -160,15 +183,7 @@ export function createTerrain(track) {
   if (!desert && !harbor) {
     // Occupied waterfront floors are authored relative to the road. Clear their
     // basements in the land itself; do not push terrain through existing shops.
-    const galleries = [
-      [0.008, 0.102, 0, 1],
-      [0.023, 0.088, 0, -1],
-      [0.306, 0.365, -1, -1],
-      [0.355, 0.411, 1, 1],
-      [0.555, 0.604, 0, -1],
-      [0.704, 0.745, 0, 1],
-      [0.925, 0.983, 0, -1],
-    ];
+    const galleries = getWaterfrontDistricts(track);
     for (const [start, end, branch, side] of galleries) {
       const bays = Math.ceil(((end - start) * track.length) / 5);
       for (let i = 0; i <= bays; i++) {
@@ -331,8 +346,20 @@ export function createTerrain(track) {
       geometry.computeBoundingSphere();
       geometries.push(geometry);
     }
+  function supportClearAt(u, branch = 0) {
+    const f = track.frame(u * track.length, branch);
+    const foot = heightAt(f.p.x, f.p.z) - 3;
+    return samples.every(
+      (lower) =>
+        lower.p.y >= f.p.y - 12 ||
+        lower.p.y <= foot + 1 ||
+        Math.hypot(lower.p.x - f.p.x, lower.p.z - f.p.z) >
+          lower.width + f.width + 10,
+    );
+  }
   function bridgeAt(u, branch = 0) {
     if (track.gap(u)) return false;
+    if (onUpperBridge(u)) return true;
     const f = track.frame(u * track.length, branch);
     return f.p.y - heightAt(f.p.x, f.p.z) > 14;
   }
@@ -342,6 +369,7 @@ export function createTerrain(track) {
     geometries,
     samples,
     bridgeAt,
+    supportClearAt,
     step: STEP,
     extent: EXTENT,
   };

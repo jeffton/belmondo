@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 const HALF_WIDTH = 3.1;
 const HALF_LENGTH = 4.25;
-const HEIGHT = 2.2;
+export const HULL_HEIGHT = 2.2;
 
 export function hullExtent(r, axis) {
   const sin = Math.sin(r.yaw),
@@ -28,7 +28,7 @@ export function solveContacts(racers, constrainWall, impact) {
       const a = racers[i];
       for (let j = i + 1; j < racers.length; j++) {
         const b = racers[j];
-        if (Math.abs(a.position.y - b.position.y) >= HEIGHT) continue;
+        if (Math.abs(a.position.y - b.position.y) >= HULL_HEIGHT) continue;
         const delta = b.position.clone().sub(a.position);
         let depth = Infinity,
           normal;

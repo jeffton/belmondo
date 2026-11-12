@@ -56,9 +56,14 @@ export function buildCity(scene, track, textures, environment) {
   const batches = new Map();
   const transform = new THREE.Object3D();
   const road = [];
-  for (let i = 0; i < 900; i++)
-    for (const branch of [-1, 0, 1])
-      road.push(track.frame((i / 900) * track.length, branch).p);
+  const roadSteps = Math.ceil(track.length / 6);
+  for (let i = 0; i < roadSteps; i++) {
+    const u = i / roadSteps;
+    for (const branch of u > track.config.split[0] && u < track.config.split[1]
+      ? [-1, 1]
+      : [0])
+      road.push(track.frame(u * track.length, branch).p);
+  }
   const clearance = (p) =>
     Math.sqrt(
       Math.min(...road.map((q) => (p.x - q.x) ** 2 + (p.z - q.z) ** 2)),

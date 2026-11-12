@@ -195,7 +195,7 @@ for (let trackIndex = 0; trackIndex < 3; trackIndex++) {
       const separated = new Set();
       const routes = new Set();
       // Production uses a fixed 120 Hz real-time step in every class.
-      for (let step = 0; step < 70 * 120; step++) {
+      for (let step = 0; step < 100 * 120; step++) {
         race.update(1 / 120, { ...neutral, throttle: false });
         for (const r of race.racers.slice(1)) {
           const u =

@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { TRACKS } from "../src/track.js";
 
 // Production main-loop integration fixture, not a driving/physics test.
 // Contact progress is held fixed to check representative tunnel/open-road positions.
@@ -39,11 +40,9 @@ try {
   );
   await page.locator("#quality").check();
   const results = [];
-  for (const [index, inside] of [
-    [0, 0.15],
-    [1, 0.24],
-    [2, 0.48],
-  ]) {
+  for (const [index, config] of TRACKS.entries()) {
+    const inside = (config.tunnel[0] + config.tunnel[1]) / 2;
+    const outside = config.tunnel[0] / 2;
     await page.locator(`#tracks button[data-index="${index}"]`).click();
     await page.locator("#start").click();
     await page.waitForFunction(
@@ -52,7 +51,7 @@ try {
     for (const [u, grounded, expected] of [
       [inside, true, index !== 0],
       [inside, false, false],
-      [0.7, true, false],
+      [outside, true, false],
     ]) {
       await page.evaluate(
         ({ u, grounded }) => musicFixture.setContact(u, grounded),
@@ -70,6 +69,7 @@ try {
       );
       results.push({
         index,
+        layoutId: config.layoutId,
         u,
         grounded,
         wet: await page.evaluate(() => musicFixture.player.wet.gain.value),

@@ -12,7 +12,15 @@ https://antigrav.roybot.se
 
 Races last five laps. C1 BEGINNER, C2 ADVANCED and C3 EXPERT select independent speed classes; local records are separated by class, craft and mode. The HUD separates SPEED and THRUST and shows current/completed lap times beside the lap counter. At the start, aim for 65–80% thrust at GO: use W/↑ or A/R2 to build thrust. Touch pilots hold BRAKE to lower thrust and release to build it; automatic thrust alone cannot earn the launch boost.
 
-Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equipped items have individual silhouettes, names and colors: red MISSILE (homing), magenta PULSE, amber MINE, cyan SHIELD and electric-blue TURBO. Equipped items appear below the timer at the top of the HUD; the indicator disappears when unarmed. Fire with Space, the inventory button or the separate mobile FIRE control. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Five-lap records are stored locally per circuit, craft, mode and speed class.
+Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equipped items have individual silhouettes, names and colors: red MISSILE (homing), magenta PULSE, amber MINE, cyan SHIELD and electric-blue TURBO. Equipped items appear below the timer at the top of the HUD; the indicator disappears when unarmed. Fire with Space, the inventory button or the separate mobile FIRE control. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Five-lap records are stored locally per circuit layout, craft, mode and speed class; records from different layouts remain separate.
+
+## Circuits
+
+- **Kaiseki Coast — 5.8 km:** rising coastal loop and a long ravine jump with an aligned landing straight.
+- **Solar Array — 6.5 km:** mountain pass with a rock-cut tunnel and broad climbing bends.
+- **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
+
+Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
 ## Sound
 

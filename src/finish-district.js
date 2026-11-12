@@ -2,18 +2,30 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 const DISTRICTS = {
-  "KAISEKI COAST": ["civic-terrace", "transit-gallery", "ticket-pavilion"],
-  "SOLAR ARRAY": ["sandstone-bank", "test-apron", "service-hangar"],
-  NOCTILUCENT: ["terminal-quay", "loading-balcony", "dock-hall"],
+  "KAISEKI COAST": ["civic-terrace", "transit-gallery"],
+  "SOLAR ARRAY": ["sandstone-bank", "test-apron"],
+  NOCTILUCENT: ["terminal-quay", "loading-balcony"],
 };
 
 /** Footprints reserve the final sector, not the jumping/landing district. */
 export function getFinishDistrictLayout(track) {
-  return [
-    { u: 0.956, side: 1, width: 22, length: 68, shoulder: 9 },
-    { u: 0.993, side: -1, width: 26, length: 52, shoulder: 9 },
-    { u: 0.012, side: -1, width: 18, length: 38, shoulder: 13 },
-  ].map((spec, index) => {
+  const [start, end] = track.config.sections.finishStraight;
+  const sections = Math.ceil(((end - start) * track.length) / 48);
+  const span = ((end - start) * track.length) / sections;
+  const stands = [];
+  for (let i = 0; i < sections; i++)
+    for (const side of [-1, 1]) {
+      stands.push({
+        u: (start + ((i + 0.5) * (end - start)) / sections) % 1,
+        side,
+        width: side < 0 ? 22 : 24,
+        length: span - 3,
+        shoulder: 9,
+        spectator: true,
+        section: i,
+      });
+    }
+  return stands.map((spec) => {
     const frame = track.frame(spec.u * track.length);
     const center = frame.p
       .clone()
@@ -31,7 +43,7 @@ export function getFinishDistrictLayout(track) {
       center.clone().addScaledVector(right, x).addScaledVector(forward, z);
     return {
       ...spec,
-      kind: DISTRICTS[track.config.name][index],
+      kind: DISTRICTS[track.config.name][spec.side < 0 ? 0 : 1],
       frame,
       center,
       forward,
@@ -56,27 +68,111 @@ const GLYPHS = {
 };
 
 function spectatorGeometry() {
-  // Crisp low-poly masses read as a waving person at PS1 render resolution.
-  const parts = [
-    [-0.12, 0.18, 0, 0.14, 0.36, 0.22, 0x555d66],
-    [0.12, 0.18, 0, 0.14, 0.36, 0.22, 0x555d66],
-    [0, 0.63, 0, 0.44, 0.82, 0.28, 0xffffff],
-    [0, 1.2, 0, 0.3, 0.3, 0.3, 0xf1d1ab],
-    [-0.32, 0.66, 0, 0.15, 0.6, 0.19, 0xffffff],
-    [0.32, 1.12, 0, 0.15, 0.76, 0.19, 0xffffff],
-  ].map(([x, y, z, w, h, d, color]) => {
-    const geometry = new THREE.BoxGeometry(w, h, d);
-    geometry.translate(x, y, z);
-    const tint = new THREE.Color(color);
-    const colors = [];
-    for (let i = 0; i < geometry.attributes.position.count; i++)
-      colors.push(tint.r, tint.g, tint.b);
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    return geometry;
-  });
-  const geometry = mergeGeometries(parts);
-  parts.forEach((part) => part.dispose());
+  // Four spectators per crossed raster card: PS1 crowd density without thousands
+  // of box-built bodies. The second face stays visible on the fast approach.
+  const front = new THREE.PlaneGeometry(6.4, 2.1);
+  front.translate(0, 1.05, 0);
+  const diagonal = front.clone().rotateY(Math.PI / 3);
+  const geometry = mergeGeometries([front, diagonal]);
+  front.dispose();
+  diagonal.dispose();
   return geometry;
+}
+
+function spectatorTexture() {
+  const pixels = new Uint8Array(128 * 64 * 4);
+  const rect = (x, y, w, h, color) => {
+    for (let row = y; row < y + h; row++)
+      for (let col = x; col < x + w; col++) {
+        pixels.set(
+          [(color >> 16) & 255, (color >> 8) & 255, color & 255, 255],
+          (row * 128 + col) * 4,
+        );
+      }
+  };
+  const coats = [0xe4c37f, 0x8bafb8, 0xb66b66, 0xa9b99a];
+  for (let i = 0; i < 4; i++) {
+    const x = 13 + i * 31;
+    rect(x - 6, 1, 5, 20, 0x3e4d60);
+    rect(x + 2, 1, 5, 20, 0x34404f);
+    rect(x - 8, 20, 17, 25, coats[i]);
+    rect(x - 8, 22, 3, 21, 0x536679);
+    rect(x - 6, 45, 12, 12, i % 2 ? 0xc6a17d : 0xe2c5a1);
+    rect(x - 6, 54, 12, 4, 0x41434d);
+    rect(x - 12, 26, 4, 18, coats[i]);
+    rect(x + 9, 39, 4, 17, coats[i]);
+    rect(x + 9, 55, 4, 5, 0xd6b18b);
+  }
+  const texture = new THREE.DataTexture(pixels, 128, 64);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.NearestFilter;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+export function buildFinishMarkings(root, track, textures) {
+  const [start, end] = track.config.sections.finishStraight;
+  const rows = Math.ceil(((end - start) * track.length) / 6);
+  const columns = Math.round((track.config.width * 2) / 4.5);
+  const positions = [],
+    colors = [],
+    uv = [];
+  for (let row = 0; row < rows; row++) {
+    const a = track.frame(
+      (start + ((end - start) * row) / rows) * track.length,
+    );
+    const b = track.frame(
+      (start + ((end - start) * (row + 1)) / rows) * track.length,
+    );
+    for (let column = 0; column < columns; column++) {
+      const left = (column / columns) * 2 - 1,
+        right = ((column + 1) / columns) * 2 - 1;
+      const points = [
+        a.p
+          .clone()
+          .addScaledVector(a.right, left * a.width)
+          .addScaledVector(a.up, 0.035),
+        a.p
+          .clone()
+          .addScaledVector(a.right, right * a.width)
+          .addScaledVector(a.up, 0.035),
+        b.p
+          .clone()
+          .addScaledVector(b.right, right * b.width)
+          .addScaledVector(b.up, 0.035),
+        b.p
+          .clone()
+          .addScaledVector(b.right, left * b.width)
+          .addScaledVector(b.up, 0.035),
+      ];
+      const tint = new THREE.Color((row + column) % 2 ? 0x4c5964 : 0xd4d2c3);
+      for (const vertex of [0, 2, 1, 0, 3, 2]) {
+        positions.push(...points[vertex].toArray());
+        colors.push(tint.r, tint.g, tint.b);
+        uv.push(vertex === 0 || vertex === 3 ? 0 : 1, vertex < 2 ? 0 : 1);
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(
+    geometry,
+    new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      map: textures.road,
+      side: THREE.DoubleSide,
+    }),
+  );
+  mesh.name = "finish-straight-checker";
+  mesh.userData.range = [start, end];
+  root.add(mesh);
+  return mesh;
 }
 
 /** Scenery only: never writes track, racer, gate or collision state. */
@@ -109,13 +205,16 @@ export function buildFinishDistrict(scene, track, textures, environment) {
   const batches = new Map();
   const bodies = [];
   function box(group, material, x, y, z, w, h, d, angle = 0) {
-    const key = `${group.id}:${material.id}`;
-    if (!batches.has(key)) batches.set(key, { group, material, matrices: [] });
     transform.position.set(x, y, z);
     transform.rotation.set(0, 0, angle);
     transform.scale.set(w, h, d);
     transform.updateMatrix();
-    batches.get(key).matrices.push(transform.matrix.clone());
+    group.updateMatrix();
+    const worldMatrix = group.matrix.clone().multiply(transform.matrix);
+    const key = `${material.id}:${Math.floor(worldMatrix.elements[12] / 160)}:${Math.floor(worldMatrix.elements[14] / 160)}`;
+    if (!batches.has(key))
+      batches.set(key, { group: root, material, matrices: [] });
+    batches.get(key).matrices.push(worldMatrix);
     bodies.push({ group, matrix: transform.matrix.clone(), material });
   }
   function place(frame, name) {
@@ -158,7 +257,9 @@ export function buildFinishDistrict(scene, track, textures, environment) {
   const time = { value: 0 };
   const crowdMaterial = new THREE.MeshLambertMaterial({
     color: 0xffffff,
-    vertexColors: true,
+    map: spectatorTexture(),
+    alphaTest: 0.4,
+    side: THREE.DoubleSide,
     flatShading: true,
   });
   crowdMaterial.onBeforeCompile = (shader) => {
@@ -204,10 +305,11 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     }
     mesh.computeBoundingSphere();
     group.add(mesh);
-    spectators += positions.length;
+    spectators += positions.length * 4;
   }
+  buildFinishMarkings(root, track, textures);
   const layout = getFinishDistrictLayout(track);
-  for (const [index, spec] of layout.entries()) {
+  for (const spec of layout) {
     const group = place(spec.frame, spec.kind);
     group.position.copy(spec.center);
     const heights = [];
@@ -238,7 +340,7 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     foundations.push({ ...spec, bottom, deck, group });
     const { side, width, length } = spec;
     const points = [];
-    if (index < 2) {
+    if (spec.spectator) {
       const rows = desert ? 4 : harbor ? 3 : 5;
       for (let row = 0; row < rows; row++) {
         const x = side * (-width / 2 + 2.4 + row * 3.5);
@@ -265,12 +367,12 @@ export function buildFinishDistrict(scene, track, textures, environment) {
         );
         for (
           let column = 0;
-          column < Math.floor((length - 8) / 1.8);
+          column < Math.floor((length - 8) / 6.4);
           column++
         ) {
           // Broken seating groups leave stairs and produce a varied silhouette.
           if (column % 12 === 5 || (column + row * 3) % 17 === 4) continue;
-          points.push([x, y + 0.9, -length / 2 + 5 + column * 1.8]);
+          points.push([x, y + 0.9, -length / 2 + 5 + column * 6.4]);
         }
       }
       const outer = side * (width / 2 - 1.4);
@@ -303,7 +405,7 @@ export function buildFinishDistrict(scene, track, textures, environment) {
         }
       } else if (harbor) {
         // Loading-hall gallery and open quay have different massing and rooflines.
-        const hall = index === 1;
+        const hall = spec.side > 0 && spec.section % 3 === 1;
         box(
           group,
           materials.accent,
@@ -335,8 +437,8 @@ export function buildFinishDistrict(scene, track, textures, environment) {
             0.7,
             length - 5,
           );
-          for (let i = 0; i < Math.floor((length - 8) / 1.6); i++)
-            points.push([outer - side * 4, 6.25, -length / 2 + 5 + i * 1.6]);
+          for (let i = 0; i < Math.floor((length - 8) / 6.4); i++)
+            points.push([outer - side * 4, 6.25, -length / 2 + 5 + i * 6.4]);
           box(
             group,
             materials.dark,
@@ -423,29 +525,6 @@ export function buildFinishDistrict(scene, track, textures, environment) {
         0.65,
         length - 1,
       );
-    } else {
-      const high = desert ? 7 : harbor ? 11 : 5;
-      box(group, materials.accent, side * 4, high / 2, 0, 8, high, length - 4);
-      box(group, materials.dark, 0, high + 0.4, 0, width, 0.8, length);
-      for (let bay = 0; bay < 4; bay++) {
-        const z = (bay - 1.5) * 8;
-        box(
-          group,
-          materials.glazing,
-          -side * 0.1,
-          high * 0.6,
-          z,
-          0.3,
-          high * 0.55,
-          5.8,
-        );
-        box(group, materials.light, -side * 4, high - 0.2, z, 6, 0.15, 0.25);
-        for (let i = 0; i < 5; i++) points.push([-side * 4, 0.5, z - 2 + i]);
-      }
-      if (desert) {
-        for (const z of [-length / 2 + 1, length / 2 - 1])
-          box(group, materials.pale, 0, high + 1.8, z, width + 1, 2.3, 1.1);
-      }
     }
     crowd(group, points, side);
   }

@@ -5,6 +5,7 @@ import { makeTrack, mod } from "../src/track.js";
 import { Race, LAPS, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 import { solveContacts, hullExtent } from "../src/contacts.js";
+import { railBounds } from "../src/rail-profile.js";
 
 const neutral = { throttle: true, steer: 0, air: 0, brake: false };
 function circuit({ gap = false, split = false } = {}) {
@@ -401,7 +402,7 @@ test("a forward drive into the separating splitter tip hits a real barrier", () 
       p.branch = branch;
       p.gate = Math.floor((s / track.length) * 32) + 1;
       let contact = false;
-      for (let step = 0; step < 20; step++) {
+      for (let step = 0; step < 80; step++) {
         race.update(1 / 120, { ...neutral, throttle: false });
         contact ||= p.wallTouched;
       }
@@ -445,13 +446,17 @@ test("route selection follows the connected fork, but separated routes retain th
         const race = setup(track),
           p = race.player;
         p.yaw = Math.atan2(f.right.x * side, f.right.z * side);
-        p.position
-          .copy(f.p)
-          .addScaledVector(
-            f.right,
-            side * (f.width - hullExtent(p, f.right) - 0.1),
-          );
+        p.position.copy(f.p);
         p.position.y += 2.2;
+        const profile = railBounds(
+          p,
+          projectRoad(track, p.position, s, branch),
+          p.position,
+        );
+        p.position.addScaledVector(
+          f.right,
+          (side === 1 ? profile.max : profile.min) - side * 0.1,
+        );
         p.velocity.copy(f.right).multiplyScalar(side * 50);
         p.s = p.contactS = s;
         p.branch = branch;
@@ -646,7 +651,7 @@ test("AI uses the same body integrator rather than assigning track position or y
 test("body AI earns an ordered lap on every production course, including every craft's jump", () => {
   for (let index = 0; index < 3; index++) {
     const race = setup(makeTrack(index), "race");
-    drive(race, 70, { ...neutral, throttle: false });
+    drive(race, 100, { ...neutral, throttle: false });
     for (const r of race.racers.slice(1)) {
       assert(
         r.lap >= 2,
@@ -834,9 +839,11 @@ test("player side pressure pushes a rival into the real barrier without wall byp
   for (let step = 0; step < 90; step++) {
     race.update(1 / 120, neutral);
     for (const r of race.racers) {
-      const edge = r.position.x + hullExtent(r, right);
+      const road = projectRoad(race.track, r.position, r.contactS, r.branch);
+      const profile = railBounds(r, road, r.position);
       assert(
-        edge <= width + 0.02,
+        r.position.x <= profile.max + 0.02 &&
+          r.position.x >= profile.min - 0.02,
         "contacts and the static barrier must constrain the same physical hull",
       );
       assert(
@@ -870,13 +877,17 @@ test("rotating a hull already alongside a barrier cannot disable wall response o
   race.countdown = 0;
   const p = race.player,
     right = new THREE.Vector3(1, 0, 0);
-  p.position.x = width - hullExtent(p, right) - 0.1;
+  p.position.x =
+    railBounds(p, projectRoad(race.track, p.position, 0, 0), p.position).max -
+    0.1;
   p.yawRate = 1.607;
   p.velocity.set(0, 0, 100);
   for (let step = 0; step < 20; step++) {
     race.update(1 / 120, { ...neutral, steer: 1, air: 1 });
+    const road = projectRoad(race.track, p.position, p.contactS, p.branch);
+    const profile = railBounds(p, road, p.position);
     assert(
-      p.position.x + hullExtent(p, right) <= width + 0.02,
+      p.position.x <= profile.max + 0.02 && p.position.x >= profile.min - 0.02,
       "previous orientation establishes contact eligibility, current orientation establishes clearance",
     );
     assert(

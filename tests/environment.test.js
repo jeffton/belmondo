@@ -9,7 +9,7 @@ for (const [index, config] of TRACKS.entries()) {
     const track = makeTrack(index),
       scene = new THREE.Scene();
     const textures = Object.fromEntries(
-      ["concrete", "road", "facade", "paint"].map((k) => [
+      ["concrete", "road", "facade", "paint", "edge"].map((k) => [
         k,
         new THREE.Texture(),
       ]),

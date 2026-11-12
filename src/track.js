@@ -1,15 +1,36 @@
 import * as THREE from "three";
+import { RAIL_PROFILE } from "./rail-profile.js";
 
-// Smooth three-lobed circuits provide broad linked bends and genuine direction
-// changes. Control-point spacing is measured against the craft's turn/grip envelope.
-function circuitPoints(radius, modulation, baseHeight) {
-  return Array.from({ length: 36 }, (_, i) => {
-    const theta = (i / 36) * Math.PI * 2;
-    const r = radius * (1 + modulation * Math.cos(3 * theta));
+// Authored plan/elevation signatures, with broad physical turns rather than
+// uniformly stretched copies of one circuit. The night loop crosses itself
+// at two different elevations; route continuity never follows screen proximity.
+function layoutPoints(course) {
+  return Array.from({ length: 72 }, (_, i) => {
+    const theta = (i / 72) * Math.PI * 2;
+    if (course === "coast") {
+      const r =
+        900 * (1 + 0.07 * Math.cos(3 * theta) + 0.04 * Math.sin(2 * theta));
+      return [
+        r * Math.cos(theta) * 1.12 - 1000,
+        55 + 25 * (1 - Math.cos(theta)) + 15 * Math.sin(2 * theta),
+        r * Math.sin(theta) * 0.88,
+      ];
+    }
+    if (course === "solar") {
+      const r =
+        950 * (1 + 0.13 * Math.cos(2 * theta) - 0.06 * Math.sin(3 * theta));
+      return [
+        r * Math.cos(theta) * 1.092 - 1000,
+        120 + 65 * Math.sin(theta - 0.4) + 30 * Math.sin(2 * theta),
+        r * Math.sin(theta) * 1.029,
+      ];
+    }
+    const phase = theta + Math.PI / 2;
+    const loopScale = Math.sin(phase) < 0 ? 1.15 : 1;
     return [
-      r * Math.cos(theta) - radius * (1 + modulation),
-      baseHeight + 12 * (1 - Math.cos(theta)) + 10 * (1 - Math.cos(2 * theta)),
-      r * Math.sin(theta),
+      936 * Math.sin(phase) * loopScale - 936,
+      105 + 62 * Math.cos(phase) + 15 * Math.sin(3 * phase),
+      457.6 * Math.sin(2 * phase) * loopScale,
     ];
   });
 }
@@ -24,7 +45,15 @@ export const TRACKS = [
     sea: 0x143b57,
     width: 18,
     branchWidths: [16, 18],
-    points: circuitPoints(650, 0.19, 45),
+    layoutId: "coast-2",
+    points: layoutPoints("coast"),
+    ramp: { start: 0.802, height: 14, length: 0.018 },
+    gapLength: 0.018,
+    sections: {
+      finishStraight: [0.955, 1.045],
+      runway: [0.77, 0.9],
+      longJump: [0.802, 0.9],
+    },
     split: [0.285, 0.445],
     jump: 0.82,
     tunnel: [0.11, 0.19],
@@ -38,7 +67,15 @@ export const TRACKS = [
     sea: 0x79645f,
     width: 19,
     branchWidths: [17, 19],
-    points: circuitPoints(740, -0.16, 65),
+    layoutId: "solar-2",
+    points: layoutPoints("solar"),
+    ramp: { start: 0.622, height: 8, length: 0.018 },
+    gapLength: 0.014,
+    sections: {
+      finishStraight: [0.955, 1.045],
+      runway: [0.59, 0.72],
+      mountainTunnel: [0.2, 0.28],
+    },
     split: [0.28, 0.46],
     jump: 0.64,
     tunnel: [0.2, 0.28],
@@ -52,10 +89,19 @@ export const TRACKS = [
     sea: 0x14314d,
     width: 18,
     branchWidths: [16, 18],
-    points: circuitPoints(610, 0.22, 45),
+    layoutId: "noctilucent-2",
+    points: layoutPoints("night"),
+    ramp: { start: 0.462, height: 8, length: 0.018 },
+    gapLength: 0.014,
+    sections: {
+      finishStraight: [0.955, 1.045],
+      runway: [0.46, 0.555],
+      upperBridge: [0.7, 0.8],
+      descent: [0.84, 0.955],
+    },
     split: [0.28, 0.45],
-    jump: 0.82,
-    tunnel: [0.44, 0.53],
+    jump: 0.48,
+    tunnel: [0.33, 0.42],
   },
 ];
 export const mod = (n, m) => ((n % m) + m) % m;
@@ -70,29 +116,128 @@ export function makeTrack(index) {
     0.45,
   );
   const length = curve.getLength();
-  const count = 1500;
-  const runwayStart = config.jump - 0.05;
-  const runwayEnd = config.jump + 0.08;
+  const count = Math.ceil(length / 3);
+  const [runwayStart, runwayEnd] = config.sections.runway;
   const approachPoint = curve.getPointAt(runwayStart);
   const landingPoint = curve.getPointAt(runwayEnd);
   const base = Array.from({ length: count + 1 }, (_, i) => {
     const u = i / count;
     const p = curve.getPointAt(u);
-    // An authored straight chord supports flight, with broad transitions that
-    // preserve the circuit's natural large-radius bends.
-    const approach = THREE.MathUtils.smoothstep(
-      u,
-      runwayStart - 0.07,
-      runwayStart,
-    );
-    const departure =
-      1 - THREE.MathUtils.smoothstep(u, runwayEnd, runwayEnd + 0.07);
-    p.lerp(
-      approachPoint
+    // Tangent-continuous entries/runouts preserve a real, long flight straight.
+    const transition = (a, b, da, db, t) =>
+      a
         .clone()
-        .lerp(landingPoint, (u - runwayStart) / (runwayEnd - runwayStart)),
-      approach * departure,
-    );
+        .multiplyScalar(2 * t * t * t - 3 * t * t + 1)
+        .addScaledVector(da, t * t * t - 2 * t * t + t)
+        .addScaledVector(b, -2 * t * t * t + 3 * t * t)
+        .addScaledVector(db, t * t * t - t * t);
+    const runwayDirection = landingPoint
+      .clone()
+      .sub(approachPoint)
+      .divideScalar(runwayEnd - runwayStart);
+    const runwayFade = 0.07;
+    if (u >= runwayStart && u <= runwayEnd) {
+      p.copy(approachPoint).lerp(
+        landingPoint,
+        (u - runwayStart) / (runwayEnd - runwayStart),
+      );
+    } else if (u >= runwayStart - runwayFade && u < runwayStart) {
+      p.copy(
+        transition(
+          curve.getPointAt(runwayStart - runwayFade),
+          approachPoint,
+          curve
+            .getTangentAt(runwayStart - runwayFade)
+            .multiplyScalar(length * runwayFade),
+          runwayDirection.clone().multiplyScalar(runwayFade),
+          (u - runwayStart + runwayFade) / runwayFade,
+        ),
+      );
+    } else if (u > runwayEnd && u <= runwayEnd + runwayFade) {
+      p.copy(
+        transition(
+          landingPoint,
+          curve.getPointAt(runwayEnd + runwayFade),
+          runwayDirection.clone().multiplyScalar(runwayFade),
+          curve
+            .getTangentAt(runwayEnd + runwayFade)
+            .multiplyScalar(length * runwayFade),
+          (u - runwayEnd) / runwayFade,
+        ),
+      );
+    }
+    // A genuine home straight spans the finish line, with generous transitions.
+    const homeU = u < 0.5 ? u + 1 : u;
+    const [homeStart, homeEnd] = config.sections.finishStraight;
+    const homeFade = config.layoutId === "solar-2" ? 0.06 : 0.055;
+    const homeOutFade = config.layoutId === "noctilucent-2" ? 0.075 : 0.1;
+    const homeA = curve.getPointAt(homeStart);
+    const homeB = curve.getPointAt(homeEnd - 1);
+    if (config.layoutId === "noctilucent-2") {
+      // A compact ~28-degree gravity drop has smooth entry and a long low runout.
+      const top = curve.getPointAt(0.845).y;
+      if (u >= 0.845)
+        p.y = THREE.MathUtils.lerp(
+          top,
+          65,
+          THREE.MathUtils.smoothstep(u, 0.845, 0.9),
+        );
+      if (u < 0.06)
+        p.y = THREE.MathUtils.lerp(
+          65,
+          p.y,
+          THREE.MathUtils.smoothstep(u, 0.025, 0.06),
+        );
+      homeA.y = homeB.y = 65;
+    }
+    const homeDirection = homeB
+      .clone()
+      .sub(homeA)
+      .divideScalar(homeEnd - homeStart);
+    if (homeU >= homeStart && homeU <= homeEnd) {
+      p.copy(homeA).lerp(homeB, (homeU - homeStart) / (homeEnd - homeStart));
+    } else if (homeU >= homeStart - homeFade && homeU < homeStart) {
+      const outer = curve.getPointAt(homeStart - homeFade);
+      const direction =
+        config.layoutId === "coast-2"
+          ? runwayDirection.clone()
+          : curve.getTangentAt(homeStart - homeFade).multiplyScalar(length);
+      if (config.layoutId === "noctilucent-2") {
+        outer.y = 65;
+        direction.y = 0;
+      }
+      p.copy(
+        transition(
+          outer,
+          homeA,
+          direction.multiplyScalar(homeFade),
+          homeDirection.clone().multiplyScalar(homeFade * 1.25),
+          (homeU - homeStart + homeFade) / homeFade,
+        ),
+      );
+    } else if (homeU > homeEnd && homeU <= homeEnd + homeOutFade) {
+      const outer = curve.getPointAt(homeEnd + homeOutFade - 1);
+      const direction = curve
+        .getTangentAt(homeEnd + homeOutFade - 1)
+        .multiplyScalar(length);
+      p.copy(
+        transition(
+          homeB,
+          outer,
+          homeDirection
+            .clone()
+            .multiplyScalar(
+              homeOutFade * (config.layoutId === "noctilucent-2" ? 1.25 : 1),
+            ),
+          direction.multiplyScalar(homeOutFade),
+          (homeU - homeEnd) / homeOutFade,
+        ),
+      );
+    }
+    if (u >= config.ramp.start && u < config.jump)
+      p.y +=
+        ((u - config.jump + config.ramp.length) / config.ramp.length) *
+        config.ramp.height;
     const tangent = curve.getTangentAt(i / count).normalize();
     const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
@@ -116,15 +261,30 @@ export function makeTrack(index) {
       return p;
     });
     routes[branch] = points.map((p, i) => {
-      const previous = points[mod(i - 1, count)],
-        next = points[(i + 1) % count];
-      const tangent = next.clone().sub(previous).normalize();
+      const previous = points[mod(i - 1, count)];
+      const next = points[(i + 1) % count];
+      const u = i / count;
+      const beforeLaunch = u < config.jump && (i + 1) / count >= config.jump;
+      const afterLaunch = u >= config.jump && (i - 1) / count < config.jump;
+      const tangent = (
+        beforeLaunch
+          ? p.clone().sub(previous)
+          : afterLaunch
+            ? next.clone().sub(p)
+            : next.clone().sub(previous)
+      ).normalize();
       const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
       return {
         p,
         tangent,
         right,
-        metric: next.distanceTo(previous) / ((2 * length) / count),
+        metric:
+          (beforeLaunch
+            ? p.distanceTo(previous)
+            : afterLaunch
+              ? next.distanceTo(p)
+              : next.distanceTo(previous) / 2) /
+          (length / count),
       };
     });
     routes[branch][count] = routes[branch][0];
@@ -142,6 +302,19 @@ export function makeTrack(index) {
         -0.18,
         0.18,
       );
+    }
+  }
+  for (const frames of Object.values(routes)) {
+    const bank = frames.slice(0, count).map((f) => f.bank);
+    for (let i = 0; i < count; i++) {
+      let value = 0,
+        weight = 0;
+      for (let j = -12; j <= 12; j++) {
+        const w = 13 - Math.abs(j);
+        value += bank[mod(i + j, count)] * w;
+        weight += w;
+      }
+      frames[i].bank = value / weight;
     }
   }
   function frame(s, branch = 0) {
@@ -165,7 +338,9 @@ export function makeTrack(index) {
       window(0.05, 0.22, 0.035),
       config.name === "SOLAR ARRAY"
         ? window(0.78, 0.94, 0.04)
-        : window(0.48, 0.69, 0.04),
+        : config.layoutId === "noctilucent-2"
+          ? window(0.76, 0.82, 0.02)
+          : window(0.48, 0.69, 0.04),
     );
     const bank = THREE.MathUtils.lerp(a.bank, b.bank, n % 1) * envelope;
     right.applyAxisAngle(tangent, -bank);
@@ -178,9 +353,13 @@ export function makeTrack(index) {
       0,
       0.3,
     );
-    // The launch ramp is part of the physical road surface.
-    const ramp = clamp((u - (config.jump - 0.018)) / 0.018, 0, 1);
-    if (u >= config.jump - 0.018 && u < config.jump) p.y += ramp * 8;
+    // The ramp is already in the authored points and their physical tangents.
+    // Do not interpolate the last pre-lip sample down into the absent gap deck.
+    if (u < config.jump && (Math.floor(n) + 1) / count >= config.jump)
+      p.copy(a.p).addScaledVector(
+        a.tangent,
+        (u - Math.floor(n) / count) * length * a.metric,
+      );
     return {
       p,
       tangent,
@@ -198,7 +377,7 @@ export function makeTrack(index) {
     };
   }
   function gap(u) {
-    return u >= config.jump && u < config.jump + 0.014;
+    return u >= config.jump && u < config.jump + config.gapLength;
   }
   function curvature(s, branch = 0) {
     const a = frame(s - 6, branch).tangent,
@@ -213,7 +392,64 @@ export function makeTrack(index) {
       u < config.tunnel[1]
     );
   }
-  const track = { config, length, frame, gap, curvature, isTunnel };
+  const physicalLengths = Object.fromEntries(
+    Object.entries(routes).map(([branch, frames]) => [
+      branch,
+      frames
+        .slice(0, count)
+        .reduce((sum, f, i) => sum + f.p.distanceTo(frames[i + 1].p), 0),
+    ]),
+  );
+  if (config.layoutId === "noctilucent-2") {
+    const candidates = routes[0]
+      .slice(0, count)
+      .map((f, i) => ({ f, i }))
+      .filter(({ f }) => Math.hypot(f.p.x + 936, f.p.z) < 35);
+    const cross = (ax, az, bx, bz) => ax * bz - az * bx;
+    const intersections = [];
+    for (const a of candidates)
+      for (const b of candidates) {
+        if (b.i - a.i < count / 4) continue;
+        const ap = a.f.p,
+          aq = routes[0][a.i + 1].p;
+        const bp = b.f.p,
+          bq = routes[0][b.i + 1].p;
+        const ax = aq.x - ap.x,
+          az = aq.z - ap.z,
+          bx = bq.x - bp.x,
+          bz = bq.z - bp.z;
+        const denominator = cross(ax, az, bx, bz);
+        if (denominator === 0) continue;
+        const ta = cross(bp.x - ap.x, bp.z - ap.z, bx, bz) / denominator;
+        const tb = cross(bp.x - ap.x, bp.z - ap.z, ax, az) / denominator;
+        if (ta < 0 || ta >= 1 || tb < 0 || tb >= 1) continue;
+        const ua = (a.i + ta) / count,
+          ub = (b.i + tb) / count;
+        const pa = frame(ua * length).p,
+          pb = frame(ub * length).p;
+        const upperU = pa.y > pb.y ? ua : ub,
+          lowerU = pa.y > pb.y ? ub : ua;
+        intersections.push({
+          upperU,
+          lowerU,
+          clearance: Math.abs(pa.y - pb.y),
+          point: [pa.x, pa.z],
+          upperSpan: [upperU - 0.05, upperU + 0.05],
+        });
+      }
+    config.sections.crossings = intersections;
+    config.sections.upperBridge = intersections[0].upperSpan;
+  }
+  const track = {
+    config,
+    length,
+    physicalLengths,
+    physicalLength: physicalLengths[0],
+    frame,
+    gap,
+    curvature,
+    isTunnel,
+  };
   track.bounds = (s, branch = 0) => roadBounds(track, s, branch);
   return track;
 }
@@ -227,6 +463,8 @@ export function roadBounds(track, s, branch = 0) {
     wallMax: f.width,
     connected: false,
     seam: null,
+    railMinHeight: RAIL_PROFILE.height,
+    railMaxHeight: RAIL_PROFILE.height,
   };
   // Include authored endpoints despite modulo/division roundoff at exact mesh stations.
   const epsilon = Number.EPSILON * 4;
@@ -242,8 +480,19 @@ export function roadBounds(track, s, branch = 0) {
   const leftInner = left.p.clone().addScaledVector(left.right, left.width);
   const rightInner = right.p.clone().addScaledVector(right.right, -right.width);
   const axis = track.frame(s, 0).right;
-  result.connected = leftInner.clone().sub(rightInner).dot(axis) >= 0;
-  if (!result.connected) return result;
+  result.connected =
+    leftInner.clone().sub(rightInner).dot(axis) >= 0 &&
+    Math.abs(leftInner.y - rightInner.y) <= 0.05;
+  if (!result.connected) {
+    const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
+    const innerHeight = Math.min(
+      RAIL_PROFILE.height,
+      gap / ((2 * RAIL_PROFILE.topOutset) / RAIL_PROFILE.height),
+    );
+    if (branch === -1) result.railMaxHeight = innerHeight;
+    else result.railMinHeight = innerHeight;
+    return result;
+  }
   // One shared world-space vertex prevents cracks between nonparallel halves.
   // The seam lies in the actual overlap, including unequal branch widths.
   result.seam = leftInner.add(rightInner).multiplyScalar(0.5);

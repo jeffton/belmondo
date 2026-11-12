@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { makeTrack } from "../src/track.js";
 import { Race, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad, roadHeight } from "../src/road-projection.js";
-import { hullExtent } from "../src/contacts.js";
+import { railBounds } from "../src/rail-profile.js";
 import { getTrackPickups, pickupPoint, crossesPickup } from "../src/pickups.js";
 
 function bends(track) {
@@ -73,17 +73,15 @@ for (let index = 0; index < 3; index++) {
           const p = race.player,
             pace = race.classSpec.pace;
           p.yaw = Math.atan2(f.right.x * side, f.right.z * side);
-          const x =
-            side *
-            (f.width -
-              hullExtent(
-                p,
-                new THREE.Vector3(f.right.x, 0, f.right.z).normalize(),
-              ) /
-                Math.cos(f.bank) -
-              0.1);
-          p.position.copy(f.p).addScaledVector(f.right, x);
+          p.position.copy(f.p);
           p.position.y += 2.2;
+          const profile = railBounds(
+            p,
+            projectRoad(track, p.position, f.s, 0),
+            p.position,
+          );
+          const x = (side === 1 ? profile.max : profile.min) - side * 0.1;
+          p.position.addScaledVector(f.right, x);
           p.s = p.contactS = f.s;
           p.gate = Math.floor((f.s / track.length) * 32) + 1;
           const road = projectRoad(track, p.position, f.s, 0);
@@ -103,9 +101,17 @@ for (let index = 0; index < 3; index++) {
           );
           assert(p.shield < 100);
           const contact = projectRoad(track, p.position, p.contactS, p.branch);
+          const contactProfile = railBounds(p, contact, p.position);
           assert(
-            Math.abs(contact.x) <=
-              contact.width - hullExtent(p, contact.wallAxis) + 0.05,
+            contact.x <= contactProfile.max + 0.05 &&
+              contact.x >= contactProfile.min - 0.05,
+            JSON.stringify({
+              c,
+              side,
+              bank: f.bank,
+              x: contact.x,
+              profile: contactProfile,
+            }),
           );
           assert(
             p.grounded,

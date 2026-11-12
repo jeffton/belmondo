@@ -68,7 +68,7 @@ function showMessage(text, seconds = 1.7) {
   messageUntil = performance.now() + seconds * 1000;
 }
 function recordKey(mode = $("mode").value, speedClass = selectedSpeedClass) {
-  return `${selectedTrack}-${selectedCraft}-${mode}-${SPEED_CLASSES[speedClass].id}-${LAPS}laps`;
+  return `${TRACKS[selectedTrack].layoutId}-${selectedCraft}-${mode}-${SPEED_CLASSES[speedClass].id}-${LAPS}laps`;
 }
 function updateRecord() {
   const r = records[recordKey()];
@@ -700,6 +700,9 @@ window.nullVector = {
       laps: LAPS,
       speedClass: race.speedClass,
       classId: race.classSpec.id,
+      layoutId: track.config.layoutId,
+      trackLength: track.length,
+      physicalLength: track.physicalLength,
       menuRacers:
         state === "menu"
           ? race.racers.map((r) => ({

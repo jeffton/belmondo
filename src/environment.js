@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createTerrain } from "./terrain.js";
+import { buildCourseGeography } from "./course-geography.js";
 
 const SEA_LEVEL = -16;
 
@@ -128,14 +129,18 @@ export function buildEnvironment(scene, track, textures) {
     group.add(mesh);
   }
   function buildingPosition(p) {
-    const searchExtent = Math.hypot(Math.abs(p.x) + 1300, Math.abs(p.z) + 1300);
+    const bound = terrain.extent - 60;
+    const searchExtent = Math.hypot(
+      Math.abs(p.x) + bound,
+      Math.abs(p.z) + bound,
+    );
     for (let radius = 0; radius <= searchExtent + 50; radius += 50) {
       const steps = radius === 0 ? 1 : Math.ceil((radius * Math.PI * 2) / 50);
       for (let i = 0; i < steps; i++) {
         const angle = (i / steps) * Math.PI * 2;
         const x = p.x + Math.cos(angle) * radius,
           z = p.z + Math.sin(angle) * radius;
-        if (Math.abs(x) > 1600 || Math.abs(z) > 1300) continue;
+        if (Math.abs(x) > bound || Math.abs(z) > bound) continue;
         if (!clearOfRoad(x, z, 45)) continue;
         const corners = [-30, 0, 30].flatMap((dx) =>
           [-30, 0, 30].map((dz) => heightAt(x + dx, z + dz)),
@@ -150,11 +155,18 @@ export function buildEnvironment(scene, track, textures) {
     }
     throw new Error("No land footprint available for building placement");
   }
+  buildCourseGeography(
+    group,
+    track,
+    { ...textures, rock: groundMap },
+    { heightAt },
+  );
   return {
     heightAt,
     buildingPosition,
     group,
     terrain,
     bridgeAt: terrain.bridgeAt,
+    supportClearAt: terrain.supportClearAt,
   };
 }

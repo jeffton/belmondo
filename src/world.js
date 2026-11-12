@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
+import { RAIL_PROFILE } from "./rail-profile.js";
+import { railPoint, railBackDepth } from "./rail-geometry.js";
 import { buildTrackPads } from "./track-pads.js";
 import { buildStartGantry } from "./start-gantry.js";
 import { buildFinishDistrict } from "./finish-district.js";
@@ -225,11 +227,14 @@ export class World {
         });
       }
     };
-    const steps = 900;
+    const steps = Math.ceil(track.length / 5);
     const stations = [
       ...new Set([
         ...Array.from({ length: steps + 1 }, (_, i) => i / steps),
         ...cfg.split,
+        cfg.ramp.start,
+        cfg.jump,
+        cfg.jump + cfg.gapLength,
       ]),
     ].sort((a, b) => a - b);
     const connectedAt = (u) => {
@@ -261,7 +266,11 @@ export class World {
       if (track.gap(u)) continue;
       for (const branch of split ? [-1, 1] : [0]) {
         const a = track.frame(u * track.length, branch),
-          b = track.frame(stations[i + 1] * track.length, branch),
+          b = track.frame(
+            stations[i + 1] * track.length -
+              (stations[i + 1] === cfg.jump ? 0.000001 : 0),
+            branch,
+          ),
           w = a.width;
         for (const f of [a, b]) {
           Object.assign(f, track.bounds(f.u * track.length, branch));
@@ -288,12 +297,19 @@ export class World {
             color: 0xbac0b0,
             kind: "concrete",
           });
-          // Inner faces remain exactly on the collision boundary, including the
-          // shared world-space seam. All visual thickness extends OUT of the road.
+          // The physical face slopes outwards; split tips taper from zero height
+          // and meet at the median rather than overlapping the opposite lane.
+          const H = RAIL_PROFILE.height;
+          const backA = railBackDepth(track, a, side),
+            backB = railBackDepth(track, b, side);
+          const back = (f) => (f === a ? backA : backB);
           const wallPoint = (frame, edge, height, depth = 0) =>
-            roadPoint(frame, edge, height).addScaledVector(
-              frame.right,
-              side * depth,
+            railPoint(
+              frame,
+              edge,
+              side,
+              height,
+              typeof depth === "function" ? depth(frame) : depth,
             );
           const face = (low, high, color, depth = 0, kind = "edge") => {
             quads.push({
@@ -317,17 +333,17 @@ export class World {
           face(0, 0.38, 0x464d58);
           face(
             0.38,
-            1.45,
+            H - 0.25,
             nose ? (i % 2 ? 0xe5ce89 : 0x6b4d3e) : joint ? 0x717c8a : 0xc9c4b4,
           );
-          face(1.45, 1.7, joint ? 0x7b858d : 0xbebdb4);
-          face(0, 1.7, 0x737e84, 1.1);
+          face(H - 0.25, H, joint ? 0x7b858d : 0xbebdb4);
+          face(0, H, 0x737e84, back);
           quads.push({
             p: [
-              wallPoint(a, edgeA, 1.7),
-              wallPoint(b, edgeB, 1.7),
-              wallPoint(b, edgeB, 1.7, 1.1),
-              wallPoint(a, edgeA, 1.7, 1.1),
+              wallPoint(a, edgeA, H),
+              wallPoint(b, edgeB, H),
+              wallPoint(b, edgeB, H, backB),
+              wallPoint(a, edgeA, H, backA),
             ],
             color: joint ? 0x737e84 : 0xb5b7b1,
             kind: "edge",
@@ -335,13 +351,13 @@ export class World {
           // Substantial cast impact blocks project OUT of the physical boundary.
           // The continuous inner face/height remains exactly the collision wall.
           if (joint && (branch === 0 || side === branch)) {
-            face(-2, 1.7, 0x7e8a91, 2.6);
+            face(-2, H, 0x7e8a91, 2.6);
             quads.push({
               p: [
-                wallPoint(a, edgeA, 1.7, 1.1),
-                wallPoint(b, edgeB, 1.7, 1.1),
-                wallPoint(b, edgeB, 1.7, 2.6),
-                wallPoint(a, edgeA, 1.7, 2.6),
+                wallPoint(a, edgeA, H, backA),
+                wallPoint(b, edgeB, H, backB),
+                wallPoint(b, edgeB, H, 2.6),
+                wallPoint(a, edgeA, H, 2.6),
               ],
               color: 0xaeb1a8,
               kind: "edge",
@@ -352,9 +368,9 @@ export class World {
             ])
               quads.push({
                 p: [
-                  wallPoint(f, edge, -2, 1.1),
-                  wallPoint(f, edge, 1.7, 1.1),
-                  wallPoint(f, edge, 1.7, 2.6),
+                  wallPoint(f, edge, -2, back(f)),
+                  wallPoint(f, edge, H, back(f)),
+                  wallPoint(f, edge, H, 2.6),
                   wallPoint(f, edge, -2, 2.6),
                 ],
                 color: 0x68757e,
@@ -492,7 +508,11 @@ export class World {
         const u = i / Math.ceil(track.length / 38);
         if (u > cfg.jump - 0.025 && u < cfg.jump + 0.04) return [];
         return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0])
-          .filter((branch) => environment.bridgeAt(u, branch))
+          .filter(
+            (branch) =>
+              environment.bridgeAt(u, branch) &&
+              environment.supportClearAt(u, branch),
+          )
           .map((branch) => track.frame(u * track.length, branch));
       },
     ).flat();
@@ -546,24 +566,6 @@ export class World {
       textures,
       environment,
     );
-    const startFrame = track.frame(0);
-    for (let x = -startFrame.width; x < startFrame.width; x += 2)
-      for (let z = 0; z < 4; z += 2) {
-        const tile = new THREE.Mesh(
-          new THREE.BoxGeometry(2, 0.05, 2),
-          basic((x + z) % 4 === 0 ? 0xe8ebe1 : 0x15232d),
-        );
-        tile.position
-          .copy(startFrame.p)
-          .addScaledVector(startFrame.right, x + 1)
-          .addScaledVector(startFrame.tangent, z)
-          .addScaledVector(startFrame.up, 0.08);
-        tile.rotation.y = Math.atan2(
-          startFrame.tangent.x,
-          startFrame.tangent.z,
-        );
-        this.scene.add(tile);
-      }
     buildSplitMarkers(this.scene, track);
     buildTrackAdvertising(this.scene, track, environment);
     this.weaponEffects = new WeaponEffects(this.scene);

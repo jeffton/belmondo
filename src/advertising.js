@@ -14,10 +14,10 @@ export function createAdvertising(scene, atlas = ATLAS, columns = 2, rows = 2) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   const panelMaterial = new THREE.MeshBasicMaterial({ map: texture });
-  const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x132330 });
+  const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x142333 });
   const neonMaterials = [
-    0xff5334, 0xc9ff00, 0x16e5ef, 0xff007c, 0xd1a6ff, 0xffe433, 0x1bffbc,
-    0xff6946,
+    0xff654d, 0x9bffd9, 0xbcafff, 0xf3f5e7, 0xff654d, 0xbcafff, 0x9bffd9,
+    0xf3f5e7,
   ].map((color) => new THREE.MeshBasicMaterial({ color }));
   const box = new THREE.BoxGeometry(1, 1, 1);
   const chunks = new Map();
@@ -178,6 +178,77 @@ export function buildSplitMarkers(scene, track) {
   }
 }
 
+export function getTrackAdvertisingLayout(track) {
+  // Four distinct large campaigns plus two slim lore installations. Placements
+  // follow real outer routes, not the nonexistent centreline inside a fork.
+  const campaigns = {
+    "KAISEKI COAST": [
+      [0.195, -1, 0],
+      [0.485, 1, 2],
+      [0.655, -1, 5],
+      [0.9, -1, 7],
+      [0.25, 1, -1],
+      [0.91, 1, -2],
+    ],
+    "SOLAR ARRAY": [
+      [0.105, -1, 1],
+      [0.31, -1, 3],
+      [0.49, 1, 4],
+      [0.79, -1, 6],
+      [0.175, 1, -1],
+      [0.92, 1, -2],
+    ],
+    NOCTILUCENT: [
+      [0.12, 1, 0],
+      [0.3, -1, 3],
+      [0.65, 1, 5],
+      [0.815, -1, 6],
+      [0.46, 1, -1],
+      [0.93, 1, -2],
+    ],
+  };
+  return campaigns[track.config.name].map(([u, side, brand]) => {
+    const branch =
+      u > track.config.split[0] && u < track.config.split[1] ? side : 0;
+    const frame = track.frame(u * track.length, branch);
+    const normal = frame.tangent
+      .clone()
+      .multiplyScalar(-0.85)
+      .addScaledVector(frame.right, -side * 0.55)
+      .setY(0)
+      .normalize();
+    const yaw = Math.atan2(normal.x, normal.z);
+    const width = brand < 0 ? 28 : 32;
+    const height = width * (brand < 0 ? 0.13 : 384 / 1024);
+    const center = frame.p
+      .clone()
+      .addScaledVector(frame.right, side * (frame.width + 16.5));
+    center.y = frame.p.y + height / 2 + (brand < 0 ? 6 : 4);
+    const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const corners = [-1, 1].flatMap((x) =>
+      [-1, 1].map((y) =>
+        center
+          .clone()
+          .addScaledVector(horizontal, (x * width) / 2)
+          .add(new THREE.Vector3(0, (y * height) / 2, 0)),
+      ),
+    );
+    return {
+      u,
+      side,
+      branch,
+      brand,
+      frame,
+      center,
+      yaw,
+      width,
+      height,
+      horizontal,
+      corners,
+    };
+  });
+}
+
 export function buildTrackAdvertising(scene, track, environment) {
   const advertising = createAdvertising(
     scene,
@@ -186,51 +257,31 @@ export function buildTrackAdvertising(scene, track, environment) {
     2,
   );
   const pierre = createPierreAdvertising(scene);
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const metal = new THREE.MeshLambertMaterial({ color: 0x314858 });
-  const positions = [0.035, 0.108, 0.205, 0.475, 0.535, 0.74, 0.925, 0.985];
-  const posts = new THREE.InstancedMesh(box, metal, positions.length * 2);
+  const layout = getTrackAdvertisingLayout(track);
+  const posts = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshLambertMaterial({ color: 0x657b7b }),
+    layout.length * 2,
+  );
   const transform = new THREE.Object3D();
-  const offset =
-    track.config.name === "SOLAR ARRAY"
-      ? 2
-      : track.config.name === "NOCTILUCENT"
-        ? 4
-        : 0;
-  positions.forEach((u, i) => {
-    const f = track.frame(u * track.length);
-    const side = i % 2 ? 1 : -1;
-    const normal = f.tangent
-      .clone()
-      .multiplyScalar(-0.85)
-      .addScaledVector(f.right, -side * 0.55)
-      .setY(0)
-      .normalize();
-    // Keep the angled landscape panels outside the driving surface.
-    const center = f.p.clone().addScaledVector(f.right, side * (f.width + 14));
-    // Two lower, slim lore banners replace ordinary ad slots, away from forks.
-    const pierreDesign = i === 2 ? 0 : i === 6 ? 1 : -1;
-    center.y += pierreDesign >= 0 ? 10.5 : 24.5;
-    const yaw = Math.atan2(normal.x, normal.z);
-    const width = pierreDesign >= 0 || i % 3 === 0 ? 24 : 20;
-    const height = width * (pierreDesign >= 0 ? 0.13 : 384 / 1024);
-    if (pierreDesign >= 0)
-      pierre.facade(center, yaw, width, pierreDesign, height);
-    else advertising.facade(center, yaw, width, (i + offset) % 8, height);
-    const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  layout.forEach((spec, i) => {
+    const { center, yaw, width, height, brand, horizontal } = spec;
+    if (brand < 0) pierre.facade(center, yaw, width, -brand - 1, height);
+    else advertising.facade(center, yaw, width, brand, height);
     for (const [j, direction] of [-1, 1].entries()) {
       const p = center
         .clone()
         .addScaledVector(horizontal, direction * width * 0.32);
       const bottom = environment.heightAt(p.x, p.z) - 2;
-      const top = center.y - height / 2 + (pierreDesign >= 0 ? -0.1 : 1);
+      const top = center.y - height / 2 + (brand < 0 ? -0.1 : 1);
       transform.position.set(p.x, (bottom + top) / 2, p.z);
-      transform.scale.set(0.7, top - bottom, 0.9);
+      transform.scale.set(0.9, top - bottom, 1.1);
       transform.rotation.set(0, yaw, 0);
       transform.updateMatrix();
       posts.setMatrixAt(i * 2 + j, transform.matrix);
     }
   });
+  posts.name = "roadside-advertising-supports";
   posts.computeBoundingSphere();
   scene.add(posts);
   advertising.finish();

@@ -1,29 +1,19 @@
-# Finish district
+# Finish straight
 
-`buildFinishDistrict(scene, track, textures, environment)` adds scenery only. `update(elapsed)` advances a shared crowd shader uniform; it does not upload instance transforms or redraw textures. World owns normal scene disposal.
+`config.sections.finishStraight` is an unwrapped normalized interval crossing the physical `s=0` timing seam. `buildFinishDistrict(scene, track, textures, environment)` fills both sides of that entire straight with grounded spectator terraces. `getFinishDistrictLayout(track)` exports their complete oriented footprints. Kaiseki shop districts use shared geographic reservations outside the spectator zone.
 
-The finish portal is exactly at `track.frame(0)`, matching the checker and timing line. Approach boards sit 300, 160 and 60 metres before it. The starting signal at +42 metres remains a separate structure.
+A worn checkerboard is embedded in the road along the complete straight, including both sides of the timing seam. It has no arrow, pad frame or illumination that could suggest a pickup. The finish portal is exactly at `track.frame(0)`; approach boards sit 300, 160 and 60 metres before it. The starting signal remains a separate structure.
 
-## Foundations
+## Geometry and crowds
 
-`getFinishDistrictLayout(track)` exports oriented corners, centre, right/forward axes and dimensions. `environment.heightAt(x, z)` must sample the rendered terrain. Each slab extends below its sampled minimum and above its sampled maximum; no terrain or course edits are performed here.
+Terraces have approximately 48-metre cullable sections with service gaps and nine-metre shoulders. Foundations intersect the visible terrain and clear its sampled maximum. Portal footings sit at ±(road half-width + 4 m), each 2.8 × 4 m.
 
-| Centre u | Side | Width × length | Inner shoulder |
-| -------- | ---- | -------------- | -------------- |
-| .956     | +1   | 22 × 68 m      | 9 m            |
-| .993     | −1   | 26 × 52 m      | 9 m            |
-| .012     | −1   | 18 × 38 m      | 13 m           |
+- **Kaiseki:** civic steps and transit roof blades.
+- **Solar:** sandstone banks and industrial shade fins.
+- **Noctilucent:** dockside terraces and loading-hall balconies.
 
-Kaiseki's reserved galleries at .925–.983/−1 and .008–.102/+1 stay separate. Foundation tests check their complete footprints, not just centres. Portal footings sit at ±(road half-width + 4 m), each 2.8 × 4 m.
-
-## Course identities
-
-- **Kaiseki:** civic steps, staggered transit roof blades and a ticket pavilion.
-- **Solar:** sandstone spectator banks, test-apron shade fins and a service hangar.
-- **Noctilucent:** open terminal quay, occupied loading-hall balcony and dock hall.
-
-Spectators share one low-poly geometry and material, instanced separately per structure for culling. Their raised arms sway in the vertex shader.
+Structure boxes share spatial/material instance batches. Each crowd card depicts four original pixel-art spectators on crossed planes. A vertex shader animates cheering without uploading transforms or redrawing textures; `update(elapsed)` changes one uniform. World owns scene disposal.
 
 ## Acceptance
 
-`node --test tests/finish-district.test.js` checks terrain intersection, complete scenery clearance, reserved galleries, exact finish alignment and instance-upload behaviour. GPU acceptance must inspect each final approach and finish at C3 speed, chase/cockpit, desktop/mobile, including the crowd shader and starting-signal sightline.
+`tests/finish-district.test.js` checks complete foundations, road clearance, gallery reservations, the physical timing portal, actual checker-mesh coverage along the full straight, crowd triangle cost and stable instance uploads. GPU acceptance covers approach/finish visibility at speed, chase/cockpit, desktop/mobile, crowd rendering and starting-signal sightlines.

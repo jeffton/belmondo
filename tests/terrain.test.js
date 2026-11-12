@@ -26,7 +26,9 @@ for (const [index, config] of TRACKS.entries()) {
             gap > 3.5,
             `land enters deck underside at ${u}/${branch}/${x}: ${gap}`,
           );
-          if (!track.gap(u)) {
+          const bridge = config.sections.upperBridge;
+          const authoredBridge = bridge && u >= bridge[0] && u <= bridge[1];
+          if (!track.gap(u) && !authoredBridge) {
             total++;
             if (gap < 12) close++;
           }
@@ -38,7 +40,9 @@ for (const [index, config] of TRACKS.entries()) {
       close / total > 0.85,
       "most of the real course must sit on land, not stilts",
     );
-    const jump = track.frame((config.jump + 0.007) * track.length);
+    const jump = track.frame(
+      (config.jump + config.gapLength / 2) * track.length,
+    );
     assert(
       jump.p.y - terrain.heightAt(jump.p.x, jump.p.z) > 35,
       "jump crosses a genuine open ravine",
@@ -123,7 +127,13 @@ test("banked earthworks follow both actual deck edges instead of a flat centreli
     const right = new THREE.Vector3(Math.cos(bank), Math.sin(bank), 0);
     const up = new THREE.Vector3(-Math.sin(bank), Math.cos(bank), 0);
     const track = {
-      config: { name: "SOLAR ARRAY", split: [0.3, 0.4], jump: 0.82 },
+      config: {
+        name: "SOLAR ARRAY",
+        split: [0.3, 0.4],
+        jump: 0.82,
+        gapLength: 0.014,
+        sections: {},
+      },
       length: 1000,
       frame: (s, branch = 0) => ({
         p: new THREE.Vector3(0, 65, s),

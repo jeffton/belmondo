@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createAdvertising } from "./advertising.js";
+import { getWaterfrontDistricts } from "./course-geography.js";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -134,17 +135,13 @@ export function buildFlagship(scene, track, textures, environment, assets) {
     );
     beam(ceramic, foot, p, size, size * 1.3);
   }
-  function sign(f, side, x, y, z, size, branded = false) {
-    if (branded) {
-      panel(f, side * x, y, y + size, z - size * 0.5, z + size * 0.5, mark);
-    } else {
-      advertising.facade(
-        point(f, side * (x - 0.2), y + size / 2, z),
-        Math.atan2(-side * f.right.x, -side * f.right.z),
-        size,
-        tenant++ % 4,
-      );
-    }
+  function sign(f, side, x, y, z, size) {
+    advertising.facade(
+      point(f, side * (x - 0.2), y + size / 2, z),
+      Math.atan2(-side * f.right.x, -side * f.right.z),
+      size,
+      tenant++,
+    );
     beam(
       cyan,
       point(f, side * (x - 0.12), y - 0.25, z - size * 0.5),
@@ -370,8 +367,8 @@ export function buildFlagship(scene, track, textures, environment, assets) {
         0.3,
         0.4,
       );
-      if (i % 3 === 1) sign(f, side, w + 4.65, 11.8, -half + 4, 4.6);
-      if (i % 7 === 0) sign(f, side, w + 12.8, tall - 8, 0, 5.5, true);
+      if (variant === 1 && i === Math.floor(bays / 2))
+        sign(f, side, w + 4.65, 10.5, 0, 7.2);
       if (workshop) {
         for (const z of [-half * 0.65, 0, half * 0.65]) {
           sheet(
@@ -417,8 +414,7 @@ export function buildFlagship(scene, track, textures, environment, assets) {
   }
 
   // 01: opposed shopping galleries, then an open-sided transit interchange.
-  district(0.008, 0.102, 0, 1);
-  district(0.023, 0.088, 0, -1, 1);
+  for (const spec of getWaterfrontDistricts(track)) district(...spec);
   for (let u = 0.113; u < 0.187; u += 0.006) {
     const f = frame(u);
     const w = f.width;
@@ -588,16 +584,7 @@ export function buildFlagship(scene, track, textures, environment, assets) {
     mark,
   );
 
-  // 03: low inner-branch workshops contrast with tall outer-branch apartments.
-  // Only the outside of each branch is occupied: the median remains navigable.
-  district(0.306, 0.365, -1, -1, 2);
-  district(0.355, 0.411, 1, 1, 3);
-
-  // 04: returning to the inhabited city gives the launch a recognisable approach.
-  district(0.555, 0.604, 0, -1, 3);
-  district(0.704, 0.745, 0, 1, 2);
-
-  // 05: the entire straight jump corridor is left open. A paired broken-arch
+  // The entire straight jump corridor is left open. A paired broken-arch
   // landmark sits at the CURRENT landing, well outside even a pitched-up flight.
   const landing = frame(track.config.jump + 0.075);
   for (const side of [-1, 1]) {
@@ -625,7 +612,6 @@ export function buildFlagship(scene, track, textures, environment, assets) {
       0.4,
     );
   }
-  district(0.925, 0.983, 0, -1, 1);
 
   for (const [material, chunks] of sheets) {
     for (const faces of chunks.values()) {
