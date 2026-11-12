@@ -97,9 +97,14 @@ export function biomeLandHeight(recipe, x, z, context) {
     );
   }
   if (recipe.biome === "hydraulic") {
-    // Broad green hills and stepped agriculture outside the excavated lock.
-    const hills = 28 + 65 * Math.sin(x * 0.0026 - z * 0.0018) ** 2;
-    return Math.floor((hills + 18 * Math.cos(z * 0.004)) / 12) * 12;
+    // Continuous rounded uplands: quantized heights made each lit grid cell
+    // resemble a separate cube, rather than an authored agricultural terrace.
+    return (
+      32 +
+      48 * Math.sin(x * 0.0018 - z * 0.0011) ** 2 +
+      12 * Math.cos(z * 0.0024) +
+      7 * Math.sin(x * 0.003 + z * 0.0018)
+    );
   }
   // A broad caldera rim surrounds dark exposed rock. Yellow is mineral staining,
   // not a second sandstone desert or a glowing red lava sea.

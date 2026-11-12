@@ -208,7 +208,7 @@ export function getTrackAdvertisingLayout(track) {
     ],
     MONSOON: [
       [0.09, 1, 2],
-      [0.295, -1, 3],
+      [0.37, -1, 3],
       [0.575, -1, 5],
       [0.88, 1, 6],
       [0.645, -1, -1],

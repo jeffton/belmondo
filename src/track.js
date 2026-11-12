@@ -304,7 +304,13 @@ export function makeTrack(index) {
           f.right,
           config.fork.offsets[route] * blend,
         );
-        p.y += config.fork.rise[route] * blend;
+        const riseProfile = config.fork.riseProfile;
+        const riseBlend = riseProfile
+          ? THREE.MathUtils.smoothstep(phase, riseProfile[0], riseProfile[1]) *
+            (1 -
+              THREE.MathUtils.smoothstep(phase, riseProfile[2], riseProfile[3]))
+          : blend;
+        p.y += config.fork.rise[route] * riseBlend;
         return p;
       }
       if (config.night && branch) {

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { terrainFootprint } from "./terrain-footprint.js";
+import { buildDamRaceway } from "./dam-raceway.js";
 
 export const LOCK_WATER_LEVEL = 42;
 
@@ -26,7 +27,9 @@ export function buildHydraulicLock(parent, track, textures, environment) {
     triangle(a, b, c, color);
     triangle(a, c, d, color);
   };
-  for (const side of [-1, 1]) {
+  // One retained reservoir leaves the opposite side open to the valley;
+  // the racing plunge and water remain visible instead of becoming a corridor.
+  for (const side of [1]) {
     const profiles = [];
     for (let i = 0; i <= stations; i++) {
       const u = start + 0.01 + ((end - start - 0.02) * i) / stations;
@@ -128,8 +131,10 @@ export function buildHydraulicLock(parent, track, textures, environment) {
     groundingContacts,
     waterContacts,
     waterLevel,
+    reservoirSides: [1],
     range: [start + 0.01, end - 0.01],
   };
   parent.add(mesh);
+  buildDamRaceway(parent, track, textures, environment);
   return mesh;
 }

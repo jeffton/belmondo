@@ -227,6 +227,11 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
       const lock = root.getObjectByName("curved-dry-lock-reservoirs");
       assert(lock, "the dry lock has continuous grounded reservoir geometry");
       const data = lock.userData;
+      assert.deepEqual(
+        data.reservoirSides,
+        [1],
+        "the left valley stays open to the driver",
+      );
       for (const p of data.groundingContacts)
         assert(env.heightAt(p.x, p.z) - p.y >= 0.999);
       for (let i = 0; i < data.waterContacts.length; i += 2) {
@@ -277,7 +282,7 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           0,
           -f.tangent.x,
         ).normalize();
-        for (const side of [-1, 1])
+        for (const side of data.reservoirSides)
           for (const wallOffset of [14, 98]) {
             const wall = f.p
               .clone()
