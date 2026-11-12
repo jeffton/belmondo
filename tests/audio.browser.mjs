@@ -265,8 +265,6 @@ try {
         "hit",
         "scrape",
         "boost",
-        "jump",
-        "land",
         "incoming",
         "lap",
         "finish",
