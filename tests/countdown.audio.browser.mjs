@@ -33,7 +33,20 @@ try {
   const results = await page.evaluate(async () => {
     const { AudioEngine } = await import("/src/audio.js");
     const results = [];
-    for (const stage of [3, 2, 1, 0, "muted", "paused", "hidden", "default"]) {
+    for (const stage of [
+      3,
+      2,
+      1,
+      0,
+      "muted",
+      "paused",
+      "hidden",
+      "default",
+      "voice:3",
+      "voice:2",
+      "voice:1",
+      "voice:0",
+    ]) {
       const context = new OfflineAudioContext(2, 48000, 48000);
       context.resume = () => Promise.resolve();
       window.AudioContext = function () {
@@ -44,7 +57,9 @@ try {
       if (stage === "muted") audio.setMuted(true);
       if (stage === "paused") audio.setPaused(true);
       if (stage === "hidden") audio.hidden = true;
-      if (stage === 0) audio.effect("go");
+      if (typeof stage === "string" && stage.startsWith("voice:"))
+        audio.effect(stage);
+      else if (stage === 0) audio.effect("go");
       else if (typeof stage === "number") audio.effect("countdown", stage);
       else audio.effect("countdown");
       const rendered = await context.startRendering();
@@ -92,6 +107,13 @@ try {
     assert(
       difference > 0.001,
       "Countdown stages and launch must be audibly distinct",
+    );
+  }
+  for (let i = 0; i < 4; i++) {
+    assert.deepEqual(
+      results[i].channels,
+      results[i + 8].channels,
+      "signal mix contains exactly the voice, with no extra tone or start chord",
     );
   }
   const frames = 48000 * 4;

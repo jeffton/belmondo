@@ -1,15 +1,19 @@
 # Countdown voice acceptance
 
-Candidate: `115bd52` with test-only module-loading and output-measurement follow-up. No finish-line relocation or two-second GO work is included.
+The start signal plays only THREE, TWO, ONE, GO. No countdown tone, start chord or turbine-sweep cue is layered with speech. Launch boost, engine, music and later boost effects are unchanged. No finish-line relocation or two-second GO work is included in this branch.
 
-- CPU: 386/386 tests; focused countdown/gantry/audio tests independently reviewed and passed. Build and formatting passed.
-- Desktop 1100×700 and mobile/touch 390×844: real start gesture unlocks running AudioContext; THREE, TWO, ONE, GO each play once at the shared physical-board stage. Pause during THREE freezes countdown; resume does not replay speech. Restart repeats all four words exactly once.
-- Post-compressor native effects output is audible; pause and mute RMS below 0.0001, unmute above 0.001. Desktop/mobile board screenshots show THREE and no HUD announcement.
-- Actual decoded voice plus original launch cues rendered through OfflineAudioContext: stage peaks 0.484/0.597/0.546/0.645; RMS 0.050/0.053/0.060/0.079. No clipping; mute, pause and hidden states produce exact silence. Mix saved privately as `test-artifacts/countdown-launch.wav`.
-- No subjective listening claim: available tools did not provide audio audition. Speech clarity against music remains a listening acceptance item, distinct from measured output and synchronization.
+## Voice-only candidate
 
-The native test used the eight authorized private soundtrack masters in the isolated build. Masters and QA captures are not committed.
+CPU tests exercise real countdown/GO effects and require exactly one speech source per crossing. The offline browser fixture compares each countdown/GO output sample-for-sample with the corresponding standalone spoken word, proving the absence of layered tones. Build and formatting are checked before integration.
 
-Public smoke independently passed for `d767c10` (`index-D4HdIopK.js`): real gesture plays Eleven soundtrack, race advances, pause and quit work, no page errors. That public release contains no countdown voice.
+Voice-only browser/audio acceptance is pending a serialized GPU grant. The private `test-artifacts/countdown-launch.wav` from the previous QA session contains layered launch sounds and is not this candidate's listening sample.
 
-All owned browsers and the isolated HTTP server were closed; shared browser/process state was untouched. GPU ownership was explicitly released.
+## Completed synchronization checks
+
+The shared timing and speech lifecycle in `115bd52` passed real start-gesture tests at desktop 1100×700 and mobile/touch 390×844: THREE, TWO, ONE, GO play once at the shared physical-board stage. Pause during THREE freezes countdown; resume does not replay speech. Restart repeats all four words exactly once. Board screenshots show THREE without a HUD announcement.
+
+Native post-compressor effects output was audible; pause/mute RMS was below 0.0001 and unmute above 0.001. These checks used the eight authorized private soundtrack masters. Masters and QA captures are not committed.
+
+The user listened to the earlier layered sample and requested voice alone. No subjective listening claim is made for the voice-only candidate before a fresh sample exists.
+
+Public smoke passed independently for `d767c10` (`index-D4HdIopK.js`): gesture plays Eleven soundtrack, race advances, pause and quit work, no page errors. That release contains no countdown voice.

@@ -159,7 +159,6 @@ export class AudioEngine {
     // and a separate, air-driven turbine with drifting blade resonances.
     this.motor = this.loopBed(this.createEngineBed(false), "lowpass", 700);
     this.turbine = this.loopBed(this.createEngineBed(true), "lowpass", 3200);
-    this.launchCues = [3, 2, 1, 0].map((stage) => this.createLaunchCue(stage));
     this.previousSpeed = 0;
     this.previousUpdate = null;
     this.wind = this.loopNoise("lowpass", 900, 0.6);
@@ -224,63 +223,8 @@ export class AudioEngine {
     return buffer;
   }
 
-  createLaunchCue(stage) {
-    // Original charge-lock ritual: rising casing modes, granular air and a
-    // soft mechanical latch. GO releases the same chamber into a turbine sweep.
-    const launch = stage === 0;
-    const duration = launch ? 0.86 : 0.52;
-    const rate = 24000;
-    const buffer = this.context.createBuffer(2, rate * duration, rate);
-    const root = [196, 147, 123.47, 98][stage];
-    const tau = Math.PI * 2;
-    for (let channel = 0; channel < 2; channel++) {
-      const samples = buffer.getChannelData(channel);
-      let seed = 3119 + channel * 607;
-      let air = 0;
-      let phase = 0;
-      for (let i = 0; i < samples.length; i++) {
-        const t = i / rate;
-        const progress = t / duration;
-        seed = (seed * 16807) % 2147483647;
-        const white = (seed / 2147483647) * 2 - 1;
-        air += (launch ? 0.26 : 0.12) * (white - air);
-        const rise = launch
-          ? 1 + 1.9 * progress
-          : 0.76 + 0.24 * Math.min(t / 0.13, 1);
-        phase += (tau * root * rise) / rate;
-        const attack = 1 - Math.exp(-t / (launch ? 0.018 : 0.012));
-        const tail = Math.pow(1 - progress, launch ? 1.65 : 2.2);
-        const chamber =
-          0.3 * Math.sin(phase) +
-          0.16 * Math.sin(phase * 2.01 + channel * 0.13) +
-          0.085 * Math.sin(phase * 3.97 + 0.5 * Math.sin(tau * 7 * t));
-        const lock =
-          Math.exp(-t * 43) * (0.13 * Math.sin(tau * 1180 * t) + white * 0.12);
-        const shimmer =
-          0.045 * Math.sin(phase * 7.03 + channel * 0.4) * Math.exp(-t * 9);
-        const airflow =
-          air * (launch ? 0.7 : 0.23) * Math.sin(Math.PI * progress);
-        samples[i] = (chamber + lock + shimmer + airflow) * attack * tail;
-      }
-    }
-    return buffer;
-  }
-
   launchCue(stage) {
     this.playSample(`voice:${stage}`);
-    const source = this.context.createBufferSource();
-    source.buffer = this.launchCues[stage === 0 ? 3 : 3 - stage];
-    const filter = this.context.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = stage === 0 ? 6600 : 3900;
-    source.connect(filter);
-    this.transient(
-      source,
-      filter,
-      this.context.currentTime,
-      source.buffer.duration,
-      stage === 0 ? 1.05 : 0.9,
-    );
   }
 
   loopBed(buffer, type, frequency) {
@@ -383,23 +327,6 @@ export class AudioEngine {
       this.boost,
     ])
       loop.gain.gain.setTargetAtTime(0, t, 0.025);
-  }
-
-  transient(source, filter, t, duration, volume) {
-    const gain = this.context.createGain();
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(volume, t + 0.006);
-    gain.gain.linearRampToValueAtTime(volume * 0.8, t + duration * 0.2);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-    filter.connect(gain);
-    gain.connect(this.master);
-    source.onended = () => {
-      source.disconnect();
-      filter.disconnect();
-      gain.disconnect();
-    };
-    source.start(t);
-    source.stop(t + duration + 0.01);
   }
 
   effect(kind, weapon = "") {

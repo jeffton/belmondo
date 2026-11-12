@@ -97,6 +97,19 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   await audio.start();
   assert.equal(globalThis.fetch.mock.callCount(), loads);
 
+  for (const stage of [3, 2, 1, 0]) {
+    const sourceCount = audio.context.sources.length;
+    audio.effect(stage === 0 ? "go" : "countdown", stage);
+    const voices = [...audio.sampleVoices];
+    assert.equal(voices.length, 1, "one spoken word per signal crossing");
+    assert.equal(voices[0].key, `voice:${stage}`);
+    assert.equal(
+      audio.context.sources.length,
+      sourceCount + 1,
+      "no layered countdown tone or start chord",
+    );
+    audio.stopSamples();
+  }
   audio.effect("voice:3");
   const spoken = [...audio.sampleVoices][0];
   assert.equal(spoken.gain.gain.value, 0.9);
