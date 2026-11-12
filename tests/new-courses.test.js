@@ -46,7 +46,7 @@ for (const index of [3, 4, 5]) {
       new Set(TRACKS.map((course) => course.layoutId)).size,
       TRACKS.length,
     );
-    assert.equal(config.tunnel, null);
+    if (index !== 4) assert.equal(config.tunnel, null);
     if (index !== 5) {
       assert.equal(config.jump, null);
       assert.equal(config.ramp, null);
@@ -77,7 +77,10 @@ for (const index of [3, 4, 5]) {
             1 / (index === 4 ? 80 : index === 5 && u >= 0.17 && u <= 0.34 ? 95 : 150),
           `radius below authored readable-turn envelope at ${u}, branch ${branch}`,
         );
-        assert.equal(track.isTunnel(s, branch), false);
+        assert.equal(
+          track.isTunnel(s, branch),
+          index === 4 && branch === -1 && frame.u > 0.81 && frame.u < 0.9,
+        );
         if (i % 100 === 0) {
           const body = frame.p.clone().addScaledVector(frame.up, 2.2);
           const road = projectRoad(track, body, s, branch);

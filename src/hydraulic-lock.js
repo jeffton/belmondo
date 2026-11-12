@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { terrainFootprint } from "./terrain-footprint.js";
 import { buildDamRaceway } from "./dam-raceway.js";
+import { buildMonsoonFork } from "./monsoon-fork.js";
 
 export const LOCK_WATER_LEVEL = 42;
 
@@ -136,5 +137,6 @@ export function buildHydraulicLock(parent, track, textures, environment) {
   };
   parent.add(mesh);
   buildDamRaceway(parent, track, textures, environment);
+  buildMonsoonFork(parent, track, textures, environment);
   return mesh;
 }

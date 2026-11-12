@@ -183,11 +183,11 @@ const layouts = {
     ],
     [0.825, -1, -7, "weapon", "Short climbing service-line armament"],
     [
-      0.85,
+      0.82,
       1,
       7,
       "boost",
-      "Long outer fork acceleration trades distance for speed",
+      "Exposed reservoir ascent acceleration trades distance for speed",
     ],
     [0.95, 0, -2, "boost", "Clean merge exit acceleration toward the finish"],
   ],

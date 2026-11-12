@@ -26,7 +26,7 @@ const track = makeTrack(4);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 test("spillway is a steep continuous dry descent with a low curved lock and climbing fork", () => {
-  assert.equal(track.config.layoutId, "monsoon-3");
+  assert.equal(track.config.layoutId, "monsoon-4");
   assert.equal(track.config.jump, null);
   let steepest = 0;
   for (let i = 0; i < 12000; i++) {
