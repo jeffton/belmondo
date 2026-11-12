@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { LAPS } from "./race.js";
 
 const INK = "#142333";
 const PAPER = "#f3f5e7";
@@ -195,15 +196,28 @@ export function buildStartGantry(scene, track) {
   });
 
   const update = (race, demo = false) => {
-    const stage = demo
-      ? "idle"
-      : race.countdown > 3
-        ? "armed"
-        : race.countdown > 0
-          ? Math.ceil(race.countdown)
-          : race.time < 1.2
-            ? "GO"
-            : "idle";
+    let stage = "idle";
+    let approaching = false;
+    let displayedLap;
+    if (!demo) {
+      if (race.countdown > 3) stage = "armed";
+      else if (race.countdown > 0) stage = Math.ceil(race.countdown);
+      else if (race.finished) stage = "FINISH";
+      else if (race.time < 1.2) stage = "GO";
+      else {
+        const player = race.player;
+        // Announce the lap entered at this line throughout the authored home
+        // straight's incoming leg. Unwrapped, gate-earned progression keeps the
+        // initial grid and outgoing leg on lap 1, not prematurely on lap 2.
+        const straightStart = track.config.sections.finishStraight[0];
+        const lapEnd = player.lap * track.length;
+        approaching =
+          player.s >= (player.lap - 1 + straightStart) * track.length &&
+          player.s < lapEnd;
+        displayedLap = player.lap + (approaching ? 1 : 0);
+        stage = displayedLap > LAPS ? "FINISH" : `LAP ${displayedLap}`;
+      }
+    }
     const age =
       typeof stage === "number"
         ? stage - race.countdown
@@ -216,11 +230,14 @@ export function buildStartGantry(scene, track) {
       fin.rotation.z = side * ((stage === "GO" ? 0.48 : 0.08) + snap * 0.24);
       fin.position.y = 11.3 + snap * 0.3;
     });
-    if (stage === previousStage) return;
-    previousStage = stage;
+    const displayKey = `${stage}:${approaching}:${Boolean(race.finished)}`;
+    if (displayKey === previousStage) return;
+    previousStage = displayKey;
     const go = stage === "GO";
     const active = typeof stage === "number" || go;
-    const accent = go ? MINT : CORAL;
+    const running = typeof stage === "string" && stage.startsWith("LAP ");
+    const complete = stage === "FINISH";
+    const accent = go || complete ? MINT : active ? CORAL : LILAC;
     lamps.forEach((lamp, index) => {
       const on = go || (typeof stage === "number" && index <= 3 - stage);
       lamp.material.color.set(on ? accent : "#394b54");
@@ -229,7 +246,7 @@ export function buildStartGantry(scene, track) {
     ctx.fillRect(0, 0, 1024, 256);
     ctx.fillStyle = INSET;
     ctx.fillRect(0, 0, 1024, 38);
-    if (labelReady) {
+    if (labelReady && !running && !complete) {
       ctx.save();
       ctx.filter = "brightness(0) invert(1)";
       ctx.drawImage(startLabel, 28, 6, 112, 26);
@@ -238,7 +255,7 @@ export function buildStartGantry(scene, track) {
     ctx.fillStyle = MINT;
     ctx.font = '600 20px "Archivo"';
     ctx.textAlign = "right";
-    ctx.fillText("BELMONDO / GRID 01", 994, 27);
+    ctx.fillText("BELMONDO / TIMING 01", 994, 27);
     drawPip(ctx, stage);
     ctx.fillStyle = LILAC;
     ctx.textAlign = "center";
@@ -255,25 +272,44 @@ export function buildStartGantry(scene, track) {
     ctx.lineTo(721, 79);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = go ? MINT : active ? CORAL : LILAC;
+    ctx.fillStyle = go || complete ? MINT : active ? CORAL : LILAC;
     ctx.textAlign = "center";
     ctx.font = active
       ? `700 ${go ? 190 : 208}px "Belmondo Circuit"`
       : '700 76px "Belmondo Circuit"';
     ctx.fillText(
-      active ? String(stage) : stage === "armed" ? "READY" : "B/",
+      active || running || complete
+        ? String(stage)
+        : stage === "armed"
+          ? "READY"
+          : "B/",
       502,
       active ? 220 : 177,
     );
+    const status = running
+      ? [approaching ? "NEXT" : "CURRENT", "LAP", `${displayedLap} / ${LAPS}`]
+      : complete
+        ? [
+            race.finished ? "RACE" : "FINISH",
+            race.finished ? "COMPLETE" : "LINE",
+            `${LAPS} / ${LAPS}`,
+          ]
+        : stage === "idle"
+          ? ["GRID", "STANDBY", "B/"]
+          : null;
     for (let index = 0; index < 3; index++) {
       const on = go || (typeof stage === "number" && index <= 3 - stage);
       ctx.fillStyle = on ? accent : INSET;
       ctx.fillRect(765, 58 + index * 59, 227, 46);
       ctx.fillStyle = on ? INK : LILAC;
-      ctx.font = '700 36px "Belmondo Circuit"';
+      ctx.font = `700 ${status ? 26 : 36}px "Belmondo Circuit"`;
       ctx.textAlign = "left";
-      ctx.fillText(`0${3 - index}`, 781, 94 + index * 59);
-      ctx.fillRect(934, 72 + index * 59, on ? 40 : 10, 16);
+      ctx.fillText(
+        status ? status[index] : `0${3 - index}`,
+        781,
+        94 + index * 59,
+      );
+      if (!status) ctx.fillRect(934, 72 + index * 59, on ? 40 : 10, 16);
     }
     ctx.fillStyle = accent;
     ctx.fillRect(0, 248, 1024, 8);

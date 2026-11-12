@@ -1,0 +1,1443 @@
+{
+  "sourceCommit": "f2f93567f98d27acf0e8798746fa9e900e688667",
+  "method": "Bounded World/actual Race fixtures, seeded near timing gates; not human gameplay",
+  "profiles": 6,
+  "screenshots": 96,
+  "errors": [],
+  "cases": [
+    {
+      "profile": "desktop-course0",
+      "course": "KAISEKI COAST",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 151,
+          "textures": 19
+        },
+        "after": {
+          "geometries": 151,
+          "textures": 19
+        },
+        "texture": "6f0d241b-c1f5-4142-b133-f0f667d8e893"
+      }
+    },
+    {
+      "profile": "desktop-course1",
+      "course": "SOLAR ARRAY",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 159,
+          "textures": 23
+        },
+        "after": {
+          "geometries": 159,
+          "textures": 23
+        },
+        "texture": "95f79c9d-3f0d-4a57-879a-9d007a846c09"
+      }
+    },
+    {
+      "profile": "desktop-course2",
+      "course": "NOCTILUCENT",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 107,
+          "textures": 19
+        },
+        "after": {
+          "geometries": 107,
+          "textures": 19
+        },
+        "texture": "aedc5b5e-898c-4e6c-9910-e9b52c886750"
+      }
+    },
+    {
+      "profile": "mobile-course0",
+      "course": "KAISEKI COAST",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 87,
+          "textures": 15
+        },
+        "after": {
+          "geometries": 87,
+          "textures": 15
+        },
+        "texture": "3e334699-f6d0-4a7c-bd06-035292443d3e"
+      }
+    },
+    {
+      "profile": "mobile-course1",
+      "course": "SOLAR ARRAY",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 78,
+          "textures": 15
+        },
+        "after": {
+          "geometries": 78,
+          "textures": 15
+        },
+        "texture": "dfc0b58e-2842-4f89-917f-c1aa11a5f835"
+      }
+    },
+    {
+      "profile": "mobile-course2",
+      "course": "NOCTILUCENT",
+      "assetErrors": [],
+      "states": [
+        {
+          "stage": 3,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "3",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 2,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "2",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 1,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "1",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": 0,
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "GO",
+            "03",
+            "02",
+            "01"
+          ]
+        },
+        {
+          "stage": "lap",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 1",
+            "CURRENT",
+            "LAP",
+            "1 / 5"
+          ]
+        },
+        {
+          "stage": "approach:1",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "NEXT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "cross:1",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 2",
+            "CURRENT",
+            "LAP",
+            "2 / 5"
+          ]
+        },
+        {
+          "stage": "approach:2",
+          "playerLap": 2,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "NEXT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "cross:2",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 3",
+            "CURRENT",
+            "LAP",
+            "3 / 5"
+          ]
+        },
+        {
+          "stage": "approach:3",
+          "playerLap": 3,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "NEXT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "cross:3",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 4",
+            "CURRENT",
+            "LAP",
+            "4 / 5"
+          ]
+        },
+        {
+          "stage": "approach:4",
+          "playerLap": 4,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "NEXT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:4",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "LAP 5",
+            "CURRENT",
+            "LAP",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "approach:5",
+          "playerLap": 5,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "FINISH",
+            "LINE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "cross:5",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "FINISH",
+            "RACE",
+            "COMPLETE",
+            "5 / 5"
+          ]
+        },
+        {
+          "stage": "demo",
+          "playerLap": 6,
+          "finished": true,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "B/",
+            "GRID",
+            "STANDBY",
+            "B/"
+          ]
+        },
+        {
+          "stage": "reset",
+          "playerLap": 1,
+          "finished": false,
+          "boardLabels": [
+            "BELMONDO / TIMING 01",
+            "PIP / 01",
+            "READY",
+            "03",
+            "02",
+            "01"
+          ]
+        }
+      ],
+      "resources": {
+        "before": {
+          "geometries": 54,
+          "textures": 16
+        },
+        "after": {
+          "geometries": 54,
+          "textures": 16
+        },
+        "texture": "5be34a64-3355-4c60-9c9d-b60e994ebf37"
+      }
+    }
+  ]
+}
