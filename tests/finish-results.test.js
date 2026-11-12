@@ -6,9 +6,10 @@ import { AudioEngine } from "../src/audio.js";
 
 function place(track, racer, s, speed = 80) {
   const frame = track.frame(s);
-  racer.lap = Math.floor(s / track.length) + 1;
+  racer.lap = Math.floor((s - track.finishS) / track.length) + 1;
   racer.s = racer.contactS = s;
-  racer.gate = Math.floor((s / track.length) * 32) + 1;
+  racer.gate = Math.floor(((s - track.finishS) / track.length) * 32) + 1;
+  racer.checkpoint = { s, branch: 0, gate: racer.gate };
   racer.position.copy(frame.p);
   racer.position.y += 2.2;
   racer.velocity.copy(frame.tangent).multiplyScalar(speed);
@@ -30,7 +31,7 @@ for (let rank = 1; rank <= 8; rank++) {
     const track = makeTrack(0);
     const race = new Race(track);
     race.countdown = 0;
-    const line = LAPS * track.length;
+    const line = track.finishS + LAPS * track.length;
     place(track, race.player, line - 0.1);
     for (const racer of race.racers.slice(1))
       place(
@@ -63,7 +64,7 @@ test("finish rank is captured after the later AI update, including a shared fini
   const track = makeTrack(0);
   const race = new Race(track);
   race.countdown = 0;
-  const line = LAPS * track.length;
+  const line = track.finishS + LAPS * track.length;
   place(track, race.player, line - 0.1, 80);
   place(track, race.racers[1], line - 0.11, 160);
   for (const racer of race.racers.slice(2))
@@ -87,7 +88,7 @@ test("trial uses its actual rank one; mute consumes the result without replay", 
   const track = makeTrack(0);
   const race = new Race(track, 0, "trial");
   race.countdown = 0;
-  place(track, race.player, LAPS * track.length - 0.1);
+  place(track, race.player, track.finishS + LAPS * track.length - 0.1);
   race.update(1 / 120, {});
   assert(race.finished);
   const event = race.events.find((event) => event.kind === "finish");
@@ -106,7 +107,7 @@ test("AI final crossing cannot emit a player finish result", () => {
   const track = makeTrack(0);
   const race = new Race(track);
   race.countdown = 0;
-  place(track, race.racers[1], LAPS * track.length - 0.1);
+  place(track, race.racers[1], track.finishS + LAPS * track.length - 0.1);
   race.update(1 / 120, {});
   assert.equal(race.racers[1].lap, LAPS + 1);
   assert(!race.finished);
