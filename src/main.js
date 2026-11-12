@@ -326,14 +326,10 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => keys.delete(e.code));
 window.addEventListener("blur", () => {
   if (state === "race") setPaused(true);
-  music.pause();
   clearInput();
 });
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    if (state === "race") setPaused(true);
-    music.pause();
-  }
+  if (document.hidden && state === "race") setPaused(true);
   last = performance.now();
 });
 for (const b of document.querySelectorAll("[data-control]")) {

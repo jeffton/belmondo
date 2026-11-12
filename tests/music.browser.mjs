@@ -293,7 +293,11 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
     .toBe(false);
-  // Drive the document lifecycle event while retaining native audio transport.
+  // Losing focus pauses the race/effects, not the native music transport.
+  const beforeHidden = await page.evaluate(() => ({
+    src: window.musicAudioElements.at(-1).src,
+    time: window.musicAudioElements.at(-1).currentTime,
+  }));
   await page.evaluate(() => {
     Object.defineProperty(document, "hidden", {
       configurable: true,
@@ -301,36 +305,57 @@ try {
     });
     document.dispatchEvent(new Event("visibilitychange"));
   });
-  await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
+  await page.waitForFunction(
+    (time) => window.musicAudioElements.at(-1).currentTime > time + 0.1,
+    beforeHidden.time,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    false,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeHidden.src,
+  );
+  assert.equal(
+    await page.evaluate(() => window.nullVector.telemetry.paused),
+    true,
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBeCloseTo(0.35, 5);
+  assert(
+    Math.abs(
+      (await page.evaluate(() => window.musicOutputGain.gain.value)) - 0.31,
+    ) < 0.0001,
+  );
   await page.evaluate(() => {
     delete document.hidden;
     document.dispatchEvent(new Event("visibilitychange"));
   });
-  assert.equal(
-    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
-    true,
-  );
   await page.locator("#resume").click();
-  await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
   const beforeBlur = await page.evaluate(
     () => window.musicAudioElements.at(-1).currentTime,
   );
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
-  await expect
-    .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
-    .toBe(true);
+  await page.waitForFunction(
+    (time) => window.musicAudioElements.at(-1).currentTime > time + 0.1,
+    beforeBlur,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    false,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeHidden.src,
+  );
+  assert.equal(
+    await page.evaluate(() => window.nullVector.telemetry.paused),
+    true,
+  );
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await page.locator("#resume").click();
-  await page.waitForFunction(
-    () =>
-      !window.musicAudioElements.at(-1).paused &&
-      window.musicAudioElements.at(-1).currentTime > 0.1,
-  );
-  assert(
-    (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
-      beforeBlur,
-    "Music playback should resume after focus and game resume",
-  );
   const beforeQuit = await page.evaluate(() => ({
     src: window.musicAudioElements.at(-1).src,
     time: window.musicAudioElements.at(-1).currentTime,
@@ -393,6 +418,30 @@ try {
     await page.evaluate(() => window.musicAudioElements.at(-1).currentTime),
     manualTime,
   );
+  // Focus/visibility callbacks must not silently restart manually paused music.
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("blur"));
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+    delete document.hidden;
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+  });
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    true,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).currentTime),
+    manualTime,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeQuit.src,
+  );
   assert.deepEqual(errors, [], "No uncaught browser errors");
   console.log(
     JSON.stringify(
@@ -409,7 +458,8 @@ try {
           "next and ended advance",
           "local override and OST restore",
           "independent music/effects controls",
-          "blur and hidden document pause music without automatic resume",
+          "blur and hidden document keep music playing while pausing the race",
+          "focus/visibility preserve explicit music pause",
           "quiet menu/race gain and track continuity",
           "quit and restart preserve manual transport pause",
           "portrait controls fit",
