@@ -387,15 +387,17 @@ for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     steerPad.querySelector("i").style.transform = "";
   });
 let lastControls = {};
+let steeringKind = "digital";
 let padPause = false,
   padFire = false,
   padView = false;
 function input() {
   const down = (...codes) => codes.some((c) => keys.has(c));
-  let steer =
-    (down("ArrowRight", "KeyD") ? 1 : 0) -
-    (down("ArrowLeft", "KeyA") ? 1 : 0) +
-    touchSteer;
+  const keyboardSteer =
+    (down("ArrowRight", "KeyD") ? 1 : 0) - (down("ArrowLeft", "KeyA") ? 1 : 0);
+  let steer = keyboardSteer + touchSteer;
+  if (keyboardSteer) steeringKind = "digital";
+  if (touchSteer !== 0) steeringKind = "analog";
   let airRight = down("KeyL", "KeyE") || held.has("airRight") ? 1 : 0;
   let airLeft = down("KeyJ", "KeyQ") || held.has("airLeft") ? 1 : 0;
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
@@ -404,7 +406,10 @@ function input() {
   let brake = down("ArrowDown", "KeyS") || held.has("brake");
   const pad = navigator.getGamepads?.()[0];
   if (pad) {
-    if (Math.abs(pad.axes[0]) > 0.12) steer = pad.axes[0];
+    if (Math.abs(pad.axes[0]) > 0.12) {
+      steer = pad.axes[0];
+      steeringKind = "analog";
+    }
     if (Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
     airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
     airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
@@ -427,6 +432,7 @@ function input() {
   return {
     // The road's lateral axis points camera-left when looking forward.
     steer: -clamp(steer, -1, 1),
+    steeringKind,
     air: airLeft - airRight,
     airLeft,
     airRight,
@@ -632,7 +638,7 @@ function animate(now) {
       }
       if (race.finished) showResults();
     }
-    world.draw(race, paused ? 0 : dt, false);
+    world.draw(race, paused ? 0 : dt, false, controls.steeringKind);
   }
   // Downshift expensive clean rendering only after sustained slow frame timing.
   if (state === "race" && !paused) {
