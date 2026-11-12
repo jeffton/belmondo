@@ -658,8 +658,7 @@ export function roadBounds(track, s, branch = 0) {
   const separation = other.p.clone().sub(f.p).dot(axis);
   // Authored forks can meet at precisely identical centres. Keep one shared
   // seam even when the branch tangents differ at that exact endpoint.
-  const ownIsLeft =
-    separation === 0 && track.config.fork ? branch === -1 : separation >= 0;
+  const ownIsLeft = separation === 0 ? branch === -1 : separation >= 0;
   const left = ownIsLeft ? f : other;
   const right = ownIsLeft ? other : f;
   result.innerSide = ownIsLeft ? 1 : -1;
@@ -677,11 +676,10 @@ export function roadBounds(track, s, branch = 0) {
     if (!seamRegion) return result;
     const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
     const slope = RAIL_PROFILE.topOutset / RAIL_PROFILE.height;
-    const expansion = track.config.fork
-      ? left.up.dot(axis) -
-        right.up.dot(axis) +
-        slope * (left.right.dot(axis) + right.right.dot(axis))
-      : 2 * slope;
+    const expansion =
+      left.up.dot(axis) -
+      right.up.dot(axis) +
+      slope * (left.right.dot(axis) + right.right.dot(axis));
     const innerHeight = Math.min(RAIL_PROFILE.height, gap / expansion);
     if (ownIsLeft) result.railMaxHeight = innerHeight;
     else result.railMinHeight = innerHeight;
