@@ -170,7 +170,7 @@ test("Solar's actual instanced outcrops touch final terrain and use distinct aut
   const textures = Object.fromEntries(
     ["concrete", "paint", "facade"].map((key) => [key, new THREE.Texture()]),
   );
-  buildCity(scene, track, textures, { heightAt: terrain.heightAt });
+  buildCity(scene, track, textures, { heightAt: terrain.heightAt, terrain });
   const variants = new Set();
   let instances = 0;
   scene.traverse((mesh) => {

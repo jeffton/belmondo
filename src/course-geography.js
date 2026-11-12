@@ -15,7 +15,7 @@ export function getWaterfrontDistricts(track) {
   ];
 }
 
-function rockStrataTexture() {
+export function rockStrataTexture() {
   const pixels = new Uint8Array(64 * 128 * 4);
   let seed = 4171;
   for (let y = 0; y < 128; y++)

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { groundedGeometryOffset } from "./terrain.js";
+import { buildRouteDistricts } from "./route-districts.js";
 
 // Authored districts, not a scatter of interchangeable apartment towers. Each
 // cluster has a clear footprint outside every route, including the flight lane.
@@ -355,66 +356,47 @@ export function buildCity(scene, track, textures, environment) {
     }
   }
 
-  // Each lap moves through contrasting activities and silhouettes. Pairs at
-  // different depths give the view a middle ground instead of a skyline wall.
-  const acts = desert
+  // Landmarks terminate particular views; close districts supply the connective
+  // tissue. Distances, sides and silhouettes are composed for each real route.
+  const landmarks = desert
     ? [
-        "cliff",
-        "solar",
-        "gantry",
-        "cliff",
-        "refinery",
-        "solar",
-        "cliff",
-        "gantry",
+        [0.08, -1, 165, "solar"],
+        [0.145, 1, 195, "cliff"],
+        [0.303, 1, 185, "cliff"],
+        [0.382, -1, 245, "gantry"],
+        [0.515, -1, 155, "solar"],
+        [0.575, 1, 185, "cliff"],
+        [0.757, 1, 165, "refinery"],
+        [0.842, -1, 235, "cliff"],
+        [0.915, -1, 160, "solar"],
       ]
     : harbor
       ? [
-          "freight",
-          "refinery",
-          "ferry",
-          "city",
-          "gantry",
-          "freight",
-          "refinery",
-          "city",
+          [0.085, -1, 170, "freight"],
+          [0.151, 1, 240, "ferry"],
+          [0.213, 1, 175, "refinery"],
+          [0.312, 1, 170, "freight"],
+          [0.425, -1, 185, "city"],
+          [0.572, -1, 210, "gantry"],
+          [0.663, -1, 165, "refinery"],
+          [0.817, 1, 180, "freight"],
+          [0.917, -1, 225, "city"],
         ]
       : [
-          "city",
-          "transit",
-          "ferry",
-          "terrace",
-          "ferry",
-          "terrace",
-          "transit",
-          "city",
+          [0.137, 1, 180, "transit"],
+          [0.213, -1, 220, "ferry"],
+          [0.263, -1, 160, "city"],
+          [0.372, 1, 225, "terrace"],
+          [0.493, 1, 180, "city"],
+          [0.578, -1, 215, "terrace"],
+          [0.675, 1, 190, "transit"],
+          [0.735, -1, 240, "ferry"],
+          [0.927, -1, 185, "city"],
         ];
-  acts.forEach((kind, i) => {
-    const u = (i + 0.35) / acts.length;
-    cluster(u, i % 2 ? -1 : 1, 145, kind, i);
-    if (!(harbor && i === 0))
-      cluster(
-        u + 0.034,
-        i % 2 ? 1 : -1,
-        175,
-        acts[(i + 3) % acts.length],
-        i + 8,
-      );
-    cluster(
-      u + 0.075,
-      i % 2 ? -1 : 1,
-      230,
-      acts[(i + 1) % acts.length],
-      i + 24,
-    );
-    cluster(
-      u + 0.015,
-      i % 2 ? -1 : 1,
-      305,
-      desert ? "cliff" : harbor ? "freight" : "terrace",
-      i + 16,
-    );
-  });
+  landmarks.forEach(([u, side, offset, kind], i) =>
+    cluster(u, side, offset, kind, i),
+  );
+  buildRouteDistricts(root, track, textures, environment);
   if (harbor) cluster(0.085, 1, 135, "harbor-gateway", 32);
   let count = 0;
   for (const batch of batches.values()) {
