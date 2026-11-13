@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {
+  buildVesperDistricts,
+  buildVesperTraffic,
+} from "./vesper-districts.js";
 
 export const METROPOLIS_SIGN_ATLAS =
   "/art/vesper/openai-image-2026-11-12T20-57-54-474Z-ig_0e43dc0e702bde06016af628221f9c87d29805ac5f177e27a2.png";
@@ -42,19 +46,9 @@ export function buildMetropolis(
   const batches = new Map();
   const transform = new THREE.Object3D();
   const tint = new THREE.Color();
-  const volumes = [];
-  const cornersAt = (center, right, forward, width, depth) =>
-    [-1, 1].flatMap((x) =>
-      [-1, 1].map((z) =>
-        center
-          .clone()
-          .addScaledVector(right, (x * width) / 2)
-          .addScaledVector(forward, (z * depth) / 2),
-      ),
-    );
-  function box(material, center, yaw, dims, color) {
-    const key = `${material}:${Math.floor(center.x / 512)}:${Math.floor(center.z / 512)}`;
-    if (!batches.has(key)) batches.set(key, { material, parts: [] });
+  function box(material, center, yaw, dims, color, shape = "box") {
+    const key = `${material}:${shape}:${Math.floor(center.x / 512)}:${Math.floor(center.z / 512)}`;
+    if (!batches.has(key)) batches.set(key, { material, shape, parts: [] });
     transform.position.copy(center);
     transform.rotation.set(0, yaw, 0);
     transform.scale.set(...dims);
@@ -62,117 +56,14 @@ export function buildMetropolis(
     batches.get(key).parts.push({ matrix: transform.matrix.clone(), color });
   }
   const samples = environment.terrain.samples;
-  const count = Math.ceil(track.length / 76);
-  for (let i = 0; i < count; i++) {
-    const u = (i + 0.31) / count;
-    const finish = track.config.sections.finishStraight;
-    // The start district owns these complete streetside spectator footprints.
-    if (u < finish[1] - 1 + 0.015 || u > finish[0] - 0.015) continue;
-    const branches =
-      u > track.config.split[0] && u < track.config.split[1] ? [-1, 1] : [0];
-    for (const branch of branches) {
-      const f = track.frame(u * track.length, branch);
-      const forward = new THREE.Vector3(
-        f.tangent.x,
-        0,
-        f.tangent.z,
-      ).normalize();
-      const right = new THREE.Vector3(forward.z, 0, -forward.x);
-      const yaw = Math.atan2(forward.x, forward.z);
-      const roofDistrict =
-        u > track.config.sections.rooftopClimb[0] &&
-        u < track.config.sections.rooftopDescent[1];
-      for (const side of [-1, 1]) {
-        const width = 28 + (i % 3) * 9;
-        const depth = 42 + (i % 2) * 12;
-        const center = f.p
-          .clone()
-          .addScaledVector(right, side * (f.width + width / 2 + 17));
-        const feet = cornersAt(center, right, forward, width, depth);
-        const heights = feet.map((p) => environment.heightAt(p.x, p.z));
-        const bottom = Math.min(...heights) - 2;
-        const ground = Math.max(...heights);
-        const top = Math.max(
-          ground + 24,
-          f.p.y + (roofDistrict ? -6 : 72 + ((i * 17 + side * 7 + 137) % 113)),
-        );
-        const volume = {
-          center,
-          right,
-          forward,
-          width,
-          depth,
-          bottom,
-          top,
-          u,
-          branch,
-          side,
-        };
-        if (!clearsMetropolisRoad(volume, samples)) continue;
-        volumes.push(volume);
-        const local = (x, y, z) =>
-          center
-            .clone()
-            .addScaledVector(right, x)
-            .addScaledVector(forward, z)
-            .setY(y);
-        const wallColor = i % 3 ? 0x243c51 : 0x433348;
-        box(
-          "facade",
-          local(0, (bottom + top) / 2, 0),
-          yaw,
-          [width, top - bottom, depth],
-          wallColor,
-        );
-        box(
-          "facade",
-          local(0, top + 1, 0),
-          yaw,
-          [width + 1, 2, depth + 1],
-          0x5c6a79,
-        );
-        // Inhabited floors: staggered warm/cool occupancy, service bands and
-        // vertical lift spines, not an identical luminous checkerboard.
-        const floors = Math.floor((top - ground) / 9);
-        for (let floor = 0; floor < floors; floor += 2) {
-          const y = ground + 6 + floor * 9;
-          const lit = (floor * 7 + i * 3 + side + 11) % 5;
-          const color = lit < 2 ? 0xe9b76e : lit === 2 ? 0x52cbd9 : 0x426080;
-          const span = width * (lit === 0 ? 0.72 : 0.38);
-          box(
-            "neon",
-            local(-side * width * 0.12, y, -depth / 2 - 0.16),
-            yaw,
-            [span, 1.1, 0.3],
-            color,
-          );
-          box(
-            "neon",
-            local(-side * (width / 2 + 0.16), y, 0),
-            yaw,
-            [0.3, 1.1, depth * 0.65],
-            color,
-          );
-        }
-        const lightColor = i % 3 ? 0x45d8e7 : 0xf7ae68;
-        box(
-          "neon",
-          local(-side * (width / 2 + 0.2), (ground + top) / 2, depth * 0.32),
-          yaw,
-          [0.4, top - ground - 4, 0.65],
-          lightColor,
-        );
-        // Rooftop service machinery belongs to the building, not the racing deck.
-        box(
-          "facade",
-          local(0, top + 4, depth * 0.18),
-          yaw,
-          [width * 0.42, 6, depth * 0.38],
-          0x647383,
-        );
-      }
-    }
-  }
+  const architecture = buildVesperDistricts(
+    track,
+    environment,
+    box,
+    clearsMetropolisRoad,
+  );
+  const { volumes } = architecture;
+  const traffic = buildVesperTraffic(root, architecture, box);
 
   // The lower fork is a covered, inhabited market gallery; the raised fork
   // remains an open skyline roof run. Roof loads go to street-rooted columns,
@@ -379,9 +270,14 @@ export function buildMetropolis(
   root.add(wetLight);
 
   const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-  for (const { material, parts } of batches.values()) {
+  const shapes = {
+    box: boxGeometry,
+    drum: new THREE.CylinderGeometry(0.5, 0.5, 1, 8),
+    crown: new THREE.CylinderGeometry(0.3, 0.5, 1, 7),
+  };
+  for (const { material, shape, parts } of batches.values()) {
     const mesh = new THREE.InstancedMesh(
-      boxGeometry,
+      shapes[shape],
       material === "neon" ? neon : facade,
       parts.length,
     );
@@ -444,11 +340,14 @@ export function buildMetropolis(
     }
   }
   root.userData.volumes = volumes;
+  root.userData.districtCounts = architecture.districtCounts;
+  root.userData.advertisingReservations = architecture.reservations;
+  root.userData.trafficLanes = traffic.lanes;
   root.userData.arcadeParts = arcadeParts;
   root.userData.supports = supports;
   root.userData.sceneryInstances = [...batches.values()].reduce(
     (n, b) => n + b.parts.length,
     0,
   );
-  return { update() {} };
+  return { update: traffic.update };
 }
