@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { Race } from "../src/race.js";
+import { Race, SPEED_CLASSES } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 import { steeringBank, updateShipBank } from "../src/ship-bank.js";
 
-function trajectory(steer, digital, fps = 120) {
-  const race = new Race(makeTrack(0), 0, "trial");
+function trajectory(steer, digital, fps = 120, speedClass = 0) {
+  const race = new Race(makeTrack(0), 0, "trial", speedClass);
   race.countdown = 0;
   let lean = 0;
   const samples = [];
@@ -15,7 +15,12 @@ function trajectory(steer, digital, fps = 120) {
     race.update(1 / fps, { steer: steer(i / fps), throttle: true });
     const target = steeringBank(race.player.yawRate);
     lean = updateShipBank(lean, target, 1 / fps, digital);
-    samples.push({ lean, target, yaw: race.player.yaw });
+    samples.push({
+      lean,
+      target,
+      yaw: race.player.yaw,
+      shield: race.player.shield,
+    });
   }
   return samples;
 }
@@ -45,9 +50,21 @@ test("repeated digital taps reduce visual roll oscillation without changing phys
 });
 
 test("digital turn-in begins on the first rendered frame and sustained holds reach the physical bank", () => {
-  const hold = trajectory((t) => (t < 1 ? 1 : 0), true);
-  assert(hold[0].lean < 0, "immediate visible response");
-  assert(Math.abs(hold[119].lean - hold[119].target) < 0.005);
+  for (const [speedClass, { pace }] of SPEED_CLASSES.entries()) {
+    // Compare one second of class-normalized physical turn-in, before an
+    // unpiloted full-lock hold hits the rail and changes the target bank.
+    const holdSeconds = 1 / pace;
+    const hold = trajectory(
+      (t) => (t < holdSeconds ? 1 : 0),
+      true,
+      120,
+      speedClass,
+    );
+    const settled = hold[Math.floor(120 * holdSeconds) - 1];
+    assert(hold[0].lean < 0, "immediate visible response");
+    assert.equal(settled.shield, 100, "settling fixture must not hit a rail");
+    assert(Math.abs(settled.lean - settled.target) < 0.005);
+  }
   const reverse = updateShipBank(-0.3, 0.3, 1 / 60, true);
   assert(reverse > -0.2, "reversals use fast turn-in rather than slow release");
 });

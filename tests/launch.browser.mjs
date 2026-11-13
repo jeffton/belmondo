@@ -172,9 +172,20 @@ async function finish(page, success, name) {
   }
   return t;
 }
-async function lap(page, device) {
+async function keyboardLapAfterLaunch(page, launchDevice) {
+  if (launchDevice === "touch") {
+    const touchSession = await page.context().newCDPSession(page);
+    await touchSession.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await touchSession.detach();
+    await page.waitForFunction(
+      () => !window.nullVector.telemetry.controls.launchIntent,
+    );
+  }
   const track = makeTrack(0),
-    held = new Set(device === "keyboard" ? ["KeyW"] : []);
+    held = new Set(launchDevice === "keyboard" ? ["KeyW"] : []);
   const begun = Date.now();
   let t;
   while (Date.now() - begun < 90000) {
@@ -227,7 +238,7 @@ async function lap(page, device) {
   await expect(page.locator("#lap-times")).toContainText("LAP 1");
   await expect(page.locator("#lap-times")).toContainText("CURRENT");
   await page.screenshot({
-    path: `test-artifacts/launch-completed-lap-${device}.png`,
+    path: `test-artifacts/launch-${launchDevice}-keyboard-piloted-lap.png`,
   });
   const layout = await page.evaluate(() => {
     const r = document.querySelector("#lap-times").getBoundingClientRect();
@@ -250,9 +261,11 @@ async function lap(page, device) {
     expect(
       Math.min(layout.right, control.right) > Math.max(layout.x, control.x) &&
         Math.min(layout.bottom, control.bottom) > Math.max(layout.y, control.y),
-      `${device} completed lap rows overlap camera/pause`,
+      `${launchDevice} launch / keyboard-piloted lap rows overlap camera/pause`,
     ).toBe(false);
   return {
+    launchDevice,
+    pilotInput: "keyboard",
     layout,
     lap: t.lap,
     lapTimes: t.lapTimes,
@@ -506,11 +519,10 @@ try {
       const completed =
         process.env.LAUNCH_LAPS !== "0" &&
         ["keyboard-timed", "touch-thrust-timed"].includes(spec.name)
-          ? await lap(page, spec.device)
+          ? await keyboardLapAfterLaunch(page, spec.device)
           : null;
       if (spec.success) {
-        if (spec.device === "touch") await page.locator("#pause").tap();
-        else await page.keyboard.press("Escape");
+        await page.keyboard.press("Escape");
         await expect(page.locator("#pause-panel")).toBeVisible();
         await page.screenshot({
           path: `test-artifacts/launch-pause-${spec.device}.png`,
@@ -556,7 +568,7 @@ try {
     }
     expect(report.errors).toEqual([]);
     console.log(
-      `Launch: ${report.cases.length} actual-input timing cases; ${report.cases.filter((c) => c.completed).length} naturally driven completed laps passed.`,
+      `Launch: ${report.cases.length} actual-input timing cases; ${report.cases.filter((c) => c.completed).length} keyboard-piloted completed laps passed (launch input recorded separately).`,
     );
   }
 } finally {
