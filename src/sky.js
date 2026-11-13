@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { celestialDirection } from "./track-lighting.js";
 import { COURSE_LIGHTING } from "./course-lighting.js";
 import { EXPANSION_SKIES } from "./expansion-skies.js";
+import { vesperTower, vesperFacade } from "./vesper-sky.js";
 
 const TAU = Math.PI * 2;
 const stories = {
@@ -177,9 +178,13 @@ function profile(knots, u, rounded) {
 }
 
 function cityAt(groups, u) {
-  for (const [start, end, height, kind] of groups) {
+  for (const [district, [start, end, height, kind]] of groups.entries()) {
     if (u < start || u >= end) continue;
     const p = (u - start) / (end - start);
+    if (kind === "metropolis") {
+      const tower = vesperTower(p, district);
+      return { ...tower, height: height * tower.height, kind, p };
+    }
     if (kind === "terraces") {
       const roofs = [0.34, 0.52, 0.68, 0.5, 0.92, 1, 0.8, 0.53, 0.31];
       return { height: height * roofs[Math.floor(p * roofs.length)], kind, p };
@@ -354,7 +359,11 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
         }
         const cityCoverage = coverage(cityHeight, latitude);
         if (city && cityCoverage > 0) {
-          pixel = blend(pixel, cityColor, haze * cityCoverage);
+          const facade =
+            city.kind === "metropolis"
+              ? vesperFacade(city, latitude, cityHeight)
+              : cityColor;
+          pixel = blend(pixel, facade, haze * cityCoverage);
           // Small, irregularly occupied window clusters, not a neon grid.
           const seed = (((x % (width - 1)) * 73856093) ^ (y * 19349663)) >>> 0;
           if (
