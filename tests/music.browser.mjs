@@ -48,6 +48,7 @@ try {
   });
 
   await page.goto(url);
+  await page.bringToFront();
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
@@ -153,7 +154,7 @@ try {
     src: window.musicAudioElements.at(-1).src,
     time: window.musicAudioElements.at(-1).currentTime,
   }));
-  await page.locator("#pause").click();
+  await page.keyboard.press("p");
   await expect(page.locator("#pause-panel")).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
@@ -293,26 +294,34 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
     .toBe(false);
-  // Losing focus pauses the race/effects, not the native music transport.
+  // Hidden/focus loss pauses the native transport; returning resumes the same position.
   const beforeHidden = await page.evaluate(() => ({
     src: window.musicAudioElements.at(-1).src,
     time: window.musicAudioElements.at(-1).currentTime,
   }));
   await page.evaluate(() => {
+    Object.defineProperty(document, "hasFocus", {
+      configurable: true,
+      value: () => true,
+    });
     Object.defineProperty(document, "hidden", {
       configurable: true,
       value: true,
     });
     document.dispatchEvent(new Event("visibilitychange"));
   });
-  await page.waitForFunction(
-    (time) => window.musicAudioElements.at(-1).currentTime > time + 0.1,
-    beforeHidden.time,
+  await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBeCloseTo(0.35, 5);
+  const hiddenTime = await page.evaluate(
+    () => window.musicAudioElements.at(-1).currentTime,
   );
-  assert.equal(
-    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
-    false,
+  await page.waitForTimeout(250);
+  const stillHiddenTime = await page.evaluate(
+    () => window.musicAudioElements.at(-1).currentTime,
   );
+  assert(Math.abs(stillHiddenTime - hiddenTime) < 0.02);
   assert.equal(
     await page.evaluate(() => window.musicAudioElements.at(-1).src),
     beforeHidden.src,
@@ -321,31 +330,47 @@ try {
     await page.evaluate(() => window.nullVector.telemetry.paused),
     true,
   );
-  await expect
-    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
-    .toBeCloseTo(0.35, 5);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    beforeHidden.src,
+  );
   assert(
     Math.abs(
       (await page.evaluate(() => window.musicOutputGain.gain.value)) - 0.31,
     ) < 0.0001,
   );
   await page.evaluate(() => {
-    delete document.hidden;
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
     document.dispatchEvent(new Event("visibilitychange"));
   });
+  await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
+  await expect
+    .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
+    .toBeCloseTo(0.35, 5);
+  await page.waitForTimeout(250);
+  assert(
+    (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
+      stillHiddenTime + 0.15,
+  );
   await page.locator("#resume").click();
   const beforeBlur = await page.evaluate(
     () => window.musicAudioElements.at(-1).currentTime,
   );
-  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
-  await page.waitForFunction(
-    (time) => window.musicAudioElements.at(-1).currentTime > time + 0.1,
-    beforeBlur,
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hasFocus", {
+      configurable: true,
+      value: () => false,
+    });
+    window.dispatchEvent(new Event("blur"));
+  });
+  await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
+  const blurredTime = await page.evaluate(
+    () => window.musicAudioElements.at(-1).currentTime,
   );
-  assert.equal(
-    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
-    false,
-  );
+  assert(Math.abs(blurredTime - beforeBlur) < 0.08);
   assert.equal(
     await page.evaluate(() => window.musicAudioElements.at(-1).src),
     beforeHidden.src,
@@ -354,7 +379,14 @@ try {
     await page.evaluate(() => window.nullVector.telemetry.paused),
     true,
   );
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hasFocus", {
+      configurable: true,
+      value: () => true,
+    });
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
   await page.locator("#resume").click();
   const beforeQuit = await page.evaluate(() => ({
     src: window.musicAudioElements.at(-1).src,
@@ -407,6 +439,37 @@ try {
   );
   await page.locator("#music-dialog .close").click();
   await page.locator("#quit").click();
+  const menuManualPause = await page.evaluate(() => ({
+    src: window.musicAudioElements.at(-1).src,
+    time: window.musicAudioElements.at(-1).currentTime,
+  }));
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: false,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(250);
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).paused),
+    true,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).src),
+    menuManualPause.src,
+  );
+  assert.equal(
+    await page.evaluate(() => window.musicAudioElements.at(-1).currentTime),
+    menuManualPause.time,
+  );
   await page.locator("#start").click();
   await page.locator("#pause").click();
   await page.locator("#restart").click();
@@ -458,7 +521,7 @@ try {
           "next and ended advance",
           "local override and OST restore",
           "independent music/effects controls",
-          "blur and hidden document keep music playing while pausing the race",
+          "blur and hidden document pause/resume music without losing track or position",
           "focus/visibility preserve explicit music pause",
           "quiet menu/race gain and track continuity",
           "quit and restart preserve manual transport pause",
