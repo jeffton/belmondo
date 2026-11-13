@@ -93,6 +93,11 @@ button:hover {
   overflow: auto;
 }
 .masthead {
+  /* An opaque pinned header suppresses iOS's native scroll-edge blur. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #10202c;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -1830,6 +1835,7 @@ body.touch .instrument-bar {
   background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
 }
 #menu .masthead {
+  --masthead-top: 16px;
   padding: 16px 28px;
 }
 #menu .menu-body {
@@ -1841,23 +1847,6 @@ body.touch .instrument-bar {
 #menu h1.wordmark {
   font-size: clamp(44px, 6.4vw, 86px);
   margin: 0 0 22px;
-}
-.menu-steps {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 22px;
-}
-.menu-steps button {
-  flex: 1;
-  background: #132c38b8;
-  border-bottom: 2px solid #668392;
-  padding: 11px 2px;
-  font-size: 10px;
-  letter-spacing: 1px;
-}
-.menu-steps button[aria-current] {
-  color: var(--mint);
-  border-color: var(--mint);
 }
 #menu .selection-label {
   margin: 0 0 12px;
@@ -1958,6 +1947,7 @@ body.touch .instrument-bar {
     background: linear-gradient(0deg, #10202cf5, #10202ce8 58%, #10202c00 85%);
   }
   #menu .masthead {
+    --masthead-top: 10px;
     padding: 10px 16px;
     font-size: 7px;
     gap: 8px;
@@ -1976,12 +1966,6 @@ body.touch .instrument-bar {
   #menu h1.wordmark {
     font-size: 44px;
     margin-bottom: 12px;
-  }
-  #menu .menu-steps {
-    margin-bottom: 14px;
-  }
-  #menu .menu-steps button {
-    padding: 9px 1px;
   }
   #menu .choice {
     padding: 12px 8px;
@@ -2050,7 +2034,12 @@ body.touch .instrument-bar {
     right: 10%;
     top: calc(env(safe-area-inset-top) + 110px);
     bottom: auto;
-    height: max(110px, calc(100dvh - 620px));
+    height: max(
+      110px,
+      calc(
+        100dvh - 580px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      )
+    );
   }
   #menu-model .model-kicker {
     font-size: 7px;
@@ -2063,6 +2052,7 @@ body.touch .instrument-bar {
 }
 @media (max-height: 700px) and (orientation: landscape) {
   #menu .masthead {
+    --masthead-top: 7px;
     padding: 7px 18px;
     font-size: 7px;
   }
@@ -2079,13 +2069,6 @@ body.touch .instrument-bar {
   #menu h1.wordmark {
     font-size: 40px;
     margin-bottom: 10px;
-  }
-  #menu .menu-steps {
-    margin-bottom: 10px;
-  }
-  #menu .menu-steps button {
-    padding: 7px 1px;
-    font-size: 9px;
   }
   #menu .selection-label {
     margin-bottom: 7px;
@@ -2202,17 +2185,38 @@ body.touch .instrument-bar {
   }
   #menu-model {
     top: calc(env(safe-area-inset-top) + 58px);
-    height: max(92px, calc(100dvh - 480px));
+    height: max(
+      92px,
+      calc(
+        100dvh - 440px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      )
+    );
   }
   #menu h1.wordmark {
     font-size: 34px;
     margin-bottom: 10px;
   }
 }
+/* Keep the opaque header box at the viewport edge, with its safe inset inside. */
+#menu,
+body.touch #menu {
+  padding-top: 0;
+}
+#menu .masthead {
+  padding-top: calc(var(--masthead-top) + env(safe-area-inset-top));
+}
+@media (max-height: 360px) and (orientation: landscape),
+  (max-height: 690px) and (orientation: portrait) {
+  #menu,
+  body.touch #menu {
+    padding-top: env(safe-area-inset-top);
+  }
+}
 /* Safe-area insets protect modal/menu content without cropping the world. */
 body.touch #menu {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
 }
 body.touch dialog:not(#pause-panel) {
   width: calc(

@@ -11,6 +11,7 @@ import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 import { localRecordKey } from "./records.js";
 import { MenuPreview } from "./menu-preview.js";
+import { frameDelta } from "./frame-clock.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
@@ -42,7 +43,7 @@ try {
     `Could not initialize WebGL2. Enable hardware acceleration to race. ${error.message}`;
   throw error;
 }
-const menuPreview = new MenuPreview(world, $("menu-model"));
+const menuPreview = new MenuPreview($("menu-model"));
 let menuStage = "class";
 const menuStages = ["class", "track", "craft"];
 function setMenuStage(stage, focus = true) {
@@ -50,11 +51,6 @@ function setMenuStage(stage, focus = true) {
   $("menu").dataset.stage = stage;
   for (const panel of document.querySelectorAll("[data-panel]"))
     panel.hidden = panel.dataset.panel !== stage;
-  for (const button of document.querySelectorAll("[data-step]")) {
-    if (button.dataset.step === stage)
-      button.setAttribute("aria-current", "step");
-    else button.removeAttribute("aria-current");
-  }
   $("setup-options").hidden = stage !== "class";
   $("setup-back").hidden = stage === "class";
   $("setup-next").hidden = stage === "craft";
@@ -90,8 +86,6 @@ $("setup-back").onclick = () =>
   setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
 $("setup-next").onclick = () =>
   setMenuStage(menuStages[menuStages.indexOf(menuStage) + 1]);
-for (const button of document.querySelectorAll("[data-step]"))
-  button.onclick = () => setMenuStage(button.dataset.step);
 let selectedTrack = 0,
   selectedCraft = 0,
   selectedSpeedClass = 0,
@@ -100,10 +94,32 @@ let selectedTrack = 0,
 let state = "menu",
   paused = false,
   accumulator = 0,
-  last = performance.now(),
+  last = null,
   messageUntil = 0,
   previousCount = "armed";
 let musicInterrupted = false;
+function startMenuMusic(event) {
+  if (
+    !event.isTrusted ||
+    state !== "menu" ||
+    !musicEnabled ||
+    !music.audio.paused ||
+    document.hidden ||
+    !document.hasFocus()
+  )
+    return;
+  if (
+    event.type === "keydown" &&
+    !["Enter", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+      event.key,
+    )
+  )
+    return;
+  if (!event.target.closest("button, input, label")) return;
+  music.play();
+}
+$("menu").addEventListener("click", startMenuMusic, { capture: true });
+$("menu").addEventListener("keydown", startMenuMusic, { capture: true });
 function updateAppFocus() {
   const inactive = document.hidden || !document.hasFocus();
   document.body.classList.toggle(
@@ -301,7 +317,7 @@ async function start(event) {
   );
   world.setupRacers(race, CRAFT);
   world.cameraReady = false;
-  last = performance.now();
+  last = null;
   state = "race";
   music.setMenu(false);
   paused = false;
@@ -449,7 +465,7 @@ window.addEventListener("blur", () => {
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && state === "race") setPaused(true);
-  last = performance.now();
+  last = null;
 });
 for (const b of document.querySelectorAll("[data-control]")) {
   b.addEventListener("pointerdown", (e) => {
@@ -710,8 +726,7 @@ function updateHUD(now) {
 }
 let hudTick = 0;
 function animate(now) {
-  const frameSeconds = (now - last) / 1000;
-  const dt = frameSeconds;
+  const dt = frameDelta(last, now);
   last = now;
   if (state === "menu") {
     demoDistance += dt * 32;
@@ -806,7 +821,7 @@ function animate(now) {
   // Downshift expensive clean rendering only after sustained slow frame timing.
   if (state === "race" && !paused) {
     renderFrames++;
-    renderTime += frameSeconds;
+    renderTime += dt;
     if (renderTime >= 2.5) {
       if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
         world.quality = "retro";
@@ -967,6 +982,7 @@ window.nullVector = {
             ).rotation.y
           : null,
       resources: { ...world.renderer.info.memory },
+      previewResources: menuPreview.resources,
       drawCalls: world.renderer.info.render.calls,
       triangles: world.renderer.info.render.triangles,
       render: world.quality,

@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const gameUrl = process.env.GAME_URL || "http://127.0.0.1:5189";
 const sourceUrl = process.env.SOURCE_URL || "http://127.0.0.1:5178";
@@ -87,9 +88,9 @@ async function drive(mobile, startupSeconds = null) {
   );
   await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
-  await page.locator('[data-step="track"]').click();
+  await goToSetupStage(page, "track");
   await page.locator("#tracks button").first().click();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   if (!mobile) await page.keyboard.down("ArrowUp");
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
@@ -426,7 +427,7 @@ async function restartChecks() {
   );
   await page.locator("#quality").check();
   await page.locator('input[name="mode"][value="race"]').check();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/8");
@@ -436,12 +437,12 @@ async function restartChecks() {
   await expect(page.locator("#position")).toContainText("/8");
   await page.keyboard.press("Escape");
   await page.locator("#quit").click();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#crafts button").nth(1).click();
   await expect(page.locator("#crafts button").nth(1)).toHaveClass(/active/);
-  await page.locator('[data-step="class"]').click();
+  await goToSetupStage(page, "class");
   await page.locator('input[name="mode"][value="trial"]').check();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/1");

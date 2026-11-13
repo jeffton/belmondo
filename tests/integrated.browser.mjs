@@ -2,6 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack, TRACKS } from "../src/track.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const recordKey = (layoutId, classId, craft = 0) =>
   `${layoutId}-${craft}-trial-${classId}-5laps-pace${SPEED_CLASSES.find((spec) => spec.id === classId).pace}`;
@@ -187,14 +188,14 @@ async function open(
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator('[data-step="track"]').click();
+  await goToSetupStage(page, "track");
   await page.locator("#tracks button").first().click();
-  await page.locator('[data-step="class"]').click();
+  await goToSetupStage(page, "class");
   await page.locator("#quality").check();
   return { context, page };
 }
 async function chooseClass(page, value, device) {
-  await page.locator('[data-step="class"]').click();
+  await goToSetupStage(page, "class");
   const selected = page.locator('input[name="speed-class"]:checked');
   const target = page.locator(`input[name="speed-class"][value="${value}"]`);
   if (device === "keyboard") {
@@ -207,7 +208,7 @@ async function chooseClass(page, value, device) {
   await expect(target).toBeChecked();
 }
 async function start(page) {
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
 }
@@ -365,7 +366,7 @@ async function ui() {
         ][speedClass],
       );
       // Craft and class are independent: changing craft must not change class.
-      await page.locator('[data-step="craft"]').click();
+      await goToSetupStage(page, "craft");
       await page.locator("#crafts button").nth(1).click();
       await expect(
         page.locator('input[name="speed-class"]:checked'),
@@ -390,7 +391,7 @@ async function ui() {
       else await page.keyboard.press("Escape");
       await page.locator("#quit").click();
       await expect(page.locator("#menu")).toBeVisible();
-      await page.locator('[data-step="craft"]').click();
+      await goToSetupStage(page, "craft");
       let menuBounds;
       if (device === "keyboard") {
         menuBounds = await page.evaluate(() => ({
@@ -424,7 +425,7 @@ async function ui() {
       report.cases.push({ device, speedClass, before, fonts, menuBounds });
     }
     if (device !== "controller") {
-      await page.locator('[data-step="track"]').click();
+      await goToSetupStage(page, "track");
       for (const [course, name] of [
         "KAISEKI COAST",
         "SOLAR ARRAY",
@@ -443,7 +444,7 @@ async function ui() {
   const portrait = await open("touch");
   await portrait.page.setViewportSize({ width: 390, height: 844 });
   await expect(portrait.page.locator("#speed-class")).toBeVisible();
-  await portrait.page.locator('[data-step="craft"]').click();
+  await goToSetupStage(portrait.page, "craft");
   const bounds = await portrait.page.locator("#start").boundingBox();
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(844);
   await portrait.page.screenshot({
@@ -457,7 +458,7 @@ async function pace() {
     const { context, page } = await open("keyboard");
     await page.locator('input[name="mode"][value="trial"]').check();
     await chooseClass(page, speedClass, "keyboard");
-    await page.locator('[data-step="craft"]').click();
+    await goToSetupStage(page, "craft");
     await page.locator("#start").click();
     await page.keyboard.down("KeyW");
     await page.waitForFunction(() => window.qaPaceSample);
@@ -843,7 +844,7 @@ async function drive() {
     track.config.layoutId,
     classSpec.id,
   );
-  await page.locator('[data-step="track"]').click();
+  await goToSetupStage(page, "track");
   await page.locator("#tracks button").nth(course).click();
   await chooseClass(page, speedClass, device);
   await page.locator('input[name="mode"][value="trial"]').check();
@@ -1220,7 +1221,7 @@ async function drive() {
       if (key !== activeKey)
         expect(records[key], `Preserve unrelated record ${key}`).toBe(value);
     await page.locator("#result-quit").click();
-    await page.locator('[data-step="track"]').click();
+    await goToSetupStage(page, "track");
     await page.locator("#tracks button").first().click();
     await chooseClass(page, 1, device);
     const otherRecord = records[recordKey(TRACKS[0].layoutId, "c2")];

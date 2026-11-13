@@ -128,10 +128,11 @@ function trackModel(track) {
   return group;
 }
 
-/** Transparent inset on World's existing canvas. The element supplies only layout. */
+/** Native-resolution transparent inset, independent of World's LOWRES canvas. */
 export class MenuPreview {
-  constructor(world, element) {
-    this.renderer = world.renderer;
+  constructor(element) {
+    this.renderer = null;
+    this.size = { width: 0, height: 0, pixelRatio: 0 };
     this.element = element;
     this.stage = "class";
     this.time = 0;
@@ -186,25 +187,77 @@ export class MenuPreview {
 
   setStage(stage) {
     this.stage = stage;
+    if (this.renderer) this.renderer.domElement.hidden = stage === "class";
+  }
+
+  createRenderer() {
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000, 0);
+    return renderer;
+  }
+
+  get resources() {
+    return {
+      geometries: this.renderer?.info.memory.geometries ?? 0,
+      textures: this.renderer?.info.memory.textures ?? 0,
+      width: this.renderer?.domElement.width ?? 0,
+      height: this.renderer?.domElement.height ?? 0,
+      pixelRatio: this.size.pixelRatio,
+      renderCalls: this.renderer?.info.render.calls ?? 0,
+      frames: this.renderer?.info.render.frame ?? 0,
+    };
   }
 
   draw(dt) {
-    if (this.stage === "class") return;
+    if (this.stage === "class" || this.element.ownerDocument.hidden) return;
     const model = this.stage === "craft" ? this.craft : this.coursePivot;
     if (!model) return;
     const rect = this.element.getBoundingClientRect();
+    const view = this.element.ownerDocument.defaultView;
+    if (
+      !rect.width ||
+      !rect.height ||
+      rect.right <= 0 ||
+      rect.bottom <= 0 ||
+      rect.left >= view.innerWidth ||
+      rect.top >= view.innerHeight
+    )
+      return;
+    if (!this.renderer) {
+      this.renderer = this.createRenderer();
+      const canvas = this.renderer.domElement;
+      canvas.className = "menu-preview-canvas";
+      canvas.setAttribute("aria-hidden", "true");
+      Object.assign(canvas.style, {
+        position: "absolute",
+        inset: "0",
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+      });
+      // Existing positioned labels follow the canvas in paint order.
+      this.element.prepend(canvas);
+    }
     const renderer = this.renderer;
     const canvas = renderer.domElement.getBoundingClientRect();
-    if (!rect.width || !rect.height || !canvas.width || !canvas.height) return;
-    const left = Math.max(rect.left, canvas.left);
-    const right = Math.min(rect.right, canvas.right);
-    const top = Math.max(rect.top, canvas.top);
-    const bottom = Math.min(rect.bottom, canvas.bottom);
-    if (right <= left || bottom <= top) return;
+    const pixelRatio = view.devicePixelRatio;
+    if (
+      canvas.width !== this.size.width ||
+      canvas.height !== this.size.height ||
+      pixelRatio !== this.size.pixelRatio
+    ) {
+      renderer.setDrawingBufferSize(canvas.width, canvas.height, pixelRatio);
+      this.size = { width: canvas.width, height: canvas.height, pixelRatio };
+    }
 
     this.time += dt;
     model.rotation.y = this.time * (this.stage === "craft" ? 0.32 : 0.16);
-    const aspect = rect.width / rect.height;
+    const aspect = canvas.width / canvas.height;
     const span = 1.16;
     this.camera.left = -span * Math.max(1, aspect);
     this.camera.right = -this.camera.left;
@@ -212,49 +265,10 @@ export class MenuPreview {
     this.camera.bottom = -this.camera.top;
     this.camera.updateProjectionMatrix();
 
-    const target = renderer.getRenderTarget();
-    const cubeFace = renderer.getActiveCubeFace();
-    const mipLevel = renderer.getActiveMipmapLevel();
-    const viewport = renderer.getViewport(new THREE.Vector4());
-    const scissor = renderer.getScissor(new THREE.Vector4());
-    const scissorTest = renderer.getScissorTest();
-    const autoClear = renderer.autoClear;
-    // Three viewport/scissor APIs accept logical renderer pixels, not CSS pixels
-    // or drawing-buffer pixels. This handles retro's 0.55 size and pixel ratio.
-    const size = renderer.getSize(new THREE.Vector2());
-    const sx = size.x / canvas.width;
-    const sy = size.y / canvas.height;
-    try {
-      renderer.setRenderTarget(null);
-      renderer.autoClear = false;
-      renderer.setViewport(
-        (rect.left - canvas.left) * sx,
-        (canvas.bottom - rect.bottom) * sy,
-        rect.width * sx,
-        rect.height * sy,
-      );
-      renderer.setScissor(
-        (left - canvas.left) * sx,
-        (canvas.bottom - bottom) * sy,
-        (right - left) * sx,
-        (bottom - top) * sy,
-      );
-      renderer.setScissorTest(true);
-      // Keep World's color buffer: only inset depth must be independent.
-      renderer.clearDepth();
-      renderer.render(
-        this.stage === "craft" ? this.craftScene : this.trackScene,
-        this.camera,
-      );
-    } finally {
-      // These getters expose default-framebuffer settings. Restore them before
-      // rebinding a target, whose own viewport/scissor must take precedence.
-      renderer.setViewport(viewport);
-      renderer.setScissor(scissor);
-      renderer.setScissorTest(scissorTest);
-      renderer.autoClear = autoClear;
-      renderer.setRenderTarget(target, cubeFace, mipLevel);
-    }
+    renderer.render(
+      this.stage === "craft" ? this.craftScene : this.trackScene,
+      this.camera,
+    );
   }
 
   dispose() {
@@ -262,5 +276,12 @@ export class MenuPreview {
     releaseScene(this.craftScene);
     this.crafts.clear();
     this.course = this.coursePivot = this.craft = null;
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+      this.renderer.domElement.remove();
+      this.renderer = null;
+    }
+    this.size = { width: 0, height: 0, pixelRatio: 0 };
   }
 }

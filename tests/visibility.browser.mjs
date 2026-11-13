@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Standalone render fixture. It imports production classes, not the app or Vite's
 // HTML client. All racer placements/instrumentation belong to this fixture only.
@@ -45,7 +46,7 @@ async function actualUi(browser) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#quality").check();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const view = page.locator("#view");
@@ -85,7 +86,7 @@ async function actualUi(browser) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await touch.locator("#quality").check();
-  await touch.locator('[data-step="craft"]').tap();
+  await goToSetupStage(touch, "craft");
   await touch.locator("#start").tap();
   await touch.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const touchView = touch.locator("#view");

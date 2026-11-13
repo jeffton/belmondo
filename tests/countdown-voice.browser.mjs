@@ -1,6 +1,7 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -56,7 +57,7 @@ try {
     );
     // Music remains on: this is the actual mixed game, not a speech-only harness.
     await page.locator('input[name="mode"][value="trial"]').check();
-    await page.locator('[data-step="craft"]').click();
+    await goToSetupStage(page, "craft");
     await page.locator("#start").click();
     await page.waitForFunction(() => window.voiceStarts.length === 1);
     if (mobile) await page.locator("#pause").tap();

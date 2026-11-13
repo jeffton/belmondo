@@ -25,6 +25,7 @@ try {
   for (const [width, height] of viewports) {
     const context = await browser.newContext({
       viewport: { width, height },
+      deviceScaleFactor: width < 900 ? 2 : 1,
       hasTouch: width < 900,
       isMobile: width < 900,
     });
@@ -38,6 +39,10 @@ try {
       () => window.nullVector.telemetry.menuRacers[0].s,
     );
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+    await expect(
+      page.locator(".menu-steps, [data-step], #track-count"),
+    ).toHaveCount(0);
+    await expect(page.getByText("01 / 03", { exact: true })).toHaveCount(0);
     await page.waitForFunction(
       (s) => window.nullVector.telemetry.menuRacers[0].s > s,
       landing,
@@ -73,16 +78,45 @@ try {
             );
           }
           samples.push(
-            await page.evaluate(() => window.nullVector.telemetry.resources),
+            await page.evaluate(() => ({
+              world: window.nullVector.telemetry.resources,
+              preview: window.nullVector.telemetry.previewResources,
+            })),
           );
         }
-        // Only visible scene chunks allocate GPU buffers; a second full tour must not grow them.
-        expect(samples[1].geometries).toBeLessThanOrEqual(
-          samples[0].geometries,
+        // The live feed's moving camera changes visible World buffers. The
+        // complete inset model has a fixed footprint across replacement cycles.
+        expect(samples[1].preview.geometries).toBe(
+          samples[0].preview.geometries,
         );
-        expect(samples[1].textures).toBeLessThanOrEqual(samples[0].textures);
+        expect(samples[1].preview.textures).toBe(samples[0].preview.textures);
         console.log("Seven-track resource cycle stable:", samples[1]);
       }
+      const backgroundBuffer = await page
+        .locator("#game")
+        .evaluate((canvas) => [canvas.width, canvas.height]);
+      expect(backgroundBuffer).toEqual([
+        Math.round(width * 0.55),
+        Math.round(height * 0.55),
+      ]);
+      const nativePreview = await page
+        .locator(".menu-preview-canvas")
+        .evaluate((canvas) => {
+          const rect = canvas.getBoundingClientRect();
+          return {
+            width: canvas.width,
+            height: canvas.height,
+            cssWidth: rect.width,
+            cssHeight: rect.height,
+            dpr: devicePixelRatio,
+          };
+        });
+      expect(nativePreview.width).toBeGreaterThanOrEqual(
+        Math.floor(nativePreview.cssWidth * nativePreview.dpr),
+      );
+      expect(nativePreview.height).toBeGreaterThanOrEqual(
+        Math.floor(nativePreview.cssHeight * nativePreview.dpr),
+      );
       const layout = await page.evaluate(() => {
         const menu = document.getElementById("menu");
         const model = document
@@ -151,7 +185,8 @@ try {
     await expect(
       page.locator('input[name="speed-class"][value="2"]'),
     ).toBeChecked();
-    await page.locator('[data-step="craft"]').click();
+    await page.locator("#setup-next").click();
+    await page.locator("#setup-next").click();
     await expect(page.locator("#crafts button").nth(2)).toHaveAttribute(
       "aria-pressed",
       "true",

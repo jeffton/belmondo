@@ -2,6 +2,7 @@ import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import { makeTrack } from "../src/track.js";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real browser input only: telemetry is read, never assigned; Race.update is never called.
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
@@ -48,13 +49,13 @@ async function open(context) {
   );
   await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
-  await page.locator('[data-step="track"]').click();
+  await goToSetupStage(page, "track");
   await page.locator("#tracks button").first().click();
-  await page.locator('[data-step="class"]').click();
+  await goToSetupStage(page, "class");
   return page;
 }
 async function start(page) {
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await keys(page, ["ArrowUp"]);
   await page.waitForFunction(

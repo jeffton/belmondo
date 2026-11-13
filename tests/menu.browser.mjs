@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { preview } from "vite";
 import { mkdir, writeFile } from "node:fs/promises";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const server = await preview({ preview: { host: "127.0.0.1", port: 0 } });
 const browser = await chromium.launch({
@@ -104,7 +105,7 @@ try {
       });
     }
     await page.keyboard.press("Escape");
-    await page.locator('[data-step="craft"]').click();
+    await goToSetupStage(page, "craft");
     await page.locator("#start").click();
     await page.keyboard.down("KeyW");
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

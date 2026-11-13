@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -44,7 +45,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

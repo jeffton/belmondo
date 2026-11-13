@@ -16,113 +16,136 @@ const rect = (left, top, width, height) => ({
 
 function fixture() {
   const calls = [];
-  const target = {
-    name: "original-target",
-    viewport: new THREE.Vector4(20, 30, 40, 50),
-    scissor: new THREE.Vector4(60, 70, 80, 90),
-    scissorTest: true,
+  const view = { innerWidth: 1440, innerHeight: 900, devicePixelRatio: 2 };
+  let bounds = rect(700, 180, 600.5, 500.5);
+  const document = { hidden: false, defaultView: view };
+  const children = [{ label: "kicker" }, { label: "name" }];
+  const element = {
+    ownerDocument: document,
+    getBoundingClientRect: () => bounds,
+    prepend(canvas) {
+      children.unshift(canvas);
+    },
+  };
+  const canvas = {
+    style: {},
+    width: 0,
+    height: 0,
+    hidden: false,
+    getBoundingClientRect: () => bounds,
+    setAttribute(name, value) {
+      this[name] = value;
+    },
+    remove() {
+      children.splice(children.indexOf(this), 1);
+      calls.push("remove");
+    },
   };
   const renderer = {
-    autoClear: true,
-    target,
-    cube: 3,
-    mip: 2,
-    viewport: new THREE.Vector4(1, 2, 3, 4),
-    scissor: new THREE.Vector4(5, 6, 7, 8),
-    scissorTest: false,
-    domElement: { getBoundingClientRect: () => rect(10, 20, 1000, 600) },
-    getRenderTarget() {
-      return this.target;
+    domElement: canvas,
+    info: {
+      memory: { geometries: 0, textures: 0 },
+      render: { calls: 0, frame: 0 },
     },
-    getActiveCubeFace() {
-      return this.cube;
-    },
-    getActiveMipmapLevel() {
-      return this.mip;
-    },
-    getViewport(out) {
-      return out.copy(this.viewport);
-    },
-    getScissor(out) {
-      return out.copy(this.scissor);
-    },
-    getScissorTest() {
-      return this.scissorTest;
-    },
-    getSize(out) {
-      return out.set(550, 330);
-    },
-    setRenderTarget(value, cube = 0, mip = 0) {
-      this.target = value;
-      this.cube = cube;
-      this.mip = mip;
-      this.activeViewport = (value ? value.viewport : this.viewport).clone();
-      this.activeScissor = (value ? value.scissor : this.scissor).clone();
-      this.activeScissorTest = value ? value.scissorTest : this.scissorTest;
-    },
-    setViewport(...args) {
-      if (args[0].isVector4) this.viewport.copy(args[0]);
-      else this.viewport.set(...args);
-      this.activeViewport = this.viewport.clone();
-      calls.push(["viewport", ...this.viewport]);
-    },
-    setScissor(...args) {
-      if (args[0].isVector4) this.scissor.copy(args[0]);
-      else this.scissor.set(...args);
-      this.activeScissor = this.scissor.clone();
-      calls.push(["scissor", ...this.scissor]);
-    },
-    setScissorTest(value) {
-      this.scissorTest = value;
-      this.activeScissorTest = value;
-    },
-    clearDepth() {
-      calls.push(["depth"]);
+    setDrawingBufferSize(width, height, pixelRatio) {
+      canvas.width = Math.floor(width * pixelRatio);
+      canvas.height = Math.floor(height * pixelRatio);
+      calls.push(["resize", width, height, pixelRatio]);
     },
     render() {
-      calls.push(["render"]);
+      this.info.render.frame++;
+      calls.push("render");
+    },
+    dispose() {
+      calls.push("dispose");
+    },
+    forceContextLoss() {
+      calls.push("loseContext");
     },
   };
-  const element = { getBoundingClientRect: () => rect(-90, 120, 400, 200) };
-  const preview = new MenuPreview({ renderer }, element);
-  preview.setTrack(makeTrack(0));
-  return { preview, renderer, calls, target };
-}
-
-function approximate(actual, expected) {
-  assert.equal(actual[0], expected[0]);
-  for (let i = 1; i < expected.length; i++)
-    assert.ok(Math.abs(actual[i] - expected[i]) < 1e-8);
-}
-
-test("inset clips to canvas at retro size and restores renderer state even on render failure", () => {
-  const { preview, renderer, calls, target } = fixture();
-  preview.setStage("track");
-  renderer.render = () => {
-    assert.equal(renderer.autoClear, false);
-    assert.equal(renderer.target, null);
-    throw new Error("render failed");
+  const preview = new MenuPreview(element);
+  preview.createRenderer = () => {
+    calls.push("create");
+    return renderer;
   };
-  assert.throws(() => preview.draw(0.1), /render failed/);
-  approximate(calls[0], ["viewport", -55, 165, 220, 110]);
-  approximate(calls[1], ["scissor", 0, 165, 165, 110]);
-  assert.equal(renderer.target, target);
-  assert.equal(renderer.cube, 3);
-  assert.equal(renderer.mip, 2);
-  assert.deepEqual(renderer.viewport.toArray(), [1, 2, 3, 4]);
-  assert.deepEqual(renderer.scissor.toArray(), [5, 6, 7, 8]);
-  assert.equal(renderer.scissorTest, false);
-  assert.equal(renderer.autoClear, true);
-  assert.deepEqual(renderer.activeViewport, target.viewport);
-  assert.deepEqual(renderer.activeScissor, target.scissor);
-  assert.equal(renderer.activeScissorTest, target.scissorTest);
-  preview.dispose();
-});
+  return {
+    preview,
+    calls,
+    renderer,
+    canvas,
+    document,
+    view,
+    children,
+    setBounds(value) {
+      bounds = value;
+    },
+  };
+}
 
-test("class stage leaves the live World untouched", () => {
-  const { preview, calls } = fixture();
+test("native inset lazily creates one canvas below labels, tracks CSS size/DPR and releases its context", () => {
+  const { preview, calls, canvas, view, children, setBounds } = fixture();
+  preview.setTrack(makeTrack(0));
   preview.draw(1);
   assert.deepEqual(calls, []);
+  assert.deepEqual(preview.resources, {
+    geometries: 0,
+    textures: 0,
+    width: 0,
+    height: 0,
+    pixelRatio: 0,
+    renderCalls: 0,
+    frames: 0,
+  });
+  preview.setStage("track");
+  preview.draw(1);
+  assert.deepEqual(calls, ["create", ["resize", 600.5, 500.5, 2], "render"]);
+  assert.equal(canvas.width, 1201);
+  assert.equal(canvas.height, 1001);
+  assert.equal(canvas["aria-hidden"], "true");
+  assert.equal(canvas.style.pointerEvents, "none");
+  assert.equal(canvas.style.width, "100%");
+  assert.equal(children[0], canvas);
+  assert.equal(children[1].label, "kicker");
+  preview.draw(1);
+  assert.equal(calls.filter((call) => Array.isArray(call)).length, 1);
+  view.devicePixelRatio = 3;
+  setBounds(rect(20, 110, 312, 262));
+  preview.draw(1);
+  assert.equal(canvas.width, 936);
+  assert.equal(canvas.height, 786);
+  assert.equal(preview.resources.pixelRatio, 3);
+  assert.equal(preview.resources.frames, 3);
+  assert.equal(calls.filter((call) => call === "create").length, 1);
+  preview.dispose();
+  assert.deepEqual(calls.slice(-3), ["dispose", "loseContext", "remove"]);
+  assert.equal(children.length, 2);
+  assert.equal(preview.renderer, null);
+});
+
+test("class, hidden menu/tab and offscreen preview do not render; returning to track reuses renderer", () => {
+  const { preview, renderer, canvas, document, setBounds } = fixture();
+  preview.setTrack(makeTrack(0));
+  preview.setStage("track");
+  preview.draw(1);
+  assert.equal(renderer.info.render.frame, 1);
+  preview.setStage("class");
+  assert.equal(canvas.hidden, true);
+  preview.draw(1);
+  assert.equal(renderer.info.render.frame, 1);
+  preview.setStage("track");
+  assert.equal(canvas.hidden, false);
+  document.hidden = true;
+  preview.draw(1);
+  document.hidden = false;
+  setBounds(rect(0, 0, 0, 0));
+  preview.draw(1);
+  setBounds(rect(1500, 0, 300, 200));
+  preview.draw(1);
+  assert.equal(renderer.info.render.frame, 1);
+  setBounds(rect(0, 0, 300, 200));
+  preview.draw(1);
+  assert.equal(renderer.info.render.frame, 2);
+  assert.equal(preview.renderer, renderer);
   preview.dispose();
 });
 

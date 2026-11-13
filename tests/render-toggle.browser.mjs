@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -71,14 +72,14 @@ try {
     await ready();
     await expect(toggle).toBeChecked();
     await rendered(true);
-    await page.locator('[data-step="track"]').click();
+    await goToSetupStage(page, "track");
     await page.locator("#tracks button").nth(1).click();
     await expect(toggle).toBeChecked();
     await rendered(true);
     await page.screenshot({
       path: `test-artifacts/render-toggle-${mobile ? "mobile" : "desktop"}.png`,
     });
-    await page.locator('[data-step="craft"]').click();
+    await goToSetupStage(page, "craft");
     await page.locator("#start").click();
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
     await rendered(true);

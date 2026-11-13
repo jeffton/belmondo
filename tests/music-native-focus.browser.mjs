@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const profile = await mkdtemp(join(tmpdir(), "belmondo-native-focus-"));
 const chrome = spawn(
@@ -78,9 +79,9 @@ try {
   });
   await away.goto("about:blank");
   await page.bringToFront();
-  await page.locator('[data-step="track"]').click();
+  await goToSetupStage(page, "track");
   await page.locator("#tracks button").nth(2).click();
-  await page.locator('[data-step="craft"]').click();
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

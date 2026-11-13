@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
+import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const sourceUrl = process.env.SOURCE_URL || "http://127.0.0.1:5178";
 const gameUrl = process.env.GAME_URL || "http://127.0.0.1:5188";
@@ -284,9 +285,9 @@ try {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await actual.locator("#quality").check();
-  await actual.locator('[data-step="track"]').click();
+  await goToSetupStage(actual, "track");
   await actual.locator("#tracks button").first().click();
-  await actual.locator('[data-step="craft"]').click();
+  await goToSetupStage(actual, "craft");
   await actual.locator("#start").click();
   await actual.keyboard.down("ArrowUp");
   await actual.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

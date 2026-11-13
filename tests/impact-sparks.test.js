@@ -1,8 +1,10 @@
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { ImpactSparks } from "../src/impact-sparks.js";
 import { World } from "../src/world.js";
+import { frameDelta } from "../src/frame-clock.js";
 
 function fixture(side = 1, speed = 180, bank = 0) {
   const rotation = new THREE.Quaternion().setFromAxisAngle(
@@ -104,6 +106,80 @@ test("hot metallic streaks cool, expire quickly and recycle without scene growth
   sparks.update(0);
   assert.equal(sparks.mesh.visible, false);
   assert.equal(sparks.mesh.geometry.drawRange.count, 0);
+});
+
+test("first race RAF after start completes and schedules its successor", async () => {
+  const source = await readFile(
+    new URL("../src/main.js", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("function animate(now) {");
+  const end = source.indexOf("\nrequestAnimationFrame(animate);", start);
+  assert.ok(start >= 0 && end > start);
+  const animateSource = source.slice(start, end);
+  const calls = [];
+  const scheduled = [];
+  const race = {
+    player: {
+      speed: 0,
+      grounded: true,
+      contactS: 0,
+      branch: 0,
+      boost: 0,
+      vx: 0,
+    },
+    classSpec: { pace: 1 },
+    events: [],
+    finished: false,
+    update() {},
+  };
+  const world = {
+    camera: { matrixWorld: {} },
+    finishDistrict: { foundations: [] },
+    quality: "retro",
+    draw: (...args) => calls.push(args),
+  };
+  const bindings = {
+    frameDelta,
+    last: null,
+    state: "race",
+    paused: false,
+    input: () => ({ steeringKind: "digital" }),
+    lastControls: null,
+    race,
+    accumulator: 0,
+    countdownBoardStage: () => "armed",
+    previousCount: "armed",
+    sound: { setTunnel() {}, update() {}, updateCrowd() {}, raceEvent() {} },
+    music: { setTunnel() {} },
+    track: { isTunnel: () => false },
+    world,
+    LAPS: 5,
+    crowdRight: { setFromMatrixColumn() {} },
+    getCrowdMix: () => 0,
+    hudTick: 0,
+    updateHUD() {},
+    showResults() {},
+    renderFrames: 0,
+    renderTime: 0,
+    qualityToggle: { checked: true },
+    requestAnimationFrame: (callback) => scheduled.push(callback),
+  };
+  const animate = new Function(
+    ...Object.keys(bindings),
+    `${animateSource}\nreturn animate;`,
+  )(...Object.values(bindings));
+
+  // Simulate the already-sampled RAF timestamp preceding the race-start click.
+  animate(999);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1], 0);
+  assert.equal(scheduled.length, 1);
+  const secondFrame = scheduled.shift();
+  secondFrame(1015);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][1], 0.016);
+  assert.equal(scheduled.length, 1);
 });
 
 test("scrapes use the contact frame while hit and landing retain their existing burst", () => {

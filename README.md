@@ -6,7 +6,7 @@ Original browser-based anti-gravity combat racer. Six circuits, eight pilots, th
 
 https://belmondo.roybot.se
 
-Choose a speed class, circuit and craft in three fixed-screen stations. The live circuit feed starts on a random course; circuit selection adds a rotating 3D course model, and craft selection shows the actual ship. Back navigation retains selections. Format and low-res settings are on the class station; briefing and sound controls are available throughout.
+Choose a speed class, circuit and craft in three fixed-screen stations. The live circuit feed starts on a random course; circuit selection adds a rotating 3D course model, and craft selection shows the actual ship. Back navigation retains selections. Format and low-res settings are on the class station; briefing and sound controls are available throughout. The rotating models render at display resolution independently of the live feed’s low-res setting.
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes, I nose down / K nose up, Space fire, V camera, Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, Y camera, Start pause.
@@ -29,7 +29,7 @@ Grandstands and road-integrated checkerboard line each complete home straight. B
 
 ## Sound
 
-The eight-track original Eleven Music soundtrack plays shuffled bags without back-to-back repeats. Music assets are distributed with the game, not the public source; see [music setup and rights](docs/music.md#soundtrack-credits). Music follows race pause/resume and has a separate volume from synthesized turbines and original generated weapon, impact and race cues. Sound-effect provenance is documented in [generated SFX](docs/generated-sfx/README.md). Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
+The eight-track original Eleven Music soundtrack plays shuffled bags without back-to-back repeats. Music starts at reduced volume on the first menu selection; browser autoplay policy requires a user interaction. Music assets are distributed with the game, not the public source; see [music setup and rights](docs/music.md#soundtrack-credits). Music follows race pause/resume and has a separate volume from synthesized turbines and original generated weapon, impact and race cues. Sound-effect provenance is documented in [generated SFX](docs/generated-sfx/README.md). Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
 
 ## Development
 
