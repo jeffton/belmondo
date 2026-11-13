@@ -40,154 +40,123 @@ function raster(width, height, draw) {
   return texture;
 }
 export function circuitTextures(accent) {
-  const concrete = raster(128, 256, (ctx, random, noise, chips) => {
-    noise(224, 12);
-    // Ceramic bridge cladding: crisp joints and restrained fastener detail.
-    for (let y = 0; y < 256; y += 32) {
-      ctx.fillStyle = "#a7b5c3";
-      ctx.fillRect(0, y, 128, 2);
-      ctx.fillStyle = "#f4f1e4";
-      ctx.fillRect(0, y + 2, 128, 1);
-    }
-    for (let x = 0; x < 128; x += 32) {
-      ctx.fillStyle = "#c6cbd1";
-      ctx.fillRect(x, 0, 1, 256);
-    }
-    for (let y = 8; y < 256; y += 32)
-      for (let x = 7; x < 128; x += 32) {
-        ctx.fillStyle = "#676d69";
-        ctx.fillRect(x, y, 2, 2);
-        ctx.fillStyle = "#c2c7ba";
-        ctx.fillRect(x, y + 2, 2, 1);
+  const concrete = raster(128, 256, (ctx) => {
+    // Large ceramic cassettes: shadow joints, chamfer light, recessed foot.
+    ctx.fillStyle = "#e2e3dd";
+    ctx.fillRect(0, 0, 128, 256);
+    for (const y of [0, 128]) {
+      ctx.fillStyle = "#647078";
+      ctx.fillRect(0, y, 128, 4);
+      ctx.fillStyle = "#fcf6e6";
+      ctx.fillRect(4, y + 4, 120, 3);
+      ctx.fillStyle = "#c5cbc8";
+      ctx.fillRect(4, y + 105, 120, 19);
+      ctx.fillStyle = "#424e55";
+      ctx.fillRect(12, y + 110, 30, 7);
+      ctx.fillRect(86, y + 110, 30, 7);
+      for (const x of [10, 114]) {
+        ctx.fillStyle = "#8d999c";
+        ctx.fillRect(x, y + 14, 4, 5);
+        ctx.fillRect(x, y + 88, 4, 5);
       }
-    for (let i = 0; i < 14; i++) {
-      const x = random() * 128,
-        y = random() * 256;
-      ctx.fillStyle = `rgba(40,48,39,${0.02 + random() * 0.025})`;
-      ctx.fillRect(x, y, 1 + random() * 3, 8 + random() * 35);
     }
-    chips(28, "#b4bcc2");
-    chips(20, "#fff8e3");
-    ctx.fillStyle = "#374249";
-    ctx.font = "bold 10px monospace";
-    ctx.fillText("K / 06", 75, 244);
+    ctx.fillStyle = "#aab4b5";
+    ctx.fillRect(0, 0, 3, 256);
+    ctx.fillStyle = "#f5f2e6";
+    ctx.fillRect(3, 0, 2, 256);
+    ctx.fillStyle = "#687781";
+    ctx.fillRect(52, 108, 22, 8);
+    ctx.fillStyle = accent;
+    ctx.fillRect(55, 110, 16, 3);
   });
-  const road = raster(256, 256, (ctx, random, noise, chips) => {
-    // Abraded induction slabs: broad longitudinal wear and staggered plates,
-    // not dark asphalt, tyre lanes, painted arrows or a highway centreline.
-    noise(150, 38);
-    for (let i = 0; i < 45; i++) {
-      const x = random() * 256,
-        y = random() * 256;
-      const width = 3 + random() * 17,
-        length = 40 + random() * 175;
-      ctx.fillStyle = i % 3 ? "#c6c5ca30" : "#343b5145";
-      ctx.fillRect(x, y, width, length);
-      ctx.fillRect(x, y - 256, width, length);
-      ctx.fillStyle = "#e0dcd326";
-      ctx.fillRect(x, y, 1, length);
-    }
-    for (const [x, y, width, height] of [
-      [0, 21, 91, 82],
-      [91, 0, 108, 143],
-      [199, 86, 57, 123],
-      [48, 173, 119, 83],
+  const road = raster(256, 256, (ctx) => {
+    // Three broad induction plates with small recessed maintenance hatches.
+    // No centreline, arrows or scattered aggregate competing with pickup pads.
+    ctx.fillStyle = "#777f88";
+    ctx.fillRect(0, 0, 256, 256);
+    for (const [x, y, width] of [
+      [32, 0, 63],
+      [98, 96, 60],
+      [161, 176, 63],
     ]) {
-      ctx.fillStyle = "#53566635";
-      ctx.fillRect(x, y, width, height);
-      ctx.fillStyle = "#373e4c";
-      ctx.fillRect(x, y, width, 2);
-      ctx.fillStyle = "#c6c4bd";
-      ctx.fillRect(x, y + 2, width, 1);
-      ctx.fillStyle = "#555a66";
-      for (const bolt of [x + 6, x + width - 7])
-        ctx.fillRect(bolt, y + 7, 2, 2);
+      ctx.fillStyle = "#818991";
+      ctx.fillRect(x, 0, width, 256);
+      ctx.fillStyle = "#454f5d";
+      ctx.fillRect(x, 0, 2, 256);
+      ctx.fillRect(x, y, width, 4);
+      ctx.fillStyle = "#a1a9ac";
+      ctx.fillRect(x + 2, y + 4, width - 2, 2);
+      ctx.fillStyle = "#727c86";
+      ctx.fillRect(x + width - 8, 0, 6, 256);
     }
-    // Uneven scorch and exposed aggregate interrupt the manufactured seams.
-    chips(430, "#616575");
-    chips(310, "#bfc0bd");
-    for (let i = 0; i < 90; i++) {
-      ctx.fillStyle = i % 2 ? "#51546555" : "#c7c2bd55";
-      ctx.fillRect(
-        random() * 256,
-        random() * 256,
-        1 + random() * 3,
-        8 + random() * 34,
-      );
+    // World-space UVs repeat across the deck: these are plate service hatches,
+    // never lane-edge drains (U=0 can occur in the centre of the racing line).
+    for (const [x, y] of [
+      [12, 32],
+      [232, 160],
+    ]) {
+      ctx.fillStyle = "#596875";
+      ctx.fillRect(x, y, 14, 32);
+      ctx.fillStyle = "#9aa7ad";
+      ctx.fillRect(x, y, 14, 2);
+      ctx.fillStyle = "#374552";
+      for (let slit = 0; slit < 3; slit++)
+        ctx.fillRect(x + 3, y + 7 + slit * 7, 8, 3);
     }
   });
-  const edge = raster(128, 128, (ctx, random, noise, chips) => {
-    // Cast impact blocks with embedded fasteners and dirty recessed joints.
-    noise(190, 31);
-    ctx.fillStyle = "#4d535c";
-    ctx.fillRect(0, 0, 5, 128);
-    ctx.fillRect(64, 0, 3, 128);
-    ctx.fillStyle = "#dbd5bd";
-    ctx.fillRect(5, 0, 2, 128);
-    ctx.fillRect(67, 0, 1, 128);
-    for (const x of [13, 52, 77, 116])
-      for (const y of [18, 81]) {
-        ctx.fillStyle = "#56595a";
-        ctx.fillRect(x, y, 4, 4);
-        ctx.fillStyle = "#e3dac2";
-        ctx.fillRect(x, y, 3, 1);
+  const edge = raster(128, 128, (ctx) => {
+    ctx.fillStyle = "#d5d9d2";
+    ctx.fillRect(0, 0, 128, 128);
+    for (const x of [0, 64]) {
+      ctx.fillStyle = "#4b5a65";
+      ctx.fillRect(x, 0, 4, 128);
+      ctx.fillStyle = "#f6f1df";
+      ctx.fillRect(x + 4, 0, 3, 128);
+      ctx.fillStyle = "#adb9ba";
+      ctx.fillRect(x + 7, 94, 57, 34);
+      ctx.fillStyle = "#475862";
+      ctx.fillRect(x + 13, 105, 39, 12);
+      for (const y of [16, 76]) {
+        ctx.fillStyle = "#73838a";
+        ctx.fillRect(x + 13, y, 5, 5);
+        ctx.fillRect(x + 51, y, 5, 5);
       }
-    for (let i = 0; i < 20; i++) {
-      ctx.fillStyle = "#333c4a30";
-      ctx.fillRect(
-        random() * 128,
-        random() * 128,
-        2 + random() * 7,
-        18 + random() * 60,
-      );
     }
-    ctx.fillStyle = "#555a5b";
-    ctx.fillRect(11, 109, 42, 8);
-    ctx.fillRect(76, 109, 42, 8);
-    chips(130, "#777d80");
-    chips(80, "#dad1b8");
   });
-  const facade = raster(128, 256, (ctx, random, noise, chips) => {
-    noise(224, 10);
-    for (let y = 0; y < 256; y += 16) {
-      ctx.fillStyle = "#8396a9";
-      ctx.fillRect(0, y, 128, 2);
-      ctx.fillStyle = "#f3eeda";
-      ctx.fillRect(0, y + 2, 128, 1);
-      for (let x = 8; x < 128; x += 16) {
-        ctx.fillStyle = "#1d3656";
-        ctx.fillRect(x, y + 5, 9, 7);
-        ctx.fillStyle =
-          random() > 0.82 ? accent : random() > 0.6 ? "#e5b47a" : "#507c9d";
-        ctx.fillRect(x + 1, y + 5, 7, 2);
-        ctx.fillStyle = "#bbc1b2";
-        ctx.fillRect(x, y + 12, 9, 1);
+  const facade = raster(128, 256, (ctx) => {
+    // Structural metal mullions and grouped glazing, not a pixel-window grid.
+    ctx.fillStyle = "#c9d3d3";
+    ctx.fillRect(0, 0, 128, 256);
+    for (let y = 0; y < 256; y += 64) {
+      for (const x of [8, 70]) {
+        ctx.fillStyle = "#253f52";
+        ctx.fillRect(x, y + 8, 48, 42);
+        ctx.fillStyle = "#456577";
+        ctx.fillRect(x, y + 8, 48, 13);
+        ctx.fillStyle = "#6d8790";
+        ctx.fillRect(x, y + 8, 48, 3);
+        ctx.fillStyle = "#91a3aa";
+        ctx.fillRect(x + 30, y + 8, 3, 42);
+        ctx.fillStyle = "#eef0df";
+        ctx.fillRect(x, y + 50, 48, 3);
       }
+      ctx.fillStyle = "#5e7581";
+      ctx.fillRect(0, y + 60, 128, 4);
     }
-    for (let x = 0; x < 128; x += 32) {
-      ctx.fillStyle = "#eee9d7";
-      ctx.fillRect(x, 0, 4, 256);
-      ctx.fillStyle = "#748aa1";
-      ctx.fillRect(x + 4, 0, 1, 256);
-    }
-    for (let i = 0; i < 25; i++) {
-      ctx.fillStyle = "#3e4c4b22";
-      ctx.fillRect(random() * 128, random() * 256, 2, 18 + random() * 48);
-    }
-    // A structural/service bay interrupts the regular window grid.
-    ctx.fillStyle = "#8b958e";
-    ctx.fillRect(66, 172, 60, 43);
-    ctx.fillStyle = "#515e5e";
-    for (let y = 177; y < 208; y += 4) ctx.fillRect(72, y, 46, 2);
-    ctx.fillStyle = "#c7c7ac";
-    ctx.fillRect(5, 228, 56, 16);
-    ctx.fillStyle = "#293a40";
-    ctx.font = "bold 10px monospace";
-    ctx.fillText("BM—04", 8, 240);
-    chips(18, "#b4c3ce");
+    ctx.fillStyle = "#758892";
+    ctx.fillRect(60, 0, 5, 256);
+    ctx.fillStyle = "#e1e5dc";
+    ctx.fillRect(65, 0, 3, 256);
+    ctx.fillStyle = "#263b4c";
+    ctx.fillRect(8, 200, 48, 42);
+    ctx.fillStyle = accent;
+    ctx.fillRect(12, 205, 38, 5);
+    ctx.fillStyle = "#71848d";
+    for (const y of [217, 225, 233]) ctx.fillRect(13, y, 37, 3);
   });
   const paint = raster(128, 128, (ctx, random, noise, chips) => {
-    noise(235, 22);
+    ctx.fillStyle = "#ebece4";
+    ctx.fillRect(0, 0, 128, 128);
     ctx.strokeStyle = "#546064";
     ctx.lineWidth = 1;
     ctx.strokeRect(7, 6, 114, 116);
@@ -213,7 +182,7 @@ export function circuitTextures(accent) {
       const x = random() > 0.5 ? random() * 7 : 121 + random() * 7;
       ctx.fillRect(x, random() * 128, 3, 1);
     }
-    chips(100, "#aeb4b1");
+    chips(12, "#aeb4b1");
     ctx.fillStyle = "#4e5a5e";
     ctx.font = "bold 8px monospace";
     ctx.fillText("01", 57, 37);
@@ -225,12 +194,12 @@ export function circuitTextures(accent) {
           155 +
             Math.sin(x * 0.2 + y * 0.3) * 13 +
             Math.sin(y * 0.6) * 15 +
-            random() * 16,
+            Math.sin(x * 0.1 - y * 0.15) * 4,
         );
         ctx.fillStyle = `rgb(${n},${n + 5},${n + 7})`;
         ctx.fillRect(x, y, 1, 1);
       }
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 18; i++) {
       ctx.fillStyle = "#c0d0ca55";
       ctx.fillRect(random() * 128, random() * 128, 3 + random() * 10, 1);
     }

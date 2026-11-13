@@ -22,17 +22,20 @@ export function railFacePixels(course) {
   const { width, height } = RAIL_FACE_PATTERN;
   const palette = PALETTES[course];
   const pixels = new Uint8Array(width * height * 4);
-  let seed = 3187;
   for (let y = 0; y < height; y++) {
     const skew = Math.round((y / (height - 1) - 0.5) * 10);
     for (let x = 0; x < width; x++) {
-      seed = (seed * 16807) % 2147483647;
       const phase = (((x + skew) % width) + width) % width;
       const color = phase < width / 2 ? palette.light : palette.dark;
-      const grain = (seed % 19) - 9;
-      const joint = phase % (width / 2) < 2 ? 0.63 : 1;
+      const panelX = phase % (width / 2);
+      const grain = 0;
+      const joint = panelX < 3 ? 0.6 : panelX < 5 ? 1.12 : 1;
+      // Ceramic face, inset metal foot and paired fixing sockets.
       const grime = y < 9 ? 0.72 + y * 0.028 : 1;
-      const scrape = (x * 13 + y * 7) % 89 < 3 ? -24 : 0;
+      const socket =
+        ((panelX >= 10 && panelX < 14) || (panelX >= 50 && panelX < 54)) &&
+        ((y >= 15 && y < 19) || (y >= 45 && y < 49));
+      const scrape = socket ? -35 : y >= 55 && y < 58 ? -12 : 0;
       const index = (y * width + x) * 4;
       pixels[index] = Math.max(
         0,
