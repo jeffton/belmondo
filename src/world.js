@@ -6,6 +6,7 @@ import { RAIL_PROFILE } from "./rail-profile.js";
 import { railPoint, railBackDepth, railHeight } from "./rail-geometry.js";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
 import { buildTrackPads } from "./track-pads.js";
+import { tunnelSegment } from "./tunnel-architecture.js";
 import { buildJumpMarkings } from "./jump-markings.js";
 import { buildStartGantry } from "./start-gantry.js";
 import { gridApproachBlend } from "./start-sequence.js";
@@ -422,45 +423,19 @@ export class World {
           if (i % 8 === 0)
             face(0.65, 0.82, nose ? 0xffa348 : 0xc3c6a0, -0.018, "light");
         }
-        // Repeating overhead ribs and tunnel skin create near-field motion cues.
-        if (track.isTunnel(u * track.length, branch)) {
-          addStrip(
-            a,
-            b,
-            -w,
-            w,
-            16,
-            i % 12 < 2 ? 0x7d8782 : 0xb0b8ac,
-            "concrete",
-          );
-          for (const side of [-1, 1])
-            quads.push({
-              p: [
-                a.p.clone().addScaledVector(a.right, side * w),
-                a.p
-                  .clone()
-                  .addScaledVector(a.right, side * w)
-                  .addScaledVector(a.up, 16),
-                b.p
-                  .clone()
-                  .addScaledVector(b.right, side * w)
-                  .addScaledVector(b.up, 16),
-                b.p.clone().addScaledVector(b.right, side * w),
-              ],
-              color: i % 12 < 2 ? 0x7b8c8a : 0xd2d5c5,
-              kind: "concrete",
-              uv: [
-                [(a.u * track.length) / 12, 0],
-                [(a.u * track.length) / 12, 1],
-                [(b.u * track.length) / 12, 1],
-                [(b.u * track.length) / 12, 0],
-              ],
-            });
-          if (i % 12 === 0) this.crossbar(a, w, 13, cfg.color);
-        }
+        if (track.isTunnel(u * track.length, branch))
+          quads.push(...tunnelSegment(a, b, track));
       }
     }
-    for (const kind of ["road", "concrete", "paint", "edge", "rail", "light"]) {
+    for (const kind of [
+      "road",
+      "concrete",
+      "paint",
+      "edge",
+      "rail",
+      "light",
+      "tunnel",
+    ]) {
       const material =
         flagship && kind === "road"
           ? new THREE.MeshPhongMaterial({
@@ -478,7 +453,10 @@ export class World {
               })
             : new THREE.MeshLambertMaterial({
                 vertexColors: true,
-                map: textures[kind],
+                map: textures[kind === "tunnel" ? "concrete" : kind],
+                // Baked service-light bounce keeps the soffit readable without
+                // adding per-bay real-time lights or lifting the outside world.
+                emissive: kind === "tunnel" ? 0x202632 : 0x000000,
                 side: THREE.DoubleSide,
                 flatShading: true,
               });
