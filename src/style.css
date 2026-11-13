@@ -1172,8 +1172,8 @@ body.touch[data-input-mode="touch"] #touch-controls {
 #steer-pad {
   pointer-events: auto;
   touch-action: none;
-  width: 112px;
-  height: 112px;
+  width: 128px;
+  height: 128px;
   border: 1px solid #b8d1d166;
   background:
     radial-gradient(circle, #10242e22 46%, transparent 47%),
@@ -1206,6 +1206,7 @@ body.touch[data-input-mode="touch"] #touch-controls {
     inset 0 0 12px #b7e8ee33;
 }
 .touch-actions {
+  width: 144px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1213,8 +1214,8 @@ body.touch[data-input-mode="touch"] #touch-controls {
 }
 #air-pad {
   position: relative;
-  width: 128px;
-  height: 80px;
+  width: 100%;
+  height: 88px;
   pointer-events: auto;
   touch-action: none;
   border: 1px solid #b8d1d166;
@@ -1265,7 +1266,7 @@ body.touch[data-input-mode="touch"] #touch-controls {
   box-shadow: inset 0 1px #e4f4f31a;
 }
 .touch-actions #touch-fire {
-  width: 44px;
+  width: 100%;
   height: 44px;
   background: color-mix(in srgb, var(--weapon-color) 22%, #10242e);
   color: var(--weapon-color);
@@ -1757,7 +1758,7 @@ body.touch .weapon-name {
   font-size: 17px;
 }
 body.touch .hud-bottom {
-  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 136px);
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 144px);
   left: max(14px, env(safe-area-inset-left));
   right: max(14px, env(safe-area-inset-right));
   gap: 12px;

@@ -159,6 +159,7 @@ try {
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 844, height: 390 },
+    { width: 320, height: 568 },
   ]) {
     const { context, page } = await open(viewport, true);
     await expect(page.locator("[data-control]")).toHaveCount(0);
@@ -177,6 +178,8 @@ try {
     const airBox = await box("#air-pad");
     const fireBox = await box("#touch-fire");
     expect(fireBox.y + fireBox.height).toBeLessThan(airBox.y);
+    expect(fireBox.width).toBe(airBox.width);
+    expect(airBox.width).toBe(144);
     const radius = airBox.width * 0.375;
     const air = (x, y) => ({
       id: 1,
@@ -184,6 +187,8 @@ try {
       y: airBox.y + 16 + y * radius,
     });
     const stickBox = await box("#steer-pad");
+    expect(stickBox.width).toBe(128);
+    expect(stickBox.x + stickBox.width).toBeLessThan(airBox.x);
     const stick = {
       id: 2,
       x: stickBox.x + stickBox.width * 0.7,
