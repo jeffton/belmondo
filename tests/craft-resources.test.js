@@ -29,6 +29,7 @@ test("grid/trial switches retain craft caches; course teardown releases detached
     ships: [],
     sparkData: [],
     weaponEffects: { reset() {} },
+    impactSparks: { reset() {} },
   });
   const specs = [0xe95a42, 0x577bda, 0x9bb846].map((color) => ({ color }));
   const grid = {

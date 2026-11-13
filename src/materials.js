@@ -121,6 +121,26 @@ export function circuitTextures(accent) {
         ctx.fillStyle = `rgb(${value - 3},${value},${value + 4})`;
         ctx.fillRect(x, y, 1, 1);
       }
+    // Staggered induction tiles: broad tonal relief and short recessed corners
+    // read at racing resolution without outlining lanes along the circuit.
+    for (const [x, y, width, height, tone] of [
+      [12, 16, 88, 92, 153],
+      [142, 38, 98, 64, 169],
+      [28, 146, 76, 78, 168],
+      [148, 162, 82, 70, 154],
+    ]) {
+      ctx.fillStyle = `rgba(${tone - 3},${tone},${tone + 4},0.58)`;
+      ctx.fillRect(x, y, width, height);
+      ctx.fillStyle = "#8e999f";
+      ctx.fillRect(x, y, 22, 2);
+      ctx.fillRect(x, y + 2, 2, 10);
+      ctx.fillStyle = "#b4bab9";
+      ctx.fillRect(x + width - 24, y + height - 2, 24, 2);
+      // Paired flush fasteners give each cassette a useful, manufactured scale.
+      ctx.fillStyle = "#929da2";
+      ctx.fillRect(x + 6, y + height - 9, 3, 3);
+      ctx.fillRect(x + 13, y + height - 9, 3, 3);
+    }
     // Shallow expansion joints cross the travel direction. Staggered half-bays
     // supply scale without long service lips, grooves or repeated lane stripes.
     for (const [x, y] of [

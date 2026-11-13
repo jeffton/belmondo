@@ -633,7 +633,7 @@ function animate(now) {
       );
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
-          world.burst(race.player);
+          world.burst(race.player, event.kind, event.text);
         sound.raceEvent(event, race, LAPS);
       }
       race.events.length = 0;

@@ -11,6 +11,7 @@ import { buildStartGantry } from "./start-gantry.js";
 import { gridApproachBlend } from "./start-sequence.js";
 import { buildFinishDistrict } from "./finish-district.js";
 import { WeaponEffects } from "./weapon-effects.js";
+import { ImpactSparks } from "./impact-sparks.js";
 import { circuitTextures } from "./materials.js";
 import { buildTrackLighting } from "./track-lighting.js";
 import { createSky } from "./sky.js";
@@ -613,6 +614,7 @@ export class World {
     buildTrackAdvertising(this.scene, track, environment);
     buildVegetation(this.scene, track, environment);
     this.weaponEffects = new WeaponEffects(this.scene);
+    this.impactSparks = new ImpactSparks(this.scene);
     this.effectMat = basic(0xff9730);
     this.sparks = new THREE.InstancedMesh(
       new THREE.TetrahedronGeometry(0.18),
@@ -641,6 +643,7 @@ export class World {
   }
   setupRacers(race, specs) {
     this.weaponEffects.reset();
+    this.impactSparks.reset();
     for (const ship of this.ships)
       this.scene.remove(ship, ship.userData.shadow, ship.userData.shield);
     for (const particle of this.sparkData) particle.life = 0;
@@ -650,7 +653,14 @@ export class World {
       this.makeShip(specs[r.craft].color, r.craft),
     );
   }
-  burst(racer) {
+  burst(racer, kind, text) {
+    if (kind === "scrape" && text === "IMPACT") {
+      this.impactSparks.burst(
+        racer,
+        this.track.frame(racer.contactS, racer.branch),
+      );
+      return;
+    }
     const f = this.track.frame(racer.s, racer.branch);
     for (let i = 0; i < 10; i++) {
       const particle =
@@ -773,6 +783,7 @@ export class World {
       this.camera.lookAt(cockpit.clone().add(gaze).lerp(focus, approach));
     }
     this.weaponEffects.update(race, dt, this.time);
+    this.impactSparks.update(dt);
     const sparkTransform = new THREE.Object3D();
     for (let i = 0; i < this.sparkData.length; i++) {
       const particle = this.sparkData[i];

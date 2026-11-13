@@ -25,6 +25,7 @@ test("returning an all-DNF field to the menu restores demo hulls without resurre
     startGantry: { update() {} },
     finishDistrict: { update() {} },
     weaponEffects: { update() {} },
+    impactSparks: { update() {} },
     lighting: { update() {} },
     renderer: { render() {} },
     sparkData: [],

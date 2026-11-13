@@ -53,6 +53,7 @@ try {
   await page.screenshot({ path: "test-artifacts/desktop-race.png" });
   await page.keyboard.press("KeyP");
   await expect(page.locator("#pause-panel")).toBeVisible();
+  await expect(page.locator("#pause-panel .help-small")).toHaveCount(0);
   const pausedTime = await page.evaluate(
     () => window.nullVector.telemetry.time,
   );
@@ -132,6 +133,11 @@ try {
     await m.locator("#touch-fire").click();
   else await expect(m.locator("#touch-fire")).toBeDisabled();
   await m.screenshot({ path: "test-artifacts/mobile-landscape.png" });
+  await m.locator("#pause").click();
+  await expect(m.locator("#pause-panel")).toBeVisible();
+  await expect(m.locator("#pause-panel .help-small")).toHaveCount(0);
+  await m.locator("#resume").click();
+  await expect(m.locator("#pause-panel")).toBeHidden();
   await m.locator("#pause").click();
   await m.locator("#quit").click();
   await m.setViewportSize({ width: 390, height: 844 });
