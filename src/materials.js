@@ -69,6 +69,31 @@ export function circuitTextures(accent) {
     ctx.fillStyle = accent;
     ctx.fillRect(55, 110, 16, 3);
   });
+  const rock = raster(128, 256, (ctx) => {
+    // Mineral beds for legacy rock instances: no manufactured seams or sockets.
+    ctx.fillStyle = "#d1d1c8";
+    ctx.fillRect(0, 0, 128, 256);
+    const ridge = (y, depth, color) => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (let x = 0; x <= 128; x += 4) {
+        const fold = Math.sin((x / 128) * Math.PI * 2) * 7;
+        if (x === 0) ctx.moveTo(x, y + fold);
+        else ctx.lineTo(x, y + fold);
+      }
+      for (let x = 128; x >= 0; x -= 4) {
+        const fold = Math.sin((x / 128) * Math.PI * 2) * 7;
+        ctx.lineTo(x, y + fold + depth);
+      }
+      ctx.closePath();
+      ctx.fill();
+    };
+    ridge(24, 42, "#c2c4bd");
+    ridge(66, 10, "#adafa9");
+    ridge(109, 38, "#e0dfd3");
+    ridge(147, 7, "#b8bab1");
+    ridge(187, 32, "#c4c6bd");
+  });
   const road = raster(256, 256, (ctx) => {
     // Three broad induction plates with small recessed maintenance hatches.
     // No centreline, arrows or scattered aggregate competing with pickup pads.
@@ -320,6 +345,7 @@ export function circuitTextures(accent) {
     });
   return {
     concrete,
+    rock,
     road,
     edge,
     facade,
