@@ -62,6 +62,7 @@ try {
     );
     await expect(page.locator("#view")).toHaveAttribute("aria-pressed", "true");
     await visibility(false);
+    if (mobile) await expect(page.locator("body")).toHaveClass(/\btouch\b/);
     await page.keyboard.press("Escape");
     await expect(page.locator("#pause-panel")).toBeVisible();
     await page.keyboard.press("Escape");

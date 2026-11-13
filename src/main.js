@@ -80,7 +80,8 @@ let touchSteer = 0,
   touchPitch = 0,
   steerPointer = null,
   touchLaunchArmed = false;
-let touch = matchMedia("(pointer: coarse)").matches;
+const touchLayout = matchMedia("(pointer: coarse)").matches;
+let touch = touchLayout;
 let inputMode = touch ? "touch" : "keyboard";
 document.body.classList.toggle("touch", touch);
 document.body.dataset.inputMode = inputMode;
@@ -88,7 +89,7 @@ function setInputMode(mode) {
   if (inputMode === mode) return;
   inputMode = mode;
   touch = mode === "touch";
-  document.body.classList.toggle("touch", touch);
+  document.body.classList.toggle("touch", touch || touchLayout);
   document.body.dataset.inputMode = mode;
   if (!touch) {
     touchSteer = 0;

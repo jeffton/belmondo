@@ -1148,7 +1148,7 @@ kbd,
 #touch-controls {
   display: none;
 }
-body.touch #touch-controls {
+body.touch[data-input-mode="touch"] #touch-controls {
   display: flex;
   position: absolute;
   bottom: max(12px, env(safe-area-inset-bottom));
@@ -1674,8 +1674,8 @@ body.touch .lap-time > :last-child {
   line-height: 13px;
   letter-spacing: 0;
 }
-body.touch #view,
-body.touch #pause {
+body.touch[data-input-mode="touch"] #view,
+body.touch[data-input-mode="touch"] #pause {
   display: grid;
   top: max(12px, env(safe-area-inset-top));
   left: auto;
