@@ -60,6 +60,14 @@ Music volume is applied through an output GainNode rather than the media element
 
 `node tests/music-menu.browser.mjs` exercises native menu/race gain ramps, measured output attenuation, track/time continuity, manual pause, local files and shuffle preservation without WebGL. `node tests/music.browser.mjs` checks the real game navigation hooks. `node tests/music-focus.browser.mjs` isolates hidden/focus pause and return behavior in race, pause-menu and main-menu states, including same-position resume and explicit pause. `node tests/music-tunnel.browser.mjs` measures native default/local wet output, dry outside, fades, pause/volume silence and context reuse without WebGL. `node tests/music-tunnel-game.browser.mjs` checks the production main-loop hook with fixed contact positions across all three circuits; it is an integration fixture, not a driving test.
 
+Native tab switching uses headed Chrome, `trash` for its temporary profile, and disabled Playwright focus emulation:
+
+```sh
+CHROME_PATH=/path/to/chrome GAME_URL=http://127.0.0.1:5178 xvfb-run -a node tests/music-native-focus.browser.mjs
+```
+
+This checks browser-generated visibility/focus events in the race and main menu, same-track resume, and manual pause. Omit `xvfb-run -a` on a desktop display.
+
 ## Soundtrack credits
 
 Eight original instrumentals generated with Eleven Music v2.5 (`elevenlabs/music/v2.5`) through fal.ai on 12 November 2026. The briefs explore the underground progressive, trance, techno, electro, breakbeat and jungle vocabulary of 1994–1999 racing soundtracks. No artist/song names, uploaded recordings or samples were used in generation. Musical descriptions are briefs, not claims of subjective listening.
