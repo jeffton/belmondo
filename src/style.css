@@ -16,6 +16,16 @@
   --display: "Belmondo Circuit", "Archivo", sans-serif;
   --interface: "Archivo", sans-serif;
   --telemetry: var(--interface);
+  --app-height: 100dvh;
+}
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  :root {
+    --app-height: 100lvh;
+    background: #10202c;
+  }
+  body {
+    background: #10202c;
+  }
 }
 * {
   box-sizing: border-box;
@@ -23,11 +33,15 @@
 html,
 body {
   width: 100%;
-  height: 100%;
+  height: var(--app-height);
   overflow: clip;
   overscroll-behavior: none;
 }
 body {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   margin: 0;
 }
 button,
@@ -75,12 +89,15 @@ button:hover {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
+  height: var(--app-height);
+  bottom: auto;
   display: block;
 }
 .scanlines {
   position: fixed;
   inset: 0;
+  bottom: auto;
+  height: var(--app-height);
   pointer-events: none;
   background: repeating-linear-gradient(transparent 0 3px, #00111d09 3px 4px);
   z-index: 1;
@@ -384,6 +401,8 @@ footer {
 #hud {
   position: fixed;
   inset: 0;
+  bottom: auto;
+  height: var(--app-height);
   z-index: 2;
   pointer-events: none;
   font-family: var(--interface);
@@ -766,6 +785,8 @@ footer {
 .overlay {
   position: fixed;
   inset: 0;
+  bottom: auto;
+  height: var(--app-height);
   z-index: 5;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -776,7 +797,7 @@ footer {
 }
 #pause-panel {
   width: 100%;
-  height: 100dvh;
+  height: var(--app-height);
   max-width: none;
   max-height: none;
   margin: 0;
@@ -1863,11 +1884,9 @@ body.touch .instrument-bar {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-/* Three fixed setup stations leave the circuit feed visible throughout. */
+/* Chrome belongs to the root viewport, not the composited circuit veil. */
 #menu {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: contents;
   overflow: clip;
   padding: 0;
   --footer-pad: 0px;
@@ -1876,7 +1895,19 @@ body.touch .instrument-bar {
   );
   background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
 }
+#menu::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  bottom: auto;
+  height: var(--app-height);
+  z-index: 2;
+  background: inherit;
+  pointer-events: none;
+}
 #menu .menu-layout {
+  position: relative;
+  z-index: 2;
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -1956,6 +1987,8 @@ body.touch .instrument-bar {
   padding: 8px 0;
 }
 #menu footer {
+  position: relative;
+  z-index: 3;
   display: block;
   padding: var(--footer-pad) calc(28px + env(safe-area-inset-right))
     calc(var(--footer-pad) + env(safe-area-inset-bottom))
@@ -1979,6 +2012,7 @@ body.touch .instrument-bar {
   outline-offset: -3px;
 }
 #menu .world-caption {
+  z-index: 2;
   right: max(28px, env(safe-area-inset-right));
   bottom: calc(var(--footer-height) + 12px);
   display: block;
@@ -1989,6 +2023,7 @@ body.touch .instrument-bar {
 }
 #menu-model {
   position: absolute;
+  z-index: 2;
   left: 49%;
   right: max(4%, env(safe-area-inset-right));
   top: 19%;
@@ -2151,7 +2186,8 @@ body.touch .instrument-bar {
     height: max(
       110px,
       calc(
-        100dvh - 580px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        var(--app-height) - 580px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
       )
     );
   }
@@ -2286,7 +2322,8 @@ body.touch .instrument-bar {
     height: max(
       92px,
       calc(
-        100dvh - 440px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        var(--app-height) - 440px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
       )
     );
   }
@@ -2314,6 +2351,11 @@ body.touch .instrument-bar {
   }
 }
 #menu,
+#menu .masthead,
+#menu .menu-layout,
+#menu footer {
+  touch-action: none;
+}
 dialog,
 .overlay {
   touch-action: pan-y;

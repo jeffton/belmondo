@@ -96,14 +96,15 @@ export class World {
     this.cameraForward = null;
   }
   resize() {
-    const scale =
-      this.quality === "retro" ? 0.55 : Math.min(1, 1500 / innerWidth);
+    const { clientWidth: width, clientHeight: height } =
+      this.renderer.domElement;
+    const scale = this.quality === "retro" ? 0.55 : Math.min(1, 1500 / width);
     this.renderer.setSize(
-      Math.round(innerWidth * scale),
-      Math.round(innerHeight * scale),
+      Math.round(width * scale),
+      Math.round(height * scale),
       false,
     );
-    this.camera.aspect = innerWidth / innerHeight;
+    this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
   disposeScene() {
