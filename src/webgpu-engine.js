@@ -29,9 +29,15 @@ export class BelmondoNodeLibrary extends StandardNodeLibrary {
       // positionNode is evaluated after Three's instancing stage. Reapply the
       // instance matrix to the deformed geometry, exactly as WebGL's vertex
       // shader does; assigning geometry here would collapse the crowd instances.
-      nodeMaterial.positionNode = referenceAttribute("instanceMatrix", "mat4")
-        .mul(vec4(positionGeometry.add(vec3(cheer.mul(0.12), cheer.mul(0.045), 0)), 1))
-        .xyz;
+      nodeMaterial.positionNode = referenceAttribute(
+        "instanceMatrix",
+        "mat4",
+      ).mul(
+        vec4(
+          positionGeometry.add(vec3(cheer.mul(0.12), cheer.mul(0.045), 0)),
+          1,
+        ),
+      ).xyz;
     }
     return nodeMaterial;
   }
@@ -51,6 +57,7 @@ export async function createWebGPURenderer(parameters) {
       "The selected renderer did not initialize a WebGPU backend.",
     );
   renderer.outputColorSpace = SRGBColorSpace;
+  renderer.info.autoReset = false;
   return renderer;
 }
 
@@ -60,10 +67,11 @@ export function createWebGPULensflare() {
   // LensflareMesh converts input colors from sRGB at first render, unlike
   // WebGL's Lensflare. Supply encoded clones, so both shaders receive the same
   // linear colors and the caller-owned elements are not mutated.
-  flare.addElement = (element) => addElement({
-    ...element,
-    color: element.color.clone().convertLinearToSRGB(),
-  });
+  flare.addElement = (element) =>
+    addElement({
+      ...element,
+      color: element.color.clone().convertLinearToSRGB(),
+    });
   return flare;
 }
 

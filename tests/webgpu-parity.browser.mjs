@@ -119,18 +119,25 @@ try {
           const celestial = world.scene.getObjectByName("low-sun");
           world.camera.lookAt(celestial.position);
           world.renderer.render(world.scene, world.camera);
-          if (world.renderer.backend?.isWebGPUBackend) await world.renderer.backend.device.queue.onSubmittedWorkDone();
+          if (world.renderer.backend?.isWebGPUBackend)
+            await world.renderer.backend.device.queue.onSubmittedWorkDone();
           else world.renderer.getContext().finish();
         });
-        await page.screenshot({ path: `${output}/${backend}-${index}-flare.png` });
+        await page.screenshot({
+          path: `${output}/${backend}-${index}-flare.png`,
+        });
         await page.evaluate(async () => {
-          const THREE = await import("three");
+          const { THREE } = await import("/tests/helpers/webgpu-scenes.js");
           const world = window.parityWorld;
           const source = world.scene.getObjectByName("spectators");
           const scene = new THREE.Scene();
           scene.background = new THREE.Color(0x203040);
           scene.add(new THREE.HemisphereLight(0xffffff, 0x808080, 2));
-          const crowd = new THREE.InstancedMesh(source.geometry, source.material, 2);
+          const crowd = new THREE.InstancedMesh(
+            source.geometry,
+            source.material,
+            2,
+          );
           const transform = new THREE.Object3D();
           transform.position.set(-6, 1, 0);
           transform.rotation.set(0, 0.2, 0.05);
@@ -144,15 +151,58 @@ try {
           crowd.setMatrixAt(1, transform.matrix);
           crowd.setColorAt(0, new THREE.Color(0xffffff));
           crowd.setColorAt(1, new THREE.Color(0xc6a17d));
-          scene.add(crowd);
+          const parent = new THREE.Group();
+          parent.rotation.z = 0.12;
+          parent.position.y = 0.4;
+          parent.add(crowd);
+          scene.add(parent);
           const camera = new THREE.OrthographicCamera(-12, 12, 8, -7, 0.1, 100);
           camera.position.set(0, 0, 20);
           world.finishDistrict.update(1.25);
+          window.crowdQA = { scene, camera, parent, crowd };
           world.renderer.render(scene, camera);
-          if (world.renderer.backend?.isWebGPUBackend) await world.renderer.backend.device.queue.onSubmittedWorkDone();
+          if (world.renderer.backend?.isWebGPUBackend)
+            await world.renderer.backend.device.queue.onSubmittedWorkDone();
           else world.renderer.getContext().finish();
         });
-        await page.screenshot({ path: `${output}/${backend}-${index}-crowd.png` });
+        await page.screenshot({
+          path: `${output}/${backend}-${index}-crowd.png`,
+        });
+        await page.evaluate(async () => {
+          const { THREE } = await import("/tests/helpers/webgpu-scenes.js");
+          const world = window.parityWorld;
+          const { scene, camera, parent, crowd } = window.crowdQA;
+          parent.remove(crowd);
+          for (let id = 0; id < 2; id++) {
+            const geometry = crowd.geometry.clone();
+            const vertices = geometry.getAttribute("position");
+            const wave = Math.sin(1.25 * 2.7 + id * 2.399);
+            for (let i = 0; i < vertices.count; i++) {
+              const height = Math.max(0, vertices.getY(i) - 0.35);
+              vertices.setXY(
+                i,
+                vertices.getX(i) + wave * 0.12 * height,
+                vertices.getY(i) + wave * 0.045 * height,
+              );
+            }
+            const material = crowd.material.clone();
+            material.onBeforeCompile = () => {};
+            material.customProgramCacheKey = () => "cpu-crowd-reference";
+            delete material.userData.finishCrowdTime;
+            material.color.set(id === 0 ? 0xffffff : 0xc6a17d);
+            const reference = new THREE.Mesh(geometry, material);
+            crowd.getMatrixAt(id, reference.matrix);
+            reference.matrixAutoUpdate = false;
+            parent.add(reference);
+          }
+          world.renderer.render(scene, camera);
+          if (world.renderer.backend?.isWebGPUBackend)
+            await world.renderer.backend.device.queue.onSubmittedWorkDone();
+          else world.renderer.getContext().finish();
+        });
+        await page.screenshot({
+          path: `${output}/${backend}-${index}-crowd-reference.png`,
+        });
       }
       result.errors = errors;
       reports.push(result);
