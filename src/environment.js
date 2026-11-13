@@ -34,11 +34,11 @@ export function buildEnvironment(scene, track, textures) {
       // Authored mineral beds and wet/dry masses, not per-pixel gravel.
       const stratum = Math.sin(v * (desert ? 3 : 2) + fold);
       const value = Math.round(
-        219 +
-          fold * 6 +
-          basin * 7 -
+        (desert ? 219 : 222) +
+          fold * (desert ? 6 : 16) +
+          basin * (desert ? 7 : 14) -
           (desert && stratum > 0.92 ? 17 : 0) -
-          (!desert && basin + fold * 0.4 < -0.5 ? 13 : 0),
+          (!desert && basin + fold * 0.4 < -0.5 ? 20 : 0),
       );
       pixels.set([value, value, value, 255], (y * 64 + x) * 4);
     }
