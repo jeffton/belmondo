@@ -77,7 +77,7 @@ async function open(viewport, touch) {
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "race",
   );
-  await controls(page, { throttle: 0, launchIntent: false });
+  await controls(page, { throttle: touch ? 1 : 0, launchIntent: false });
   return { context, page };
 }
 try {
@@ -142,9 +142,11 @@ try {
     { width: 844, height: 390 },
   ]) {
     const { context, page } = await open(viewport, true);
-    await expect(page.locator('[data-control="brake"]')).toHaveCount(0);
-    await expect(page.locator('[data-control="thrust"]')).toHaveAccessibleName(
-      "Hold for thrust",
+    await expect(
+      page.locator('[data-control="brake"], [data-control="thrust"]'),
+    ).toHaveCount(0);
+    await expect(page.locator('[data-control="coast"]')).toHaveAccessibleName(
+      "Hold to coast",
     );
     const cdp = await context.newCDPSession(page);
     const center = async (selector, id) => {
@@ -156,7 +158,7 @@ try {
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
       return { id, x: box.x + box.width / 2, y: box.y + box.height / 2 };
     };
-    const thrust = await center('[data-control="thrust"]', 1);
+    const coast = await center('[data-control="coast"]', 1);
     const stickBox = await page.locator("#steer-pad").boundingBox();
     const stick = {
       id: 2,
@@ -170,12 +172,23 @@ try {
       cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
     await send("touchStart", [stick]);
     await controls(page, {
-      throttle: 0,
+      throttle: 1,
       launchIntent: false,
       steer: -0.5,
       pitch: 0.5,
     });
-    await send("touchStart", [stick, thrust, left, right, fire]);
+    await send("touchStart", [stick, coast, left, right, fire]);
+    await controls(page, {
+      throttle: 0,
+      launchIntent: false,
+      steer: -0.5,
+      pitch: 0.5,
+      airLeft: 1,
+      airRight: 1,
+    });
+    await expect(page.locator('[data-control="coast"]')).toHaveClass(/pressed/);
+    // Release only coast; stick and both airbrakes retain pointer ownership.
+    await send("touchEnd", [coast]);
     await controls(page, {
       throttle: 1,
       launchIntent: true,
@@ -184,41 +197,58 @@ try {
       airLeft: 1,
       airRight: 1,
     });
-    await expect(page.locator('[data-control="thrust"]')).toHaveClass(
-      /pressed/,
-    );
-    // Release only thrust: the stick and both airbrakes remain owned and held.
-    await send("touchEnd", [thrust]);
-    await controls(page, {
-      throttle: 0,
-      launchIntent: false,
-      steer: -0.5,
-      pitch: 0.5,
-      airLeft: 1,
-      airRight: 1,
-    });
     await send("touchCancel", []);
+    // Canceling other controls cannot revoke an already deliberate coast release.
     await controls(page, {
-      throttle: 0,
-      launchIntent: false,
+      throttle: 1,
+      launchIntent: true,
       steer: 0,
       pitch: 0,
       airLeft: 0,
       airRight: 0,
     });
-    await send("touchStart", [thrust]);
-    await controls(page, { throttle: 1, launchIntent: true });
-    await send("touchCancel", []);
+    await send("touchStart", [coast]);
     await controls(page, { throttle: 0, launchIntent: false });
-    await expect(page.locator('[data-control="thrust"]')).not.toHaveClass(
+    await send("touchCancel", []);
+    await controls(page, { throttle: 1, launchIntent: false });
+    await expect(page.locator('[data-control="coast"]')).not.toHaveClass(
       /pressed/,
     );
+    await page.locator('[data-control="coast"]').evaluate((button) => {
+      button.addEventListener(
+        "pointerdown",
+        (event) => {
+          button.testPointerId = event.pointerId;
+        },
+        { once: true },
+      );
+    });
+    await send("touchStart", [coast]);
+    await controls(page, { throttle: 0, launchIntent: false });
+    // Activate pending implicit capture before deliberately releasing it.
+    await send("touchMove", [{ ...coast, x: coast.x + 10 }]);
+    // Release actual browser pointer capture while the CDP finger remains held.
+    await page.locator('[data-control="coast"]').evaluate((button) => {
+      button.releasePointerCapture(button.testPointerId);
+    });
+    await send("touchMove", [{ ...coast, x: coast.x + 11 }]);
+    await controls(page, { throttle: 1, launchIntent: false });
+    await send("touchEnd", []);
+    await controls(page, { throttle: 1, launchIntent: false });
     await page.waitForFunction(
       () => window.nullVector.telemetry.countdown === 0,
     );
-    await controls(page, { throttle: false, launchIntent: false });
-    await send("touchStart", [thrust]);
-    await controls(page, { throttle: true, launchIntent: true });
+    expect((await read(page)).launch.success).toBe(false);
+    await controls(page, { throttle: true, launchIntent: false });
+    await send("touchStart", [coast]);
+    await controls(page, {
+      throttle: false,
+      launchIntent: false,
+      airLeft: 0,
+      airRight: 0,
+    });
+    await send("touchEnd", []);
+    await controls(page, { throttle: true, launchIntent: false });
     await page.keyboard.down("KeyW");
     await expect(page.locator("body")).toHaveAttribute(
       "data-input-mode",
@@ -226,24 +256,43 @@ try {
     );
     await page.keyboard.up("KeyW");
     await controls(page, { throttle: false, launchIntent: false });
-    await send("touchCancel", []);
-    // The first touch restores controls hidden by keyboard mode; it hits the canvas.
-    await send("touchStart", [thrust]);
+    // First canvas touch restores touch input and automatic thrust.
+    await send("touchStart", [coast]);
     await expect(page.locator("body")).toHaveAttribute(
       "data-input-mode",
       "touch",
     );
     await send("touchEnd", []);
-    await send("touchStart", [thrust]);
-    await controls(page, { throttle: true, launchIntent: true });
+    await controls(page, { throttle: true, launchIntent: false });
+    await page.evaluate(() => {
+      window.inputPad.buttons = [0];
+    });
+    await expect(page.locator("body")).toHaveAttribute(
+      "data-input-mode",
+      "gamepad",
+    );
+    await page.evaluate(() => {
+      window.inputPad.buttons = [];
+    });
+    await controls(page, { throttle: false, launchIntent: false });
+    await send("touchStart", [coast]);
+    await send("touchEnd", []);
+    await controls(page, { throttle: true, launchIntent: false });
+    await send("touchStart", [coast, left, right]);
+    await controls(page, { throttle: false, airLeft: 1, airRight: 1 });
     await page.evaluate(() => window.dispatchEvent(new Event("blur")));
     await expect(page.locator("#pause-panel")).toBeVisible();
     await send("touchCancel", []);
     await page.locator("#resume").tap();
-    await controls(page, { throttle: false, launchIntent: false });
+    await controls(page, {
+      throttle: true,
+      launchIntent: false,
+      airLeft: 0,
+      airRight: 0,
+    });
     await context.close();
     console.log(
-      `Touch thrust hold/release/cancel/chord/mode-switch/blur PASS ${viewport.width}×${viewport.height}`,
+      `Touch auto-thrust/coast/release/cancel/capture-loss/chord/mode-switch/blur PASS ${viewport.width}×${viewport.height}`,
     );
   }
   expect(errors).toEqual([]);

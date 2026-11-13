@@ -92,8 +92,8 @@ async function drive(mobile, startupSeconds = null) {
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const cdp = mobile ? await context.newCDPSession(page) : null;
   const pad = mobile ? await page.locator("#steer-pad").boundingBox() : null;
-  const thrust = mobile
-    ? await page.locator('[data-control="thrust"]').boundingBox()
+  const coast = mobile
+    ? await page.locator('[data-control="coast"]').boundingBox()
     : null;
   const samples = [],
     transitions = [];
@@ -143,11 +143,11 @@ async function drive(mobile, startupSeconds = null) {
           y: pad.y + pad.height / 2,
         },
       ];
-      if (!needBrake)
+      if (needBrake)
         points.push({
           id: 2,
-          x: thrust.x + thrust.width / 2,
-          y: thrust.y + thrust.height / 2,
+          x: coast.x + coast.width / 2,
+          y: coast.y + coast.height / 2,
         });
       await cdp.send("Input.dispatchTouchEvent", {
         type: touching ? "touchMove" : "touchStart",

@@ -1,6 +1,8 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
+import { mockInputApp } from "./helpers/input-app-mocks.mjs";
+const inputMocks = process.env.INPUT_MOCKS === "1";
 
 // Actual application input only. Telemetry is read; no Race state is assigned.
 const url = process.env.GAME_URL || "http://127.0.0.1:5189";
@@ -16,8 +18,9 @@ const browser = await chromium.launch({
   headless: true,
   args: [
     "--no-sandbox",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
+    ...(inputMocks
+      ? ["--disable-gpu", "--disable-software-rasterizer"]
+      : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]),
   ],
 });
 const read = (page) => page.evaluate(() => window.nullVector.telemetry);
@@ -140,6 +143,7 @@ async function open(device, heldFromMenu = false, viewport, label) {
   });
   const page = await context.newPage();
   page.on("pageerror", (e) => report.errors.push(e.message));
+  if (inputMocks) await mockInputApp(page);
   await page.goto(url);
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
@@ -180,6 +184,8 @@ async function keyboardLapAfterLaunch(page, launchDevice) {
       touchPoints: [],
     });
     await touchSession.detach();
+    // Touch launched; the following lap deliberately switches to keyboard input.
+    await page.keyboard.press("KeyW");
     await page.waitForFunction(
       () => !window.nullVector.telemetry.controls.launchIntent,
     );
@@ -375,19 +381,32 @@ try {
       },
       { name: "touch-idle", device: "touch", success: false },
       {
-        name: "touch-thrust-timed",
+        name: "touch-coast-timed",
         device: "touch",
         when: 0.58,
         success: true,
       },
       {
-        name: "touch-thrust-early",
+        name: "touch-coast-early",
         device: "touch",
         when: 1.2,
         success: false,
       },
       {
-        name: "touch-thrust-cancel",
+        name: "touch-coast-lost-capture",
+        device: "touch",
+        when: 0.58,
+        lostCapture: true,
+        success: false,
+      },
+      {
+        name: "touch-coast-late",
+        device: "touch",
+        when: 0.15,
+        success: false,
+      },
+      {
+        name: "touch-coast-cancel",
         device: "touch",
         when: 0.58,
         cancel: true,
@@ -404,39 +423,87 @@ try {
       let press, release, numeric;
       if (spec.device === "touch" && spec.when) {
         const cdp = await context.newCDPSession(page);
-        const box = await page.locator('[data-control="thrust"]').boundingBox();
+        const box = await page.locator('[data-control="coast"]').boundingBox();
         const finger = {
           id: 1,
           x: box.x + box.width / 2,
           y: box.y + box.height / 2,
         };
-        if (!spec.cancel) await at(page, spec.when);
+        await page.locator('[data-control="coast"]').evaluate((button) => {
+          button.addEventListener(
+            "pointerdown",
+            (event) => {
+              button.testPointerId = event.pointerId;
+            },
+            { once: true },
+          );
+        });
         await cdp.send("Input.dispatchTouchEvent", {
           type: "touchStart",
           touchPoints: [finger],
         });
         await page.waitForFunction(
-          () => window.nullVector.telemetry.controls.launchIntent,
+          () =>
+            window.nullVector.telemetry.controls.throttle === 0 &&
+            !window.nullVector.telemetry.controls.launchIntent,
         );
+        await at(page, spec.when);
+        if (spec.cancel) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchCancel",
+            touchPoints: [],
+          });
+        } else if (spec.lostCapture) {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ ...finger, x: finger.x + 10 }],
+          });
+          await page
+            .locator('[data-control="coast"]')
+            .evaluate((button) =>
+              button.releasePointerCapture(button.testPointerId),
+            );
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ ...finger, x: finger.x + 11 }],
+          });
+          await page.waitForFunction(
+            () =>
+              !window.nullVector.telemetry.controls.launchIntent &&
+              window.nullVector.telemetry.controls.throttle === 1,
+          );
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchEnd",
+            touchPoints: [],
+          });
+        } else {
+          await cdp.send("Input.dispatchTouchEvent", {
+            type: "touchEnd",
+            touchPoints: [],
+          });
+        }
+        await page.waitForFunction((deliberate) => {
+          const c = window.nullVector.telemetry.controls;
+          return c.throttle === 1 && c.launchIntent === deliberate;
+        }, !spec.cancel && !spec.lostCapture);
+        release = await read(page);
         press = await page.evaluate(() =>
           window.launchEvents.findLast(
             (event) =>
               event.type === "pointerdown" && event.pointerType === "touch",
           ),
         );
-        if (spec.cancel) {
-          await at(page, spec.when);
-          await cdp.send("Input.dispatchTouchEvent", {
-            type: "touchCancel",
-            touchPoints: [],
-          });
-          await page.waitForFunction(
-            () => !window.nullVector.telemetry.controls.launchIntent,
+        if (!spec.lostCapture) {
+          const delivered = await page.evaluate(
+            () =>
+              window.launchEvents.findLast(
+                (event) =>
+                  event.pointerType === "touch" &&
+                  ["pointerup", "pointercancel"].includes(event.type),
+              ).countdown,
           );
-          release = await read(page);
-        } else {
-          expect(press.countdown).toBeGreaterThan(spec.when - 0.1);
-          expect(press.countdown).toBeLessThan(spec.when + 0.1);
+          expect(delivered).toBeGreaterThan(spec.when - 0.1);
+          expect(delivered).toBeLessThan(spec.when + 0.1);
         }
       } else if (spec.when) {
         press = await at(page, spec.when);
@@ -479,9 +546,9 @@ try {
         });
       }
       const result = await finish(page, spec.success, spec.name);
-      if (spec.name === "keyboard-early")
+      if (["keyboard-early", "touch-coast-early"].includes(spec.name))
         expect(result.launch.level).toBeGreaterThan(0.8);
-      if (spec.name === "keyboard-late")
+      if (["keyboard-late", "touch-coast-late"].includes(spec.name))
         expect(result.launch.level).toBeLessThan(0.65);
       if (
         [
@@ -489,7 +556,8 @@ try {
           "keyboard-held-from-menu",
           "controller-held-from-menu",
           "touch-idle",
-          "touch-thrust-cancel",
+          "touch-coast-cancel",
+          "touch-coast-lost-capture",
         ].includes(spec.name)
       )
         expect(result.launch.level).toBe(0);
@@ -502,7 +570,7 @@ try {
       expect(accelerationSample.time).toBeGreaterThanOrEqual(0.4);
       expect(accelerationSample.time).toBeLessThan(0.5);
       expect(typeof running.controls.throttle).toBe("boolean");
-      if (spec.success || spec.name === "touch-thrust-early")
+      if (spec.success || spec.name === "touch-coast-early")
         expect(
           await page
             .locator("#speed-bar")
@@ -512,13 +580,13 @@ try {
       await expect(page.locator("#lap-times .current b")).not.toHaveText(
         "00:00.00",
       );
-      if (spec.success || spec.name === "touch-thrust-early")
+      if (spec.success || spec.name === "touch-coast-early")
         await page.screenshot({
           path: `test-artifacts/launch-${spec.name}.png`,
         });
       const completed =
         process.env.LAUNCH_LAPS !== "0" &&
-        ["keyboard-timed", "touch-thrust-timed"].includes(spec.name)
+        ["keyboard-timed", "touch-coast-timed"].includes(spec.name)
           ? await keyboardLapAfterLaunch(page, spec.device)
           : null;
       if (spec.success) {
@@ -554,7 +622,7 @@ try {
     for (const [success, control] of [
       ["keyboard-timed", "keyboard-early"],
       ["controller-analog-timed", "keyboard-early"],
-      ["touch-thrust-timed", "touch-thrust-early"],
+      ["touch-coast-timed", "touch-coast-early"],
     ]) {
       const successCase = report.cases.find((c) => c.name === success);
       const controlCase = report.cases.find((c) => c.name === control);

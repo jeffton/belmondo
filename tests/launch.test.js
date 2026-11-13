@@ -80,14 +80,15 @@ test("late digital throttle earns a launch; too early and too late do not", () =
   }
 });
 
-test("analog throttle and a deliberate touch thrust hold share the timing model", () => {
+test("analog throttle and a deliberate touch coast release share the timing model", () => {
   const analog = launchAt([
     [2.04, idle],
     [1.16, { ...press, throttle: 0.5 }],
   ]);
   const touch = launchAt([
-    [2.62, idle],
-    [0.58, press],
+    [2, { ...press, launchIntent: false }], // Automatic touch thrust cannot charge.
+    [0.62, idle], // Held coast releases thrust without braking.
+    [0.58, press], // Deliberate pointerup resumes automatic thrust and charges.
   ]);
   assert.equal(analog.success, true);
   assert.equal(touch.success, true);

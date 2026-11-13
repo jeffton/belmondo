@@ -124,15 +124,22 @@ try {
   await m.locator("#start").click();
   await m.waitForFunction(() => window.nullVector.telemetry.state === "race");
   const cdp = await mobile.newCDPSession(m);
-  const thrustBox = await m.locator('[data-control="thrust"]').boundingBox();
-  const thrustFinger = {
+  const coastBox = await m.locator('[data-control="coast"]').boundingBox();
+  const coastFinger = {
     id: 1,
-    x: thrustBox.x + thrustBox.width / 2,
-    y: thrustBox.y + thrustBox.height / 2,
+    x: coastBox.x + coastBox.width / 2,
+    y: coastBox.y + coastBox.height / 2,
   };
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
-    touchPoints: [thrustFinger],
+    touchPoints: [coastFinger],
+  });
+  await m.waitForFunction(
+    () => window.nullVector.telemetry.controls.throttle === 0,
+  );
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
   });
   await m.waitForFunction(
     () => window.nullVector.telemetry.speed > 40,
@@ -145,7 +152,6 @@ try {
   await cdp.send("Input.dispatchTouchEvent", {
     type: "touchStart",
     touchPoints: [
-      thrustFinger,
       { id: 2, x: rect.x + rect.width * 0.8, y: rect.y + rect.height * 0.5 },
     ],
   });
@@ -154,7 +160,7 @@ try {
     type: "touchEnd",
     touchPoints: [],
   });
-  await m.waitForFunction(() => !window.nullVector.telemetry.controls.throttle);
+  await m.waitForFunction(() => window.nullVector.telemetry.controls.throttle);
   await m.locator("[data-control=airRight]").click();
   if (await m.locator("#touch-fire").isEnabled())
     await m.locator("#touch-fire").click();
@@ -176,7 +182,7 @@ try {
   await expect(m.locator("#pause")).toBeVisible();
   await m.screenshot({ path: "test-artifacts/mobile-portrait-race.png" });
   console.log(
-    "Mobile: landscape/portrait menus, held/released thrust, proportional pointer pad, buttons, pause, no horizontal overflow OK",
+    "Mobile: landscape/portrait menus, automatic thrust and held/released coast, proportional pointer pad, buttons, pause, no horizontal overflow OK",
   );
   await mobile.close();
   expect(errors).toEqual([]);

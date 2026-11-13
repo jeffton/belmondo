@@ -2,6 +2,8 @@ import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
 import { getTrackPickups } from "../src/pickups.js";
+import { mockInputApp } from "./helpers/input-app-mocks.mjs";
+const inputMocks = process.env.INPUT_MOCKS === "1";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5188";
 const gamepadOnly = process.env.INPUT_SCOPE === "gamepad";
@@ -10,8 +12,9 @@ const browser = await chromium.launch({
   headless: true,
   args: [
     "--no-sandbox",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
+    ...(inputMocks
+      ? ["--disable-gpu", "--disable-software-rasterizer"]
+      : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]),
   ],
 });
 const errors = [],
@@ -19,6 +22,7 @@ const errors = [],
 async function ready(context, mode = "trial", trackIndex = 0) {
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
+  if (inputMocks) await mockInputApp(page);
   await page.goto(url);
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
@@ -260,7 +264,7 @@ try {
     ]) {
       await send("touchStart", [point(1, x, y)]);
       await controls(touch, `CDP-stick-${x}-${y}`, {
-        throttle: false,
+        throttle: true,
         launchIntent: false,
         steer: -x,
         pitch: y,
@@ -297,14 +301,14 @@ try {
     const leftBrake = await center('[data-control="airLeft"]', 2);
     const rightBrake = await center('[data-control="airRight"]', 3);
     const fire = await center("#touch-fire", 4);
-    const thrust = await center('[data-control="thrust"]', 5);
-    await send("touchStart", [owner, leftBrake, rightBrake, fire, thrust]);
+    const coast = await center('[data-control="coast"]', 5);
+    await send("touchStart", [owner, leftBrake, rightBrake, fire, coast]);
     await controls(
       touch,
-      "CDP-five-finger-diagonal+thrust+both-airbrakes+fire",
+      "CDP-five-finger-diagonal+coast+both-airbrakes+fire",
       {
-        throttle: true,
-        launchIntent: true,
+        throttle: false,
+        launchIntent: false,
         steer: 0.75,
         pitch: 0.75,
         airLeft: 1,
@@ -360,8 +364,8 @@ try {
     const armed = await ready(armedContext, "race", 1);
     const armedCdp = await armedContext.newCDPSession(armed);
     const armedPad = await armed.locator("#steer-pad").boundingBox();
-    const thrustBox = await armed
-      .locator('[data-control="thrust"]')
+    const coastBox = await armed
+      .locator('[data-control="coast"]')
       .boundingBox();
     const track = makeTrack(1);
     const authoredPickups = getTrackPickups(track);
@@ -398,14 +402,14 @@ try {
       const demand = error * 2.8 - t.yawRate * 0.32;
       const steer = Math.max(-1, Math.min(1, -demand));
       const nextThrusting = t.speed < 70;
-      if (thrusting !== nextThrusting) {
+      if (touching && thrusting !== nextThrusting) {
         await armedCdp.send("Input.dispatchTouchEvent", {
           type: "touchEnd",
           touchPoints: [],
         });
         touching = false;
-        thrusting = nextThrusting;
       }
+      thrusting = nextThrusting;
       await armedCdp.send("Input.dispatchTouchEvent", {
         type: touching ? "touchMove" : "touchStart",
         touchPoints: [
@@ -414,12 +418,12 @@ try {
             x: armedPad.x + armedPad.width * (0.5 + steer * 0.38),
             y: armedPad.y + armedPad.height * 0.5,
           },
-          ...(thrusting
+          ...(!thrusting
             ? [
                 {
                   id: 2,
-                  x: thrustBox.x + thrustBox.width / 2,
-                  y: thrustBox.y + thrustBox.height / 2,
+                  x: coastBox.x + coastBox.width / 2,
+                  y: coastBox.y + coastBox.height / 2,
                 },
               ]
             : []),
@@ -460,7 +464,7 @@ try {
       return { id, x: box.x + box.width / 2, y: box.y + box.height / 2 };
     };
     const fireFinger = await armedCenter("#touch-fire", 4);
-    const thrustFinger = await armedCenter('[data-control="thrust"]', 5);
+    const coastFinger = await armedCenter('[data-control="coast"]', 5);
     await armedCdp.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
@@ -472,12 +476,12 @@ try {
         await armedCenter('[data-control="airLeft"]', 2),
         await armedCenter('[data-control="airRight"]', 3),
         fireFinger,
-        thrustFinger,
+        coastFinger,
       ],
     });
-    await controls(armed, "equipped-diagonal+thrust+both-airbrakes+fire", {
-      throttle: true,
-      launchIntent: true,
+    await controls(armed, "equipped-diagonal+coast+both-airbrakes+fire", {
+      throttle: false,
+      launchIntent: false,
       steer: -0.375,
       pitch: 0.375,
       airLeft: 1,
@@ -520,7 +524,7 @@ try {
   console.log(
     gamepadOnly
       ? `Input chords: ${samples.length} keyboard/gamepad observations passed; simultaneous left-stick X/Y, nose response, deadzone, right-stick independence, analog airbrakes, R2 thrust and unbound B/S/Down.`
-      : `Input chords: ${samples.length} raw-controls/body-pitch observations passed; keyboard, both airbrake pairs, standard left-stick X/Y, real CDP two-axis stick, five-finger chords, held thrust, ownership, release/cancel and blur cleanup.`,
+      : `Input chords: ${samples.length} raw-controls/body-pitch observations passed; keyboard, both airbrake pairs, standard left-stick X/Y, real CDP two-axis stick, five-finger chords, held coast, ownership, release/cancel and blur cleanup.`,
   );
 } finally {
   await writeFile(

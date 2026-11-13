@@ -234,22 +234,22 @@ async function input(page, context, device) {
   } else {
     const session = await context.newCDPSession(page),
       box = await page.locator("#steer-pad").boundingBox(),
-      thrust = await page.locator('[data-control="thrust"]').boundingBox();
+      coast = await page.locator('[data-control="coast"]').boundingBox();
     await session.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
         { id: 1, x: box.x + box.width * 0.6, y: box.y + box.height * 0.4 },
         {
           id: 2,
-          x: thrust.x + thrust.width / 2,
-          y: thrust.y + thrust.height / 2,
+          x: coast.x + coast.width / 2,
+          y: coast.y + coast.height / 2,
         },
       ],
     });
     await page.waitForFunction(() => {
       const c = window.nullVector.telemetry.controls;
       return (
-        c.throttle &&
+        !c.throttle &&
         Math.abs(c.steer + 0.25) < 0.001 &&
         Math.abs(c.pitch - 0.25) < 0.001
       );
@@ -858,7 +858,7 @@ async function drive() {
     touchSession = await context.newCDPSession(page);
     touchPad = await page.locator("#steer-pad").boundingBox();
     touchButtons = {};
-    for (const control of ["thrust", "airLeft", "airRight"]) {
+    for (const control of ["coast", "airLeft", "airRight"]) {
       const box = await page
         .locator(`[data-control="${control}"]`)
         .boundingBox();
@@ -909,7 +909,7 @@ async function drive() {
             x: touchPad.x + touchPad.width * (0.5 - steer * 0.4),
             y: touchPad.y + touchPad.height * 0.5,
           },
-          ...(coast ? [] : [{ id: 2, ...touchButtons.thrust }]),
+          ...(coast ? [{ id: 2, ...touchButtons.coast }] : []),
           ...(air
             ? [{ id: 3, ...touchButtons[air > 0 ? "airLeft" : "airRight"] }]
             : []),
