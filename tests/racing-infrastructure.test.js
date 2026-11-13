@@ -105,12 +105,35 @@ for (const [index, config] of TRACKS.entries()) {
         }
     }
     for (const ad of getTrackAdvertisingLayout(track)) {
-      for (const approach of [120, 60, 30]) {
-        const eye = track
-          .frame(ad.u * track.length - approach, ad.branch)
-          .p.clone();
-        eye.y += 5;
-        for (const target of [ad.center, ...ad.corners]) {
+      for (const approach of [160, 120, 60, 45, 30]) {
+        const curated = approach === 160 || approach === 45;
+        const s = ad.u * track.length - approach;
+        const u = s / track.length;
+        const branch = curated
+          ? u > config.split[0] && u < config.split[1]
+            ? ad.side
+            : 0
+          : ad.branch;
+        const eye = track.frame(s, branch).p.clone();
+        eye.y += curated ? 8 : 5;
+        const targets = [ad.center, ...ad.corners];
+        if (curated) {
+          const normal = new THREE.Vector3(
+            Math.sin(ad.yaw),
+            0,
+            Math.cos(ad.yaw),
+          );
+          for (const x of [-0.45, -0.225, 0, 0.225, 0.45])
+            for (const y of [-0.4, 0, 0.4]) {
+              const target = ad.center
+                .clone()
+                .addScaledVector(ad.horizontal, x * ad.width)
+                .addScaledVector(normal, 0.86);
+              target.y += y * ad.height;
+              targets.push(target);
+            }
+        }
+        for (const target of targets) {
           const ray = new THREE.Ray(eye, target.clone().sub(eye).normalize());
           for (const [a, b, c] of triangles) {
             const hit = ray.intersectTriangle(
@@ -122,7 +145,7 @@ for (const [index, config] of TRACKS.entries()) {
             );
             assert(
               !hit || hit.distanceTo(eye) >= target.distanceTo(eye),
-              "relief masks a billboard approach",
+              `relief masks billboard ${ad.u} at ${approach} m`,
             );
           }
         }
