@@ -31,6 +31,23 @@ export function buildSectionalValues(track, direction) {
         .push({ f, end, vector, lengthSq: vector.lengthSq(), s, endS, branch });
     }
   }
+  // Road quads repeatedly shade vertices in the same few spatial cells. Resolve
+  // the 27-cell neighbourhood once, retaining the original traversal/tie order.
+  const neighborhoods = new Map();
+  function neighborhood(x, y, z) {
+    const cell = key(x, y, z);
+    if (!neighborhoods.has(cell)) {
+      const candidates = [];
+      for (let dx = -1; dx <= 1; dx++)
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dz = -1; dz <= 1; dz++) {
+            const samples = cells.get(key(x + dx, y + dy, z + dz));
+            if (samples) candidates.push(...samples);
+          }
+      neighborhoods.set(cell, candidates);
+    }
+    return neighborhoods.get(cell);
+  }
   const delta = new THREE.Vector3();
   const up = new THREE.Vector3();
   const right = new THREE.Vector3();
@@ -41,23 +58,20 @@ export function buildSectionalValues(track, direction) {
     let nearest;
     let distance = Infinity;
     let fraction = 0;
-    for (let dx = -1; dx <= 1; dx++)
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dz = -1; dz <= 1; dz++)
-          for (const sample of cells.get(key(x + dx, y + dy, z + dz)) || []) {
-            delta.subVectors(point, sample.f.p);
-            const t = THREE.MathUtils.clamp(
-              delta.dot(sample.vector) / sample.lengthSq,
-              0,
-              1,
-            );
-            const d = delta.addScaledVector(sample.vector, -t).lengthSq();
-            if (d < distance) {
-              distance = d;
-              nearest = sample;
-              fraction = t;
-            }
-          }
+    for (const sample of neighborhood(x, y, z)) {
+      delta.subVectors(point, sample.f.p);
+      const t = THREE.MathUtils.clamp(
+        delta.dot(sample.vector) / sample.lengthSq,
+        0,
+        1,
+      );
+      const d = delta.addScaledVector(sample.vector, -t).lengthSq();
+      if (d < distance) {
+        distance = d;
+        nearest = sample;
+        fraction = t;
+      }
+    }
     if (!nearest) return 1;
     const { f, end, branch } = nearest;
     delta.subVectors(point, f.p).addScaledVector(nearest.vector, -fraction);

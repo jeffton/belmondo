@@ -8,12 +8,17 @@ import { buildNewTerrainSurface } from "./new-course-environments.js";
 const SEA_LEVEL = -16;
 
 /** Authored land, earthworks and ground infrastructure share the visible surface. */
-export function buildEnvironment(scene, track, textures) {
+export function buildEnvironment(scene, track, textures, preparedTerrain) {
   if (newCourseRecipe(track))
-    return buildNewTerrainSurface(scene, track, textures, createTerrain(track));
+    return buildNewTerrainSurface(
+      scene,
+      track,
+      textures,
+      createTerrain(track, preparedTerrain),
+    );
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
-  const terrain = createTerrain(track);
+  const terrain = createTerrain(track, preparedTerrain);
   const { heightAt } = terrain;
   const group = new THREE.Group();
   group.name = "environment";

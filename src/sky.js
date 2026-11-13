@@ -398,10 +398,10 @@ export function paintSky(config, fogHex, width = 1024, height = 512) {
 }
 
 /** One static, world-oriented sky; no extra scenery meshes or per-frame work. */
-export function createSky(config, fogHex) {
+export function createSky(config, fogHex, prepared) {
   // One active course at a time: every painting shares the same budget.
   // LOW RES controls the scene framebuffer, not a second coarse horizon source.
-  const image = paintSky(config, fogHex, 2048, 1024);
+  const image = prepared ?? paintSky(config, fogHex, 2048, 1024);
   const texture = new THREE.DataTexture(image.data, image.width, image.height);
   texture.name = `${config.name} distant world`;
   texture.mapping = THREE.EquirectangularReflectionMapping;

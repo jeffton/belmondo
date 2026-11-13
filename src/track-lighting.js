@@ -214,21 +214,24 @@ export function buildTrackLighting(scene, track) {
       pools.push({ p: f.p, right: f.right, tangent: f.tangent, up: f.up });
     }
   }
+  const shadeColor = new THREE.Color();
+  const poolDelta = new THREE.Vector3();
   return {
     shade(point, color) {
       const sectional = sectionalValues(point);
       if (!night || track.config.biome === "metropolis")
-        return new THREE.Color(color).multiplyScalar(sectional).getHex();
+        return shadeColor.set(color).multiplyScalar(sectional).getHex();
       let strength = 0;
       for (const pool of pools) {
-        const delta = point.clone().sub(pool.p);
+        const delta = poolDelta.subVectors(point, pool.p);
         const radius =
           (delta.dot(pool.right) / 30) ** 2 +
           (delta.dot(pool.tangent) / 40) ** 2 +
           (delta.dot(pool.up) / 12) ** 2;
         strength = Math.max(strength, Math.max(0, 1 - radius) ** 2);
       }
-      return new THREE.Color(color)
+      return shadeColor
+        .set(color)
         .multiplyScalar(sectional * (0.7 + strength * 1.3))
         .getHex();
     },

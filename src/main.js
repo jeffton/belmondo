@@ -14,6 +14,7 @@ import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
 import { frameDelta } from "./frame-clock.js";
 import { halfstickPosition } from "./touch-halfstick.js";
+import { CoursePreparation } from "./course-preparation.js";
 
 installZoomPolicy();
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -202,26 +203,76 @@ function recordKey(mode = selectedMode(), speedClass = selectedSpeedClass) {
     LAPS,
   );
 }
-function selectTrack(i) {
+const coursePreparation = new CoursePreparation();
+let resolveInitialCourse;
+const initialCourseReady = new Promise((resolve) => {
+  resolveInitialCourse = resolve;
+});
+let trackGeneration = 0;
+let trackLoading = false;
+let loadedTrack = -1;
+let trackLoadTiming = null;
+async function selectTrack(i) {
   selectedTrack = i;
-  track = makeTrack(i);
-  world.build(track);
-  menuPreview.setTrack(track);
+  const generation = ++trackGeneration;
+  const isCurrent = () => generation === trackGeneration;
+  const start = performance.now();
+  trackLoading = true;
+  $("start").disabled = true;
+  $("tracks").setAttribute("aria-busy", "true");
+  $("fatal").hidden = true;
   updateModelName();
-  race = new Race(
-    track,
-    selectedCraft,
-    "race",
-    selectedSpeedClass,
-    world.environment.terrain,
-  );
-  world.setupRacers(race, CRAFT);
-  demoDistance = track.length * 0.02;
   $("circuit-name").textContent = TRACKS[i].name;
   for (const b of $("tracks").children) {
     const active = Number(b.dataset.index) === i;
     b.classList.toggle("active", active);
     b.setAttribute("aria-pressed", String(active));
+  }
+  try {
+    const prepared = await coursePreparation.load(i);
+    if (!isCurrent()) return;
+    const nextTrack = makeTrack(i);
+    menuPreview.setTrack(nextTrack);
+    const buildStart = performance.now();
+    let nextRace;
+    const candidate = await world.prepare(
+      nextTrack,
+      prepared,
+      isCurrent,
+      (scene) => {
+        nextRace = new Race(
+          nextTrack,
+          selectedCraft,
+          "race",
+          selectedSpeedClass,
+          scene.environment.terrain,
+        );
+        scene.setupRacers(nextRace, CRAFT);
+      },
+    );
+    if (!candidate || !isCurrent()) return;
+    world.adopt(candidate);
+    track = nextTrack;
+    race = nextRace;
+    demoDistance = track.length * 0.02;
+    loadedTrack = i;
+    resolveInitialCourse();
+    trackLoadTiming = {
+      totalMs: performance.now() - start,
+      buildMs: performance.now() - buildStart,
+      workerMs: prepared.workerMs,
+    };
+  } catch (error) {
+    if (!isCurrent()) return;
+    $("fatal").hidden = false;
+    $("fatal").textContent = `Could not prepare circuit: ${error.message}`;
+    throw error;
+  } finally {
+    if (isCurrent()) {
+      trackLoading = false;
+      $("start").disabled = loadedTrack !== selectedTrack;
+      $("tracks").setAttribute("aria-busy", "false");
+    }
   }
 }
 for (const [i, t] of TRACKS.entries()) {
@@ -250,7 +301,6 @@ for (const [i, c] of CRAFT.entries()) {
 }
 $("crafts").children[0].click();
 menuPreview.setClass(selectedSpeedClass);
-selectTrack(Math.floor(Math.random() * TRACKS.length));
 setMenuStage("class", false);
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
@@ -272,6 +322,8 @@ $("render-quality").onchange = () => {
   localStorage.setItem("nv-render", world.quality);
 };
 window.addEventListener("resize", () => world.resize());
+await selectTrack(Math.floor(Math.random() * TRACKS.length));
+await initialCourseReady;
 function clearInput() {
   keys.clear();
   touchSteer = 0;
@@ -285,7 +337,9 @@ function clearInput() {
 }
 let startGeneration = 0;
 async function start(event) {
+  if (trackLoading || loadedTrack !== selectedTrack) return;
   const generation = ++startGeneration;
+  const courseGeneration = trackGeneration;
   const button = event.currentTarget;
   button.disabled = true;
   music.setTunnel(false);
@@ -302,9 +356,10 @@ async function start(event) {
     window.alert(`Could not load audio: ${error.message}`);
     return;
   } finally {
-    button.disabled = false;
+    button.disabled = trackLoading || loadedTrack !== selectedTrack;
   }
-  if (generation !== startGeneration) return;
+  if (generation !== startGeneration || courseGeneration !== trackGeneration)
+    return;
   race = new Race(
     track,
     selectedCraft,
@@ -940,6 +995,9 @@ window.nullVector = {
       state,
       menuStage,
       selectedTrack,
+      loadedTrack,
+      trackLoading,
+      trackLoadTiming,
       selectedCraft,
       paused,
       time: race.time,

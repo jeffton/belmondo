@@ -106,7 +106,7 @@ export class World {
     this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
   }
-  build(track) {
+  disposeScene() {
     this.lighting?.dispose();
     if (this.scene) {
       const geometries = new Set(),
@@ -133,6 +133,47 @@ export class World {
         if (!this.assetTextures.has(t)) t.dispose();
       });
     }
+  }
+  build(track, prepared) {
+    for (const _ of this.buildSteps(track, prepared)) {
+      // Synchronous construction remains useful for deterministic CPU fixtures.
+    }
+  }
+  async prepare(track, prepared, isCurrent, setup) {
+    const candidate = Object.create(World.prototype);
+    candidate.flagshipAssets = this.flagshipAssets;
+    candidate.assetTextures = this.assetTextures;
+    const steps = candidate.buildSteps(track, prepared);
+    let complete = false;
+    try {
+      while (isCurrent()) {
+        if (steps.next().done) {
+          setup(candidate);
+          // Compile the completed scene before committing it. Parallel shader
+          // compilation avoids first-frame driver stalls while the old feed runs.
+          await this.renderer.compileAsync(candidate.scene, this.camera);
+          if (!isCurrent()) return null;
+          complete = true;
+          return candidate;
+        }
+        // A task boundary lets pointer input and animation run between build slices.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+      return null;
+    } finally {
+      if (!complete) {
+        steps.return();
+        candidate.disposeScene();
+      }
+    }
+  }
+  adopt(candidate) {
+    this.disposeScene();
+    Object.assign(this, candidate);
+  }
+  *buildSteps(track, prepared) {
+    this.disposeScene();
+    let sliceStart = performance.now();
     this.scene = new THREE.Scene();
     this.track = track;
     this.ships = [];
@@ -145,7 +186,7 @@ export class World {
     );
     textures.rail = createRailFaceTexture(cfg.name);
     this.textures = textures;
-    this.scene.background = createSky(cfg, fogColor);
+    this.scene.background = createSky(cfg, fogColor, prepared?.sky);
     this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
     this.lighting = buildTrackLighting(this.scene, track);
     const sea = new THREE.Mesh(
@@ -156,9 +197,17 @@ export class World {
     sea.rotation.x = -Math.PI / 2;
     sea.position.y = -16;
     this.scene.add(sea);
-    const environment = buildEnvironment(this.scene, track, textures);
+    yield;
+    const environment = buildEnvironment(
+      this.scene,
+      track,
+      textures,
+      prepared?.terrain,
+    );
     this.environment = environment;
+    yield;
     buildRacingInfrastructure(this.scene, track, textures, environment);
+    yield;
     const quads = [];
     const roadPoint = (frame, x, y) => {
       const inner =
@@ -256,6 +305,10 @@ export class World {
     for (let i = 0; i < stations.length - 1; i++) {
       const u = stations[i];
       const split = u >= cfg.split[0] && u < cfg.split[1];
+      if (performance.now() - sliceStart >= 1000 / 60) {
+        yield;
+        sliceStart = performance.now();
+      }
       if (track.gap(u)) continue;
       for (const branch of split ? [-1, 1] : [0]) {
         const a = track.frame(u * track.length, branch),
@@ -466,12 +519,19 @@ export class World {
         if (!chunks.has(key)) chunks.set(key, []);
         chunks.get(key).push(q);
       }
-      for (const chunk of chunks.values())
+      for (const chunk of chunks.values()) {
         this.scene.add(
           new THREE.Mesh(quadGeometry(chunk, this.lighting), material),
         );
+        if (performance.now() - sliceStart >= 1000 / 60) {
+          yield;
+          sliceStart = performance.now();
+        }
+      }
     }
+    yield;
     this.city = buildCity(this.scene, track, textures, environment);
+    yield;
     if (flagship)
       buildFlagship(
         this.scene,
@@ -480,9 +540,14 @@ export class World {
         environment,
         this.flagshipAssets,
       );
+    yield;
     const obj = new THREE.Object3D();
     const foundationQuads = [];
     for (let i = 0; i < stations.length - 1; i++) {
+      if (performance.now() - sliceStart >= 1000 / 60) {
+        yield;
+        sliceStart = performance.now();
+      }
       const u = stations[i],
         next = stations[i + 1];
       if (track.gap(u)) continue;
@@ -580,6 +645,7 @@ export class World {
     });
     this.scene.add(supports, trusses);
     buildTrackPads(this.scene, track, textures);
+    yield;
     buildJumpMarkings(this.scene, track, this.lighting);
     this.startGantry = buildStartGantry(this.scene, track);
     this.finishDistrict = buildFinishDistrict(
@@ -588,9 +654,12 @@ export class World {
       textures,
       environment,
     );
+    yield;
     buildSplitMarkers(this.scene, track);
     buildTrackAdvertising(this.scene, track, environment);
+    yield;
     buildVegetation(this.scene, track, environment);
+    yield;
     this.weaponEffects = new WeaponEffects(this.scene);
     this.impactSparks = new ImpactSparks(this.scene);
     this.effectMat = basic(0xff9730);
