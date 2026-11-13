@@ -96,7 +96,7 @@ function surfaceSamples(part, spacing = 2) {
   return samples;
 }
 
-/** Advertising remains readable through its complete 120 m approach fan. */
+/** Reserve the board envelope and its center/corner sight rays at 120 m. */
 export function infrastructureAdClear(parts, ads, track) {
   const inverse = new THREE.Matrix4();
   const bounds = new THREE.Box3(
