@@ -143,6 +143,29 @@ test("Cinderline shallow distant ridge does not jump a full contrast row", () =>
   }
 });
 
+test("Vesper occupied skyline lights form coherent architectural spans, not isolated pixels", () => {
+  const config = TRACKS.find((course) => course.name === "VESPER CIRCUIT");
+  const image = paintSky(config, config.fog, 2048, 1024);
+  const lit = (x, y) => Math.max(...pixel(image, x, y).slice(0, 3)) > 108;
+  let lights = 0;
+  let isolated = 0;
+  // Horizon latitude 0.07–0.13: below clouds, above fog, through all districts.
+  // The old per-texel hash produces 1,269 isolated lights in this same crop.
+  for (let y = 535; y < 555; y++) {
+    for (let x = 1; x < image.width - 1; x++) {
+      if (!lit(x, y)) continue;
+      lights++;
+      if (!lit(x - 1, y) && !lit(x + 1, y)) isolated++;
+    }
+  }
+  assert(lights > 500, "the city remains inhabited rather than simply unlit");
+  assert.equal(
+    isolated,
+    0,
+    "lights belong to bands/spines with horizontal extent",
+  );
+});
+
 test("course paintings are deterministic and distinct", () => {
   const hashes = TRACKS.map((config) => {
     const a = paintSky(config, config.fog, 256, 128);
