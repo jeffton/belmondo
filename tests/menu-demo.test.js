@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { Race } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 import { World } from "../src/world.js";
+import { createTerrain } from "../src/terrain.js";
 
 test("returning an all-DNF field to the menu restores demo hulls without resurrecting racers", () => {
   const track = makeTrack(0);
@@ -15,6 +16,7 @@ test("returning an all-DNF field to the menu restores demo hulls without resurre
   // Exercise the production draw method with real Three transforms, but no GPU.
   const world = Object.assign(Object.create(World.prototype), {
     track,
+    environment: { terrain: createTerrain(track) },
     time: 0,
     view: "chase",
     scene: new THREE.Scene(),
