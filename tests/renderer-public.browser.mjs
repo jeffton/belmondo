@@ -88,12 +88,13 @@ try {
   expect(await page.evaluate(() => localStorage.getItem("nv-renderer"))).toBe(
     "webgl",
   );
+  expect(errors.filter((error) => error.phase === "recovery")).toEqual([]);
   console.log(
     JSON.stringify({
       viewport,
       defaultWebGL: true,
       lazyGPU: true,
-      nativePreviewAndRace: true,
+      previewRenderedAndRaceStarted: true,
       explicitOptIn: true,
       manualRecovery: true,
       recordsPreserved: true,
