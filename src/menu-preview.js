@@ -289,7 +289,8 @@ function classSymbol(index) {
 
 /** Native-resolution transparent inset, independent of World's LOWRES canvas. */
 export class MenuPreview {
-  constructor(element) {
+  constructor(element, { createRenderer } = {}) {
+    this.rendererFactory = createRenderer;
     this.renderer = null;
     this.size = { width: 0, height: 0, pixelRatio: 0 };
     this.element = element;
@@ -379,6 +380,7 @@ export class MenuPreview {
   }
 
   createRenderer() {
+    if (this.rendererFactory) return this.rendererFactory();
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
@@ -478,7 +480,7 @@ export class MenuPreview {
     this.course = this.coursePivot = this.craft = this.classModel = null;
     if (this.renderer) {
       this.renderer.dispose();
-      this.renderer.forceContextLoss();
+      if (!this.renderer.backend?.isWebGPUBackend) this.renderer.forceContextLoss();
       this.renderer.domElement.remove();
       this.renderer = null;
     }

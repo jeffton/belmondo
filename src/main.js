@@ -15,6 +15,11 @@ import { MenuPreview } from "./menu-preview.js";
 import { frameDelta } from "./frame-clock.js";
 import { halfstickPosition } from "./touch-halfstick.js";
 import { CoursePreparation } from "./course-preparation.js";
+import {
+  selectedRenderer,
+  selectRenderer,
+  showRendererFailure,
+} from "./renderer-selection.js";
 
 installZoomPolicy();
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -38,16 +43,35 @@ music.volume = 0.65;
 music.setMenu(true);
 music.loadTracks(soundtrack, { shuffle: true });
 let musicEnabled = true;
+const rendererMode = selectedRenderer();
 let world;
+let gpuEngine;
 try {
-  world = new World($("game"));
+  if (rendererMode === "webgpu") {
+    const { createWebGPUEngine } = await import("./webgpu-engine.js");
+    gpuEngine = await createWebGPUEngine($("game"));
+  }
+  world = new World($("game"), {
+    renderer: gpuEngine?.worldRenderer,
+    createLensflare: gpuEngine?.createLensflare,
+  });
 } catch (error) {
-  $("fatal").hidden = false;
-  $("fatal").textContent =
-    `Could not initialize WebGL2. Enable hardware acceleration to race. ${error.message}`;
+  showRendererFailure($("fatal"), rendererMode, error);
   throw error;
 }
-const menuPreview = new MenuPreview($("menu-model"));
+if (gpuEngine) {
+  for (const renderer of [gpuEngine.worldRenderer, gpuEngine.previewRenderer]) {
+    renderer.onDeviceLost = (info) => {
+      console.error("WebGPU device lost", info);
+      showRendererFailure($("fatal"), rendererMode, new Error(info.message));
+    };
+  }
+}
+const menuPreview = new MenuPreview($("menu-model"), {
+  createRenderer: gpuEngine ? () => gpuEngine.previewRenderer : undefined,
+});
+$("renderer-select").value = rendererMode;
+$("renderer-select").onchange = (event) => selectRenderer(event.target.value);
 let menuStage = "class";
 const menuStages = ["class", "track", "craft"];
 function setMenuStage(stage, focus = true) {
@@ -1062,6 +1086,11 @@ window.nullVector = {
       drawCalls: world.renderer.info.render.calls,
       triangles: world.renderer.info.render.triangles,
       render: world.quality,
+      renderer: rendererMode,
+      backend: world.renderer.backend?.isWebGPUBackend ? "webgpu" : "webgl",
+      previewBackend: menuPreview.renderer?.backend?.isWebGPUBackend
+        ? "webgpu"
+        : "webgl",
     };
   },
 };
