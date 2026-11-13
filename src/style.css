@@ -481,15 +481,62 @@ footer {
   gap: 20px;
 }
 .shield {
-  width: 170px;
+  position: relative;
+  width: 178px;
 }
-.shield.critical .hud-label,
+.shield-instrument {
+  padding: 9px 12px 11px;
+  background: #0b1b28e8;
+  border-left: 3px solid var(--lime);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+.shield .hud-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.shield-mark {
+  width: 11px;
+  height: 13px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 85% 65%, 50% 100%, 15% 65%);
+}
+.shield-value {
+  margin-left: auto;
+  font: 700 22px/1 var(--telemetry);
+  letter-spacing: -1px;
+}
+.shield-value small {
+  margin-left: 2px;
+  font-size: 10px;
+}
+.shield .shield-cells {
+  height: 13px;
+  border: 0;
+  transform: skewX(-18deg);
+  background: #d4f53c20;
+  mask-image: repeating-linear-gradient(90deg, #000 0 8%, transparent 8% 10%);
+}
+.shield.critical .shield-instrument {
+  border-color: #ff642a;
+  background: #351b1ae8;
+}
+.shield.critical .hud-label {
+  color: transparent;
+}
+.shield.critical .shield-mark,
+.shield.critical .shield-value,
 #shield-warning {
   color: #ff8c60;
 }
 #shield-warning {
+  position: absolute;
+  top: 15px;
+  left: 29px;
   display: block;
-  margin-top: 5px;
+  margin: 0;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -563,8 +610,24 @@ footer {
   background: #304452;
 }
 .velocity {
+  position: relative;
   text-align: right;
-  width: 170px;
+  width: 184px;
+  padding: 10px 12px 12px;
+  border-right: 3px solid var(--orange);
+  background: linear-gradient(135deg, transparent 10px, #0b1b28e8 10px);
+}
+.velocity::before {
+  content: "";
+  display: block;
+  height: 3px;
+  width: 42px;
+  margin: 0 0 5px auto;
+  background: repeating-linear-gradient(
+    110deg,
+    var(--orange) 0 7px,
+    transparent 7px 10px
+  );
 }
 .velocity strong {
   font: 700 68px/1 var(--display);
@@ -581,17 +644,45 @@ footer {
   text-align: left;
 }
 .instrument-label {
-  display: block;
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
   line-height: 1.2;
-  letter-spacing: 0.8px;
+  letter-spacing: 1.1px;
+}
+.instrument-label i {
+  color: var(--orange);
+  font: 700 12px/1 var(--telemetry);
+}
+.thrust .instrument-label i {
+  color: #66edee;
 }
 .instrument-bar {
   position: relative;
-  height: 12px;
-  margin-top: 4px;
-  background: #07141cf2;
-  border: 1px solid #d4e4ecaa;
+  height: 17px;
+  margin-top: 5px;
+  background: #ee804426;
+  border: 0;
+}
+.speed-instrument .instrument-bar {
+  clip-path: polygon(0 77%, 100% 0, 100% 100%, 0 100%);
+  mask-image: repeating-linear-gradient(90deg, #000 0 8%, transparent 8% 10%);
+}
+.thrust-meter {
+  height: 11px;
+  background: #66edee20;
+  transform: skewX(-18deg);
+}
+.thrust-meter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(20% - 2px),
+    #0b1b28 0 20%
+  );
 }
 #speed-bar {
   background: var(--orange);
@@ -620,7 +711,7 @@ footer {
   color: #fff;
 }
 .thrust.launch .launch-band,
-.thrust.launch .launch-status {
+.thrust.launch .launch-status:not(:empty) {
   display: block;
 }
 #race-message {
@@ -1144,6 +1235,26 @@ body.touch .velocity strong {
 body.touch .velocity {
   width: 160px;
 }
+body.touch .shield-instrument {
+  padding: 7px 8px 9px;
+}
+body.touch #shield-warning {
+  top: 11px;
+  left: 25px;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+body.touch .shield .hud-label {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+body.touch .shield-value {
+  font-size: 18px;
+}
+body.touch .shield-mark {
+  width: 8px;
+  height: 10px;
+}
 body.touch .shield {
   width: 120px;
 }
@@ -1476,8 +1587,12 @@ body.touch .shield {
     display: grid;
     grid-template-columns: 84px minmax(0, 1fr);
     column-gap: 8px;
-    width: min(220px, calc((100vw - 180px) / 2 - 42px));
+    width: min(244px, calc(100vw - 230px));
+    padding: 7px 9px;
     text-align: center;
+  }
+  body.touch .velocity::before {
+    display: none;
   }
   body.touch .velocity strong {
     grid-column: 1;
@@ -1521,9 +1636,9 @@ body.touch .shield {
   }
   body.touch .shield {
     position: fixed;
-    top: 142px;
+    top: 174px;
     left: 23px;
-    width: 95px;
+    width: 140px;
   }
   body.touch .shield .bar {
     margin-top: 4px;

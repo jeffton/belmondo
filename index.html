@@ -165,9 +165,18 @@
       <div id="race-message" role="status"></div>
       <div class="hud-bottom">
         <div class="shield">
-          <span class="hud-label">SHIELD <b id="shield-num">100</b>%</span>
-          <div class="bar"><i id="shield-bar"></i></div>
-          <span id="shield-warning" hidden>SHIELD CRITICAL</span>
+          <div class="shield-instrument">
+            <span class="hud-label"
+              ><i class="shield-mark" aria-hidden="true"></i> SHIELD
+              <span class="shield-value"
+                ><b id="shield-num">100</b><small>%</small></span
+              ></span
+            >
+            <div class="bar shield-cells"><i id="shield-bar"></i></div>
+          </div>
+          <span id="shield-warning" aria-label="Shield critical" hidden
+            >CRITICAL</span
+          >
           <canvas
             id="map"
             width="180"
@@ -176,18 +185,22 @@
           ></canvas>
         </div>
         <div class="velocity">
-          <strong id="speed">000</strong><span>KM/H</span>
+          <strong id="speed">000</strong><span class="speed-unit">KM/H</span>
           <div class="speed-instrument">
-            <span class="instrument-label">SPEED</span>
+            <span class="instrument-label"
+              ><i aria-hidden="true">///</i> SPEED</span
+            >
             <div class="bar instrument-bar"><i id="speed-bar"></i></div>
           </div>
           <div id="thrust-system" class="thrust">
-            <span class="instrument-label">THRUST</span>
+            <span class="instrument-label"
+              ><i aria-hidden="true">»</i> THRUST</span
+            >
             <div class="bar instrument-bar thrust-meter">
               <i id="thrust-bar"></i>
               <span class="launch-band" aria-hidden="true"></span>
             </div>
-            <span id="launch-status" class="launch-status">65–80% AT GO</span>
+            <span id="launch-status" class="launch-status"></span>
           </div>
         </div>
       </div>
@@ -343,9 +356,9 @@
       </div>
       <h3>LAUNCH</h3>
       <p>
-        Build thrust with W / ↑ or A / R2 and reach 65–80% at GO for a launch
-        boost. Touch pilots must hold and release BRAKE to time the launch;
-        automatic thrust alone does not earn it.
+        Build thrust with W / ↑ or A / R2 and time the marked thrust zone with
+        GO for a launch boost. Touch pilots must hold and release BRAKE to time
+        the launch; automatic thrust alone does not earn it.
       </p>
       <div id="weapon-roster" class="arsenal"></div>
     </dialog>
