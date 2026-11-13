@@ -56,7 +56,8 @@ function failRendering(error) {
   sound.setPaused(true);
   musicEnabled = false;
   music.pause();
-  for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+  for (const dialog of document.querySelectorAll("dialog[open]"))
+    dialog.close();
   for (const element of document.body.children)
     if (element !== $("fatal")) element.inert = true;
   showRendererFailure($("fatal"), rendererMode, error);
@@ -260,9 +261,10 @@ let trackLoading = false;
 let loadedTrack = -1;
 let trackLoadTiming = null;
 async function selectTrack(i) {
+  if (renderingFailed) return;
   selectedTrack = i;
   const generation = ++trackGeneration;
-  const isCurrent = () => generation === trackGeneration;
+  const isCurrent = () => generation === trackGeneration && !renderingFailed;
   const start = performance.now();
   trackLoading = true;
   $("start").disabled = true;
@@ -311,8 +313,11 @@ async function selectTrack(i) {
     };
   } catch (error) {
     if (!isCurrent()) return;
-    $("fatal").hidden = false;
-    $("fatal").textContent = `Could not prepare circuit: ${error.message}`;
+    if (rendererMode === "webgpu") failRendering(error);
+    else {
+      $("fatal").hidden = false;
+      $("fatal").textContent = `Could not prepare circuit: ${error.message}`;
+    }
     throw error;
   } finally {
     if (isCurrent()) {
@@ -941,7 +946,11 @@ function animate(now) {
     renderFrames++;
     renderTime += dt;
     if (renderTime >= 2.5) {
-      if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
+      if (
+        rendererMode === "webgl" &&
+        renderTime / renderFrames > 0.027 &&
+        world.quality === "clean"
+      ) {
         world.quality = "retro";
         qualityToggle.checked = true;
         world.resize();
@@ -1117,7 +1126,9 @@ window.nullVector = {
           : null,
       resources: { ...world.renderer.info.memory },
       previewResources: menuPreview.resources,
-      drawCalls: world.renderer.info.render.calls,
+      drawCalls: world.renderer.backend?.isWebGPUBackend
+        ? world.renderer.info.render.drawCalls
+        : world.renderer.info.render.calls,
       triangles: world.renderer.info.render.triangles,
       render: world.quality,
       renderer: rendererMode,

@@ -144,6 +144,7 @@ export class World {
   }
   async prepare(track, prepared, isCurrent, setup) {
     const candidate = Object.create(World.prototype);
+    candidate.createLensflare = this.createLensflare;
     candidate.flagshipAssets = this.flagshipAssets;
     candidate.assetTextures = this.assetTextures;
     const steps = candidate.buildSteps(track, prepared);
@@ -852,6 +853,7 @@ export class World {
     this.sparks.instanceMatrix.needsUpdate = true;
     this.sparks.computeBoundingSphere();
     this.lighting.update(this.camera);
+    if (this.renderer.backend?.isWebGPUBackend) this.renderer.info.reset();
     this.renderer.render(this.scene, this.camera);
   }
 }

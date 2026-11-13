@@ -27,6 +27,14 @@ Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equippe
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
+## Renderer
+
+The class station offers **WebGL** and **WebGPU · Test**. Changing renderer reloads the game; records and low-res preference stay local. WebGL is the default. WebGPU requires an actual GPU adapter in a secure context and never silently switches to WebGL. Startup, device and rendering failures offer an explicit **Use WebGL** action.
+
+Both paths retain the same world geometry, textures, effects and simulation. The WebGPU path translates the animated instanced crowd to TSL and uses Three's node-based, occlusion-aware lens flare. Menu models render at display resolution; the live feed and race retain the selected low-res setting. WebGPU preserves the selected resolution rather than applying WebGL's adaptive resolution reduction.
+
+[Safari 26 supports WebGPU on iOS and iPadOS](https://webkit.org/blog/17333/webkit-features-in-safari-26-0/#webgpu). API availability alone does not guarantee that a device can create an adapter. Physical iPhone performance and visual parity require device testing; a headless software adapter cannot establish either.
+
 ## Sound
 
 The eight-track original Eleven Music soundtrack plays shuffled bags without back-to-back repeats. Music starts at reduced volume on the first menu selection; browser autoplay policy requires a user interaction. Music assets are distributed with the game, not the public source; see [music setup and rights](docs/music.md#soundtrack-credits). Music follows race pause/resume and has a separate volume from synthesized turbines and original generated weapon, impact and race cues. Sound-effect provenance is documented in [generated SFX](docs/generated-sfx/README.md). Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
