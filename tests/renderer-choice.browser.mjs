@@ -70,6 +70,28 @@ try {
   ).toBe('{"existing-best":42}');
   await unsupported.close();
 
+  const noAdapter = await browser.newPage();
+  await mockInputApp(noAdapter);
+  await noAdapter.addInitScript(() =>
+    Object.defineProperty(navigator, "gpu", {
+      value: { requestAdapter: async () => null },
+    }),
+  );
+  const fallbackWarnings = [];
+  noAdapter.on("console", (message) => {
+    if (message.text().includes("running under WebGL"))
+      fallbackWarnings.push(message.text());
+  });
+  await noAdapter.goto(`${base}?renderer=webgpu`);
+  await expect(noAdapter.locator("#fatal")).toContainText(
+    "Unable to create WebGPU adapter",
+  );
+  await expect(
+    noAdapter.getByRole("button", { name: "USE WEBGL" }),
+  ).toBeVisible();
+  expect(fallbackWarnings).toEqual([]);
+  await noAdapter.close();
+
   const runtime = await browser.newPage();
   await mockInputApp(runtime);
   await runtime.route("**/src/webgpu-engine.js**", (route) =>
