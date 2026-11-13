@@ -140,6 +140,8 @@ test("first race RAF after start completes and schedules its successor", async (
     draw: (...args) => calls.push(args),
   };
   const bindings = {
+    renderingFailed: false,
+    rendererMode: "webgl",
     frameDelta,
     last: null,
     state: "race",
