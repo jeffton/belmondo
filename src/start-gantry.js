@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { LAPS } from "./race.js";
 
 // Shared by the physical signal and its voice; the race owns the only clock.
 export function countdownBoardStage(race) {
@@ -219,7 +218,7 @@ export function buildStartGantry(scene, track) {
           player.s >= (player.lap - 1 + straightStart) * track.length &&
           player.s < lapEnd;
         displayedLap = player.lap + (approaching ? 1 : 0);
-        stage = displayedLap > LAPS ? "FINISH" : `LAP ${displayedLap}`;
+        stage = displayedLap > race.lapCount ? "FINISH" : `LAP ${displayedLap}`;
       }
     }
     const age =
@@ -291,12 +290,16 @@ export function buildStartGantry(scene, track) {
       active ? 220 : 177,
     );
     const status = running
-      ? [approaching ? "NEXT" : "CURRENT", "LAP", `${displayedLap} / ${LAPS}`]
+      ? [
+          approaching ? "NEXT" : "CURRENT",
+          "LAP",
+          `${displayedLap} / ${race.lapCount}`,
+        ]
       : complete
         ? [
             race.finished ? "RACE" : "FINISH",
             race.finished ? "COMPLETE" : "LINE",
-            `${LAPS} / ${LAPS}`,
+            `${race.lapCount} / ${race.lapCount}`,
           ]
         : stage === "idle"
           ? ["GRID", "STANDBY", "B/"]

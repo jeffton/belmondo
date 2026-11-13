@@ -270,7 +270,10 @@ export class AudioEngine {
     if (event.kind === "finish") {
       if (!race.finished || this.announcedResults.has(race)) return;
       this.announcedResults.add(race);
-      this.effect("finish", race.position);
+      this.effect(
+        "finish",
+        race.player.eliminated ? "eliminated" : race.position,
+      );
     } else if (event.kind === "lap") {
       if (!race.finished)
         this.effect(

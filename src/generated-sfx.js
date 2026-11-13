@@ -27,6 +27,10 @@ export const SFX_CUES = {
   "voice:result:6": { files: ["/audio/voice/sixth-place.wav"], gain: 0.9 },
   "voice:result:7": { files: ["/audio/voice/seventh-place.wav"], gain: 0.9 },
   "voice:result:8": { files: ["/audio/voice/you-lost.wav"], gain: 0.9 },
+  "voice:result:eliminated": {
+    files: ["/audio/voice/eliminated.wav"],
+    gain: 0.9,
+  },
   critical: { files: ["/audio/sfx/shield-critical.wav"], gain: 0.65 },
   hit: {
     files: ["/audio/sfx/hit-1.wav", "/audio/sfx/hit-2.wav"],

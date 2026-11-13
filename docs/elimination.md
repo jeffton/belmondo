@@ -2,7 +2,7 @@
 
 Zero shield permanently eliminates a racer, player or NPC. An eliminated hull cannot drive, collide, collect, fire, take damage, heal or recover. Positive-shield off-road/terrain recovery remains a checkpoint return with its existing shield penalty and minimum of 10.
 
-Finishers rank before every DNF, in swept finish-plane crossing order. Eliminated racers rank by survival: the first eliminated is last, the next is immediately ahead. Equal-step eliminations use deterministic simulation order. These ranks cannot change later. Surviving racers must still complete five laps; being the last survivor does not fabricate completed laps or award an automatic finish.
+Finishers rank before every DNF, in swept finish-plane crossing order. Eliminated racers rank by survival: the first eliminated is last, the next is immediately ahead. Equal-step eliminations use deterministic simulation order. These ranks cannot change later. Surviving racers must still complete their class's configured 3, 4 or 5 laps; being the last survivor does not fabricate completed laps or award an automatic finish.
 
 `race.finished` means the player has a terminal result. `race.complete` means every racer has finished or been eliminated. Surviving NPCs continue with their ordinary controller, physics, contacts and weapons behind the results panel. `resultPosition` and `resultTime` are the player's immutable terminal rank and elapsed time; `position` returns that rank after the result. A single player `finish` event supplies result speech for both a finish and elimination. An NPC result never emits player result speech. Eliminated runs cannot save a total-time record.
 

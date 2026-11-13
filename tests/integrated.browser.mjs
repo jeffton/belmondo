@@ -2,10 +2,13 @@ import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack, TRACKS } from "../src/track.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { LAPS_BY_CLASS } from "../src/race.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
-const recordKey = (layoutId, classId, craft = 0) =>
-  `${layoutId}-${craft}-trial-${classId}-5laps-pace${SPEED_CLASSES.find((spec) => spec.id === classId).pace}`;
+const recordKey = (layoutId, classId, craft = 0) => {
+  const classIndex = SPEED_CLASSES.findIndex((spec) => spec.id === classId);
+  return `${layoutId}-${craft}-trial-${classId}-${LAPS_BY_CLASS[classIndex]}laps-pace${SPEED_CLASSES[classIndex].pace}`;
+};
 const preservedRecords = {
   "0-0-trial": 0.1,
   "0-0-trial-c1-5laps": 0.2,
@@ -841,10 +844,12 @@ async function drive() {
   const course = Number(process.env.INTEGRATED_COURSE || 0);
   const speedClass = Number(process.env.INTEGRATED_CLASS || 0);
   const device = process.env.INTEGRATED_INPUT || "keyboard";
-  const targetLaps = Number(process.env.INTEGRATED_LAPS || 5);
+  const targetLaps = Number(
+    process.env.INTEGRATED_LAPS || LAPS_BY_CLASS[speedClass],
+  );
   const track = makeTrack(course),
     classSpec = SPEED_CLASSES[speedClass];
-  const fullRun = targetLaps === 5;
+  const fullRun = targetLaps === LAPS_BY_CLASS[speedClass];
   const { context, page } = await open(
     device,
     fullRun ? "drive" : "none",
@@ -1196,13 +1201,13 @@ async function drive() {
   }
   let records;
   if (fullRun) {
-    for (let lap = 1; lap <= 5; lap++)
+    for (let lap = 1; lap <= targetLaps; lap++)
       await expect(page.locator("#result-data")).toContainText(`LAP / ${lap}`);
     await expect(page.locator("#result-data")).toContainText(
-      `${classSpec.name} / 5 LAPS`,
+      `${classSpec.name} / ${targetLaps} LAPS`,
     );
     await page.screenshot({
-      path: `test-artifacts/integrated-${tag}-five-lap-results.png`,
+      path: `test-artifacts/integrated-${tag}-${targetLaps}-lap-results.png`,
     });
     for (const [label, viewport] of [
       ["landscape", { width: 844, height: 390 }],

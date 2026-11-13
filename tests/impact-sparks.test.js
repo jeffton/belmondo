@@ -141,6 +141,8 @@ test("first race RAF after start completes and schedules its successor", async (
   };
   const bindings = {
     frameDelta,
+    pollMenuGamepad() {},
+    menuNavigator: { sync() {} },
     last: null,
     state: "race",
     paused: false,
@@ -154,7 +156,6 @@ test("first race RAF after start completes and schedules its successor", async (
     music: { setTunnel() {} },
     track: { isTunnel: () => false },
     world,
-    LAPS: 5,
     crowdRight: { setFromMatrixColumn() {} },
     getCrowdMix: () => 0,
     hudTick: 0,

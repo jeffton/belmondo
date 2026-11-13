@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { AudioEngine } from "../src/audio.js";
 import { SFX_CUES } from "../src/generated-sfx.js";
-import { Race, LAPS } from "../src/race.js";
+import { Race, LAPS_BY_CLASS } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 
 globalThis.window = undefined;
+const LAPS = LAPS_BY_CLASS[2];
 globalThis.document = undefined;
 
 class Node {
@@ -333,35 +334,44 @@ test("spoken lap entry follows earned player gates, including final lap and fini
     racer.velocity.copy(frame.tangent).multiplyScalar(50);
     racer.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
   };
-  for (const lap of [1, 2, 3, 4, 5]) {
-    const race = new Race(track, 0, "trial");
-    race.countdown = 0;
-    const player = race.player;
-    placeBeforeGate(player, lap);
-    assert.equal(race.events.length, 0, "no pre-crossing announcement");
-    for (let step = 0; step < 120 && player.lap === lap; step++)
-      race.update(1 / 120, {});
-    assert.equal(player.lap, lap + 1);
-    for (const event of race.events) audio.raceEvent(event, race, LAPS);
-    const spoken = [...audio.sampleVoices].filter(
-      (voice) => voice.announcementPriority !== undefined,
-    );
-    if (lap === LAPS) {
-      assert.deepEqual(
-        spoken.map((voice) => voice.key),
-        ["voice:result:1"],
-        "finish replaces lap speech without repeating final lap",
+  for (const [speedClass, lapCount] of LAPS_BY_CLASS.entries()) {
+    for (let lap = 1; lap <= lapCount; lap++) {
+      const race = new Race(track, 0, "trial", speedClass);
+      race.countdown = 0;
+      const player = race.player;
+      placeBeforeGate(player, lap);
+      assert.equal(race.events.length, 0, "no pre-crossing announcement");
+      for (let step = 0; step < 120 && player.lap === lap; step++)
+        race.update(1 / 120, {});
+      assert.equal(player.lap, lap + 1);
+      for (const event of race.events)
+        audio.raceEvent(event, race, race.lapCount);
+      const spoken = [...audio.sampleVoices].filter(
+        (voice) => voice.announcementPriority !== undefined,
       );
-      assert(
-        [...audio.sampleVoices].some((voice) => voice.key === "voice:result:1"),
-      );
-    } else {
-      assert.deepEqual(
-        spoken.map((voice) => voice.key),
-        [lap + 1 === LAPS ? "voice:lap:final" : `voice:lap:${lap + 1}`],
-      );
+      if (lap === race.lapCount) {
+        assert.deepEqual(
+          spoken.map((voice) => voice.key),
+          ["voice:result:1"],
+          "finish replaces lap speech without repeating final lap",
+        );
+        assert(
+          [...audio.sampleVoices].some(
+            (voice) => voice.key === "voice:result:1",
+          ),
+        );
+      } else {
+        assert.deepEqual(
+          spoken.map((voice) => voice.key),
+          [
+            lap + 1 === race.lapCount
+              ? "voice:lap:final"
+              : `voice:lap:${lap + 1}`,
+          ],
+        );
+      }
+      audio.stopSamples();
     }
-    audio.stopSamples();
   }
   const aiRace = new Race(track);
   aiRace.countdown = 0;
@@ -407,7 +417,7 @@ test("real jump and landing retain simulation events without event audio", async
       if (event.kind !== "jump" && event.kind !== "land") continue;
       seen.add(event.kind);
       const sourceCount = audio.context.sources.length;
-      audio.raceEvent(event, race, LAPS);
+      audio.raceEvent(event, race, race.lapCount);
       assert.equal(audio.context.sources.length, sourceCount);
       assert.equal(audio.sampleVoices.size, 0);
     }
@@ -462,6 +472,7 @@ test("every replacement category has distinct decodable PCM masters", async () =
       "voice:result:6",
       "voice:result:7",
       "voice:result:8",
+      "voice:result:eliminated",
       "voice:3",
       "voice:2",
       "voice:1",

@@ -30,7 +30,9 @@ try {
     await page.goto(`${url}/announcer-qa`);
     await page.evaluate(async () => {
       const { AudioEngine } = await import("/src/audio.js");
-      const { Race, LAPS } = await import("/src/race.js");
+      const { Race, LAPS_BY_CLASS } = await import("/src/race.js");
+      const lapCount = LAPS_BY_CLASS[2];
+      window.lapCount = lapCount;
       const { makeTrack } = await import("/src/track.js");
       const { pickupPoint } = await import("/src/pickups.js");
       window.calls = [];
@@ -49,7 +51,7 @@ try {
         window.ready = true;
       };
       window.crossLap = (lap) => {
-        const race = new Race(track, 0, "trial");
+        const race = new Race(track, 0, "trial", 2);
         race.countdown = 0;
         const player = race.player;
         const s = track.finishS + lap * track.length - 1;
@@ -64,7 +66,8 @@ try {
         player.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
         for (let step = 0; step < 120 && player.lap === lap; step++)
           race.update(1 / 120, {});
-        for (const event of race.events) audio.raceEvent(event, race, LAPS);
+        for (const event of race.events)
+          audio.raceEvent(event, race, race.lapCount);
         return { lap: player.lap, finished: race.finished };
       };
       window.collectWeapon = () => {
@@ -85,7 +88,8 @@ try {
         player.checkpoint = { s: pad.s, branch: 0, gate: player.gate };
         player.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
         race.update(1 / 120, {});
-        for (const event of race.events) audio.raceEvent(event, race, LAPS);
+        for (const event of race.events)
+          audio.raceEvent(event, race, race.lapCount);
         return player.weapon;
       };
     });
@@ -101,7 +105,8 @@ try {
         );
       });
     };
-    for (let lap = 1; lap <= 4; lap++) {
+    const lapCount = await page.evaluate(() => window.lapCount);
+    for (let lap = 1; lap < lapCount; lap++) {
       const state = await page.evaluate((lap) => window.crossLap(lap), lap);
       assert.equal(state.lap, lap + 1);
       assert(!state.finished);
@@ -125,7 +130,7 @@ try {
     await page.evaluate(() => window.audio.setMuted(true));
     assert((await rms()) < 0.0001, "mute silences speech");
     await page.evaluate(() => window.audio.setMuted(false));
-    await page.evaluate(() => window.crossLap(5));
+    await page.evaluate(() => window.crossLap(window.lapCount));
     const calls = await page.evaluate(() => window.calls);
     assert.deepEqual(
       calls.slice(0, 4).map((call) => call.key),

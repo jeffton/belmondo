@@ -50,7 +50,7 @@ export const CRAFT = [
   },
 ];
 export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
-export const LAPS = 5;
+export const LAPS_BY_CLASS = Object.freeze([3, 4, 5]);
 export const CRITICAL_SHIELD = 25;
 
 export class Race {
@@ -58,6 +58,7 @@ export class Race {
     this.terrain = terrain;
     this.speedClass = speedClass;
     this.classSpec = SPEED_CLASSES[speedClass];
+    this.lapCount = LAPS_BY_CLASS[speedClass];
     this.track = track;
     this.pickups = getTrackPickups(track);
     this.mode = mode;
@@ -700,10 +701,10 @@ export class Race {
                 this.laps.push(lapTime);
                 this.bestLap = Math.min(this.bestLap, lapTime);
                 this.lapStart = crossingTime;
-                if (r.lap <= LAPS)
-                  this.emit("lap", "LAP " + r.lap + " / " + LAPS);
+                if (r.lap <= this.lapCount)
+                  this.emit("lap", "LAP " + r.lap + " / " + this.lapCount);
               }
-              if (r.lap > LAPS) finishCrossings.push({ r, fraction });
+              if (r.lap > this.lapCount) finishCrossings.push({ r, fraction });
             }
           }
         }

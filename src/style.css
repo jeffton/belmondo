@@ -68,19 +68,16 @@ button,
   user-select: none;
   -webkit-touch-callout: none;
 }
-button:focus-visible,
-.menu-links a:focus-visible,
-select:focus-visible,
-label:focus-within {
-  outline: 3px solid var(--lime);
-  outline-offset: 3px;
-}
 button {
   border: 0;
   color: inherit;
 }
 button:hover {
   filter: brightness(1.13);
+}
+.menu-cursor {
+  box-shadow: inset 0 -3px 0 var(--lime);
+  filter: brightness(1.12);
 }
 [hidden] {
   display: none !important;
@@ -226,18 +223,30 @@ h1.wordmark {
   margin-top: 6px;
   opacity: 0.85;
 }
+#tracks .choice small.track-progress,
+#tracks .choice small.track-lock {
+  min-height: 1.35em;
+  margin-top: 4px;
+  font-size: 8px;
+  letter-spacing: 0.35px;
+}
+#tracks .choice .trophy-1 {
+  color: #e6a72e;
+}
+#tracks .choice .trophy-2 {
+  color: #a9bdc9;
+}
+#tracks .choice .trophy-3 {
+  color: #cd8157;
+}
+#tracks .choice.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .crafts .choice {
   display: flex;
   align-items: center;
   gap: 9px;
-}
-.craft-icon {
-  display: inline-block;
-  clip-path: polygon(50% 0, 100% 100%, 50% 75%, 0 100%);
-  width: 20px;
-  height: 30px;
-  flex-shrink: 0;
-  background: var(--craft);
 }
 .menu-options {
   border: 0;
@@ -277,11 +286,6 @@ h1.wordmark {
   color: var(--ink);
   background: var(--mint);
   border-color: var(--paper);
-}
-.speed-choices .choice:has(input:focus-visible),
-.binary-options:has(input:focus-visible) {
-  outline: 3px solid var(--lime);
-  outline-offset: 3px;
 }
 .mode-row {
   display: grid;
@@ -1158,6 +1162,17 @@ kbd,
   font-size: 11px;
 }
 .result-line b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lime);
+}
+.result-mark {
+  font: 700 9px/1 var(--interface);
+  letter-spacing: 0.8px;
+}
+.best-lap-mark,
+.new-record-mark {
   color: var(--lime);
 }
 #fatal {
@@ -1346,9 +1361,6 @@ body.touch[data-input-mode="touch"] #touch-controls {
   #menu .choice {
     padding: 8px;
   }
-  #menu .craft-icon {
-    height: 26px;
-  }
   #menu #speed-class {
     margin-top: 12px;
   }
@@ -1450,10 +1462,6 @@ body.touch[data-input-mode="touch"] #touch-controls {
   }
   .crafts .choice {
     gap: 6px;
-  }
-  .craft-icon {
-    width: 17px;
-    height: 26px;
   }
 }
 @media (max-width: 480px) {
@@ -1576,10 +1584,6 @@ body.touch[data-input-mode="touch"] #touch-controls {
   .choice small {
     font-size: 9px;
     margin-top: 3px;
-  }
-  .craft-icon {
-    height: 23px;
-    width: 16px;
   }
   .mode-row {
     margin-top: 9px;
@@ -2008,9 +2012,6 @@ body.touch .instrument-bar {
   border: 0;
   font-size: 9px;
 }
-#menu footer .menu-links :is(button, a):focus-visible {
-  outline-offset: -3px;
-}
 #menu .world-caption {
   z-index: 2;
   right: max(28px, env(safe-area-inset-right));
@@ -2142,10 +2143,6 @@ body.touch .instrument-bar {
   #menu .crafts .choice small {
     font-size: 8px;
   }
-  #menu .craft-icon {
-    width: 12px;
-    height: 23px;
-  }
   #menu .mode-row {
     margin-top: 12px;
   }
@@ -2245,10 +2242,6 @@ body.touch .instrument-bar {
   }
   #menu .crafts .choice small {
     font-size: 8px;
-  }
-  #menu .craft-icon {
-    width: 12px;
-    height: 20px;
   }
   #menu .mode-row {
     margin-top: 9px;

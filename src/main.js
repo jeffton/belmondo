@@ -1,7 +1,7 @@
 import "./style.css";
 import { Vector3 } from "three";
 import { TRACKS, makeTrack, clamp, mod } from "./track.js";
-import { Race, CRAFT, SPEED_CLASSES, LAPS } from "./race.js";
+import { Race, CRAFT, SPEED_CLASSES, LAPS_BY_CLASS } from "./race.js";
 import { World } from "./world.js";
 import { AudioEngine } from "./audio.js";
 import { countdownBoardStage } from "./start-gantry.js";
@@ -10,8 +10,15 @@ import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 import { localRecordKey } from "./records.js";
+import {
+  loadProgression,
+  recordProgressionResult,
+  trackIsUnlocked,
+  trackProgress,
+} from "./progression.js";
 import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
+import { MenuNavigation } from "./menu-navigation.js";
 import { frameDelta } from "./frame-clock.js";
 import { halfstickPosition } from "./touch-halfstick.js";
 import { CoursePreparation } from "./course-preparation.js";
@@ -50,7 +57,8 @@ try {
 const menuPreview = new MenuPreview($("menu-model"));
 let menuStage = "class";
 const menuStages = ["class", "track", "craft"];
-function setMenuStage(stage, focus = true) {
+let menuNavigator;
+function setMenuStage(stage) {
   menuStage = stage;
   $("menu").dataset.stage = stage;
   for (const panel of document.querySelectorAll("[data-panel]"))
@@ -72,12 +80,7 @@ function setMenuStage(stage, focus = true) {
   );
   menuPreview.setStage(stage);
   updateModelName();
-  if (focus)
-    document
-      .querySelector(
-        `[data-panel="${stage}"] .active, [data-panel="${stage}"] input:checked`,
-      )
-      .focus({ preventScroll: true });
+  menuNavigator?.sync();
 }
 function updateCraftStats() {
   const craft = CRAFT[selectedCraft];
@@ -203,6 +206,7 @@ window.addEventListener(
   { capture: true },
 );
 const records = JSON.parse(localStorage.getItem("nv-records") || "{}");
+const progression = loadProgression(localStorage);
 function formatTime(t) {
   if (!Number.isFinite(t)) return "—";
   const m = Math.floor(t / 60);
@@ -221,7 +225,7 @@ function recordKey(mode = selectedMode(), speedClass = selectedSpeedClass) {
     selectedCraft,
     mode,
     SPEED_CLASSES[speedClass],
-    LAPS,
+    LAPS_BY_CLASS[speedClass],
   );
 }
 const coursePreparation = new CoursePreparation();
@@ -234,6 +238,16 @@ let trackLoading = false;
 let loadedTrack = -1;
 let trackLoadTiming = null;
 async function selectTrack(i) {
+  if (
+    !trackIsUnlocked(
+      progression,
+      SPEED_CLASSES[selectedSpeedClass].id,
+      TRACKS[i].layoutId,
+      i,
+      TRACKS,
+    )
+  )
+    return;
   selectedTrack = i;
   const generation = ++trackGeneration;
   const isCurrent = () => generation === trackGeneration;
@@ -300,9 +314,53 @@ for (const [i, t] of TRACKS.entries()) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.index = i;
-  button.innerHTML = `<b>${t.name}</b><small>${t.subtitle.split("/")[1]}</small>`;
+  button.innerHTML = `<b>${t.name}</b><small>${t.subtitle.split("/")[1]}</small><small class="track-progress"></small><small class="track-lock" hidden>🔒 LOCKED</small>`;
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
+}
+function refreshTrackProgression() {
+  const classId = SPEED_CLASSES[selectedSpeedClass].id;
+  for (const button of $("tracks").children) {
+    const index = Number(button.dataset.index);
+    const trackConfig = TRACKS[index];
+    const unlocked = trackIsUnlocked(
+      progression,
+      classId,
+      trackConfig.layoutId,
+      index,
+      TRACKS,
+    );
+    const progress = trackProgress(progression, classId, trackConfig.layoutId);
+    button.disabled = !unlocked;
+    button.classList.toggle("locked", !unlocked);
+    button.querySelector(".track-lock").hidden = unlocked;
+    button.querySelector(".track-progress").textContent = progress
+      ? progress.bestPosition <= 3
+        ? `★ BEST / ${progress.bestPosition}${{ 1: "ST", 2: "ND", 3: "RD" }[progress.bestPosition]}`
+        : `BEST / ${progress.bestPosition}TH`
+      : "";
+    button.querySelector(".track-progress").className =
+      `track-progress${progress && progress.bestPosition <= 3 ? ` trophy-${progress.bestPosition}` : ""}`;
+    button.setAttribute(
+      "aria-label",
+      `${trackConfig.name}${unlocked ? "" : ", locked"}${progress ? `, best place ${progress.bestPosition}` : ""}`,
+    );
+  }
+  if (
+    !trackIsUnlocked(
+      progression,
+      classId,
+      TRACKS[selectedTrack].layoutId,
+      selectedTrack,
+      TRACKS,
+    )
+  ) {
+    selectedTrack = TRACKS.findIndex((track, index) =>
+      trackIsUnlocked(progression, classId, track.layoutId, index, TRACKS),
+    );
+    void selectTrack(selectedTrack);
+  }
+  menuNavigator?.sync();
 }
 // Menu order is independent of the stable physics, AI and record craft IDs.
 for (const i of [2, 0, 1]) {
@@ -310,7 +368,7 @@ for (const i of [2, 0, 1]) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.craftIndex = i;
-  button.innerHTML = `<i class="craft-icon" style="--craft:#${c.color.toString(16)}"></i><span><b>${c.name}</b><small>${c.team}</small></span>`;
+  button.innerHTML = `<span><b>${c.name}</b><small>${c.team}</small></span>`;
   button.onclick = () => {
     selectedCraft = i;
     menuPreview.setCraft(i);
@@ -325,15 +383,17 @@ for (const i of [2, 0, 1]) {
   };
   $("crafts").append(button);
 }
+refreshTrackProgression();
 $("crafts").children[0].click();
 menuPreview.setClass(selectedSpeedClass);
-setMenuStage("class", false);
+setMenuStage("class");
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
     document.querySelector('input[name="speed-class"]:checked').value,
   );
   menuPreview.setClass(selectedSpeedClass);
   updateModelName();
+  refreshTrackProgression();
 };
 const qualityToggle = $("quality");
 qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
@@ -361,7 +421,18 @@ function clearInput() {
 }
 let startGeneration = 0;
 async function start(event) {
-  if (trackLoading || loadedTrack !== selectedTrack) return;
+  if (
+    trackLoading ||
+    loadedTrack !== selectedTrack ||
+    !trackIsUnlocked(
+      progression,
+      SPEED_CLASSES[selectedSpeedClass].id,
+      TRACKS[selectedTrack].layoutId,
+      selectedTrack,
+      TRACKS,
+    )
+  )
+    return;
   const generation = ++startGeneration;
   const courseGeneration = trackGeneration;
   const button = event.currentTarget;
@@ -425,6 +496,7 @@ function setPaused(value) {
   if (paused) music.setTunnel(false);
   else if (musicEnabled && !document.hidden && document.hasFocus())
     music.play();
+  menuNavigator?.sync();
 }
 function quit() {
   ++startGeneration;
@@ -436,7 +508,6 @@ function quit() {
   $("hud").hidden = true;
   $("pause-panel").close();
   $("results").hidden = true;
-  $("start").focus();
   sound.setPaused(true);
   sound.stopCrowd();
   music.setMenu(true);
@@ -445,6 +516,7 @@ function quit() {
 }
 function returnToPaddock() {
   quit();
+  refreshTrackProgression();
   setMenuStage("track");
 }
 $("start").onclick = start;
@@ -474,9 +546,12 @@ for (const [button, dialog] of [
       $("concept").src =
         "/art/openai-image-2026-11-11T14-07-30-783Z-ig_04b9a94398de6a94016af4763e4cec87d2b31fcfefd192931f.png";
     $(dialog).showModal();
+    menuNavigator?.sync();
   };
 for (const b of document.querySelectorAll("dialog .close"))
   b.onclick = () => b.closest("dialog").close();
+for (const dialog of document.querySelectorAll("dialog"))
+  dialog.addEventListener("close", () => menuNavigator?.sync());
 for (const d of document.querySelectorAll("dialog:not(#pause-panel)"))
   d.addEventListener("click", (e) => {
     if (e.target === d) {
@@ -500,7 +575,67 @@ $("touch-fire").addEventListener("pointerdown", (e) => {
 $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
+function navigationRoot() {
+  const dialogs = document.querySelectorAll("dialog[open]");
+  if (dialogs.length) return dialogs[dialogs.length - 1];
+  if (state === "menu") return $("menu");
+  if (state === "results") return $("results");
+  return null;
+}
+menuNavigator = new MenuNavigation({
+  document,
+  root: navigationRoot,
+  onInput: setInputMode,
+  onActivate: (cursor) => {
+    if (state !== "menu") return false;
+    if (menuStage === "class" && cursor.closest(".speed-choices")) {
+      setMenuStage("track");
+      return true;
+    }
+    if (menuStage === "track" && cursor.closest("#tracks")) {
+      cursor.click();
+      setMenuStage("craft");
+      return true;
+    }
+    if (menuStage === "craft" && cursor.closest("#crafts")) {
+      cursor.click();
+      $("start").click();
+      return true;
+    }
+    return false;
+  },
+  onEscape: () => {
+    const dialogs = document.querySelectorAll("dialog[open]");
+    if (dialogs.length) {
+      const dialog = dialogs[dialogs.length - 1];
+      if (dialog.id === "pause-panel") setPaused(false);
+      else dialog.close();
+    } else if (state === "results") returnToPaddock();
+    else if (state === "menu" && menuStage !== "class")
+      setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
+    menuNavigator.sync();
+  },
+});
+function readMenuGamepad(pad, now = performance.now()) {
+  const menuActive = Boolean(navigationRoot());
+  const x = pad?.axes?.[0] || 0;
+  const y = pad?.axes?.[1] || 0;
+  if (menuActive && (Math.abs(x) > 0.12 || Math.abs(y) > 0.12))
+    padAxesConsumed = true;
+  if (!pad || (Math.abs(x) < 0.12 && Math.abs(y) < 0.12))
+    padAxesConsumed = false;
+  menuNavigator.gamepad(menuActive ? pad : null, now);
+  if (menuNavigator.lastAction === "activate") padAConsumed = true;
+  if (menuNavigator.lastAction === "back" && pad?.buttons?.[9]?.pressed)
+    padPauseConsumed = true;
+  if (!pad?.buttons?.[0]?.pressed) padAConsumed = false;
+  if (!pad?.buttons?.[9]?.pressed) padPauseConsumed = false;
+}
+function pollMenuGamepad() {
+  readMenuGamepad(navigator.getGamepads?.()[0] || null);
+}
 window.addEventListener("keydown", (e) => {
+  if (menuNavigator?.keydown(e)) return;
   if (document.querySelector("dialog[open]:not(#pause-panel)")) return;
   if (state !== "race") return;
   if (
@@ -623,7 +758,10 @@ let lastControls = {};
 let steeringKind = "digital";
 let padPause = false,
   padFire = false,
-  padView = false;
+  padView = false,
+  padAConsumed = false,
+  padAxesConsumed = false,
+  padPauseConsumed = false;
 let previousPadInput = [];
 function input() {
   const pad = navigator.getGamepads?.()[0];
@@ -631,7 +769,9 @@ function input() {
     const values = [
       ...pad.axes
         .slice(0, 2)
-        .map((value) => (Math.abs(value) > 0.12 ? value : 0)),
+        .map((value) =>
+          !padAxesConsumed && Math.abs(value) > 0.12 ? value : 0,
+        ),
       ...pad.buttons.map((button, index) =>
         [4, 5, 7].includes(index)
           ? button.value > 0.1
@@ -664,27 +804,37 @@ function input() {
   let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
   let throttle = touch ? 1 - touchCoast : Number(launchIntent);
   if (pad) {
-    if (Math.abs(pad.axes[0]) > 0.12) {
+    if (!padAxesConsumed && Math.abs(pad.axes[0]) > 0.12) {
       steer = pad.axes[0];
       steeringKind = "analog";
     }
-    if (Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
+    if (!padAxesConsumed && Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
     airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
     airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
-    const padThrust = pad.buttons[0]?.pressed ? 1 : pad.buttons[7]?.value || 0;
+    const padThrust =
+      (pad.buttons[0]?.pressed && !padAConsumed ? 1 : 0) ||
+      pad.buttons[7]?.value ||
+      0;
     throttle = Math.max(throttle, padThrust > 0.1 ? padThrust : 0);
     launchIntent ||= padThrust > 0.1;
-    if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
-    padFire = pad.buttons[2]?.pressed;
-    if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
-    padView = pad.buttons[3]?.pressed;
-    if (
-      pad.buttons[9]?.pressed &&
-      !padPause &&
-      !document.querySelector("dialog[open]:not(#pause-panel)")
-    )
-      setPaused(!paused);
-    padPause = pad.buttons[9]?.pressed;
+    if (state === "race") {
+      if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
+      padFire = pad.buttons[2]?.pressed;
+      if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
+      padView = pad.buttons[3]?.pressed;
+      if (
+        pad.buttons[9]?.pressed &&
+        !padPauseConsumed &&
+        !padPause &&
+        !document.querySelector("dialog[open]:not(#pause-panel)")
+      )
+        setPaused(!paused);
+      padPause = pad.buttons[9]?.pressed;
+    } else {
+      padFire = pad.buttons[2]?.pressed;
+      padView = pad.buttons[3]?.pressed;
+      padPause = pad.buttons[9]?.pressed;
+    }
   }
   return {
     // The road's lateral axis points camera-left when looking forward.
@@ -751,40 +901,64 @@ function showResults() {
     records[key] = race.resultTime;
     localStorage.setItem("nv-records", JSON.stringify(records));
   }
+  if (recordProgressionResult(progression, race, track))
+    localStorage.setItem("nv-progression", JSON.stringify(progression));
+  refreshTrackProgression();
   $("result-title").textContent = race.player.eliminated
-    ? `ELIMINATED / ${race.position}`
-    : race.mode === "trial"
-      ? "RUN COMPLETE."
-      : race.position === 1
-        ? "FIRST PLACE"
-        : `POSITION / ${race.position}`;
+    ? "ELIMINATED"
+    : race.position === 1
+      ? "YOU WON"
+      : race.position === 8
+        ? "YOU LOST"
+        : `${race.position}${{ 2: "ND", 3: "RD" }[race.position] || "TH"} PLACE`;
   $("result-data").replaceChildren();
   const lines = [
-    ["CLASS", `${race.classSpec.name} / ${LAPS} LAPS`],
+    ["CLASS", `${race.classSpec.name} / ${race.lapCount} LAPS`],
     [
       race.player.eliminated ? "ELAPSED / DNF" : "TOTAL TIME",
       formatTime(race.resultTime),
+      false,
+      isRecord,
     ],
-    ...race.laps.map((v, i) => [`LAP / ${i + 1}`, formatTime(v)]),
-    ["BEST LAP", formatTime(race.bestLap)],
-    ["LOCAL RECORD", isRecord ? "NEW RECORD" : formatTime(records[key])],
+    ...race.laps.map((v, i) => [
+      `LAP / ${i + 1}`,
+      formatTime(v),
+      v === race.bestLap,
+      false,
+    ]),
   ];
-  for (const [label, value] of lines) {
+  for (const [label, value, isBestLap, isNewRecord] of lines) {
     const row = document.createElement("div");
     row.className = "result-line";
     const l = document.createElement("span");
     l.textContent = label;
+    if (isBestLap) {
+      const mark = document.createElement("small");
+      mark.className = "result-mark best-lap-mark";
+      mark.textContent = "BEST LAP";
+      l.append(mark);
+    }
     const v = document.createElement("b");
-    v.textContent = value;
+    const time = document.createElement("span");
+    time.textContent = value;
+    v.append(time);
+    if (isNewRecord) {
+      const mark = document.createElement("small");
+      mark.className = "result-mark new-record-mark";
+      mark.textContent = "NEW RECORD";
+      v.append(mark);
+    }
     row.append(l, v);
     $("result-data").append(row);
   }
+  menuNavigator?.sync();
 }
 function updateHUD(now) {
   const p = race.player;
   $("position").innerHTML =
     `${race.position}<small>/${race.racers.length}</small>`;
-  $("lap").innerHTML = `${Math.min(LAPS, p.lap)}<small>/${LAPS}</small>`;
+  $("lap").innerHTML =
+    `${Math.min(race.lapCount, p.lap)}<small>/${race.lapCount}</small>`;
   $("timer").textContent = formatTime(race.time);
   $("speed").textContent = String(Math.round(p.speed * 3.6)).padStart(3, "0");
   $("speed-bar").style.width =
@@ -826,6 +1000,8 @@ let hudTick = 0;
 function animate(now) {
   const dt = frameDelta(last, now);
   last = now;
+  pollMenuGamepad();
+  menuNavigator?.sync();
   if (state === "menu") {
     demoDistance += dt * 32;
     race.player.s = demoDistance;
@@ -876,7 +1052,7 @@ function animate(now) {
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
           world.burst(race.player, event.kind, event.text);
-        sound.raceEvent(event, race, LAPS);
+        sound.raceEvent(event, race, race.lapCount);
       }
       race.events.length = 0;
       sound.update(
@@ -1015,7 +1191,7 @@ window.addEventListener("drop", async (e) => {
     $("music-dialog").showModal();
   }
 });
-await selectTrack(Math.floor(Math.random() * TRACKS.length));
+await selectTrack(0);
 await initialCourseReady;
 requestAnimationFrame(animate);
 
@@ -1054,7 +1230,7 @@ window.nullVector = {
         mod(race.player.s - track.finishS, track.length) / track.length,
       finishS: track.finishS,
       lap: race.player.lap,
-      laps: LAPS,
+      laps: race.lapCount,
       speedClass: race.speedClass,
       classId: race.classSpec.id,
       layoutId: track.config.layoutId,

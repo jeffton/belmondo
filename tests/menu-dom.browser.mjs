@@ -2,6 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import { createServer } from "vite";
 import { makeTrack } from "../src/track.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { LAPS_BY_CLASS } from "../src/race.js";
 import { localRecordKey } from "../src/records.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
@@ -25,7 +26,7 @@ const key = (track, craft, mode, classIndex) =>
     craft,
     mode,
     SPEED_CLASSES[classIndex],
-    5,
+    LAPS_BY_CLASS[classIndex],
   );
 const records = {
   [`${layout}-0-race-c1-5laps`]: 1,
@@ -110,23 +111,174 @@ try {
       const response = await route.fetch();
       await route.fulfill({
         response,
-        body: `${await response.text()}\nwindow.menuQA = () => ({
-          selectedSpeedClass, selectedCraft, selectedTrack,
+        body: `${await response.text()}\nwindow.menuGamepadQA = (x = 0, y = 0, pressed = []) => {
+          window.menuPadQA = (x, y, pressed) => ({
+            axes: [x, y],
+            buttons: Array.from({ length: 16 }, (_, index) => ({
+              pressed: pressed.includes(index),
+              value: pressed.includes(index) ? 1 : 0,
+            })),
+          });
+          window.__menuGamepadTime = (window.__menuGamepadTime || performance.now()) + 200;
+          const pad = window.menuPadQA(x, y, pressed);
+          return readMenuGamepad(pad, window.__menuGamepadTime);
+        };
+        window.menuInputQA = (x = 0, y = 0, pressed = []) => {
+          const pad = window.menuPadQA(x, y, pressed);
+          Object.defineProperty(navigator, "getGamepads", {
+            configurable: true,
+            value: () => [pad],
+          });
+          window.__menuGamepadTime += 200;
+          readMenuGamepad(pad, window.__menuGamepadTime);
+          return input();
+        };
+        window.pauseQA = () => setPaused(true);
+        window.menuCursorQA = (selector) => {
+          const element = document.querySelector(selector);
+          menuNavigator.cursor = element.closest("label") || element;
+          menuNavigator.sync();
+        };
+        window.menuQA = () => ({
+          stage: menuStage, selectedSpeedClass, selectedCraft, selectedTrack, paused,
           mode: selectedMode(), quality: world.quality,
           raceClass: race.speedClass, raceMode: race.mode,
           classId: race.classSpec.id, pace: race.classSpec.pace,
           className: race.classSpec.name, craft: race.player.craft,
+          lapCount: race.lapCount,
           layoutId: race.track.config.layoutId
         });
-        window.finishQA = (resultTime) => {
+        window.selectTrackQA = (index) => selectTrack(index);
+        window.unlockFirstThreeQA = () => {
+          const classId = SPEED_CLASSES[selectedSpeedClass].id;
+          progression.classes[classId] = Object.fromEntries(
+            TRACKS.slice(0, 3).map((track, index) => [track.layoutId, {
+              bestPosition: [1, 2, 3][index], won: true
+            }]),
+          );
+          localStorage.setItem("nv-progression", JSON.stringify(progression));
+          refreshTrackProgression();
+        };
+        window.finishQA = (resultTime, rank = 1, eliminated = false, lapTimes = [40, 39, 39, 41, 42]) => {
           race.player.finished = race.finished = true;
+          race.player.eliminated = eliminated;
+          race.resultPosition = rank;
           race.resultTime = resultTime;
+          race.laps = lapTimes;
+          race.bestLap = Math.min(...lapTimes);
           showResults();
         };`,
       });
     });
     await page.goto(url);
     await page.waitForFunction(() => window.menuQA);
+    await page.keyboard.press("ArrowRight");
+    await expect(
+      page.locator('input[name="speed-class"][value="1"]'),
+    ).toBeChecked();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+    for (let step = 0; step < 5; step++) {
+      if (await page.locator("#mode label.menu-cursor").count()) break;
+      await page.keyboard.press("ArrowDown");
+    }
+    await expect(page.locator("#mode label.menu-cursor")).toHaveCount(1);
+    const modeCursor = page.locator("#mode label.menu-cursor input");
+    if ((await modeCursor.getAttribute("value")) === "trial")
+      await page.keyboard.press("Enter");
+    else await page.keyboard.press("ArrowRight");
+    await expect(
+      page.locator('input[name="mode"][value="trial"]'),
+    ).toBeChecked();
+    for (let step = 0; step < 3; step++) {
+      if (await page.locator("#render-quality label.menu-cursor").count())
+        break;
+      await page.keyboard.press("ArrowRight");
+    }
+    await expect(page.locator("#render-quality label.menu-cursor")).toHaveCount(
+      1,
+    );
+    const qualityCursor = page.locator(
+      "#render-quality label.menu-cursor input",
+    );
+    if ((await qualityCursor.getAttribute("value")) === "clean")
+      await page.keyboard.press("ArrowRight");
+    else await page.keyboard.press("Enter");
+    await expect(page.locator("#quality")).toBeChecked();
+    for (let step = 0; step < 8; step++) {
+      if (await page.locator("#help-open.menu-cursor").count()) break;
+      await page.keyboard.press("ArrowDown");
+    }
+    await expect(page.locator("#help-open.menu-cursor")).toHaveCount(1);
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#help-dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#help-dialog")).not.toBeVisible();
+    await page.locator("#music-open").click();
+    await expect(page.locator("#music-dialog")).toBeVisible();
+    await page.evaluate(() => window.menuCursorQA("#volume"));
+    await page.keyboard.press("ArrowRight");
+    await expect(page.locator("#volume")).toHaveValue("0.66");
+    await page.evaluate(() => window.menuGamepadQA(1, 0));
+    await page.evaluate(() => window.menuGamepadQA(1, 0));
+    await expect(page.locator("#volume")).toHaveValue("0.67");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#music-dialog")).not.toBeVisible();
+    if (viewport.width === 1280) {
+      await page.evaluate(() => window.menuCursorQA("#help-open"));
+      for (let step = 0; step < 5; step++)
+        await page.evaluate(() => window.menuGamepadQA(0, -1));
+      await expect(
+        page.locator(".speed-choices label.menu-cursor"),
+      ).toHaveCount(1);
+      await page.evaluate(() => window.menuGamepadQA(0.2, 0, [0]));
+      expect(await page.evaluate(() => window.menuQA().stage)).toBe("track");
+      await page.evaluate(() => window.menuGamepadQA(0.2, 0));
+      await page.evaluate(() => window.menuGamepadQA(0.2, 0, [0]));
+      expect(await page.evaluate(() => window.menuQA().stage)).toBe("craft");
+      await page.evaluate(() => window.menuGamepadQA(0.2, 0));
+      await expect(page.locator("#start")).toBeEnabled();
+      await page.evaluate(() => window.menuGamepadQA(0.2, 0, [0]));
+      await page.waitForFunction(
+        () => window.nullVector.telemetry.state === "race",
+      );
+      const consumedRaceInput = await page.evaluate(() =>
+        window.menuInputQA(0.2, 0, [0]),
+      );
+      expect(Math.abs(consumedRaceInput.steer)).toBe(0);
+      expect(consumedRaceInput.pitch).toBe(0);
+      expect(consumedRaceInput.throttle).toBeFalsy();
+      await page.evaluate(() => window.menuInputQA(0, 0, []));
+      await page.evaluate(() => window.pauseQA());
+      await expect(page.locator("#pause-panel")).toBeVisible();
+      await page.evaluate(() => window.menuGamepadQA(0, 0, [1]));
+      await expect(page.locator("#pause-panel")).toBeVisible();
+      await page.evaluate(() => window.menuGamepadQA());
+      await page.evaluate(() => window.menuGamepadQA(0, 0, [1]));
+      await expect(page.locator("#pause-panel")).not.toBeVisible();
+      await page.evaluate(() => window.menuInputQA(0, 0, [9]));
+      await expect(page.locator("#pause-panel")).toBeVisible();
+      await page.evaluate(() => window.menuInputQA());
+      await page.evaluate(() => window.menuGamepadQA(0, 0, [9]));
+      await page.evaluate(() => window.menuInputQA(0, 0, [9]));
+      expect(await page.evaluate(() => window.menuQA().paused)).toBe(false);
+      await expect(page.locator("#pause-panel")).not.toBeVisible();
+      await page.reload();
+      await page.waitForFunction(() => window.menuQA);
+      await page.locator('input[name="speed-class"][value="1"]').check();
+    }
+    await expect(page.locator("#crafts .craft-icon")).toHaveCount(0);
+    await expect(page.locator("#crafts button")).toHaveText([
+      /WRAITH/,
+      /STRIKER/,
+      /RAPTOR/,
+    ]);
     await expect(page.locator("#best")).toHaveCount(0);
     const footer = page.locator("#menu footer.menu-footer");
     await expect(footer).not.toContainText(
@@ -147,12 +299,8 @@ try {
       "RESONANCE",
       "SINGULARITY",
     ]);
-    const initial = page.locator('input[name="speed-class"]:checked');
-    await initial.focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(
-      page.locator('input[name="speed-class"][value="1"]'),
-    ).toBeChecked();
+    const selectedSpeed = page.locator('input[name="speed-class"]:checked');
+    await expect(selectedSpeed).toHaveValue("1");
     await page.locator('input[name="mode"][value="trial"]').check();
     await goToSetupStage(page, "craft");
     await page.locator('#crafts button[data-craft-index="1"]').click();
@@ -218,24 +366,32 @@ try {
       raceMode: "trial",
       mode: "trial",
     });
-    await page.evaluate(() => window.finishQA(140));
+    await page.evaluate(() => window.finishQA(140, 2));
     await expect(page.locator("#results")).toBeVisible();
-    const recordRow = page.locator("#result-data > div").filter({
-      hasText: "LOCAL RECORD",
-    });
     await expect(page.locator("#result-data")).toContainText(
-      "RESONANCE / 5 LAPS",
+      "RESONANCE / 4 LAPS",
     );
-    await expect(recordRow).toContainText("02:10.00");
+    await expect(page.locator("#result-data .best-lap-mark")).toHaveCount(2);
+    await expect(page.locator("#result-data")).not.toContainText(
+      "LOCAL RECORD",
+    );
+    const totalRow = page.locator("#result-data > div").filter({
+      hasText: "TOTAL TIME",
+    });
+    await expect(totalRow).toContainText("02:20.00");
+    await expect(totalRow.locator(".new-record-mark")).toHaveCount(0);
     expect(
       await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
     ).toEqual(records);
 
     await page.locator("#result-quit").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await expect(page.locator("#tracks button[aria-pressed=true]")).toHaveClass(
+      /menu-cursor/,
+    );
     await expect(
       page.locator("#tracks button[aria-pressed=true]"),
-    ).toBeFocused();
+    ).not.toBeFocused();
     expect(await page.evaluate(() => window.menuQA())).toMatchObject({
       selectedSpeedClass: 1,
       selectedCraft: 1,
@@ -260,9 +416,29 @@ try {
       raceMode: "trial",
       mode: "trial",
     });
-    await page.evaluate(() => window.finishQA(42.12));
+    await page.evaluate(() => window.finishQA(42.12, 1));
     await expect(page.locator("#results")).toBeVisible();
-    await expect(recordRow).toContainText("NEW RECORD");
+    await expect(totalRow.locator(".new-record-mark")).toHaveText("NEW RECORD");
+    await expect(page.locator("#result-data .best-lap-mark")).toHaveCount(2);
+    await expect(page.locator("#result-title")).toHaveText("YOU WON");
+    for (const [rank, title] of [
+      [1, "YOU WON"],
+      [2, "2ND PLACE"],
+      [3, "3RD PLACE"],
+      [4, "4TH PLACE"],
+      [5, "5TH PLACE"],
+      [6, "6TH PLACE"],
+      [7, "7TH PLACE"],
+      [8, "YOU LOST"],
+    ]) {
+      await page.evaluate((rank) => window.finishQA(42.12, rank), rank);
+      await expect(page.locator("#result-title")).toHaveText(title);
+    }
+    await page.evaluate(() => window.finishQA(42.12, 8, true));
+    await expect(page.locator("#result-title")).toHaveText("ELIMINATED");
+    await expect(page.locator(".eyebrow").last()).not.toContainText(
+      "CLASSIFIED",
+    );
     const earnedRecords = {
       ...records,
       [key(coast, 1, "trial", 1)]: 42.12,
@@ -275,6 +451,32 @@ try {
     expect(
       await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
     ).toEqual(earnedRecords);
+    await goToSetupStage(page, "track");
+    const trackButtons = page.locator("#tracks button");
+    await expect(trackButtons).toHaveCount(7);
+    for (let index = 0; index < 3; index++)
+      await expect(trackButtons.nth(index)).toBeEnabled();
+    for (let index = 3; index < 7; index++)
+      await expect(trackButtons.nth(index)).toBeDisabled();
+    await page.evaluate(() => window.selectTrackQA(3));
+    expect(await page.evaluate(() => window.menuQA().selectedTrack)).toBe(0);
+    await page.evaluate(() => window.unlockFirstThreeQA());
+    for (let index = 0; index < 4; index++)
+      await expect(trackButtons.nth(index)).toBeEnabled();
+    await expect(trackButtons.nth(0)).toContainText("★ BEST / 1ST");
+    await expect(trackButtons.nth(1)).toContainText("★ BEST / 2ND");
+    await expect(trackButtons.nth(2)).toContainText("★ BEST / 3RD");
+    await trackButtons.nth(3).click();
+    await expect(trackButtons.nth(3)).toHaveAttribute("aria-pressed", "true");
+    await goToSetupStage(page, "class");
+    await page.locator('input[name="mode"][value="trial"]').check();
+    await goToSetupStage(page, "track");
+    await expect(trackButtons.nth(3)).toBeEnabled();
+    await goToSetupStage(page, "class");
+    await page.locator('input[name="speed-class"][value="1"]').check();
+    expect(await page.evaluate(() => window.menuQA().selectedTrack)).toBe(0);
+    await goToSetupStage(page, "track");
+    await expect(trackButtons.nth(3)).toBeDisabled();
     console.log(
       `Menu DOM/input/records/persistence PASS ${viewport.width}×${viewport.height}`,
     );

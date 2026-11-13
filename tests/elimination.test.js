@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Race, LAPS, CRITICAL_SHIELD } from "../src/race.js";
+import { Race, CRITICAL_SHIELD } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 
 const input = { throttle: true, steer: 0, air: 0 };
@@ -22,12 +22,12 @@ function place(race, r, s, speed = 80, x = 0) {
   r.grounded = true;
 }
 function approachFinish(race, r, distance = 0.1, speed = 80, x = 0) {
-  r.lap = LAPS;
-  r.gate = LAPS * 32;
+  r.lap = race.lapCount;
+  r.gate = race.lapCount * 32;
   place(
     race,
     r,
-    race.track.finishS + LAPS * race.track.length - distance,
+    race.track.finishS + race.lapCount * race.track.length - distance,
     speed,
     x,
   );
@@ -126,7 +126,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
     race.update(1 / 120, {});
     assert.equal(race.player.finished, true);
     assert.equal(race.player.eliminated, false);
-    assert.equal(race.player.lap, LAPS + 1);
+    assert.equal(race.player.lap, race.lapCount + 1);
     assert.equal(race.resultPosition, 1);
     assert.equal(race.complete, true);
     assert.equal(finishEvents(race).length, 1);

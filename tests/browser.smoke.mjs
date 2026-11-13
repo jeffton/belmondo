@@ -22,7 +22,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await expect(page.locator('[data-panel="class"]')).toBeVisible();
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
   await expect(page.locator("#tracks")).toBeHidden();
   await expect(page.locator("#crafts")).toBeHidden();
   await expect(page.locator("#start")).toBeHidden();
@@ -30,7 +30,7 @@ try {
   await page.locator('#speed-class input[value="1"]').check();
   await page.locator("#quality").check();
   await page.locator("#setup-next").click();
-  await expect(page.locator('[data-panel="track"]')).toBeVisible();
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
   await expect(page.locator("#tracks button")).toHaveCount(7);
   await page.locator("#tracks button").nth(1).click();
   await expect(page.locator("#circuit-name")).toHaveText("SOLAR ARRAY");
@@ -38,7 +38,7 @@ try {
   await expect(page.locator("#circuit-name")).toHaveText("NOCTILUCENT");
   await page.locator("#tracks button").first().click();
   await page.locator("#setup-next").click();
-  await expect(page.locator('[data-panel="craft"]')).toBeVisible();
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");
   await expect(page.locator("#crafts button")).toHaveCount(3);
   await expect(page.locator("#start")).toBeVisible();
   await page.locator('#crafts button[data-craft-index="1"]').click();
@@ -131,18 +131,18 @@ try {
   m.on("pageerror", (e) => errors.push(e.message));
   await m.goto(url);
   await m.waitForFunction(() => window.nullVector?.telemetry.state === "menu");
-  await expect(m.locator('[data-panel="class"]')).toBeVisible();
+  await expect(m.locator("#menu")).toHaveAttribute("data-stage", "class");
   await expect(m.locator("#tracks")).toBeHidden();
   await expect(m.locator("#crafts")).toBeHidden();
   await expect(m.locator("#start")).toBeHidden();
   await m.locator('#speed-class input[value="2"]').check();
   await m.locator("#quality").check();
   await m.locator("#setup-next").tap();
-  await expect(m.locator('[data-panel="track"]')).toBeVisible();
+  await expect(m.locator("#menu")).toHaveAttribute("data-stage", "track");
   await expect(m.locator("#tracks button")).toHaveCount(7);
   await m.locator("#tracks button").first().tap();
   await m.locator("#setup-next").tap();
-  await expect(m.locator('[data-panel="craft"]')).toBeVisible();
+  await expect(m.locator("#menu")).toHaveAttribute("data-stage", "craft");
   await expect(m.locator("#crafts button")).toHaveCount(3);
   await expect(m.locator("#start")).toBeVisible();
   await m.locator('#crafts button[data-craft-index="0"]').tap();

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, mod } from "../src/track.js";
-import { Race, LAPS, SPEED_CLASSES } from "../src/race.js";
+import { Race, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 import { solveContacts, hullExtent } from "../src/contacts.js";
 import { railBounds } from "../src/rail-profile.js";
@@ -495,11 +495,12 @@ test("nearby unrelated road cannot teleport projection or award a cut lap", () =
   assert.equal(race.laps.length, 0);
 });
 
-test("five earned laps finish every class; four laps do not, and AI advances the ranking", () => {
+test("each class needs its configured laps to finish, and AI advances the ranking", () => {
   for (let c = 0; c < SPEED_CLASSES.length; c++) {
     const race = new Race(circuit(), 0, "race", c);
     race.countdown = 0;
-    drive(race, 5, { ...neutral, throttle: false });
+    const lapCount = race.lapCount;
+    drive(race, lapCount, { ...neutral, throttle: false });
     assert(
       race.position > 1,
       "rivals physically overtake the stationary player",
@@ -516,23 +517,23 @@ test("five earned laps finish every class; four laps do not, and AI advances the
         },
       });
       race.update(1 / 120, controls);
-      if (race.laps.length === 4) {
+      if (race.laps.length === lapCount - 1) {
         sawFourth = true;
         assert.equal(race.finished, false);
-        assert.equal(race.player.lap, 5);
+        assert.equal(race.player.lap, lapCount);
       }
     }
     assert(
       sawFourth,
       "crossed the actual fourth finish after its ordered gates",
     );
-    assert(race.finished, `class ${c} finishes its fifth earned lap`);
-    assert.equal(race.laps.length, LAPS);
-    assert.equal(race.player.lap, LAPS + 1);
-    assert.equal(race.player.gate, LAPS * 32 + 1);
+    assert(race.finished, `class ${c} finishes its ${lapCount} earned laps`);
+    assert.equal(race.laps.length, lapCount);
+    assert.equal(race.player.lap, lapCount + 1);
+    assert.equal(race.player.gate, lapCount * 32 + 1);
     assert(
       race.racers.slice(1).every((r) => r.lap > 1),
-      "AI keeps earning laps during the five-lap race",
+      "AI keeps earning laps during the race",
     );
   }
 });

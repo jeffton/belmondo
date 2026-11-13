@@ -4,10 +4,17 @@ import assert from "node:assert/strict";
 import { MathUtils } from "three";
 import { makeTrack, clamp, mod } from "../src/track.js";
 import { Race } from "../src/race.js";
+import { getTrackPickups } from "../src/pickups.js";
 import { createTerrain } from "../src/terrain.js";
 
 const track = makeTrack(5);
 const terrain = createTerrain(track);
+const lowerWeapon = getTrackPickups(track).find((pad) =>
+  pad.purpose.includes("Inner geothermal return-fork armament"),
+);
+const upperBoost = getTrackPickups(track).find((pad) =>
+  pad.purpose.includes("Wide upper rim acceleration"),
+);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 
 function controls(race, targetBranch, aimPickup) {
@@ -90,16 +97,16 @@ for (const speedClass of [0, 2]) {
     const upper = run(speedClass, 1, true);
     const missedUpper = run(speedClass, 1, false);
     assert(
-      lower.pickups.includes("1:CINDERLINE:5"),
+      lower.pickups.includes(`1:${lowerWeapon.id}`),
       "lower weapon silhouette was crossed",
     );
-    assert(!lower.pickups.includes("1:CINDERLINE:6"));
+    assert(!lower.pickups.includes(`1:${upperBoost.id}`));
     assert(
-      upper.pickups.includes("1:CINDERLINE:6"),
+      upper.pickups.includes(`1:${upperBoost.id}`),
       "upper boost was physically collected",
     );
-    assert(!upper.pickups.includes("1:CINDERLINE:5"));
-    assert(!missedUpper.pickups.includes("1:CINDERLINE:6"));
+    assert(!upper.pickups.includes(`1:${lowerWeapon.id}`));
+    assert(!missedUpper.pickups.includes(`1:${upperBoost.id}`));
     assert(upper.sector < missedUpper.sector);
     assert(
       Math.abs(upper.sector - lower.sector) <

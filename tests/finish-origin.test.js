@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, TRACKS } from "../src/track.js";
-import { Race, LAPS } from "../src/race.js";
+import { Race } from "../src/race.js";
 import {
   buildTimingStripe,
   getFinishDistrictLayout,
@@ -98,7 +98,7 @@ for (let course = 0; course < TRACKS.length; course++) {
       assert.equal(r.gate, 32);
       // Drive the last 100m using real inputs and collision/projection. A final
       // gate fixture isolates timing behavior; it is not a full-lap claim.
-      for (const lap of [1, LAPS]) {
+      for (const lap of [1, race.lapCount]) {
         r.lap = lap;
         r.gate = lap * 32;
         race.finished = false;
@@ -128,7 +128,7 @@ for (let course = 0; course < TRACKS.length; course++) {
             .sub(track.frame(finish).p)
             .dot(track.frame(finish).tangent) >= 0,
         );
-        assert.equal(race.finished, lap === LAPS);
+        assert.equal(race.finished, lap === race.lapCount);
         assert.equal(r.shield, 100);
       }
     }

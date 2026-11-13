@@ -10,17 +10,19 @@ for (let course = 0; course < 6; course++) {
   after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
   for (const speedClass of [0, 2]) {
     if (course === 5) {
-      test(`CINDERLINE: C${speedClass + 1} eight-ship pack earns five clean laps`, () => {
+      test(`CINDERLINE: C${speedClass + 1} eight-ship pack earns its clean race`, () => {
         const race = new Race(track, 0, "race", speedClass, terrain);
         race.countdown = 0;
         race.player.id = 8;
+        const targetLap = race.lapCount + 1;
         // Disable firing only; ordinary grid contacts and pickups remain active.
         for (const racer of race.racers) racer.aiFire = Infinity;
         race.damage = () => assert.fail("no weapon damage in the driving pack");
         let hullContactLoss = 0;
         for (
           let step = 0;
-          step < 120 * 400 && !race.racers.every((racer) => racer.lap >= 6);
+          step < 120 * 400 &&
+          !race.racers.every((racer) => racer.lap >= targetLap);
           step++
         ) {
           const shields = race.racers.map((racer) => racer.shield);
@@ -41,7 +43,7 @@ for (let course = 0; course < 6; course++) {
             );
           }
         }
-        assert(race.racers.every((racer) => racer.lap >= 6));
+        assert(race.racers.every((racer) => racer.lap >= targetLap));
         assert(
           hullContactLoss > 0,
           "the real pack exercises hull-contact damage",

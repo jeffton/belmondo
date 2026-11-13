@@ -42,7 +42,7 @@ try {
       const threePath = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
-      const [{ World }, { Race, CRAFT, LAPS }, { makeTrack }, THREE] =
+      const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
         await Promise.all([
           import("/src/world.js"),
           import("/src/race.js"),
@@ -93,7 +93,7 @@ try {
             fillRect(...args);
           };
           world.draw(race, 0);
-          return { course: track.config.name, errors };
+          return { course: track.config.name, lapCount: race.lapCount, errors };
         },
         step(stage) {
           if (stage === "reset") race = new Race(track, 0, "trial");
@@ -119,7 +119,7 @@ try {
               p = race.player;
             for (let i = 0; i < 600 && p.lap === lap; i++)
               race.update(1 / 120, { throttle: true });
-            if (p.lap !== lap + 1 || race.finished !== (lap === LAPS))
+            if (p.lap !== lap + 1 || race.finished !== (lap === race.lapCount))
               throw new Error("Timing crossing failed");
           }
           world.draw(race, 0, stage === "demo");
@@ -128,7 +128,10 @@ try {
           );
           const version = display.material.map.version;
           if (String(stage).startsWith("approach:")) {
-            race.racers.push({ lap: LAPS + 1, s: (LAPS + 1) * track.length });
+            race.racers.push({
+              lap: race.lapCount + 1,
+              s: (race.lapCount + 1) * track.length,
+            });
             world.startGantry.update(race);
             race.racers.pop();
             if (display.material.map.version !== version)
@@ -148,7 +151,7 @@ try {
                   ? "B/"
                   : stage === "reset"
                     ? "READY"
-                    : Number(stage.split(":")[1]) === LAPS
+                    : Number(stage.split(":")[1]) === race.lapCount
                       ? "FINISH"
                       : `LAP ${Number(stage.split(":")[1]) + 1}`;
           if (!labels.includes(expected))
@@ -191,8 +194,8 @@ try {
             geometries: world.renderer.info.memory.geometries,
             textures: world.renderer.info.memory.textures,
           };
-          for (let i = 0; i < LAPS; i++) {
-            race.player.lap = (i % LAPS) + 1;
+          for (let i = 0; i < race.lapCount; i++) {
+            race.player.lap = (i % race.lapCount) + 1;
             race.finished = false;
             world.draw(race, 0);
             world.draw(race, 0, true);
@@ -228,7 +231,7 @@ try {
         1,
         0,
         "lap",
-        ...Array.from({ length: 5 }, (_, i) => [
+        ...Array.from({ length: data.lapCount }, (_, i) => [
           `approach:${i + 1}`,
           `cross:${i + 1}`,
         ]).flat(),
@@ -248,9 +251,8 @@ try {
             "lap",
             "approach:1",
             "cross:1",
-            "approach:4",
-            "approach:5",
-            "cross:5",
+            `approach:${data.lapCount}`,
+            `cross:${data.lapCount}`,
           ].includes(stage)
         ) {
           await page.screenshot({
