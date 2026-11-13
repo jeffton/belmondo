@@ -79,7 +79,8 @@ const keys = new Set(),
   held = new Set();
 let touchSteer = 0,
   touchPitch = 0,
-  steerPointer = null;
+  steerPointer = null,
+  touchLaunchArmed = false;
 const touchLayout = matchMedia("(pointer: coarse)").matches;
 let touch = touchLayout;
 let inputMode = touch ? "touch" : "keyboard";
@@ -95,6 +96,7 @@ function setInputMode(mode) {
     touchSteer = 0;
     touchPitch = 0;
     steerPointer = null;
+    touchLaunchArmed = false;
     held.clear();
     document
       .querySelectorAll("[data-control].pressed")
@@ -207,6 +209,7 @@ function clearInput() {
   touchSteer = 0;
   touchPitch = 0;
   steerPointer = null;
+  touchLaunchArmed = false;
   for (const b of document.querySelectorAll(".pressed"))
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
@@ -401,6 +404,10 @@ for (const b of document.querySelectorAll("[data-control]")) {
   });
   for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     b.addEventListener(event, () => {
+      if (b.dataset.control === "coast" && race?.countdown > 0) {
+        if (event === "pointerup" && held.has("coast")) touchLaunchArmed = true;
+        else if (event === "pointercancel") touchLaunchArmed = false;
+      }
       held.delete(b.dataset.control);
       b.classList.remove("pressed");
     });
@@ -481,8 +488,8 @@ function input() {
   let airRight = down("KeyL") || held.has("airRight") ? 1 : 0;
   let airLeft = down("KeyJ") || held.has("airLeft") ? 1 : 0;
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
-  let launchIntent = down("ArrowUp", "KeyW") || held.has("thrust");
-  let throttle = launchIntent ? 1 : 0;
+  let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
+  let throttle = touch ? Number(!held.has("coast")) : Number(launchIntent);
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) {
       steer = pad.axes[0];

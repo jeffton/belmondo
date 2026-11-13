@@ -8,7 +8,7 @@ https://belmondo.roybot.se
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes, I nose down / K nose up, Space fire, V camera, Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, Y camera, Start pause.
-- **Touch:** hold the thrust button to accelerate; release to coast. Two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and thrust/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
+- **Touch:** automatic thrust; hold the coast button to release thrust without applying braking force. Two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and coast/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
 
 Races last five laps. C1 FLOW (1.2×), C2 RUSH (1.4×) and C3 OVERDRIVE (1.6×) select independent speed classes; local records are separated by class, physical pace, craft and mode. The HUD separates SPEED and THRUST and shows current/completed lap times beside the lap counter.
 
