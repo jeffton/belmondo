@@ -537,7 +537,7 @@ function updateHUD(now) {
   $("thrust-bar").style.width =
     `${(launching ? race.launch.level : Number(lastControls.throttle || 0)) * 100}%`;
   $("launch-status").textContent =
-    touch && !touchLaunchArmed ? "BRAKE → RELEASE" : "65–80% AT GO";
+    touch && !touchLaunchArmed ? "BRAKE → RELEASE" : "";
   const timingRows = race.laps.map(
     (time, i) =>
       `<div class="lap-time"><span>LAP ${i + 1}</span><b>${formatTime(time)}</b></div>`,
