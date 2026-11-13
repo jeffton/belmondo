@@ -4,7 +4,13 @@ import { Launch } from "../src/launch.js";
 import { Race } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 
-const idle = { throttle: 0, launchIntent: false, steer: 0, air: 0, brake: 0 };
+const idle = {
+  throttle: 0,
+  launchIntent: false,
+  steer: 0,
+  airLeft: 0,
+  airRight: 0,
+};
 const press = { ...idle, throttle: 1, launchIntent: true };
 
 function advance(target, seconds, input, step = 1 / 120) {
@@ -74,14 +80,14 @@ test("late digital throttle earns a launch; too early and too late do not", () =
   }
 });
 
-test("analog throttle and a deliberate touch brake/release share the timing model", () => {
+test("analog throttle and a deliberate touch thrust hold share the timing model", () => {
   const analog = launchAt([
     [2.04, idle],
     [1.16, { ...press, throttle: 0.5 }],
   ]);
   const touch = launchAt([
     [2, { ...press, launchIntent: false }],
-    [0.62, { ...idle, launchIntent: true, brake: 1 }],
+    [0.62, { ...idle, launchIntent: true }],
     [0.58, press],
   ]);
   assert.equal(analog.success, true);

@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -168,15 +169,18 @@ function cleanLap(speedClass, fork) {
       Math.sqrt((25 * pace * pace) / Math.max(crest, 0.0001)),
     );
     // Ordinary player controls; no AI identity, body teleport or route lock.
-    race.update(1 / 120, {
-      throttle: true,
-      steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
-      air: clamp(error * 0.8, -1, 1),
-      brake: Math.max(
-        clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
-        Math.abs(error) > 0.7 ? 1 : 0,
-      ),
-    });
+    race.update(
+      1 / 120,
+      pilotInputs({
+        throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
+        steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
+        air: clamp(error * 0.8, -1, 1),
+        slowing: Math.max(
+          clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
+          Math.abs(error) > 0.7 ? 1 : 0,
+        ),
+      }),
+    );
     if (r.wallTouched) railFrames++;
     if (r.recoveredThisStep) recoveries++;
     assert(

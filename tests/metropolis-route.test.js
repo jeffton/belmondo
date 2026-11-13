@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -67,19 +68,19 @@ function drive(
   }
   if (speedTarget) {
     target = speedTarget(s);
-    return {
+    return pilotInputs({
       throttle: speed < target + 0.2 * pace,
       steer,
       air,
-      brake: clamp((speed - target) / (2 * pace), 0, 1),
-    };
+      slowing: clamp((speed - target) / (2 * pace), 0, 1),
+    });
   }
-  return {
+  return pilotInputs({
     throttle: speed < target + 3 * pace,
     steer,
     air,
-    brake: clamp((speed - target) / (18 * pace), 0, 1),
-  };
+    slowing: clamp((speed - target) / (18 * pace), 0, 1),
+  });
 }
 
 // Exercise the isolated route through the real registry/factory; production
@@ -237,10 +238,10 @@ test("VESPER: a poor rooftop A exit carries a physical cost into B", (t) => {
   t.diagnostic(JSON.stringify(results));
 });
 
-test("VESPER: full-width racing-line search compares normal controls with and without airbrakes", (t) => {
+test("VESPER: full-width racing-line search compares normal controls with and without differential airbrake yaw", (t) => {
   // This is a bounded search, not a claim of a globally optimal racing line.
   // Both drivers get the same preview/speed objective; the airless driver can
-  // use the entire steering range and ordinary brake. Every trial starts on
+  // use the entire steering range and paired airbraking. Every trial starts on
   // the real grid, and follows the linked rooftop corners, not a reseeded arc.
   const results = [];
   for (const lateralAcceleration of [48, 56, 64, 80]) {
@@ -268,7 +269,8 @@ test("VESPER: full-width racing-line search compares normal controls with and wi
           });
           if (
             Math.abs(
-              controls.steer * 0.9 * CRAFT[1].handling + controls.air * 0.5,
+              controls.steer * 0.9 * CRAFT[1].handling +
+                (controls.airLeft - controls.airRight) * 0.5,
             ) >
             0.9 * CRAFT[1].handling
           )
@@ -321,7 +323,7 @@ test("VESPER: full-width racing-line search compares normal controls with and wi
     .sort((a, b) => a.seconds - b.seconds)[0];
   assert(
     cleanNoAir,
-    "independently tuned ordinary brakes must yield a genuinely clean no-air reference",
+    "independently tuned paired slowing must yield a clean no-differential-yaw reference",
   );
   assert(
     cleanAir.beyondSteerFrames > 0,
@@ -456,7 +458,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
         let touches = 0;
         let minShield = 100;
         let airFrames = 0;
-        let brakeFrames = 0;
+        let slowingFrames = 0;
         let maxSpeed = 0;
         let firstRailU = null;
         let maxSurge = 0;
@@ -465,8 +467,9 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
         let forkExitTime = null;
         for (let step = 0; step < 180 * 120 && r.lap === 1; step++) {
           const controls = drive(track, r, branch, speedClass);
-          if (Math.abs(controls.air) > 0.1) airFrames++;
-          if (controls.brake > 0.1) brakeFrames++;
+          if (Math.abs(controls.airLeft - controls.airRight) > 0.1) airFrames++;
+          if (Math.min(controls.airLeft, controls.airRight) > 0.1)
+            slowingFrames++;
           race.update(1 / 120, controls);
           maxSpeed = Math.max(maxSpeed, r.speed);
           maxSurge = Math.max(maxSurge, r.surge);
@@ -490,7 +493,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
               boost: r.boost,
               grounded: r.grounded,
               x: r.x,
-              brake: controls.brake,
+              pairedAir: Math.min(controls.airLeft, controls.airRight),
             };
           }
           const u = r.contactS / track.length;
@@ -529,7 +532,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
           airFrames > 500,
           "technical route uses substantial rotation control",
         );
-        assert(brakeFrames > 500, "braking is part of the driven lap");
+        assert(slowingFrames > 500, "braking is part of the driven lap");
         t.diagnostic(
           JSON.stringify({
             seconds: race.time,
@@ -537,7 +540,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
             touches,
             maxSpeed,
             airFrames,
-            brakeFrames,
+            slowingFrames,
           }),
         );
       });

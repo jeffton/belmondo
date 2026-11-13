@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, clamp, mod } from "../src/track.js";
@@ -10,8 +11,8 @@ after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 const angle = (value) => Math.atan2(Math.sin(value), Math.cos(value));
 
 // External player-input controller: no AI identity, body repositioning, speed
-// override or physics changes. Both variants keep exactly the same service
-// brake law. Air taps supplement saturated steering, then release immediately.
+// override or physics changes. Both variants keep exactly the same paired-trigger
+// slowing law. Air taps supplement saturated steering, then release immediately.
 function inputs(race, airEnabled, { acceleration, steeringGain }) {
   const r = race.player;
   const pace = race.classSpec.pace;
@@ -40,15 +41,15 @@ function inputs(race, airEnabled, { acceleration, steeringGain }) {
   );
   const demand = error * steeringGain - (r.yawRate * 0.25) / pace;
   const steer = clamp(demand, -1, 1);
-  return {
-    throttle: true,
+  return pilotInputs({
+    throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
     steer,
     air: airEnabled ? clamp((demand - steer) * 1.8, -1, 1) : 0,
-    brake: Math.max(
+    slowing: Math.max(
       clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
       Math.abs(error) > 0.7 ? 1 : 0,
     ),
-  };
+  });
 }
 
 function drive(speedClass, airEnabled, tuning) {
@@ -57,13 +58,13 @@ function drive(speedClass, airEnabled, tuning) {
   let walls = 0;
   let recoveries = 0;
   let airSeconds = 0;
-  let brakeSeconds = 0;
+  let slowingSeconds = 0;
   let start = null;
   let end = null;
   for (let step = 0; step < 14400 && race.player.lap < 2; step++) {
     const control = inputs(race, airEnabled, tuning);
-    airSeconds += Math.abs(control.air) / 120;
-    brakeSeconds += control.brake / 120;
+    airSeconds += Math.abs(control.airLeft - control.airRight) / 120;
+    slowingSeconds += Math.min(control.airLeft, control.airRight) / 120;
     race.update(1 / 120, control);
     const r = race.player;
     walls += Number(r.wallTouched);
@@ -75,7 +76,7 @@ function drive(speedClass, airEnabled, tuning) {
     time: race.time,
     sector: end - start,
     airSeconds,
-    brakeSeconds,
+    slowingSeconds,
     walls,
     recoveries,
     shield: race.player.shield,
@@ -122,7 +123,10 @@ for (const speedClass of [0, 2]) {
         )
         .sort((a, b) => a.time - b.time);
       assert(clean.length > 0, "a clean ordinary player-input lap is feasible");
-      assert(clean[0].brakeSeconds > 0, "service braking stays enabled");
+      assert(
+        clean[0].slowingSeconds > 0,
+        "paired airbrake slowing stays enabled",
+      );
       return clean[0];
     }
     const air = bestClean(true);

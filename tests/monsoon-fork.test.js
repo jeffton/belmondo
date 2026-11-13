@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -70,22 +71,22 @@ function pickupLine(race, branch) {
     ),
   );
   const target = Math.sqrt((95 * pace * pace) / Math.max(curve, 0.0001));
-  return {
-    throttle: true,
+  return pilotInputs({
+    throttle: r.speed < target && Math.abs(error) < 0.7,
     steer: clamp(error * 5 - (r.yawRate * 0.15) / pace, -1, 1),
     air: clamp(error * 0.8, -1, 1),
-    brake: Math.max(
+    slowing: Math.max(
       clamp((r.speed - target) / (30 * pace), 0, 1),
       Math.abs(error) > 0.7 ? 1 : 0,
     ),
-  };
+  });
 }
 
 function lap(speedClass, branch, turboAt = null, targetPickups = false) {
   const race = new Race(track, 0, "trial", speedClass, terrain);
   race.countdown = 0;
   const r = race.player;
-  // Production AI supplies ordinary steering, air and service braking to the
+  // Production AI supplies steering, throttle lifting and paired airbraking to the
   // same physical body. IDs select the intended fork; movement is never seeded.
   r.id = targetPickups ? 0 : branch === -1 ? 1 : 2;
   r.aiFire = Infinity;

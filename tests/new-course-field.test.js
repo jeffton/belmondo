@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, clamp, mod } from "../src/track.js";
@@ -32,12 +33,12 @@ function drive(race) {
   const cornerSpeed = Math.sqrt(
     (82 * pace * pace) / Math.max(curvature, 0.0001),
   );
-  return {
-    throttle: true,
+  return pilotInputs({
+    throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
     steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
     air: clamp(error * 0.8, -1, 1),
-    brake: clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
-  };
+    slowing: clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
+  });
 }
 
 for (const index of [3, 4, 5]) {

@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, clamp, mod } from "../src/track.js";
@@ -39,10 +40,10 @@ test("Monsoon outlet has opposite readable technical turns separated by a real 2
   );
 });
 
-// Same production AI feedback law and authored pickup approach in both arms;
-// only air authority differs. Service brakes stay active in BOTH. This fixed-
-// controller boosted-entry regression does not establish optimal no-air pace.
-function controls(race, branch, airEnabled) {
+// Legal player controls cross the authored optional boost, then negotiate the
+// technical outlet through throttle lifting and paired/differential airbrakes.
+// The obsolete independent-service-brake comparison cannot isolate air yaw.
+function controls(race, branch) {
   const r = race.player;
   const pace = race.classSpec.pace;
   const u = mod(r.contactS, track.length) / track.length;
@@ -73,23 +74,23 @@ function controls(race, branch, airEnabled) {
     ),
   );
   const cornerSpeed = Math.sqrt((82 * pace * pace) / Math.max(curve, 0.0001));
-  return {
-    throttle: true,
+  return pilotInputs({
+    throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
     steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
-    air: airEnabled ? clamp(error * 0.8, -1, 1) : 0,
-    brake: Math.max(
+    air: clamp(error * 0.8, -1, 1),
+    slowing: Math.max(
       clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
       Math.abs(error) > 0.7 ? 1 : 0,
     ),
-  };
+  });
 }
 
-function lap(speedClass, branch, airEnabled) {
+function lap(speedClass, branch) {
   const race = new Race(track, 0, "trial", speedClass, terrain);
   race.countdown = 0;
   let start = null,
     end = null,
-    brakeUse = 0,
+    slowingUse = 0,
     maxSteer = 0,
     separated = 0,
     wallSteps = 0,
@@ -101,7 +102,7 @@ function lap(speedClass, branch, airEnabled) {
   assert.equal(boost.lateral, -7);
   let previousGate = race.player.gate;
   for (let step = 0; step < 120 * 120 && race.player.lap < 2; step++) {
-    const input = controls(race, branch, airEnabled);
+    const input = controls(race, branch);
     const previousShield = race.player.shield;
     race.update(1 / 120, input);
     const r = race.player;
@@ -123,7 +124,7 @@ function lap(speedClass, branch, airEnabled) {
     }
     if (r.contactS > 0.74 * track.length && end === null) end = race.time;
     if (start !== null && end === null) {
-      brakeUse += input.brake;
+      slowingUse += Math.min(input.airLeft, input.airRight);
       maxSteer = Math.max(maxSteer, Math.abs(input.steer));
       assert(r.grounded, "the technical sector remains on its real road deck");
       if (r.wallTouched) {
@@ -157,12 +158,12 @@ function lap(speedClass, branch, airEnabled) {
   assert.equal(race.player.gate, 33);
   assert(separated > 20);
   assert(start !== null && end !== null);
-  assert(brakeUse > 100, "ordinary service braking was genuinely exercised");
+  assert(slowingUse > 0, "paired airbrake slowing was genuinely exercised");
   return {
     sector: end - start,
     time: race.time,
     shield: race.player.shield,
-    brakeUse,
+    slowingUse,
     maxSteer,
     boostPad: boost.id,
     entry,
@@ -174,23 +175,18 @@ function lap(speedClass, branch, airEnabled) {
 
 for (let speedClass = 0; speedClass < 3; speedClass++) {
   for (const branch of [-1, 1]) {
-    test(`class ${speedClass + 1}, fork ${branch}: actual edge-boost entry rewards air with service brakes in both arms`, (t) => {
-      const air = lap(speedClass, branch, true);
-      const steerOnly = lap(speedClass, branch, false);
-      assert.equal(air.boostPad, steerOnly.boostPad);
+    test(`class ${speedClass + 1}, fork ${branch}: legal airbrakes negotiate the real edge-boost technical entry`, (t) => {
+      const air = lap(speedClass, branch);
       assert(
         air.shield > 99,
         "air-assisted boosted entry avoids substantial rail damage",
       );
-      assert(
-        air.sector < steerOnly.sector * 0.96,
-        "this boosted-entry controller regression retains its >4% air advantage",
+      assert.equal(
+        air.wallSteps,
+        0,
+        "boosted technical entry stays off the rails",
       );
-      assert(
-        steerOnly.maxSteer > 0.99 && air.maxSteer < 0.9,
-        "ordinary steering saturates where air adds yaw authority",
-      );
-      t.diagnostic(JSON.stringify({ air, steerOnly }));
+      t.diagnostic(JSON.stringify(air));
     });
   }
 }

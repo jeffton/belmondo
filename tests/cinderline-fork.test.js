@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { MathUtils } from "three";
@@ -45,15 +46,15 @@ function controls(race, targetBranch, aimPickup) {
   const demand = error * 6 - (r.yawRate * 0.25) / pace;
   const steer = clamp(demand, -1, 1);
   const cornerSpeed = Math.sqrt((220 * pace * pace) / Math.max(curve, 0.0001));
-  return {
-    throttle: true,
+  return pilotInputs({
+    throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
     steer,
     air: clamp((demand - steer) * 1.8, -1, 1),
-    brake: Math.max(
+    slowing: Math.max(
       clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
       Math.abs(error) > 0.7 ? 1 : 0,
     ),
-  };
+  });
 }
 
 function run(speedClass, branch, aimPickup) {

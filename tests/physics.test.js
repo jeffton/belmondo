@@ -1,3 +1,4 @@
+import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
@@ -7,7 +8,7 @@ import { projectRoad } from "../src/road-projection.js";
 import { solveContacts, hullExtent } from "../src/contacts.js";
 import { railBounds } from "../src/rail-profile.js";
 
-const neutral = { throttle: true, steer: 0, air: 0, brake: false };
+const neutral = { throttle: 1, steer: 0, airLeft: 0, airRight: 0 };
 function circuit({ gap = false, split = false } = {}) {
   const radius = 200,
     length = Math.PI * 2 * radius;
@@ -84,17 +85,18 @@ function driver(race) {
     Math.sin(desiredYaw - p.yaw),
     Math.cos(desiredYaw - p.yaw),
   );
-  return {
+  return pilotInputs({
     ...neutral,
+    throttle: p.speed < Math.sqrt(75 / Math.abs(curve)),
     steer: Math.max(
       -1,
       Math.min(1, (curve * p.speed + error * 2 - p.yawRate * 0.1) / 0.9),
     ),
-    brake: Math.max(
+    slowing: Math.max(
       0,
       Math.min(1, (p.speed - Math.sqrt(75 / Math.abs(curve))) / 15),
     ),
-  };
+  });
 }
 
 test("passive throttle cannot rotate around a curve; a yaw controller can race it", () => {
@@ -126,9 +128,11 @@ test("engines reach distinct physical cruising speeds without clamping excess mo
     const race = new Race(straight(), craft, "trial");
     race.countdown = 0;
     drive(race, 25);
-    assert(Math.abs(race.player.speed - expected[craft]) < 2);
     assert(
-      race.player.position.z > expected[craft] * 20,
+      Math.abs(race.player.speed / race.classSpec.pace - expected[craft]) < 2,
+    );
+    assert(
+      race.player.position.z > expected[craft] * race.classSpec.pace * 20,
       "actual world distance, not a HUD speed multiplier",
     );
     race.player.velocity.z = 230;
@@ -149,9 +153,10 @@ test("boost spools force gradually and carries momentum through its smooth tail"
   race.update(1 / 120, neutral);
   assert(race.player.boost > 0 && race.player.boost < 0.03);
   assert(race.player.speed - cruise < 0.05, "no instant speed step");
-  drive(race, 0.99);
+  const pace = race.classSpec.pace;
+  drive(race, 0.99 / pace);
   const beforeEnd = race.player.speed;
-  drive(race, 0.25);
+  drive(race, 0.25 / pace);
   assert.equal(race.player.surge, 0);
   assert(
     race.player.boost > 0.8,
@@ -161,11 +166,11 @@ test("boost spools force gradually and carries momentum through its smooth tail"
     race.player.speed > beforeEnd,
     "inertia and residual force continue accelerating after the pad timer",
   );
-  drive(race, 0.5);
+  drive(race, 0.5 / pace);
   const peak = race.player.speed;
-  assert(peak > cruise + 35);
-  drive(race, 2.25);
-  assert(race.player.speed < peak && race.player.speed > cruise + 10);
+  assert(peak > cruise + 35 * pace);
+  drive(race, 2.25 / pace);
+  assert(race.player.speed < peak && race.player.speed > cruise + 10 * pace);
   assert(race.player.boost > 0 && race.player.boost < 0.1);
 });
 
@@ -262,7 +267,6 @@ test("pitch, yaw and bilateral airbrakes remain independent simultaneous control
   drive(race, 0.25, {
     ...neutral,
     steer: 0.5,
-    air: 0,
     airLeft: 1,
     airRight: 1,
     pitch: -1,
@@ -310,8 +314,8 @@ test("both airbrakes add drag while their yaw moments cancel", () => {
   const left = setup(),
     right = setup();
   const initialYaw = left.player.yaw;
-  drive(left, 0.3, { ...neutral, air: 1, airLeft: 1, airRight: 0 });
-  drive(right, 0.3, { ...neutral, air: -1, airLeft: 0, airRight: 1 });
+  drive(left, 0.3, { ...neutral, airLeft: 1, airRight: 0 });
+  drive(right, 0.3, { ...neutral, airLeft: 0, airRight: 1 });
   assert(left.player.yaw > initialYaw && right.player.yaw < initialYaw);
 });
 
@@ -898,7 +902,7 @@ test("rotating a hull already alongside a barrier cannot disable wall response o
   p.yawRate = 1.607;
   p.velocity.set(0, 0, 100);
   for (let step = 0; step < 20; step++) {
-    race.update(1 / 120, { ...neutral, steer: 1, air: 1 });
+    race.update(1 / 120, { ...neutral, steer: 1, airLeft: 1, airRight: 0 });
     const road = projectRoad(race.track, p.position, p.contactS, p.branch);
     const profile = railBounds(p, road, p.position);
     assert(
