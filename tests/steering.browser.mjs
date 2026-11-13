@@ -166,6 +166,10 @@ try {
   const t = await touch.newPage();
   await ready(t);
   const cdp = await touch.newCDPSession(t);
+  async function thrustFinger() {
+    const box = await t.locator('[data-control="thrust"]').boundingBox();
+    return { id: 2, x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
   for (const direction of [-1, 1]) {
     const before = await start(t),
       pad = await t.locator("#steer-pad").boundingBox();
@@ -177,6 +181,7 @@ try {
           x: pad.x + pad.width * (direction > 0 ? 0.8 : 0.2),
           y: pad.y + pad.height / 2,
         },
+        await thrustFinger(),
       ],
     });
     await checkDirection(t, before, direction, `touch ${direction}`);
@@ -203,6 +208,7 @@ try {
           x: button.x + button.width / 2,
           y: button.y + button.height / 2,
         },
+        await thrustFinger(),
       ],
     });
     await checkDirection(t, before, direction, `touch ${control}`);

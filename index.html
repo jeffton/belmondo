@@ -246,10 +246,9 @@
             </button>
           </div>
           <div>
-            <button data-control="brake" aria-label="Brake">
+            <button data-control="thrust" aria-label="Hold for thrust">
               <svg viewBox="0 0 32 32" aria-hidden="true">
-                <circle cx="16" cy="16" r="7" />
-                <path d="M6 7a13 13 0 0 0 0 18M26 7a13 13 0 0 1 0 18M12 16h8" />
+                <path d="m8 12 8-7 8 7M8 21l8-7 8 7M11 28l5-5 5 5" />
               </svg></button
             ><button
               id="touch-fire"
@@ -296,16 +295,13 @@
           <div class="keyboard-diagram">
             <div
               class="key-cluster"
-              aria-label="W thrust, A left, S brake, D right"
+              aria-label="W thrust, A steer left, D steer right"
             >
               <div class="key-action key-top">
                 <kbd>W</kbd><span>Thrust</span>
               </div>
               <div class="key-action key-left">
                 <kbd>A</kbd><span>Steer left</span>
-              </div>
-              <div class="key-action key-bottom">
-                <kbd>S</kbd><span>Brake</span>
               </div>
               <div class="key-action key-right">
                 <kbd>D</kbd><span>Steer right</span>
@@ -346,8 +342,8 @@
             <title id="pad-map-title">Standard gamepad controls</title>
             <desc id="pad-map-desc">
               Left stick steers and pitches: up nose down, down nose up. L1 left
-              airbrake, R1 right airbrake. A or R2 thrust. B brake, X fire, Y
-              view. Start pauses.
+              airbrake, R1 right airbrake. A or R2 thrust. X fire, Y view. Start
+              pauses.
             </desc>
             <path
               class="pad-shell"
@@ -357,7 +353,7 @@
               <path d="M143 136 V72 H22 M297 136 V72 H418 M315 113 V34 H418" />
               <path d="M139 206 H90 V343 H22 M220 178 V101 H196" />
               <path
-                d="M305 171 V92 H360 M277 199 H250 V319 H228 M333 199 H393 V250 H418 M305 227 V285 H418"
+                d="M305 171 V92 H360 M277 199 H250 V319 H228 M305 227 V285 H418"
               />
             </g>
             <g class="pad-labels">
@@ -367,7 +363,6 @@
               <text x="196" y="93" text-anchor="end">PAUSE</text>
               <text x="365" y="94">VIEW</text>
               <text x="230" y="335">FIRE</text>
-              <text x="418" y="245" text-anchor="end">BRAKE</text>
               <text x="418" y="280" text-anchor="end">THRUST</text>
               <text x="22" y="363">STEER + PITCH</text>
               <text class="pad-note" x="22" y="383">

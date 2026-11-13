@@ -92,8 +92,8 @@ async function drive(mobile, startupSeconds = null) {
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const cdp = mobile ? await context.newCDPSession(page) : null;
   const pad = mobile ? await page.locator("#steer-pad").boundingBox() : null;
-  const brake = mobile
-    ? await page.locator('[data-control="brake"]').boundingBox()
+  const thrust = mobile
+    ? await page.locator('[data-control="thrust"]').boundingBox()
     : null;
   const samples = [],
     transitions = [];
@@ -143,11 +143,11 @@ async function drive(mobile, startupSeconds = null) {
           y: pad.y + pad.height / 2,
         },
       ];
-      if (needBrake)
+      if (!needBrake)
         points.push({
           id: 2,
-          x: brake.x + brake.width / 2,
-          y: brake.y + brake.height / 2,
+          x: thrust.x + thrust.width / 2,
+          y: thrust.y + thrust.height / 2,
         });
       await cdp.send("Input.dispatchTouchEvent", {
         type: touching ? "touchMove" : "touchStart",
@@ -156,10 +156,9 @@ async function drive(mobile, startupSeconds = null) {
       touching = true;
       braking = needBrake;
     } else {
-      const wanted = new Set(["ArrowUp"]);
+      const wanted = new Set(needBrake ? [] : ["ArrowUp"]);
       if (demand > 0.055) wanted.add("ArrowLeft");
       else if (demand < -0.055) wanted.add("ArrowRight");
-      if (needBrake) wanted.add("ArrowDown");
       if (Math.abs(error) > 0.38) wanted.add(error > 0 ? "KeyJ" : "KeyL");
       for (const key of held) if (!wanted.has(key)) await page.keyboard.up(key);
       for (const key of wanted)

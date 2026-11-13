@@ -79,7 +79,6 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     touchPitch: 0,
     steerPointer: null,
     touch: false,
-    touchLaunchArmed: false,
     race: { countdown: 0 },
     paused: false,
     padPause: false,

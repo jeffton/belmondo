@@ -122,6 +122,18 @@ try {
   await m.waitForFunction(() => window.nullVector?.telemetry.state === "menu");
   await m.locator("#quality").check();
   await m.locator("#start").click();
+  await m.waitForFunction(() => window.nullVector.telemetry.state === "race");
+  const cdp = await mobile.newCDPSession(m);
+  const thrustBox = await m.locator('[data-control="thrust"]').boundingBox();
+  const thrustFinger = {
+    id: 1,
+    x: thrustBox.x + thrustBox.width / 2,
+    y: thrustBox.y + thrustBox.height / 2,
+  };
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [thrustFinger],
+  });
   await m.waitForFunction(
     () => window.nullVector.telemetry.speed > 40,
     {},
@@ -130,11 +142,19 @@ try {
   await expect(m.locator("#steer-pad")).toBeVisible();
   await expect(m.locator("#touch-fire")).toBeVisible();
   const rect = await m.locator("#steer-pad").boundingBox();
-  await m.mouse.move(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
-  await m.mouse.down();
-  await m.mouse.move(rect.x + rect.width * 0.8, rect.y + rect.height * 0.5);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [
+      thrustFinger,
+      { id: 2, x: rect.x + rect.width * 0.8, y: rect.y + rect.height * 0.5 },
+    ],
+  });
   await m.waitForTimeout(300);
-  await m.mouse.up();
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+  await m.waitForFunction(() => !window.nullVector.telemetry.controls.throttle);
   await m.locator("[data-control=airRight]").click();
   if (await m.locator("#touch-fire").isEnabled())
     await m.locator("#touch-fire").click();
@@ -156,7 +176,7 @@ try {
   await expect(m.locator("#pause")).toBeVisible();
   await m.screenshot({ path: "test-artifacts/mobile-portrait-race.png" });
   console.log(
-    "Mobile: landscape/portrait menus, automatic thrust, proportional pointer pad, buttons, pause, no horizontal overflow OK",
+    "Mobile: landscape/portrait menus, held/released thrust, proportional pointer pad, buttons, pause, no horizontal overflow OK",
   );
   await mobile.close();
   expect(errors).toEqual([]);

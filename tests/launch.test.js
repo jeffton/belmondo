@@ -32,7 +32,7 @@ function launchAt(segments, step) {
   return launch;
 }
 
-test("automatic thrust and input held from the start cannot win a launch", () => {
+test("idle input and thrust held from the start cannot win a launch", () => {
   for (const input of [
     idle,
     { ...press, launchIntent: false },
@@ -86,8 +86,7 @@ test("analog throttle and a deliberate touch thrust hold share the timing model"
     [1.16, { ...press, throttle: 0.5 }],
   ]);
   const touch = launchAt([
-    [2, { ...press, launchIntent: false }],
-    [0.62, { ...idle, launchIntent: true }],
+    [2.62, idle],
     [0.58, press],
   ]);
   assert.equal(analog.success, true);

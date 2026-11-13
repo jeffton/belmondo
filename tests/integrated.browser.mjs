@@ -233,11 +233,17 @@ async function input(page, context, device) {
     });
   } else {
     const session = await context.newCDPSession(page),
-      box = await page.locator("#steer-pad").boundingBox();
+      box = await page.locator("#steer-pad").boundingBox(),
+      thrust = await page.locator('[data-control="thrust"]').boundingBox();
     await session.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
         { id: 1, x: box.x + box.width * 0.6, y: box.y + box.height * 0.4 },
+        {
+          id: 2,
+          x: thrust.x + thrust.width / 2,
+          y: thrust.y + thrust.height / 2,
+        },
       ],
     });
     await page.waitForFunction(() => {
@@ -852,7 +858,7 @@ async function drive() {
     touchSession = await context.newCDPSession(page);
     touchPad = await page.locator("#steer-pad").boundingBox();
     touchButtons = {};
-    for (const control of ["brake", "airLeft", "airRight"]) {
+    for (const control of ["thrust", "airLeft", "airRight"]) {
       const box = await page
         .locator(`[data-control="${control}"]`)
         .boundingBox();
@@ -862,12 +868,11 @@ async function drive() {
       };
     }
   }
-  async function command(steer, brake, air) {
+  async function command(steer, coast, air) {
     if (device === "keyboard") {
-      const wanted = new Set(["KeyW"]);
+      const wanted = new Set(coast ? [] : ["KeyW"]);
       if (steer > 0) wanted.add("ArrowLeft");
       if (steer < 0) wanted.add("ArrowRight");
-      if (brake) wanted.add("ArrowDown");
       if (air > 0) wanted.add("KeyJ");
       if (air < 0) wanted.add("KeyL");
       for (const key of held) if (!wanted.has(key)) await page.keyboard.up(key);
@@ -877,18 +882,17 @@ async function drive() {
       for (const key of wanted) held.add(key);
     } else if (device === "controller") {
       await page.evaluate(
-        ({ steer, brake, air }) => {
+        ({ steer, coast, air }) => {
           window.qaPad.axes = [-steer, 0, 0, 0];
           window.qaPad.buttons = [
-            0,
-            ...(brake ? [1] : []),
+            ...(coast ? [] : [0]),
             ...(air > 0 ? [4] : air < 0 ? [5] : []),
           ];
         },
-        { steer, brake, air },
+        { steer, coast, air },
       );
     } else {
-      const mask = `${brake}:${air}`;
+      const mask = `${coast}:${air}`;
       if (touching && mask !== touchMask) {
         await touchSession.send("Input.dispatchTouchEvent", {
           type: "touchEnd",
@@ -905,7 +909,7 @@ async function drive() {
             x: touchPad.x + touchPad.width * (0.5 - steer * 0.4),
             y: touchPad.y + touchPad.height * 0.5,
           },
-          ...(brake ? [{ id: 2, ...touchButtons.brake }] : []),
+          ...(coast ? [] : [{ id: 2, ...touchButtons.thrust }]),
           ...(air
             ? [{ id: 3, ...touchButtons[air > 0 ? "airLeft" : "airRight"] }]
             : []),

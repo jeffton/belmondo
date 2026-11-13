@@ -33,27 +33,35 @@ try {
     await expect(help).not.toContainText("launch boost");
     await expect(help).not.toContainText("BRAKE → RELEASE");
     await expect(
-      help.locator("kbd").filter({ hasText: /^[QEP↑←↓→]$/ }),
+      help.locator("kbd").filter({ hasText: /^[QEPS↑←↓→]$/ }),
     ).toHaveCount(0);
     for (const keys of [
-      ["W", "A", "S", "D"],
+      ["W", "A", null, "D"],
       ["I", "J", "K", "L"],
     ]) {
       const boxes = await Promise.all(
         keys.map((key) =>
-          help
-            .locator("kbd")
-            .filter({ hasText: new RegExp(`^${key}$`) })
-            .boundingBox(),
+          key
+            ? help
+                .locator("kbd")
+                .filter({ hasText: new RegExp(`^${key}$`) })
+                .boundingBox()
+            : null,
         ),
       );
       const [top, left, bottom, right] = boxes;
-      expect(top.y).toBeLessThan(bottom.y);
-      expect(top.x).toBeCloseTo(bottom.x, 0);
-      expect(left.x).toBeLessThan(bottom.x);
-      expect(right.x).toBeGreaterThan(bottom.x);
+      expect(top.y).toBeLessThan(left.y);
+      expect(left.x).toBeLessThan(top.x);
+      expect(right.x).toBeGreaterThan(top.x);
+      if (bottom) {
+        expect(top.x).toBeCloseTo(bottom.x, 0);
+        expect(top.y).toBeLessThan(bottom.y);
+      }
       expect(left.y).toBeCloseTo(right.y, 0);
     }
+    await expect(help.locator(".controller-map")).not.toContainText(
+      /\bBRAKE\b/,
+    );
     const overflow = await help.evaluate(
       (el) => el.scrollWidth > el.clientWidth,
     );
@@ -84,7 +92,7 @@ try {
   }
   expect(errors).toEqual([]);
   console.log(
-    "Controls guide: physical key formations, no Q/E/P, arrow keys or tables, responsive diagrams and close PASS.",
+    "Controls guide: physical key formations, no Q/E/P/S, arrow keys, service brake or tables, responsive diagrams and close PASS.",
   );
 } finally {
   await browser.close();

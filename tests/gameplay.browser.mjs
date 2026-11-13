@@ -137,10 +137,10 @@ async function skilled() {
       ),
     );
     const targetSpeed = Math.min(150, Math.sqrt(80 / Math.max(curve, 0.0001)));
-    const input = ["ArrowUp"];
+    const input = [];
+    if (t.speed <= targetSpeed + 4 && Math.abs(error) <= 0.7)
+      input.push("ArrowUp");
     if (direction) input.push(direction);
-    if (t.speed > targetSpeed + 4 || Math.abs(error) > 0.7)
-      input.push("ArrowDown");
     if (Math.abs(error) > 0.38) input.push(error > 0 ? "KeyJ" : "KeyL");
     await keys(page, input);
     samples.push({

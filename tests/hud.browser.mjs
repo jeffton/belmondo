@@ -93,7 +93,7 @@ try {
           "#touch-fire",
           '[data-control="airLeft"]',
           '[data-control="airRight"]',
-          '[data-control="brake"]',
+          '[data-control="thrust"]',
           ".velocity",
           ".shield",
         ];

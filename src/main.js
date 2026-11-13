@@ -79,8 +79,7 @@ const keys = new Set(),
   held = new Set();
 let touchSteer = 0,
   touchPitch = 0,
-  steerPointer = null,
-  touchLaunchArmed = false;
+  steerPointer = null;
 const touchLayout = matchMedia("(pointer: coarse)").matches;
 let touch = touchLayout;
 let inputMode = touch ? "touch" : "keyboard";
@@ -96,7 +95,6 @@ function setInputMode(mode) {
     touchSteer = 0;
     touchPitch = 0;
     steerPointer = null;
-    touchLaunchArmed = false;
     held.clear();
     document
       .querySelectorAll("[data-control].pressed")
@@ -209,7 +207,6 @@ function clearInput() {
   touchSteer = 0;
   touchPitch = 0;
   steerPointer = null;
-  touchLaunchArmed = false;
   for (const b of document.querySelectorAll(".pressed"))
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
@@ -354,12 +351,10 @@ window.addEventListener("keydown", (e) => {
   if (
     [
       "ArrowUp",
-      "ArrowDown",
       "ArrowLeft",
       "ArrowRight",
       "KeyW",
       "KeyA",
-      "KeyS",
       "KeyD",
       "KeyI",
       "KeyJ",
@@ -377,11 +372,7 @@ window.addEventListener("keydown", (e) => {
     return;
   }
   if (paused) return;
-  if (
-    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(
-      e.code,
-    )
-  )
+  if (["ArrowUp", "ArrowLeft", "ArrowRight", "Space"].includes(e.code))
     e.preventDefault();
   if (e.repeat) return;
   if (e.code === "KeyV") {
@@ -410,10 +401,6 @@ for (const b of document.querySelectorAll("[data-control]")) {
   });
   for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
     b.addEventListener(event, () => {
-      if (b.dataset.control === "brake" && race?.countdown > 0) {
-        if (event === "pointerup" && held.has("brake")) touchLaunchArmed = true;
-        else if (event === "pointercancel") touchLaunchArmed = false;
-      }
       held.delete(b.dataset.control);
       b.classList.remove("pressed");
     });
@@ -470,7 +457,9 @@ function input() {
           ? button.value > 0.1
             ? button.value
             : 0
-          : Number(button.pressed),
+          : index === 1
+            ? 0
+            : Number(button.pressed),
       ),
     ];
     const active = values.some((value) => value !== 0);
@@ -492,9 +481,8 @@ function input() {
   let airRight = down("KeyL") || held.has("airRight") ? 1 : 0;
   let airLeft = down("KeyJ") || held.has("airLeft") ? 1 : 0;
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
-  let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
-  let throttle = touch || down("ArrowUp", "KeyW") ? 1 : 0;
-  let brake = down("ArrowDown", "KeyS") || held.has("brake");
+  let launchIntent = down("ArrowUp", "KeyW") || held.has("thrust");
+  let throttle = launchIntent ? 1 : 0;
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) {
       steer = pad.axes[0];
@@ -506,7 +494,6 @@ function input() {
     const padThrust = pad.buttons[0]?.pressed ? 1 : pad.buttons[7]?.value || 0;
     throttle = Math.max(throttle, padThrust > 0.1 ? padThrust : 0);
     launchIntent ||= padThrust > 0.1;
-    brake = brake || pad.buttons[1]?.pressed;
     if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
     padFire = pad.buttons[2]?.pressed;
     if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
@@ -527,9 +514,8 @@ function input() {
     airLeft,
     airRight,
     pitch: clamp(pitch, -1, 1),
-    throttle: race?.countdown > 0 ? (brake ? 0 : throttle) : Boolean(throttle),
+    throttle: race?.countdown > 0 ? throttle : Boolean(throttle),
     launchIntent,
-    brake,
   };
 }
 const mapCtx = $("map").getContext("2d");
