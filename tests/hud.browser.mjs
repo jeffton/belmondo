@@ -127,7 +127,7 @@ try {
           ),
         };
       });
-      expect(state.fireText).toBe("FIRE");
+      expect(state.fireText).toBe("");
       await expect(page.locator("#weapon .weapon-action")).toHaveCount(0);
       if (weapon) {
         await expect(page.locator("#weapon")).toHaveText(weapon);
@@ -139,7 +139,8 @@ try {
       if (touch) {
         const fire = page.locator("#touch-fire");
         await expect(fire).toBeVisible();
-        await expect(fire).toBeEnabled();
+        if (weapon) await expect(fire).toBeEnabled();
+        else await expect(fire).toBeDisabled();
         const bounds = await fire.boundingBox();
         expect(bounds.x).toBeGreaterThanOrEqual(0);
         expect(bounds.y).toBeGreaterThanOrEqual(0);
@@ -154,7 +155,7 @@ try {
           }),
         ).toBe(true);
       }
-      expect(state.fireIcons).toBe(0);
+      expect(state.fireIcons).toBe(1);
       expect(state.hidden).toBe(weapon === null);
       if (weapon === null) {
         expect(state.inventory.width * state.inventory.height).toBe(0);
@@ -213,7 +214,7 @@ try {
   }
   expect(report.errors).toEqual([]);
   console.log(
-    "HUD: all five inventories + empty/re-empty, production DOM/CSS, top placement/non-overlap and plain FIRE passed at 1440×900, 844×390 and 390×844.",
+    "HUD: all five inventories + empty/re-empty, production DOM/CSS, top placement/non-overlap and inventory-aware icon controls passed at 1440×900, 844×390 and 390×844.",
   );
 } finally {
   await writeFile(

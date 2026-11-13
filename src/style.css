@@ -422,7 +422,7 @@ footer {
   padding: 5px 0;
 }
 .hud-track > b {
-  display: block;
+  display: none;
   font-size: 11px;
   line-height: 1.3;
   letter-spacing: 1.1px;
@@ -446,8 +446,7 @@ footer {
   width: 140px;
   margin-top: 6px;
   padding: 4px 6px;
-  background: #0c1a24d9;
-  border-right: 2px solid #e8ebe166;
+  background: none;
 }
 .lap-time {
   display: flex;
@@ -1146,9 +1145,9 @@ kbd,
 body.touch #touch-controls {
   display: flex;
   position: absolute;
-  bottom: 18px;
-  left: 20px;
-  right: 20px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
   justify-content: space-between;
   align-items: flex-end;
   pointer-events: none;
@@ -1156,107 +1155,85 @@ body.touch #touch-controls {
 #steer-pad {
   pointer-events: auto;
   touch-action: none;
-  width: 170px;
-  height: 130px;
-  border: 1px solid #b7cdd45c;
-  background: #10212c66;
+  width: 112px;
+  height: 112px;
+  border: 1px solid #b7cdd477;
+  background:
+    radial-gradient(circle, #9bc9d80c 46%, transparent 47%),
+    radial-gradient(circle, transparent 65%, #9bc9d824 66%, transparent 69%);
   position: relative;
-  border-radius: 10px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
 }
-#steer-pad span {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #c6d7df;
-}
-#steer-pad .pitch-forward,
-#steer-pad .pitch-back {
+#steer-pad .stick-reticle {
   position: absolute;
-  font-size: 9px;
-  opacity: 0.8;
-}
-#steer-pad .pitch-forward {
-  top: 9px;
-}
-#steer-pad .pitch-back {
-  bottom: 9px;
+  inset: 13px;
+  border-radius: 50%;
+  background:
+    linear-gradient(#b7cdd455, #b7cdd455) center / 1px 100% no-repeat,
+    linear-gradient(90deg, #b7cdd455, #b7cdd455) center / 100% 1px no-repeat;
 }
 #steer-pad i {
   position: absolute;
   width: 34px;
   height: 34px;
-  border: 2px solid var(--orange);
+  border: 2px solid #d8ede8;
   border-radius: 50%;
   left: calc(50% - 17px);
   top: calc(50% - 17px);
-  background: #ff6a2022;
+  background: #88c9d344;
+  box-shadow:
+    0 0 0 5px #9ccbd811,
+    inset 0 0 12px #b7e8ee33;
 }
 .touch-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .touch-actions > div {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 .touch-actions button {
   touch-action: none;
   font-family: var(--display);
   font-weight: 700;
-  width: 70px;
-  height: 45px;
-  background: #10242ed9;
-  border: 1px solid #b8d1d177;
-  font-size: 14px;
-  letter-spacing: 0.3px;
-  border-radius: 2px;
+  width: 54px;
+  height: 50px;
+  padding: 10px;
+  background: #10242e55;
+  border: 1px solid #b8d1d166;
+  color: #d5e5e5;
+  border-radius: 14px 4px;
+}
+.touch-actions svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: square;
+  stroke-linejoin: bevel;
 }
 .touch-actions #touch-fire {
-  background: var(--orange);
-  color: var(--ink);
-  font-weight: 600;
+  background: color-mix(in srgb, var(--weapon-color) 22%, #10242e);
+  color: var(--weapon-color);
+  border-color: var(--weapon-color);
+  box-shadow: inset 0 0 12px
+    color-mix(in srgb, var(--weapon-color) 18%, transparent);
   text-shadow: none;
+}
+.touch-actions #touch-fire:disabled {
+  background: transparent;
+  color: #a6bec866;
+  border-color: #a6bec833;
+  box-shadow: none;
 }
 .touch-actions button.pressed {
   background: var(--lime);
   color: var(--ink);
-}
-body.touch .hud-bottom {
-  bottom: 193px;
-}
-body.touch #map {
-  display: none;
-}
-body.touch .velocity strong {
-  font-size: 50px;
-}
-body.touch .velocity {
-  width: 160px;
-}
-body.touch .shield-instrument {
-  padding: 7px 8px 9px;
-}
-body.touch #shield-warning {
-  top: 11px;
-  left: 25px;
-  font-size: 8px;
-  letter-spacing: 0.04em;
-}
-body.touch .shield .hud-label {
-  font-size: 9px;
-  letter-spacing: 0.5px;
-}
-body.touch .shield-value {
-  font-size: 18px;
-}
-body.touch .shield-mark {
-  width: 8px;
-  height: 10px;
-}
-body.touch .shield {
-  width: 120px;
 }
 @media (min-height: 850px) and (min-width: 800px) {
   .menu-body {
@@ -1572,77 +1549,6 @@ body.touch .shield {
   .hud-bottom {
     bottom: 18px;
   }
-  body.touch .hud-bottom {
-    bottom: 164px;
-  }
-  body.touch .velocity strong {
-    font-size: 38px;
-  }
-  body.touch .velocity {
-    position: fixed;
-    top: 82px;
-    left: 23px;
-    bottom: auto;
-    transform: none;
-    display: grid;
-    grid-template-columns: 84px minmax(0, 1fr);
-    column-gap: 8px;
-    width: min(244px, calc(100vw - 230px));
-    padding: 7px 9px;
-    text-align: center;
-  }
-  body.touch .velocity::before {
-    display: none;
-  }
-  body.touch .velocity strong {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    align-self: start;
-    margin-top: 2px;
-  }
-  body.touch .velocity > span {
-    position: absolute;
-    left: 0;
-    bottom: 1px;
-    width: 84px;
-    font-size: 9px;
-  }
-  body.touch .speed-instrument {
-    grid-column: 2;
-    grid-row: 1;
-    margin-top: 0;
-  }
-  body.touch .thrust {
-    position: relative;
-    grid-column: 2;
-    grid-row: 2;
-    margin-top: 6px;
-  }
-  body.touch .instrument-label {
-    font-size: 10px;
-    line-height: 12px;
-  }
-  body.touch .instrument-bar {
-    height: 9px;
-    margin-top: 3px;
-  }
-  body.touch .launch-status {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    margin-top: 0;
-    font-size: 9px;
-    line-height: 12px;
-  }
-  body.touch .shield {
-    position: fixed;
-    top: 174px;
-    left: 23px;
-    width: 140px;
-  }
-  body.touch .shield .bar {
-    margin-top: 4px;
-  }
   #race-message {
     top: 25%;
     font-size: 30px;
@@ -1700,4 +1606,240 @@ body.touch .shield {
   .world-caption strong {
     font-size: 30px;
   }
+}
+
+/* Touch cockpit: instruments hug the edges; the racing line stays open. */
+body.touch .hud-top {
+  grid-template-columns: 46px minmax(0, 1fr) 92px;
+  grid-template-rows: 23px 25px;
+  column-gap: 12px;
+  padding: max(12px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+}
+body.touch .hud-top > :first-child {
+  grid-row: 1 / 3;
+}
+body.touch .hud-top strong {
+  font-size: 34px;
+}
+body.touch .hud-top strong small {
+  font-size: 14px;
+}
+body.touch .hud-label {
+  font-size: 8px;
+  letter-spacing: 0.7px;
+}
+body.touch .hud-track {
+  display: contents;
+}
+body.touch #timer {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  font: 600 22px/1 var(--telemetry);
+  margin: 0;
+}
+body.touch .lap {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: start;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-align: left;
+}
+body.touch .lap strong {
+  font-size: 20px;
+}
+body.touch .lap-times {
+  position: absolute;
+  top: 49px;
+  left: 0;
+  right: auto;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+body.touch .lap-time {
+  display: none;
+  min-height: 13px;
+  font-size: 9px;
+  line-height: 13px;
+  gap: 8px;
+}
+body.touch .lap-time.current {
+  display: flex;
+}
+body.touch .lap-time > :last-child {
+  font-size: 10px;
+  line-height: 13px;
+  letter-spacing: 0;
+}
+body.touch #view,
+body.touch #pause {
+  top: max(12px, env(safe-area-inset-top));
+  left: auto;
+  right: max(14px, env(safe-area-inset-right));
+  width: 40px;
+  height: 44px;
+  border: 0;
+  background: #10242e44;
+  border-bottom: 1px solid #b8d1d177;
+}
+body.touch #view {
+  transform: translateX(-48px);
+  font-size: 10px;
+}
+body.touch .weapon {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 78px);
+  left: max(14px, env(safe-area-inset-left));
+  width: 125px;
+  margin: 0;
+}
+body.touch .weapon button {
+  min-height: 38px;
+  padding: 3px 6px;
+  gap: 5px;
+  background: #10242e66;
+}
+body.touch .weapon-icon {
+  width: 24px;
+  height: 24px;
+}
+body.touch .weapon-name {
+  font-size: 17px;
+}
+body.touch .hud-bottom {
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 124px);
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
+  gap: 12px;
+}
+body.touch #map {
+  display: none;
+}
+body.touch .shield {
+  width: 112px;
+}
+body.touch .shield-instrument {
+  padding: 5px 6px 7px;
+  background: #0b1b2855;
+  border-left-width: 2px;
+}
+body.touch .shield .hud-label {
+  gap: 4px;
+  font-size: 8px;
+  letter-spacing: 0;
+}
+body.touch .shield-mark {
+  width: 7px;
+  height: 9px;
+}
+body.touch .shield-value {
+  font-size: 18px;
+}
+body.touch .shield-value small {
+  font-size: 8px;
+}
+body.touch .shield .shield-cells {
+  height: 7px;
+  margin-top: 5px;
+}
+body.touch #shield-warning {
+  top: 10px;
+  left: 19px;
+  font-size: 8px;
+  letter-spacing: 0;
+}
+body.touch .velocity {
+  display: grid;
+  grid-template-columns: 76px 64px;
+  column-gap: 8px;
+  width: 160px;
+  padding: 4px 6px;
+  background: none;
+  border-right-width: 2px;
+  text-align: left;
+}
+body.touch .velocity::before {
+  display: none;
+}
+body.touch .velocity strong {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  font-size: 37px;
+  align-self: center;
+  line-height: 0.9;
+}
+body.touch .velocity > .speed-unit {
+  grid-column: 1;
+  grid-row: 3;
+  text-align: right;
+  font-size: 8px;
+  letter-spacing: 1px;
+  padding-right: 3px;
+}
+body.touch .speed-instrument,
+body.touch .thrust {
+  grid-column: 2;
+  margin-top: 0;
+}
+body.touch .speed-instrument {
+  grid-row: 1;
+}
+body.touch .thrust {
+  grid-row: 2 / 4;
+  margin-top: 5px;
+  position: relative;
+}
+body.touch .instrument-label {
+  font-size: 8px;
+  line-height: 10px;
+  letter-spacing: 0.5px;
+}
+body.touch .instrument-label i {
+  font-size: 9px;
+}
+body.touch .instrument-bar {
+  height: 7px;
+  margin-top: 3px;
+}
+body.touch .launch-status {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  white-space: nowrap;
+  font-size: 9px;
+  margin: 0;
+}
+@media (max-width: 360px) {
+  body.touch .velocity {
+    width: 148px;
+    grid-template-columns: 68px 60px;
+  }
+  body.touch .velocity strong {
+    font-size: 33px;
+  }
+}
+/* Safe-area insets protect modal/menu content without cropping the world. */
+body.touch #menu {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body.touch dialog:not(#pause-panel) {
+  width: calc(
+    100% - max(20px, env(safe-area-inset-left)) -
+      max(20px, env(safe-area-inset-right))
+  );
+  max-height: calc(
+    100dvh - max(20px, env(safe-area-inset-top)) -
+      max(20px, env(safe-area-inset-bottom))
+  );
+}
+body.touch :is(dialog, .overlay) {
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
 }

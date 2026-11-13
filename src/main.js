@@ -377,8 +377,9 @@ function moveSteer(e) {
     -1,
     1,
   );
+  const visualScale = 1 / Math.max(1, Math.hypot(touchSteer, touchPitch));
   steerPad.querySelector("i").style.transform =
-    `translate(${touchSteer * rect.width * 0.32}px, ${-touchPitch * rect.height * 0.32}px)`;
+    `translate(${touchSteer * visualScale * rect.width * 0.32}px, ${-touchPitch * visualScale * rect.height * 0.32}px)`;
 }
 steerPad.addEventListener("pointerdown", (e) => {
   e.preventDefault();

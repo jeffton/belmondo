@@ -286,8 +286,8 @@ try {
       if (sample.alignment !== null)
         expect(sample.alignment).toBeGreaterThan(0.9999);
       expect(sample.desktop.text).toContain(weapon);
-      expect(sample.mobile.text.trim()).toBe("FIRE");
-      expect(sample.mobile.glyph).toBeNull();
+      expect(sample.mobile.text.trim()).toBe("");
+      expect(sample.mobile.glyph).not.toBeNull();
       await page.screenshot({
         path: `test-artifacts/weapons-${device}-${weapon}.png`,
       });

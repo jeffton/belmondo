@@ -16,13 +16,14 @@ const browser = await chromium.launch({
 });
 const errors = [],
   samples = [];
-async function ready(context, mode = "trial") {
+async function ready(context, mode = "trial", trackIndex = 0) {
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(url);
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
+  await page.locator(`#tracks button:nth-child(${trackIndex + 1})`).click();
   await page.locator(`input[name="mode"][value="${mode}"]`).check();
   await page.locator("#quality").check();
   await page.locator("#start").click();
@@ -324,13 +325,14 @@ try {
       isMobile: true,
       hasTouch: true,
     });
-    const armed = await ready(armedContext, "race");
+    // Solar's opening pickup reaches the test before the technical fork.
+    const armed = await ready(armedContext, "race", 1);
     const armedCdp = await armedContext.newCDPSession(armed);
     const armedPad = await armed.locator("#steer-pad").boundingBox();
     const brakeBox = await armed
       .locator('[data-control="brake"]')
       .boundingBox();
-    const track = makeTrack(0);
+    const track = makeTrack(1);
     const authoredPickups = getTrackPickups(track);
     let touching = false,
       braking = false,
@@ -363,9 +365,8 @@ try {
         ) - t.yaw;
       const error = Math.atan2(Math.sin(delta), Math.cos(delta));
       const demand = error * 2.8 - t.yawRate * 0.32;
-      const steer = demand > 0.055 ? -1 : demand < -0.055 ? 1 : 0;
-      const nextBraking =
-        t.speed > (t.progress > 0.15 && t.progress < 0.23 ? 85 : 125);
+      const steer = Math.max(-1, Math.min(1, -demand));
+      const nextBraking = t.speed > 70;
       if (braking !== nextBraking) {
         await armedCdp.send("Input.dispatchTouchEvent", {
           type: "touchEnd",
@@ -414,7 +415,11 @@ try {
     await expect(armed.locator("#weapon .weapon-name")).toHaveText(
       equipped.weapon,
     );
-    await expect(armed.locator("#touch-fire")).toHaveText("FIRE");
+    await expect(armed.locator("#touch-fire")).toBeEnabled();
+    await expect(armed.locator("#touch-fire")).toHaveAttribute(
+      "aria-label",
+      `Fire ${equipped.weapon}`,
+    );
     await armedCdp.send("Input.dispatchTouchEvent", {
       type: "touchEnd",
       touchPoints: [],
@@ -453,7 +458,7 @@ try {
     await expect(armed.locator("#weapon")).toBeHidden();
     await expect(armed.locator("#weapon")).toHaveText("");
     await expect(armed.locator("#touch-fire")).toBeVisible();
-    await expect(armed.locator("#touch-fire")).toHaveText("FIRE");
+    await expect(armed.locator("#touch-fire")).toBeDisabled();
     samples.push({
       name: "fourth-finger-weapon-consumed",
       previousWeapon: equipped.weapon,

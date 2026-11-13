@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "BELMONDO — Anti-gravity racing",
+  "short_name": "BELMONDO",
+  "description": "Original anti-gravity combat racing. Eight pilots, split routes and coastal megastructures.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#111c25",
+  "background_color": "#111c25",
+  "categories": ["games"],
+  "icons": [
+    {
+      "src": "/art/belmondo-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/art/belmondo-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

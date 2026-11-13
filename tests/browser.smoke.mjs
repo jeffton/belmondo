@@ -128,7 +128,9 @@ try {
   await m.waitForTimeout(300);
   await m.mouse.up();
   await m.locator("[data-control=airRight]").click();
-  await m.locator("#touch-fire").click();
+  if (await m.locator("#touch-fire").isEnabled())
+    await m.locator("#touch-fire").click();
+  else await expect(m.locator("#touch-fire")).toBeDisabled();
   await m.screenshot({ path: "test-artifacts/mobile-landscape.png" });
   await m.locator("#pause").click();
   await m.locator("#quit").click();

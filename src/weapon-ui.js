@@ -45,7 +45,6 @@ export function createWeaponHUD(desktop, touch, roster) {
     description.textContent = item.description;
     roster.append(heading, description);
   }
-  touch.textContent = "FIRE";
   touch.setAttribute("aria-label", "Fire weapon");
   let current = Symbol("uninitialized");
   return (weapon) => {
@@ -53,6 +52,9 @@ export function createWeaponHUD(desktop, touch, roster) {
     current = weapon;
     const item = weapon ? WEAPON_UI[weapon] : null;
     desktop.parentElement.hidden = !item;
+    touch.disabled = !item;
+    touch.setAttribute("aria-label", item ? `Fire ${weapon}` : "Fire weapon");
+    touch.style.setProperty("--weapon-color", item?.color || "#a6bec8");
     if (!item) {
       desktop.replaceChildren();
       desktop.removeAttribute("aria-label");
