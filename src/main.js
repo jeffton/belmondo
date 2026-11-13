@@ -443,11 +443,15 @@ function quit() {
   music.setTunnel(false);
   world.cameraReady = false;
 }
+function returnToPaddock() {
+  quit();
+  setMenuStage("track");
+}
 $("start").onclick = start;
 $("again").onclick = start;
 $("restart").onclick = start;
 $("quit").onclick = quit;
-$("result-quit").onclick = quit;
+$("result-quit").onclick = returnToPaddock;
 function toggleView() {
   world.setView(world.view === "chase" ? "first-person" : "chase");
   $("view").setAttribute("aria-pressed", String(world.view === "first-person"));

@@ -232,6 +232,15 @@ try {
     ).toEqual(records);
 
     await page.locator("#result-quit").click();
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await expect(
+      page.locator("#tracks button[aria-pressed=true]"),
+    ).toBeFocused();
+    expect(await page.evaluate(() => window.menuQA())).toMatchObject({
+      selectedSpeedClass: 1,
+      selectedCraft: 1,
+      selectedTrack: 0,
+    });
     await goToSetupStage(page, "craft");
     await page.locator('#crafts button[data-craft-index="1"]').click();
     await page.locator("#start").click();
