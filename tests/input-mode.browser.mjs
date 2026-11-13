@@ -1,8 +1,6 @@
 import { chromium, expect } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5215";
-await mkdir("test-artifacts/input-mode", { recursive: true });
 const browser = await chromium.launch({
   headless: true,
   args: [
@@ -135,11 +133,8 @@ try {
     await visibility(true);
     await page.locator("#pause").tap();
     await expect(page.locator("#pause-panel")).toBeVisible();
-    await page.locator("#resume").tap();
-    await expect(page.locator("#pause-panel")).toBeHidden();
-    await page.screenshot({
-      path: `test-artifacts/input-mode/touch-${width}.png`,
-    });
+    // Keep the real race paused for the final routing checks; held steering must
+    // not turn this UI test into an unpiloted shield-elimination race.
     await page.evaluate(() => {
       window.modePad.axes = [-0.4, 0];
     });
