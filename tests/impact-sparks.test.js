@@ -114,7 +114,7 @@ test("first race RAF after start completes and schedules its successor", async (
     "utf8",
   );
   const start = source.indexOf("function animate(now) {");
-  const end = source.indexOf("\nrequestAnimationFrame(animate);", start);
+  const end = source.indexOf("\nasync function loadFiles(", start);
   assert.ok(start >= 0 && end > start);
   const animateSource = source.slice(start, end);
   const calls = [];

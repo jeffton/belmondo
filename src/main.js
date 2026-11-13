@@ -322,8 +322,6 @@ $("render-quality").onchange = () => {
   localStorage.setItem("nv-render", world.quality);
 };
 window.addEventListener("resize", () => world.resize());
-await selectTrack(Math.floor(Math.random() * TRACKS.length));
-await initialCourseReady;
 function clearInput() {
   keys.clear();
   touchSteer = 0;
@@ -904,7 +902,6 @@ function animate(now) {
   }
   requestAnimationFrame(animate);
 }
-requestAnimationFrame(animate);
 
 async function loadFiles(files) {
   await music.loadFiles(files);
@@ -988,6 +985,10 @@ window.addEventListener("drop", async (e) => {
     $("music-dialog").showModal();
   }
 });
+await selectTrack(Math.floor(Math.random() * TRACKS.length));
+await initialCourseReady;
+requestAnimationFrame(animate);
+
 // Read-only telemetry for the pilot and browser smoke tests. No external services.
 window.nullVector = {
   get telemetry() {

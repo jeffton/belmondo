@@ -51,6 +51,15 @@ try {
       await route.continue();
     });
     await page.goto(url);
+    await page.waitForFunction(
+      () =>
+        document.getElementById("tracks").getAttribute("aria-busy") === "true",
+    );
+    for (const dialog of ["help", "music"]) {
+      await page.locator(`#${dialog}-open`).click();
+      await expect(page.locator(`#${dialog}-dialog`)).toBeVisible();
+      await page.locator(`#${dialog}-dialog .close`).click();
+    }
     await page.locator('input[name="speed-class"][value="2"]').check();
     await page.locator("#setup-next").click();
     await page.locator("#tracks button").nth(6).click();

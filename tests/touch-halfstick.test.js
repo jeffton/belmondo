@@ -16,6 +16,37 @@ test("halfstick preserves analog travel, projects diagonals to its arc and exclu
   assert.equal(diagonal.y, 0.8);
 });
 
+test("omitted throttle remains finite and identical to explicit coast through countdown and racing", () => {
+  const track = makeTrack(0);
+  const omitted = new Race(track, 0, "trial");
+  const coast = new Race(track, 0, "trial");
+  for (let step = 0; step < 1200; step++) {
+    omitted.update(1 / 120, {});
+    coast.update(1 / 120, { throttle: 0 });
+    for (const race of [omitted, coast]) {
+      for (const value of [
+        ...race.player.position.toArray(),
+        ...race.player.velocity.toArray(),
+        race.player.speed,
+        race.player.yaw,
+        race.player.shield,
+        race.time,
+        race.countdown,
+      ])
+        assert(
+          Number.isFinite(value),
+          `finite simulation state at step ${step}`,
+        );
+    }
+    assert.deepEqual(omitted.player, coast.player);
+    assert.equal(omitted.countdown, coast.countdown);
+    assert.equal(omitted.time, coast.time);
+    assert.deepEqual(omitted.launch, coast.launch);
+  }
+  assert.equal(omitted.countdown, 0);
+  assert(omitted.time > 4);
+});
+
 test("partial touch thrust scales engine force without changing coast drag or boolean input", () => {
   const track = makeTrack(0);
   const velocity = (throttle) => {
