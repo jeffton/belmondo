@@ -80,7 +80,7 @@ try {
       (expected) => musicFixture.player.inTunnel === expected,
       index !== 0,
     );
-    await page.locator("#pause").click();
+    await page.keyboard.press("Escape");
     await page.waitForFunction(
       () => musicFixture.player.output.gain.value === 0,
     );

@@ -701,16 +701,7 @@ footer {
   border-right: 2px solid #fff;
   background: repeating-linear-gradient(90deg, #fff8 0 2px, #07141c66 2px 5px);
 }
-.launch-status {
-  display: none;
-  margin-top: 5px;
-  font-size: 11px;
-  line-height: 1.2;
-  letter-spacing: 0.2px;
-  color: #fff;
-}
-.thrust.launch .launch-band,
-.thrust.launch .launch-status:not(:empty) {
+.thrust.launch .launch-band {
   display: block;
 }
 #race-message {
@@ -730,10 +721,10 @@ footer {
 }
 #view,
 #pause {
+  display: none;
   position: absolute;
   top: 214px;
   right: 35px;
-  display: grid;
   place-items: center;
   width: 44px;
   height: 40px;
@@ -939,7 +930,7 @@ kbd,
 }
 .keyboard-diagram {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   align-items: end;
   gap: 22px;
   padding: 20px 12px;
@@ -985,18 +976,6 @@ kbd,
   line-height: 1.3;
   color: #d0dfe5;
   text-align: center;
-}
-.alternate-keys {
-  border-left: 1px solid #68829055;
-  padding-left: 12px;
-}
-.diagram-caption {
-  display: block;
-  text-align: center;
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: #9eb7c2;
-  margin-bottom: 12px;
 }
 .utility-keys {
   display: flex;
@@ -1044,11 +1023,6 @@ kbd,
 @media (max-width: 600px) {
   .keyboard-diagram {
     grid-template-columns: 1fr;
-  }
-  .alternate-keys {
-    border-left: 0;
-    border-top: 1px solid #68829055;
-    padding: 12px 0 0;
   }
   .pad-labels {
     font-size: 16px;
@@ -1702,6 +1676,7 @@ body.touch .lap-time > :last-child {
 }
 body.touch #view,
 body.touch #pause {
+  display: grid;
   top: max(12px, env(safe-area-inset-top));
   left: auto;
   right: max(14px, env(safe-area-inset-right));
@@ -1825,14 +1800,6 @@ body.touch .instrument-label i {
 body.touch .instrument-bar {
   height: 7px;
   margin-top: 3px;
-}
-body.touch .launch-status {
-  position: absolute;
-  top: calc(100% + 5px);
-  right: 0;
-  white-space: nowrap;
-  font-size: 9px;
-  margin: 0;
 }
 @media (max-width: 360px) {
   body.touch .velocity {

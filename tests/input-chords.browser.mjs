@@ -145,6 +145,30 @@ try {
     airLeft: 0,
     airRight: 0,
   });
+  for (const [key, expected] of [
+    ["ArrowUp", { throttle: true }],
+    ["ArrowDown", { brake: true }],
+    ["ArrowLeft", { steer: 1 }],
+    ["ArrowRight", { steer: -1 }],
+  ]) {
+    await page.keyboard.down(key);
+    await controls(page, key, expected);
+    await page.keyboard.up(key);
+    await controls(page, `${key}-released`, {
+      throttle: false,
+      brake: false,
+      steer: 0,
+    });
+  }
+  await page.keyboard.press("KeyP");
+  await expect(page.locator("#pause-panel")).toBeHidden();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#pause-panel")).toBeVisible();
+  // P cannot resume a paused race either.
+  await page.keyboard.press("KeyP");
+  await expect(page.locator("#pause-panel")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#pause-panel")).toBeHidden();
   await page.evaluate(() => {
     window.chordPad.axes = [0.6, -0.75, 0, 0];
     window.chordPad.buttons = [0, 4, 5];
@@ -205,7 +229,7 @@ try {
     window.chordPad.buttons = [];
   });
   await page.screenshot({ path: "test-artifacts/hud-actual-desktop-race.png" });
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.waitForFunction(() => window.nullVector.telemetry.paused);
   await page.screenshot({
     path: "test-artifacts/hud-actual-desktop-pause.png",

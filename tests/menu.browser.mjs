@@ -115,7 +115,7 @@ try {
       mode === "race" ? "/8" : "/1",
     );
     await page.keyboard.up("KeyW");
-    await page.locator("#pause").click();
+    await page.keyboard.press("Escape");
     await page.locator("#quit").click();
     await expect(
       page.locator(`input[name="speed-class"][value="${index}"]`),

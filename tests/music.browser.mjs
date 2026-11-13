@@ -154,7 +154,7 @@ try {
     src: window.musicAudioElements.at(-1).src,
     time: window.musicAudioElements.at(-1).currentTime,
   }));
-  await page.keyboard.press("p");
+  await page.keyboard.press("Escape");
   await expect(page.locator("#pause-panel")).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
@@ -176,7 +176,7 @@ try {
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
     .toBe(1);
   await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await expect(page.locator("#pause-panel")).toBeVisible();
   await page.locator("#pause-music").click();
   await page.locator("#music-play").click();
@@ -190,7 +190,7 @@ try {
     .toBe(true);
 
   // Restore playback, then verify next and native ended→next advancement by seeking to the tail.
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#pause-music").click();
   await page.locator("#music-play").click();
   await page.waitForFunction(
@@ -392,7 +392,7 @@ try {
     src: window.musicAudioElements.at(-1).src,
     time: window.musicAudioElements.at(-1).currentTime,
   }));
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#quit").click();
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
@@ -421,7 +421,7 @@ try {
     (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
       beforeQuit.time,
   );
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#restart").click();
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
@@ -430,7 +430,7 @@ try {
     await page.evaluate(() => window.musicAudioElements.at(-1).src),
     beforeQuit.src,
   );
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#pause-music").click();
   await page.locator("#music-play").click();
   await page.waitForFunction(() => window.musicAudioElements.at(-1).paused);
@@ -471,7 +471,7 @@ try {
     menuManualPause.time,
   );
   await page.locator("#start").click();
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#restart").click();
   assert.equal(
     await page.evaluate(() => window.musicAudioElements.at(-1).paused),

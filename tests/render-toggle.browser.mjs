@@ -80,7 +80,8 @@ try {
     await page.locator("#start").click();
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
     await rendered(true);
-    await page.locator("#pause").click();
+    if (mobile) await page.locator("#pause").tap();
+    else await page.keyboard.press("Escape");
     const pauseDialog = page.getByRole("dialog", {
       name: "PAUSED",
       exact: true,
@@ -113,9 +114,9 @@ try {
     expect(await page.evaluate(() => window.nullVector.telemetry.paused)).toBe(
       true,
     );
-    await page.keyboard.press("p");
+    await page.keyboard.press("Escape");
     await expect(pauseDialog).not.toBeVisible();
-    await expect(page.locator("#pause")).toBeFocused();
+    await expect(page.locator("#resume")).not.toBeFocused();
     expect(await page.evaluate(() => window.nullVector.telemetry.paused)).toBe(
       false,
     );
@@ -126,21 +127,21 @@ try {
     expect(await page.evaluate(() => window.nullVector.telemetry.paused)).toBe(
       false,
     );
-    await page.keyboard.press("p");
+    await page.keyboard.press("Escape");
     await expect(page.locator("#resume")).toBeFocused();
     await page.locator("#restart").click();
     await expect(pauseDialog).not.toBeVisible();
     expect(await page.evaluate(() => window.nullVector.telemetry.paused)).toBe(
       false,
     );
-    await page.keyboard.press("p");
+    await page.keyboard.press("Escape");
     await expect(pauseDialog).toBeVisible();
     await page.locator("#quit").click();
     await expect(pauseDialog).not.toBeVisible();
     await expect(page.locator("#start")).toBeFocused();
     await ready();
-    if (mobile) await toggle.tap();
-    else await toggle.uncheck();
+    if (mobile) await page.locator("#quality-clean").tap();
+    else await page.locator("#quality-clean").check();
     await expect(toggle).not.toBeChecked();
     await rendered(false);
     expect(await page.evaluate(() => localStorage.getItem("nv-render"))).toBe(

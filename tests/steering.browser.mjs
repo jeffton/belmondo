@@ -31,7 +31,7 @@ async function start(page) {
   return page.evaluate(() => window.nullVector.telemetry);
 }
 async function reset(page) {
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#quit").click();
 }
 async function checkDirection(page, before, direction, label) {

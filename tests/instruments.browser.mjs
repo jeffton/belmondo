@@ -48,25 +48,10 @@ try {
     await page.locator("#start").click();
     await expect(page.locator("#hud")).toBeVisible();
     await expect(page.locator("#hud-track")).toBeHidden();
-    if (touch) {
-      await expect(page.locator("#launch-status")).toBeVisible();
-      const hint = await page.locator("#launch-status").boundingBox();
-      const shield = await page.locator(".shield-instrument").boundingBox();
-      const velocity = await page.locator(".velocity").boundingBox();
-      expect(hint.x).toBeGreaterThanOrEqual(0);
-      expect(hint.x + hint.width).toBeLessThanOrEqual(width);
-      expect(hint.y + hint.height).toBeLessThanOrEqual(height);
-      expect(
-        Math.min(hint.x + hint.width, shield.x + shield.width) >
-          Math.max(hint.x, shield.x) &&
-          Math.min(hint.y + hint.height, shield.y + shield.height) >
-            Math.max(hint.y, shield.y),
-        `${name}: launch hint overlaps shield`,
-      ).toBe(false);
-      if (height < width) expect(hint.y).toBeGreaterThanOrEqual(velocity.y);
+    await expect(page.locator("#launch-status")).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText("BRAKE → RELEASE");
+    if (touch)
       await page.screenshot({ path: `${output}/${name}-countdown.png` });
-    }
-    await expect(page.locator("#launch-status")).not.toContainText("65");
     await expect(page.locator("body")).not.toContainText("65–80%");
     await page.waitForFunction(
       () => window.nullVector.telemetry.time > 0.2,
@@ -81,7 +66,8 @@ try {
     );
     await page.screenshot({ path: `${output}/${name}-race.png` });
     // Pause the actual race, then examine its rendered instrument geometry.
-    await page.locator("#pause").click();
+    if (touch) await page.locator("#pause").tap();
+    else await page.keyboard.press("Escape");
     const boxes = await page.evaluate(() => {
       const selectors = [
         ".shield-instrument",

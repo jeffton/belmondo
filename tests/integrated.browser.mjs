@@ -296,8 +296,12 @@ async function publicSmoke(device) {
         currentTime: audio.currentTime,
       })),
   );
-  if (device === "keyboard") await page.keyboard.up("KeyW");
-  await page.locator("#pause").click();
+  if (device === "keyboard") {
+    await page.keyboard.up("KeyW");
+    await page.keyboard.press("Escape");
+  } else {
+    await page.locator("#pause").tap();
+  }
   await expect(page.locator("#pause-panel")).toBeVisible();
   await page.waitForFunction(() =>
     window.qaAudio.every((audio) => audio.paused),
@@ -371,7 +375,8 @@ async function ui() {
       await page.screenshot({
         path: `test-artifacts/integrated-${device}-c${speedClass + 1}.png`,
       });
-      await page.locator("#pause").click();
+      if (device === "touch") await page.locator("#pause").tap();
+      else await page.keyboard.press("Escape");
       await page.locator("#quit").click();
       await expect(page.locator("#menu")).toBeVisible();
       let menuBounds;

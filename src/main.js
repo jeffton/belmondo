@@ -80,8 +80,35 @@ let touchSteer = 0,
   touchPitch = 0,
   steerPointer = null,
   touchLaunchArmed = false;
-const touch = matchMedia("(pointer: coarse)").matches;
+let touch = matchMedia("(pointer: coarse)").matches;
+let inputMode = touch ? "touch" : "keyboard";
 document.body.classList.toggle("touch", touch);
+document.body.dataset.inputMode = inputMode;
+function setInputMode(mode) {
+  if (inputMode === mode) return;
+  inputMode = mode;
+  touch = mode === "touch";
+  document.body.classList.toggle("touch", touch);
+  document.body.dataset.inputMode = mode;
+  if (!touch) {
+    touchSteer = 0;
+    touchPitch = 0;
+    steerPointer = null;
+    touchLaunchArmed = false;
+    held.clear();
+    document
+      .querySelectorAll("[data-control].pressed")
+      .forEach((button) => button.classList.remove("pressed"));
+    $("steer-pad").querySelector("i").style.transform = "";
+  }
+}
+window.addEventListener(
+  "pointerdown",
+  (event) => {
+    if (event.pointerType === "touch") setInputMode("touch");
+  },
+  { capture: true },
+);
 const records = JSON.parse(localStorage.getItem("nv-records") || "{}");
 function formatTime(t) {
   if (!Number.isFinite(t)) return "—";
@@ -316,7 +343,27 @@ $("touch-fire").onclick = (e) => {
 window.addEventListener("keydown", (e) => {
   if (document.querySelector("dialog[open]:not(#pause-panel)")) return;
   if (state !== "race") return;
-  if (e.code === "Escape" || e.code === "KeyP") {
+  if (
+    [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "KeyW",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "KeyI",
+      "KeyJ",
+      "KeyK",
+      "KeyL",
+      "Space",
+      "KeyV",
+      "Escape",
+    ].includes(e.code)
+  )
+    setInputMode("keyboard");
+  if (e.code === "Escape") {
     e.preventDefault();
     if (!e.repeat) setPaused(!paused);
     return;
@@ -402,7 +449,32 @@ let steeringKind = "digital";
 let padPause = false,
   padFire = false,
   padView = false;
+let previousPadInput = [];
 function input() {
+  const pad = navigator.getGamepads?.()[0];
+  if (pad) {
+    const values = [
+      ...pad.axes
+        .slice(0, 2)
+        .map((value) => (Math.abs(value) > 0.12 ? value : 0)),
+      ...pad.buttons.map((button, index) =>
+        [4, 5, 7].includes(index)
+          ? button.value > 0.1
+            ? button.value
+            : 0
+          : Number(button.pressed),
+      ),
+    ];
+    const active = values.some((value) => value !== 0);
+    const moved = values.some(
+      (value, index) =>
+        Math.abs(value - (previousPadInput[index] || 0)) >
+        (index < 2 ? 0.12 : 0.1),
+    );
+    if (active && moved) setInputMode("gamepad");
+    // Keep the last deliberate position, not each noisy sample of a held stick.
+    if (!active || moved) previousPadInput = values;
+  }
   const down = (...codes) => codes.some((c) => keys.has(c));
   const keyboardSteer =
     (down("ArrowRight", "KeyD") ? 1 : 0) - (down("ArrowLeft", "KeyA") ? 1 : 0);
@@ -415,7 +487,6 @@ function input() {
   let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
   let throttle = touch || down("ArrowUp", "KeyW") ? 1 : 0;
   let brake = down("ArrowDown", "KeyS") || held.has("brake");
-  const pad = navigator.getGamepads?.()[0];
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) {
       steer = pad.axes[0];
@@ -549,8 +620,6 @@ function updateHUD(now) {
   $("thrust-system").classList.toggle("launch", launching);
   $("thrust-bar").style.width =
     `${(launching ? race.launch.level : Number(lastControls.throttle || 0)) * 100}%`;
-  $("launch-status").textContent =
-    touch && !touchLaunchArmed ? "BRAKE → RELEASE" : "";
   const timingRows = race.laps.map(
     (time, i) =>
       `<div class="lap-time"><span>LAP ${i + 1}</span><b>${formatTime(time)}</b></div>`,

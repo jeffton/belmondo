@@ -29,13 +29,15 @@ try {
     const help = page.locator("#help-dialog");
     await expect(help).toBeVisible();
     await expect(help.locator("table, dl")).toHaveCount(0);
-    await expect(help.locator("kbd").filter({ hasText: /^[QE]$/ })).toHaveCount(
-      0,
-    );
+    await expect(help).not.toContainText("LAUNCH");
+    await expect(help).not.toContainText("launch boost");
+    await expect(help).not.toContainText("BRAKE → RELEASE");
+    await expect(
+      help.locator("kbd").filter({ hasText: /^[QEP↑←↓→]$/ }),
+    ).toHaveCount(0);
     for (const keys of [
       ["W", "A", "S", "D"],
       ["I", "J", "K", "L"],
-      ["↑", "←", "↓", "→"],
     ]) {
       const boxes = await Promise.all(
         keys.map((key) =>
@@ -82,7 +84,7 @@ try {
   }
   expect(errors).toEqual([]);
   console.log(
-    "Controls guide: physical key formations, no Q/E or tables, responsive diagrams and close PASS.",
+    "Controls guide: physical key formations, no Q/E/P, arrow keys or tables, responsive diagrams and close PASS.",
   );
 } finally {
   await browser.close();

@@ -85,6 +85,9 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     padPause: false,
     padFire: false,
     padView: false,
+    previousPadInput: [],
+    // This fixture isolates bank routing; full browser tests cover mode transitions.
+    setInputMode: () => {},
     navigator: { getGamepads: () => [pad] },
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
   });

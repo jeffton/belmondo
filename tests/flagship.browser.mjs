@@ -427,11 +427,11 @@ async function restartChecks() {
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/8");
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#restart").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/8");
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   await page.locator("#quit").click();
   await page.locator("#crafts button").nth(1).click();
   await expect(page.locator("#crafts button").nth(1)).toHaveClass(/active/);

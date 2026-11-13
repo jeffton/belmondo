@@ -37,6 +37,11 @@ try {
     {},
     { timeout: 20000 },
   );
+  await expect(page.locator("#view")).toBeHidden();
+  await expect(page.locator("#pause")).toBeHidden();
+  await page.keyboard.press("KeyV");
+  await expect(page.locator("#view")).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("KeyV");
   await page.keyboard.down("ArrowUp");
   await page.waitForFunction(
     () => window.nullVector.telemetry.speed > 65,
@@ -52,6 +57,8 @@ try {
   await page.keyboard.up("ArrowUp");
   await page.screenshot({ path: "test-artifacts/desktop-race.png" });
   await page.keyboard.press("KeyP");
+  await expect(page.locator("#pause-panel")).toBeHidden();
+  await page.keyboard.press("Escape");
   await expect(page.locator("#pause-panel")).toBeVisible();
   await expect(page.locator("#pause-panel .help-small")).toHaveCount(0);
   const pausedTime = await page.evaluate(
@@ -133,12 +140,12 @@ try {
     await m.locator("#touch-fire").click();
   else await expect(m.locator("#touch-fire")).toBeDisabled();
   await m.screenshot({ path: "test-artifacts/mobile-landscape.png" });
-  await m.locator("#pause").click();
+  await m.locator("#pause").tap();
   await expect(m.locator("#pause-panel")).toBeVisible();
   await expect(m.locator("#pause-panel .help-small")).toHaveCount(0);
   await m.locator("#resume").click();
   await expect(m.locator("#pause-panel")).toBeHidden();
-  await m.locator("#pause").click();
+  await m.locator("#pause").tap();
   await m.locator("#quit").click();
   await m.setViewportSize({ width: 390, height: 844 });
   await m.screenshot({ path: "test-artifacts/mobile-portrait.png" });

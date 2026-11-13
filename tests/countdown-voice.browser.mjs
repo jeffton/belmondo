@@ -58,7 +58,8 @@ try {
     await page.locator('input[name="mode"][value="trial"]').check();
     await page.locator("#start").click();
     await page.waitForFunction(() => window.voiceStarts.length === 1);
-    await page.locator("#pause").click();
+    if (mobile) await page.locator("#pause").tap();
+    else await page.keyboard.press("Escape");
     const outputRms = async () => {
       await page.waitForTimeout(250);
       return page.evaluate(() => {
@@ -89,7 +90,8 @@ try {
     );
     assert(first.every((entry) => entry.contextState === "running"));
     assert.equal(await page.locator("#race-message").textContent(), "");
-    await page.locator("#pause").click();
+    if (mobile) await page.locator("#pause").tap();
+    else await page.keyboard.press("Escape");
     await page.locator("#restart").click();
     await page.waitForFunction(() => window.voiceStarts.length === 5);
     await page.screenshot({

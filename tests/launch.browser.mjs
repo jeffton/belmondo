@@ -279,7 +279,8 @@ try {
       expect(
         (await page.locator("#race-message").textContent()).trim(),
       ).not.toMatch(/^[1-3]$/);
-      await page.locator("#pause").click();
+      if (device === "touch") await page.locator("#pause").tap();
+      else await page.keyboard.press("Escape");
       await expect(page.locator("#pause-panel")).toBeVisible();
       await page.screenshot({
         path: `test-artifacts/launch-visual-${label}-pause.png`,
@@ -502,7 +503,8 @@ try {
           ? await lap(page, spec.device)
           : null;
       if (spec.success) {
-        await page.locator("#pause").click();
+        if (spec.device === "touch") await page.locator("#pause").tap();
+        else await page.keyboard.press("Escape");
         await expect(page.locator("#pause-panel")).toBeVisible();
         await page.screenshot({
           path: `test-artifacts/launch-pause-${spec.device}.png`,

@@ -212,14 +212,13 @@
               <i id="thrust-bar"></i>
               <span class="launch-band" aria-hidden="true"></span>
             </div>
-            <span id="launch-status" class="launch-status"></span>
           </div>
         </div>
       </div>
       <button id="view" aria-label="First-person view" aria-pressed="false">
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M5 11h6l3-4h7l3 4h3v14H5Z" />
-          <circle cx="16" cy="17" r="5" />
+          <rect x="4" y="8" width="16" height="16" rx="2" />
+          <path d="m20 13 8-5v16l-8-5z" />
         </svg>
       </button>
       <button id="pause" aria-label="Pause race">
@@ -329,31 +328,11 @@
                 <kbd>L</kbd><span>Right airbrake</span>
               </div>
             </div>
-            <div class="alternate-keys">
-              <span class="diagram-caption">ALTERNATE FLIGHT KEYS</span>
-              <div
-                class="key-cluster"
-                aria-label="Arrow keys: up thrust, left and right steer, down brake"
-              >
-                <div class="key-action key-top">
-                  <kbd>↑</kbd><span>Thrust</span>
-                </div>
-                <div class="key-action key-left">
-                  <kbd>←</kbd><span>Steer left</span>
-                </div>
-                <div class="key-action key-bottom">
-                  <kbd>↓</kbd><span>Brake</span>
-                </div>
-                <div class="key-action key-right">
-                  <kbd>→</kbd><span>Steer right</span>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="utility-keys">
             <div><kbd>SPACE</kbd><span>Fire</span></div>
             <div><kbd>V</kbd><span>View</span></div>
-            <div><kbd>P</kbd><kbd>ESC</kbd><span>Pause</span></div>
+            <div><kbd>ESC</kbd><span>Pause</span></div>
           </div>
         </section>
         <section class="control-card" aria-labelledby="gamepad-heading">
@@ -421,12 +400,6 @@
           </svg>
         </section>
       </div>
-      <h3>LAUNCH</h3>
-      <p>
-        Build thrust with W / ↑ or A / R2 and time the marked thrust zone with
-        GO for a launch boost. Touch pilots must hold and release BRAKE to time
-        the launch; automatic thrust alone does not earn it.
-      </p>
       <div id="weapon-roster" class="arsenal"></div>
     </dialog>
     <dialog id="music-dialog">

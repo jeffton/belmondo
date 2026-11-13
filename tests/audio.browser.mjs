@@ -70,7 +70,7 @@ try {
     mute.dispatchEvent(new Event("change"));
   });
   await page.keyboard.up("ArrowUp");
-  await page.locator("#pause").click();
+  await page.keyboard.press("Escape");
   live.paused = await rms();
   assert(live.paused < 0.0001, "Paused game must be silent");
   await page.locator("#resume").click();
