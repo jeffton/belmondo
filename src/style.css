@@ -381,14 +381,6 @@ footer {
 .world-caption small {
   font-size: 8px;
 }
-.live-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--orange);
-  margin-right: 5px;
-  border-radius: 50%;
-}
 #hud {
   position: fixed;
   inset: 0;
@@ -1877,9 +1869,9 @@ body.touch .instrument-bar {
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: clip;
   padding: 0;
-  --footer-pad: 8px;
+  --footer-pad: 0px;
   --footer-height: calc(
-    44px + 2 * var(--footer-pad) + env(safe-area-inset-bottom) + 1px
+    28px + 2 * var(--footer-pad) + env(safe-area-inset-bottom) + 1px
   );
   background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
 }
@@ -1977,7 +1969,13 @@ body.touch .instrument-bar {
 #menu footer .menu-links :is(button, a) {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  font-size: 9px;
+}
+#menu footer .menu-links :is(button, a):focus-visible {
+  outline-offset: -3px;
 }
 #menu .world-caption {
   right: max(28px, env(safe-area-inset-right));
@@ -2075,9 +2073,6 @@ body.touch .instrument-bar {
   }
   #menu .menu-links {
     margin-top: 8px;
-  }
-  #menu {
-    --footer-pad: 4px;
   }
   #menu footer {
     padding: var(--footer-pad) calc(16px + env(safe-area-inset-right))
@@ -2191,9 +2186,6 @@ body.touch .instrument-bar {
   #menu .menu-links :is(button, a) {
     padding: 5px 0;
     font-size: 8px;
-  }
-  #menu {
-    --footer-pad: 6px;
   }
   #menu footer {
     padding: var(--footer-pad) calc(18px + env(safe-area-inset-right))

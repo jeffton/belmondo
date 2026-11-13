@@ -128,10 +128,22 @@ try {
             document.elementFromPoint(innerWidth / 2, innerHeight - 4),
           ),
           footer: box(footer),
+          toolControls: [...footer.querySelectorAll("button, a")].map(
+            (element) => ({
+              ...box(element),
+              border: getComputedStyle(element).borderBottomStyle,
+              fontSize: getComputedStyle(element).fontSize,
+            }),
+          ),
           body: box(document.querySelector(".menu-body")),
           model: box(document.getElementById("menu-model")),
           world: box(document.getElementById("game")),
           controls,
+          obsoleteFeedLabel:
+            document
+              .querySelector(".world-caption")
+              .textContent.includes("LIVE CIRCUIT FEED") ||
+            !!document.querySelector(".world-caption .live-dot"),
           rootScroll: document.scrollingElement.scrollTop,
           menuScroll: menu.scrollTop,
           overflow: menu.scrollHeight - menu.clientHeight,
@@ -146,7 +158,15 @@ try {
       assert.equal(observed.footer.left, 0, detail);
       assert.equal(observed.footer.right, width, detail);
       assert.equal(observed.footer.bottom, height, detail);
+      assert.equal(observed.footer.height, 29 + bottom, detail);
+      assert.equal(observed.toolControls.length, 4, detail);
+      for (const control of observed.toolControls) {
+        assert.equal(control.height, 28, detail);
+        assert.equal(control.border, "none", detail);
+        assert.equal(control.fontSize, "9px", detail);
+      }
       assert.equal(observed.footerAtSample, true, detail);
+      assert.equal(observed.obsoleteFeedLabel, false, detail);
       assert.equal(observed.rootScroll, 0, detail);
       assert.equal(observed.menuScroll, 0, detail);
       assert.ok(observed.overflow <= 1, detail);
