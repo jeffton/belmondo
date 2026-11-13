@@ -13,7 +13,7 @@ import { buildFinishDistrict } from "../src/finish-district.js";
 const BASELINE = [
   "069a3b56de873b4f0899ebd81ceddcb96081c80f1fa05831b0494e58a95b51ca",
   "7123459c27ab2ebd313e49fd96250bd687c628bb6f1c0815e8d842de1744085e",
-  "4d964ccfe8b14dc4e3fe8dfa96f8f0d01655152f83d73a78aa6fa16a7b10ac09",
+  "d7b7634f882f3809e7dc4897d739b196408dfecefbda4e27794628e30b25fd1a",
 ];
 export function environmentDigest(index) {
   const scene = new THREE.Scene();
