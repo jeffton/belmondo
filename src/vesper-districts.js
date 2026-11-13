@@ -117,6 +117,13 @@ export function buildVesperDistricts(track, environment, box, clearsRoad) {
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       const yaw = Math.atan2(forward.x, forward.z);
       for (const side of [-1, 1]) {
+        // Staggered cross-street openings break the paired marching blocks.
+        // Keep the civic canyon dense; its continuous walls are its identity.
+        if (
+          district.name !== "civic-canyon" &&
+          (i + (side > 0 ? 3 : 0)) % 7 === 4
+        )
+          continue;
         const variant = (i * 7 + (side + 1) * 3) % 11;
         // Irregular massing and setbacks reveal cross streets and occasional plazas.
         const width = [48, 66, 38, 58, 76][variant % 5];

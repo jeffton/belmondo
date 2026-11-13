@@ -50,6 +50,8 @@ export const VEGETATION_PROFILES = {
       [0.06, 0.13],
       [0.57, 0.67],
       [0.87, 0.94],
+      // A planted quay pocket beyond the process works, outside the freight yards.
+      [0.7, 0.74],
     ],
     species: ["tree", "bush", "bush"],
     spacing: 150,
