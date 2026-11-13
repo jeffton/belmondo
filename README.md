@@ -29,7 +29,7 @@ Grandstands and road-integrated checkerboard line each complete home straight. B
 
 ## Renderer
 
-WebGPU is an isolated experiment, not part of the production release. The server's SwiftShader adapter loses its device on first submission, including a raw WebGPU canvas clear without Three.js. Visual parity and performance remain unverified; this branch is not release-ready.
+WebGPU is an opt-in experiment; WebGL is the default. The server's SwiftShader adapter loses its device on first submission, including a raw WebGPU canvas clear without Three.js. Actual WebGPU rendering, visual parity and iPhone performance are unverified.
 
 The class station offers **WebGL** and **WebGPU · Test**. Changing renderer reloads the game; records and low-res preference stay local. WebGL is the default. WebGPU requires an actual GPU adapter in a secure context and never silently switches to WebGL. Startup, device and rendering failures offer an explicit **Use WebGL** action.
 
