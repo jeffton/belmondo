@@ -171,13 +171,20 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       put("pale", 0, deck + 14, -20, 1.5, 28, 1.5);
       put("accent", 0, deck + 27, -20, 9, 1, 2);
     } else if (kind === "observatory" || kind === "survey") {
-      const count = kind === "observatory" ? 3 : 2;
-      for (let i = 0; i < count; i++) {
-        const x = (i - (count - 1) / 2) * 22;
-        put("accent", x, deck + 5, 0, 17, 10, 22);
-        put("pale", x, deck + 10.5, 0, 19, 1, 24);
-        put("dark", x, deck + 6, -11.1, 12, 3, 0.3);
-        put("pale", x + 7, deck + 3, -13, 3, 6, 4);
+      // A principal lab and a low service wing frame the observation dome.
+      // Survey camps use a single broad shelter rather than a copied cabin row.
+      const labs =
+        kind === "observatory"
+          ? [
+              [-23, -13, 19, 10, 20],
+              [21, -5, 15, 6, 29],
+            ]
+          : [[8, 6, 28, 9, 30]];
+      for (const [x, z, w, h, d] of labs) {
+        put("accent", x, deck + h / 2, z, w, h, d);
+        put("pale", x, deck + h + 0.5, z, w + 2, 1, d + 2);
+        put("dark", x, deck + h * 0.6, z - d / 2 - 0.1, w - 5, 3, 0.3);
+        put("pale", x + w / 2 - 2, deck + 2, z - d / 2 - 2, 3, 4, 4);
       }
       if (kind === "observatory") {
         put("pale", 0, deck + 17, 12, 18, 14, 18, "cylinder");
@@ -195,11 +202,31 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
         put("dark", -width / 2 + 4.8, deck + 4, z, 0.5, 8, 10);
       }
     } else if (kind === "pipe-yard") {
-      for (const x of [-22, -7, 8, 23]) {
-        put("pale", x, deck + 5, 0, 5, 5, depth - 10);
-        for (const z of [-depth / 2 + 9, 0, depth / 2 - 9])
-          put("wall", x, deck + 2, z, 8, 4, 4);
-        put("accent", x, deck + 5, 8, 5.4, 5.4, 2);
+      const mains =
+        Math.floor(u * 100) % 2
+          ? [
+              [-22, 3, 48, 5],
+              [-5, -7, 31, 7],
+              [21, 7, 39, 4],
+            ]
+          : [
+              [-23, -7, 34, 7],
+              [0, 4, 50, 5],
+              [22, -2, 26, 4],
+            ];
+      for (const [x, z, length, diameter] of mains) {
+        put("pale", x, deck + 5, z, diameter, diameter, length);
+        for (const dz of [-length / 2 + 4, length / 2 - 4])
+          put("wall", x, deck + 2, z + dz, diameter + 3, 4, 4);
+        put(
+          "accent",
+          x,
+          deck + 5,
+          z + length * 0.2,
+          diameter + 0.4,
+          diameter + 0.4,
+          2,
+        );
       }
       put("wall", 0, deck + 4, -depth / 2 + 6, 62, 8, 8);
       put("pale", 0, deck + 14, depth / 2 - 10, 38, 20, 12);
@@ -242,11 +269,15 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       }
       put("pale", 0, deck + 2, 27, 34, 4, 8);
     } else if (kind === "pumps") {
-      for (const x of [-24, 0, 24]) {
-        put("pale", x, deck + 13, 0, 18, 26, 28);
-        put("dark", x, deck + 22, -14.2, 12, 5, 0.4);
-        put("accent", x, deck + 28, 0, 20, 4, 30);
-        put("wall", x, deck + 4, -23, 9, 8, 22);
+      for (const [x, z, h, w] of [
+        [-25, 4, 30, 20],
+        [3, -3, 19, 16],
+        [27, 8, 12, 13],
+      ]) {
+        put("pale", x, deck + h / 2, z, w, h, 25);
+        put("dark", x, deck + h * 0.72, z - 12.7, w - 6, 4, 0.4);
+        put("accent", x, deck + h + 1.5, z, w + 2, 3, 27);
+        put("wall", x, deck + 3, z - 21, 7, 6, 17);
       }
       put("wall", 0, deck + 6, 23, 70, 12, 8);
       put("pale", 0, deck + 13, 23, 74, 2, 10);
@@ -275,13 +306,30 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
       put("dark", 8, deck + 26, 0, 28, 2, 20);
     } else if (kind === "basalt" || kind === "iceface") {
       // Irregular grounded columns, not floating rocks or identical red mesas.
-      for (let i = 0; i < 7; i++) {
-        const h = 12 + ((i * 13) % 29);
-        const x = (i - 3) * 10;
-        const z = Math.sin(i * 2.1) * 12;
+      const formations = [
+        [
+          [-26, -15, 19, 18, 15],
+          [-10, -9, 39, 21, 20],
+          [8, 3, 28, 17, 22],
+          [24, 16, 14, 13, 16],
+        ],
+        [
+          [-25, 9, 16, 17, 20],
+          [-10, 17, 24, 15, 18],
+          [15, -12, 42, 26, 23],
+        ],
+        [
+          [-23, -12, 34, 24, 19],
+          [-1, -3, 20, 18, 20],
+          [24, 13, 29, 17, 17],
+          [10, 23, 12, 12, 12],
+        ],
+      ];
+      const formation = formations[Math.floor(u * 100) % formations.length];
+      for (const [i, [x, z, h, w, d]] of formation.entries()) {
         transform.position.copy(local(x, 0, z));
         transform.rotation.set(0, yaw, 0);
-        transform.scale.set(14, h, 17);
+        transform.scale.set(w, h, d);
         transform.updateMatrix();
         const y = groundedGeometryOffset(
           geometries.basalt,
@@ -293,9 +341,9 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
           x,
           y,
           z,
-          14,
+          w,
           h,
-          17,
+          d,
           "basalt",
         );
       }

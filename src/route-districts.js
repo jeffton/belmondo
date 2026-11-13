@@ -231,6 +231,11 @@ export function buildRouteDistricts(parent, track, textures, environment) {
     const bays = Math.ceil(length / (district.style === "strata" ? 43 : 52));
     let accepted = 0;
     for (let i = 0; i < bays; i++) {
+      // Service courts split long rows into groups of two or three buildings.
+      // Rock cuttings remain continuous geology, not an architectural parade.
+      const stone = district.style === "strata";
+      if (!stone && i % 5 === 3 && i !== bays - 1) continue;
+      const rhythm = (i + course + districts.indexOf(district)) % 4;
       const u =
         district.start + ((i + 0.5) / bays) * (district.end - district.start);
       const f = track.frame(u * track.length, district.branch || 0);
@@ -241,12 +246,16 @@ export function buildRouteDistricts(parent, track, textures, environment) {
       ).normalize();
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       const yaw = Math.atan2(forward.x, forward.z);
-      const width = district.style === "strata" ? 44 : 34;
-      const depth = Math.min(44, (length / bays) * 0.84);
+      const width = stone ? 44 : 34;
+      const depth = Math.min(
+        stone || district.style === "silos" ? 44 : [42, 30, 36, 26][rhythm],
+        (length / bays) * 0.84,
+      );
       // Setbacks open and close around each district's central landmark.
       const middle = 1 - Math.abs(((i + 0.5) / bays) * 2 - 1);
       const setback =
-        district.style === "terraces" ? 17 : 12 + (1 - middle) * 14;
+        (district.style === "terraces" ? 17 : 12 + (1 - middle) * 14) +
+        (stone ? 0 : [0, 12, 5, 18][rhythm]);
       const center = f.p
         .clone()
         .addScaledVector(
@@ -295,7 +304,8 @@ export function buildRouteDistricts(parent, track, textures, environment) {
       const face = -district.side * (width / 2 + 0.12);
       const facade = (y, h, color, z = 0, d = depth - 4, lit = false) =>
         box(face, y, z, 0.5, h, d, color, unit, lit);
-      const height = 13 + middle * 22;
+      const height =
+        (13 + middle * 22) * (stone ? 1 : [1, 0.68, 0.86, 0.76][rhythm]);
       if (district.style === "terraces") {
         for (let tier = 0; tier < 3; tier++) {
           box(
