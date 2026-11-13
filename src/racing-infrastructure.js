@@ -96,7 +96,7 @@ function surfaceSamples(part, spacing = 2) {
   return samples;
 }
 
-/** Reserve the board envelope and its center/corner sight rays at 120 m. */
+/** Reserve board envelopes, close approaches and the curated 160/45 m face grid. */
 export function infrastructureAdClear(parts, ads, track) {
   const inverse = new THREE.Matrix4();
   const bounds = new THREE.Box3(
@@ -104,8 +104,34 @@ export function infrastructureAdClear(parts, ads, track) {
     new THREE.Vector3(0.5, 0.5, 0.5),
   );
   for (const ad of ads) {
-    const eye = track.frame(ad.u * track.length - 120, ad.branch).p.clone();
-    eye.y += 5;
+    const views = [120, 60, 30].map((distance) => {
+      const eye = track
+        .frame(ad.u * track.length - distance, ad.branch)
+        .p.clone();
+      eye.y += 5;
+      return { eye, targets: [ad.center, ...ad.corners] };
+    });
+    // Match the curated billboard acceptance's full-face sampling and eye height.
+    for (const distance of [160, 45]) {
+      const s = ad.u * track.length - distance;
+      const u = s / track.length;
+      const branch =
+        u > track.config.split[0] && u < track.config.split[1] ? ad.side : 0;
+      const eye = track.frame(s, branch).p.clone();
+      eye.y += 8;
+      const normal = new THREE.Vector3(Math.sin(ad.yaw), 0, Math.cos(ad.yaw));
+      const targets = [-0.45, -0.225, 0, 0.225, 0.45].flatMap((x) =>
+        [-0.4, 0, 0.4].map((y) => {
+          const target = ad.center
+            .clone()
+            .addScaledVector(ad.horizontal, x * ad.width)
+            .addScaledVector(normal, 0.86);
+          target.y += y * ad.height;
+          return target;
+        }),
+      );
+      views.push({ eye, targets });
+    }
     for (const part of parts) {
       inverse.copy(part.matrix).invert();
       // Expanded envelope protects the physical board as well as sightlines.
@@ -118,17 +144,18 @@ export function infrastructureAdClear(parts, ads, track) {
         )
       )
         return false;
-      for (const target of [ad.center, ...ad.corners]) {
-        const a = eye.clone().applyMatrix4(inverse);
-        const b = target.clone().applyMatrix4(inverse);
-        const direction = b.clone().sub(a);
-        const length = direction.length();
-        const hit = new THREE.Ray(a, direction.normalize()).intersectBox(
-          bounds,
-          new THREE.Vector3(),
-        );
-        if (hit && hit.distanceTo(a) < length) return false;
-      }
+      for (const { eye, targets } of views)
+        for (const target of targets) {
+          const a = eye.clone().applyMatrix4(inverse);
+          const b = target.clone().applyMatrix4(inverse);
+          const direction = b.clone().sub(a);
+          const length = direction.length();
+          const hit = new THREE.Ray(a, direction.normalize()).intersectBox(
+            bounds,
+            new THREE.Vector3(),
+          );
+          if (hit && hit.distanceTo(a) < length) return false;
+        }
     }
   }
   return true;
