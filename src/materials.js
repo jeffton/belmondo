@@ -41,33 +41,46 @@ function raster(width, height, draw) {
 }
 export function circuitTextures(accent) {
   const concrete = raster(128, 256, (ctx) => {
-    // Large ceramic cassettes: shadow joints, chamfer light, recessed foot.
-    ctx.fillStyle = "#e2e3dd";
+    // Cast ceramic cassettes: repeated structural bays survive stretched faces.
+    // Broad glaze/relief carries the material; no granular weathering overlay.
+    ctx.fillStyle = "#d4d9d5";
     ctx.fillRect(0, 0, 128, 256);
-    for (const y of [0, 128]) {
-      ctx.fillStyle = "#647078";
-      ctx.fillRect(0, y, 128, 4);
-      ctx.fillStyle = "#fcf6e6";
-      ctx.fillRect(4, y + 4, 120, 3);
-      ctx.fillStyle = "#c5cbc8";
-      ctx.fillRect(4, y + 105, 120, 19);
-      ctx.fillStyle = "#424e55";
-      ctx.fillRect(12, y + 110, 30, 7);
-      ctx.fillRect(86, y + 110, 30, 7);
-      for (const x of [10, 114]) {
-        ctx.fillStyle = "#8d999c";
-        ctx.fillRect(x, y + 14, 4, 5);
-        ctx.fillRect(x, y + 88, 4, 5);
+    for (let row = 0; row < 4; row++)
+      for (let column = 0; column < 2; column++) {
+        const x = column * 64;
+        const y = row * 64;
+        ctx.fillStyle = "#76858a";
+        ctx.fillRect(x, y, 64, 3);
+        ctx.fillRect(x, y, 2, 64);
+        ctx.fillStyle = "#f5f1df";
+        ctx.fillRect(x + 2, y + 3, 62, 2);
+        ctx.fillRect(x + 2, y + 5, 2, 57);
+        // The inset has a rolled glaze, lower cast shadow and a pale shoulder.
+        const glaze = ctx.createLinearGradient(x, y + 8, x + 48, y + 55);
+        glaze.addColorStop(0, row % 2 === column ? "#eeeade" : "#e2e7df");
+        glaze.addColorStop(0.42, "#d8ded8");
+        glaze.addColorStop(1, "#bac5c4");
+        ctx.fillStyle = glaze;
+        ctx.fillRect(x + 9, y + 10, 47, 40);
+        ctx.fillStyle = "#f0eee2";
+        ctx.fillRect(x + 9, y + 9, 47, 2);
+        ctx.fillStyle = "#a8b5b7";
+        ctx.fillRect(x + 54, y + 11, 3, 40);
+        ctx.fillRect(x + 10, y + 49, 44, 3);
+        // Broad runoff collects at the sill, rather than scattered pixel chips.
+        ctx.fillStyle = "#bdc7c3";
+        ctx.fillRect(x + 7, y + 55, 52, 5);
+        ctx.fillStyle = "#7b8d93";
+        ctx.fillRect(x + 13, y + 56, 18, 3);
+        ctx.fillRect(x + 42, y + 56, 9, 3);
+        ctx.fillStyle = "#8d9b9d";
+        ctx.fillRect(x + 59, y + 16, 3, 5);
+        ctx.fillRect(x + 59, y + 42, 3, 5);
       }
-    }
-    ctx.fillStyle = "#aab4b5";
-    ctx.fillRect(0, 0, 3, 256);
-    ctx.fillStyle = "#f5f2e6";
-    ctx.fillRect(3, 0, 2, 256);
-    ctx.fillStyle = "#687781";
-    ctx.fillRect(52, 108, 22, 8);
+    ctx.fillStyle = "#566c79";
+    ctx.fillRect(78, 183, 30, 5);
     ctx.fillStyle = accent;
-    ctx.fillRect(55, 110, 16, 3);
+    ctx.fillRect(80, 184, 25, 2);
   });
   const rock = raster(128, 256, (ctx) => {
     // Mineral beds for legacy rock instances: no manufactured seams or sockets.
@@ -95,36 +108,64 @@ export function circuitTextures(accent) {
     ridge(187, 32, "#c4c6bd");
   });
   const road = raster(256, 256, (ctx) => {
-    // Three broad induction plates with small recessed maintenance hatches.
-    // No centreline, arrows or scattered aggregate competing with pickup pads.
-    ctx.fillStyle = "#777f88";
-    ctx.fillRect(0, 0, 256, 256);
-    for (const [x, y, width] of [
-      [32, 0, 63],
-      [98, 96, 60],
-      [161, 176, 63],
-    ]) {
-      ctx.fillStyle = "#818991";
-      ctx.fillRect(x, 0, width, 256);
-      ctx.fillStyle = "#454f5d";
+    // Rolled induction alloy, not asphalt. Broad sheen and directional abrasion
+    // retain values in night lighting without reinstating pixel-gravel noise.
+    const bases = [155, 165, 159, 169];
+    for (let y = 0; y < 256; y++)
+      for (let x = 0; x < 256; x++) {
+        const plate = Math.floor(x / 64);
+        const localX = x % 64;
+        const rolled = Math.sin((localX / 64) * Math.PI * 2) * 10;
+        const polish =
+          Math.sin(
+            (x / 256) * Math.PI * 12 + Math.sin((y / 256) * Math.PI * 2) * 0.35,
+          ) * 6;
+        const lengthwise = Math.cos((y / 256) * Math.PI * 2 + plate) * 4;
+        const value = Math.round(bases[plate] + rolled + polish + lengthwise);
+        ctx.fillStyle = `rgb(${value - 3},${value},${value + 4})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    // Plate joints are staggered, but all details respect the repeating world UV.
+    // No assumed lane margins, centreline, arrows or luminous pickup-like marks.
+    for (const [plate, station] of [0, 96, 176, 48].entries()) {
+      const x = plate * 64;
+      ctx.fillStyle = "#677580";
       ctx.fillRect(x, 0, 2, 256);
-      ctx.fillRect(x, y, width, 4);
-      ctx.fillStyle = "#a1a9ac";
-      ctx.fillRect(x + 2, y + 4, width - 2, 2);
-      ctx.fillStyle = "#727c86";
-      ctx.fillRect(x + width - 8, 0, 6, 256);
+      ctx.fillRect(x, station, 64, 3);
+      ctx.fillStyle = "#c0c7c7";
+      ctx.fillRect(x + 2, station + 3, 62, 2);
+      ctx.fillStyle = "#afb7b9";
+      ctx.fillRect(x + 2, 0, 2, 256);
+      // Anodized service lip, with a broad polished shoulder instead of a line.
+      ctx.fillStyle = "#828e97";
+      ctx.fillRect(x + 57, 0, 7, 256);
+      ctx.fillStyle = "#a6b0b4";
+      ctx.fillRect(x + 54, 0, 3, 256);
     }
-    // World-space UVs repeat across the deck: these are plate service hatches,
-    // never lane-edge drains (U=0 can occur in the centre of the racing line).
+    // Soft, long service scuffs break the plate fill without adding random chips.
+    for (const [x, y, width, length] of [
+      [14, 31, 15, 174],
+      [84, 86, 9, 133],
+      [139, 14, 18, 194],
+      [210, 58, 13, 157],
+    ]) {
+      const wear = ctx.createLinearGradient(0, y, 0, y + length);
+      wear.addColorStop(0, "#e0e3dc00");
+      wear.addColorStop(0.25, "#e0e3dc24");
+      wear.addColorStop(0.7, "#e0e3dc34");
+      wear.addColorStop(1, "#e0e3dc00");
+      ctx.fillStyle = wear;
+      ctx.fillRect(x, y, width, length);
+    }
     for (const [x, y] of [
       [12, 32],
       [232, 160],
     ]) {
-      ctx.fillStyle = "#596875";
+      ctx.fillStyle = "#758590";
       ctx.fillRect(x, y, 14, 32);
-      ctx.fillStyle = "#9aa7ad";
+      ctx.fillStyle = "#bdc5c7";
       ctx.fillRect(x, y, 14, 2);
-      ctx.fillStyle = "#374552";
+      ctx.fillStyle = "#52636f";
       for (let slit = 0; slit < 3; slit++)
         ctx.fillRect(x + 3, y + 7 + slit * 7, 8, 3);
     }
