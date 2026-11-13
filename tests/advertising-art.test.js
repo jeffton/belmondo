@@ -46,10 +46,21 @@ test("all campaign faces sample their own artwork, not presentation margins, in 
       ROADSIDE_ART.columns,
       ROADSIDE_ART.rows,
       ROADSIDE_ART.region,
+      true,
     );
     for (let brand = 0; brand < 8; brand++)
       ads.facade(new THREE.Vector3(brand * 20, 10, 0), 0, 16, brand, 6);
     ads.finish();
+    scene.updateMatrixWorld(true);
+    const hits = new THREE.Raycaster(
+      new THREE.Vector3(0, 10, 20),
+      new THREE.Vector3(0, 0, -1),
+    ).intersectObjects(scene.children, true);
+    assert(hits.length, "campaign face must be visible to approaching racers");
+    assert(
+      hits[0].object.material.map,
+      "artwork must sit ahead of its opaque housing",
+    );
     assert.deepEqual(loaded, [ROADSIDE_ART.url]);
     const panels = scene.children[0].children.filter(
       (mesh) => !mesh.isInstancedMesh,
@@ -72,7 +83,7 @@ test("all campaign faces sample their own artwork, not presentation margins, in 
     );
     assert.equal(
       details.reduce((sum, mesh) => sum + mesh.count, 0),
-      8 * 3,
+      8 * 5,
     );
     assert.equal(new Set(panels.map((mesh) => mesh.material.map)).size, 1);
   } finally {
