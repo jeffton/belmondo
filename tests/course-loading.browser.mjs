@@ -83,17 +83,31 @@ try {
         const t = window.nullVector.telemetry;
         return !t.trackLoading && t.loadedTrack === i;
       }, i);
-      const result = await page.evaluate(() => {
+      await page.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => setTimeout(resolve, 0)),
+            ),
+          ),
+      );
+      const result = await page.evaluate((start) => {
         const t = window.nullVector.telemetry;
         return {
           ...t.trackLoadTiming,
-          maxTaskMs: Math.max(0, ...window.courseLongTasks.map((e) => e.ms)),
+          presentedMs: performance.now() - start,
+          maxTaskMs: Math.max(
+            0,
+            ...window.courseLongTasks
+              .filter((e) => e.start >= start)
+              .map((e) => e.ms),
+          ),
           resources: t.resources,
           preview: t.previewResources,
           selected: t.selectedTrack,
           loaded: t.loadedTrack,
         };
-      });
+      }, click.start);
       expect(result.loaded).toBe(i);
       expect(result.selected).toBe(i);
       switches.push({ i, handlerMs: click.handlerMs, ...result });
