@@ -1,18 +1,32 @@
 import * as THREE from "three";
 
-/** Low-contrast stone/ice grain without architectural seams, holes or panels. */
+/** Broad, tileable mineral masses; terrain vertex colours retain biome identity. */
 export function biomeGroundTexture(biome) {
   const pixels = new Uint8Array(64 * 64 * 4);
-  let seed = { polar: 4417, hydraulic: 7187, volcanic: 9173, metropolis: 6197 }[
-    biome
-  ];
   for (let y = 0; y < 64; y++)
     for (let x = 0; x < 64; x++) {
-      seed = (seed * 16807) % 2147483647;
-      const grain = (seed % 31) - 15;
-      const strata =
-        Math.sin((y * Math.PI) / 8 + Math.sin((x * Math.PI) / 16) * 0.7) * 6;
-      const value = 211 + grain + Math.round(strata);
+      const u = (x / 64) * Math.PI * 2;
+      const v = (y / 64) * Math.PI * 2;
+      const fold = Math.sin(u + Math.sin(v) * 0.7);
+      const basin = Math.cos(v + Math.sin(u) * 0.5);
+      let value;
+      if (biome === "polar") {
+        // Unbroken snowfields with broad blue-grey exposed rock shelves.
+        const shelf = Math.sin(v * 2 + fold * 0.8);
+        value = shelf > 0.55 ? 192 + fold * 5 : 235 + basin * 5;
+      } else if (biome === "hydraulic") {
+        // Damp silt basins against drier mineral ledges, not mottled noise.
+        value = basin + fold * 0.45 > 0.15 ? 223 : 193;
+        value += Math.sin(v * 3 + fold) * 4;
+      } else if (biome === "volcanic") {
+        // Basalt beds, with a quiet ash-filled joint at each broad stratum.
+        const bed = Math.sin(v * 3 + fold * 1.2);
+        value = 211 + basin * 7 + fold * 5 - (bed > 0.92 ? 21 : 0);
+      } else {
+        // Urban foundations: broad dry/wet transitions beneath the buildings.
+        value = 218 + basin * 7 + fold * 5;
+      }
+      value = Math.round(value);
       pixels.set([value, value, value, 255], (y * 64 + x) * 4);
     }
   const texture = new THREE.DataTexture(pixels, 64, 64);

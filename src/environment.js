@@ -25,12 +25,23 @@ export function buildEnvironment(scene, track, textures) {
   const metal = material(harbor ? 0x44586a : 0x73868a, textures.facade);
   const paint = material(track.config.color, textures.paint);
   const pixels = new Uint8Array(64 * 64 * 4);
-  let grain = 3917;
-  for (let i = 0; i < pixels.length; i += 4) {
-    grain = (grain * 16807) % 2147483647;
-    const value = 180 + (grain % 65);
-    pixels.set([value, value, value, 255], i);
-  }
+  for (let y = 0; y < 64; y++)
+    for (let x = 0; x < 64; x++) {
+      const u = (x / 64) * Math.PI * 2;
+      const v = (y / 64) * Math.PI * 2;
+      const fold = Math.sin(u + Math.sin(v) * 0.7);
+      const basin = Math.cos(v + Math.sin(u) * 0.5);
+      // Authored mineral beds and wet/dry masses, not per-pixel gravel.
+      const stratum = Math.sin(v * (desert ? 3 : 2) + fold);
+      const value = Math.round(
+        219 +
+          fold * 6 +
+          basin * 7 -
+          (desert && stratum > 0.92 ? 17 : 0) -
+          (!desert && basin + fold * 0.4 < -0.5 ? 13 : 0),
+      );
+      pixels.set([value, value, value, 255], (y * 64 + x) * 4);
+    }
   const groundMap = new THREE.DataTexture(pixels, 64, 64);
   groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
   groundMap.magFilter = THREE.NearestFilter;
