@@ -42,8 +42,11 @@ function quadGeometry(quads, lighting) {
     c = [],
     uv = [];
   for (const q of quads) {
+    const cornerColors = q.p.map(
+      (point) => new THREE.Color(lighting.shade(point, q.color)),
+    );
     for (const i of [0, 2, 1, 0, 3, 2]) {
-      const color = new THREE.Color(lighting.shade(q.p[i], q.color));
+      const color = cornerColors[i];
       vertices.push(...q.p[i].toArray());
       c.push(color.r, color.g, color.b);
       uv.push(
