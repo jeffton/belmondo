@@ -1,113 +1,9 @@
 import * as THREE from "three";
 import { createPierreAdvertising } from "./pierre-advertising.js";
-import { advertisingCellUV, ROADSIDE_ART } from "./advertising-art.js";
+import { ROADSIDE_ART } from "./advertising-art.js";
+import { createAdvertising } from "./advertising-panels.js";
 
-const ATLAS =
-  "/art/openai-image-2026-11-11T16-25-29-514Z-ig_0a4106913d49f121016af496c5017087d286f627a074fae0ad.png";
-
-// Four original tenants share one image atlas. Spatial batches keep facade ads
-// in the ordinary camera frustum; no per-frame updates or transparent glow layers.
-export function createAdvertising(
-  scene,
-  atlas = ATLAS,
-  columns = 2,
-  rows = 2,
-  region = [0, 0, 1, 1],
-) {
-  const root = new THREE.Group();
-  root.name = "district-advertising";
-  scene.add(root);
-  const texture = new THREE.TextureLoader().load(atlas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.magFilter = THREE.NearestFilter;
-  const panelMaterial = new THREE.MeshBasicMaterial({ map: texture });
-  const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x142333 });
-  const neonMaterials = [
-    0xff654d, 0x9bffd9, 0xbcafff, 0xf3f5e7, 0xff654d, 0xbcafff, 0x9bffd9,
-    0xf3f5e7,
-  ].map((color) => new THREE.MeshBasicMaterial({ color }));
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const chunks = new Map();
-  const transform = new THREE.Object3D();
-
-  function facade(position, yaw, size, brand, height = size) {
-    const key = `${Math.floor(position.x / 256)}:${Math.floor(position.z / 256)}`;
-    if (!chunks.has(key))
-      chunks.set(key, { positions: [], uv: [], details: [] });
-    const chunk = chunks.get(key);
-    const rotation = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 1, 0),
-      yaw,
-    );
-    const corner = (x, y, z) =>
-      new THREE.Vector3(x, y, z).applyQuaternion(rotation).add(position);
-    const corners = [
-      corner(-size / 2, -height / 2, 0.35),
-      corner(size / 2, -height / 2, 0.35),
-      corner(size / 2, height / 2, 0.35),
-      corner(-size / 2, height / 2, 0.35),
-    ];
-    const uv = advertisingCellUV(brand, columns, rows, region);
-    for (const i of [0, 1, 2, 0, 2, 3]) {
-      chunk.positions.push(...corners[i].toArray());
-      chunk.uv.push(...uv[i]);
-    }
-    const detail = (x, y, z, w, h, d, material) => {
-      transform.position.copy(corner(x, y, z));
-      transform.quaternion.copy(rotation);
-      transform.scale.set(w, h, d);
-      transform.updateMatrix();
-      chunk.details.push({ matrix: transform.matrix.clone(), material });
-    };
-    detail(0, 0, 0, size + 0.7, height + 0.7, 0.6, housingMaterial);
-    // Campaign-specific light rails keep the same two instances per panel.
-    const railSide = brand % 2 === 0 ? -1 : 1;
-    const railEdge = brand % 3 === 0 ? 1 : -1;
-    detail(
-      railSide * (size / 2 + 0.6),
-      0,
-      0.2,
-      0.2,
-      height + 1.5,
-      0.25,
-      neonMaterials[brand],
-    );
-    detail(
-      0,
-      railEdge * (height / 2 + 0.6),
-      0.2,
-      size + 1.5,
-      0.2,
-      0.25,
-      neonMaterials[brand],
-    );
-  }
-
-  function finish() {
-    for (const chunk of chunks.values()) {
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(chunk.positions, 3),
-      );
-      geometry.setAttribute(
-        "uv",
-        new THREE.Float32BufferAttribute(chunk.uv, 2),
-      );
-      geometry.computeBoundingSphere();
-      root.add(new THREE.Mesh(geometry, panelMaterial));
-      for (const material of [housingMaterial, ...neonMaterials]) {
-        const details = chunk.details.filter((d) => d.material === material);
-        if (!details.length) continue;
-        const mesh = new THREE.InstancedMesh(box, material, details.length);
-        details.forEach((d, i) => mesh.setMatrixAt(i, d.matrix));
-        mesh.computeBoundingSphere();
-        root.add(mesh);
-      }
-    }
-  }
-  return { facade, finish };
-}
+export { createAdvertising } from "./advertising-panels.js";
 
 export function buildSplitMarkers(scene, track) {
   const [start, end] = track.config.split;
@@ -179,104 +75,97 @@ export function buildSplitMarkers(scene, track) {
 }
 
 export function getTrackAdvertisingLayout(track) {
-  // Four distinct large campaigns plus two slim lore installations. Placements
-  // follow real outer routes, not the nonexistent centreline inside a fork.
+  // Four individually staged landmarks per lap: three different campaigns and
+  // one full-size Pierre panel. Nothing is tiled along the running rail.
   const campaigns = {
     "KAISEKI COAST": [
-      [0.195, -1, 0],
-      [0.485, 1, 2],
-      [0.655, -1, 6],
-      [0.9, -1, 1],
-      [0.25, 1, -1],
-      [0.91, 1, -2],
+      [0.195, 1, 0, 56],
+      [0.485, 1, 2, 50],
+      [0.65, 1, 6, 60],
+      [0.91, -1, -1, 48],
     ],
     "SOLAR ARRAY": [
-      [0.105, -1, 1],
-      [0.31, -1, 2],
-      [0.49, 1, 5],
-      [0.79, -1, 7],
-      [0.175, 1, -1],
-      [0.92, 1, -2],
+      [0.105, -1, 1, 56],
+      [0.31, 1, 2, 50],
+      [0.79, 1, 7, 60],
+      [0.92, -1, -1, 48],
     ],
     WHITEOUT: [
-      [0.105, -1, 4],
-      [0.235, 1, 0],
-      [0.53, -1, 3],
-      [0.9, 1, 7],
-      [0.695, 1, -1],
-      [0.94, -1, -2],
+      [0.105, 1, 4, 52],
+      [0.235, 1, 0, 58],
+      [0.56, 1, 3, 50],
+      [0.94, -1, -1, 48],
     ],
     MONSOON: [
-      [0.09, 1, 1],
-      [0.37, -1, 6],
-      [0.575, -1, 4],
-      [0.88, 1, 2],
-      [0.645, -1, -1],
-      [0.94, 1, -2],
+      [0.09, 1, 1, 56],
+      [0.37, -1, 6, 60, 20],
+      [0.575, -1, 4, 50, 20],
+      [0.94, 1, -1, 48],
     ],
     "VESPER CIRCUIT": [
-      [0.115, -1, 3],
-      [0.34, 1, 4],
-      [0.61, -1, 5],
-      [0.89, 1, -1],
+      [0.12, -1, 3, 54],
+      [0.32, 1, 4, 60],
+      [0.69, -1, 5, 52, 0, -4],
+      [0.965, -1, -1, 50],
     ],
     CINDERLINE: [
-      [0.1, -1, 5],
-      [0.41, 1, 2],
-      [0.695, -1, 7],
-      [0.925, 1, 3],
-      [0.61, -1, -1],
-      [0.945, 1, -2],
+      [0.3, -1, 5, 56],
+      [0.41, 1, 2, 52],
+      [0.68, 1, 7, 60],
+      [0.945, 1, -1, 48],
     ],
     NOCTILUCENT: [
-      [0.12, 1, 0],
-      [0.3, -1, 3],
-      [0.65, 1, 4],
-      [0.815, -1, 6],
-      [0.46, 1, -1],
-      [0.93, 1, -2],
+      [0.12, 1, 0, 56],
+      [0.3, -1, 3, 52],
+      [0.65, -1, 4, 60],
+      [0.93, -1, -1, 48],
     ],
   };
-  return campaigns[track.config.name].map(([u, side, brand]) => {
-    const branch =
-      u > track.config.split[0] && u < track.config.split[1] ? side : 0;
-    const frame = track.frame(u * track.length, branch);
-    const normal = frame.tangent
-      .clone()
-      .multiplyScalar(-0.85)
-      .addScaledVector(frame.right, -side * 0.55)
-      .setY(0)
-      .normalize();
-    const yaw = Math.atan2(normal.x, normal.z);
-    const width = brand < 0 ? 28 : 32;
-    const height = width * (brand < 0 ? 0.13 : 384 / 1024);
-    const center = frame.p
-      .clone()
-      .addScaledVector(frame.right, side * (frame.width + 16.5));
-    center.y = frame.p.y + height / 2 + (brand < 0 ? 6 : 4);
-    const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-    const corners = [-1, 1].flatMap((x) =>
-      [-1, 1].map((y) =>
-        center
-          .clone()
-          .addScaledVector(horizontal, (x * width) / 2)
-          .add(new THREE.Vector3(0, (y * height) / 2, 0)),
-      ),
-    );
-    return {
-      u,
-      side,
-      branch,
-      brand,
-      frame,
-      center,
-      yaw,
-      width,
-      height,
-      horizontal,
-      corners,
-    };
-  });
+  return campaigns[track.config.name].map(
+    ([u, side, brand, width, elevation = 0, setback = 0]) => {
+      const branch =
+        u > track.config.split[0] && u < track.config.split[1] ? side : 0;
+      const frame = track.frame(u * track.length, branch);
+      const normal = frame.tangent
+        .clone()
+        .multiplyScalar(-0.85)
+        .addScaledVector(frame.right, -side * 0.55)
+        .setY(0)
+        .normalize();
+      const yaw = Math.atan2(normal.x, normal.z);
+      const height = width * (384 / 1024);
+      const center = frame.p
+        .clone()
+        .addScaledVector(
+          frame.right,
+          side * (frame.width + width * 0.46 + 12 + setback),
+        );
+      // Monsoon's two lock-wall installations stand above the hydraulic walls.
+      center.y = frame.p.y + height / 2 + 7 + elevation;
+      const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+      const corners = [-1, 1].flatMap((x) =>
+        [-1, 1].map((y) =>
+          center
+            .clone()
+            .addScaledVector(horizontal, (x * width) / 2)
+            .add(new THREE.Vector3(0, (y * height) / 2, 0)),
+        ),
+      );
+      return {
+        u,
+        side,
+        branch,
+        brand,
+        frame,
+        center,
+        yaw,
+        width,
+        height,
+        horizontal,
+        corners,
+      };
+    },
+  );
 }
 
 export function buildTrackAdvertising(scene, track, environment) {
@@ -286,6 +175,7 @@ export function buildTrackAdvertising(scene, track, environment) {
     ROADSIDE_ART.columns,
     ROADSIDE_ART.rows,
     ROADSIDE_ART.region,
+    true,
   );
   const pierre = createPierreAdvertising(scene);
   const layout = getTrackAdvertisingLayout(track);
@@ -304,7 +194,7 @@ export function buildTrackAdvertising(scene, track, environment) {
         .clone()
         .addScaledVector(horizontal, direction * width * 0.32);
       const bottom = environment.heightAt(p.x, p.z) - 2;
-      const top = center.y - height / 2 + (brand < 0 ? -0.1 : 1);
+      const top = center.y - height / 2 + 1;
       transform.position.set(p.x, (bottom + top) / 2, p.z);
       transform.scale.set(0.9, top - bottom, 1.1);
       transform.rotation.set(0, yaw, 0);
@@ -316,4 +206,5 @@ export function buildTrackAdvertising(scene, track, environment) {
   posts.computeBoundingSphere();
   scene.add(posts);
   advertising.finish();
+  pierre.finish();
 }

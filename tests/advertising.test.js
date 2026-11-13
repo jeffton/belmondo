@@ -9,6 +9,8 @@ for (const [index, config] of TRACKS.entries()) {
     const track = makeTrack(index),
       terrain = createTerrain(track),
       layout = getTrackAdvertisingLayout(track);
+    assert.equal(layout.length, 4, "four authored roadside landmarks per lap");
+    assert.equal(layout.filter((spec) => spec.brand < 0).length, 1);
     const campaigns = layout.filter((spec) => spec.brand >= 0);
     assert.equal(
       new Set(campaigns.map((spec) => spec.brand)).size,
@@ -33,7 +35,19 @@ for (const [index, config] of TRACKS.entries()) {
         !(spec.u >= finishStart || spec.u <= finishEnd - 1),
         "large panels cannot intersect full-straight crowd stands",
       );
-      for (const point of spec.corners) {
+      // Sample the whole face, not just corners: an angled billboard can cross
+      // a neighbouring road or cut into a ridge through its middle.
+      const face = [];
+      for (let x = -1; x <= 1; x += 0.125) {
+        for (let y = -1; y <= 1; y += 0.5) {
+          const point = spec.center
+            .clone()
+            .addScaledVector(spec.horizontal, x * (spec.width / 2 + 1.5));
+          point.y += y * (spec.height / 2 + 1.6);
+          face.push(point);
+        }
+      }
+      for (const point of face) {
         assert(
           point.y > terrain.heightAt(point.x, point.z) + 1,
           "campaign face must remain above real land",
@@ -46,13 +60,22 @@ for (const [index, config] of TRACKS.entries()) {
           );
         }
       }
+      assert(spec.width >= 48, "readable landmark rather than a rail strip");
+      assert(
+        spec.height >= 18,
+        "Pierre uses the full campaign proportions too",
+      );
+      const normal = spec.horizontal.clone().cross({ x: 0, y: 1, z: 0 });
+      assert(
+        normal.dot(spec.frame.tangent) < -0.7,
+        "art faces approaching traffic",
+      );
       for (const side of [-1, 1]) {
         const p = spec.center
           .clone()
           .addScaledVector(spec.horizontal, side * spec.width * 0.32);
         const bottom = terrain.heightAt(p.x, p.z) - 2;
-        const top =
-          spec.center.y - spec.height / 2 + (spec.brand < 0 ? -0.1 : 1);
+        const top = spec.center.y - spec.height / 2 + 1;
         assert(top > bottom, "support feet must ground below the actual panel");
         for (const f of roads) {
           if (f.p.y + 3.3 < bottom || f.p.y > top) continue;
