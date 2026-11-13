@@ -71,12 +71,14 @@ try {
     await ready();
     await expect(toggle).toBeChecked();
     await rendered(true);
+    await page.locator('[data-step="track"]').click();
     await page.locator("#tracks button").nth(1).click();
     await expect(toggle).toBeChecked();
     await rendered(true);
     await page.screenshot({
       path: `test-artifacts/render-toggle-${mobile ? "mobile" : "desktop"}.png`,
     });
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#start").click();
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
     await rendered(true);

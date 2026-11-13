@@ -78,7 +78,9 @@ try {
   });
   await away.goto("about:blank");
   await page.bringToFront();
+  await page.locator('[data-step="track"]').click();
   await page.locator("#tracks button").nth(2).click();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

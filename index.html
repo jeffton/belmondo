@@ -43,7 +43,7 @@
   <body>
     <canvas id="game" aria-label="3D anti-gravity race"></canvas>
     <div class="scanlines" aria-hidden="true"></div>
-    <main id="menu">
+    <main id="menu" data-stage="class">
       <header class="masthead">
         <span class="brand-symbol" aria-hidden="true">B<span>/</span></span
         ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
@@ -58,39 +58,64 @@
         >
       </header>
       <div class="menu-body">
-        <p class="eyebrow">ANTI-GRAVITY COMBAT RACING</p>
         <h1 class="wordmark">BELMONDO</h1>
-        <p class="tagline">Coastal division / 2146</p>
-        <div class="selection-label">
-          <span>01 / CIRCUIT</span
-          ><span id="track-count">3 SECTORS · 5 LAPS</span>
-        </div>
-        <div id="tracks" class="choices"></div>
-        <div class="selection-label">
-          <span>02 / PILOT SYSTEM</span><span id="craft-note"></span>
-        </div>
-        <div id="crafts" class="choices crafts"></div>
-        <fieldset id="speed-class" class="menu-options">
-          <legend class="selection-label">03 / SPEED CLASS</legend>
-          <div class="choices speed-choices">
-            <label class="choice"
-              ><input type="radio" name="speed-class" value="0" checked /><b
-                >FLOW</b
-              ></label
-            >
-            <label class="choice"
-              ><input type="radio" name="speed-class" value="1" /><b
-                >RUSH</b
-              ></label
-            >
-            <label class="choice"
-              ><input type="radio" name="speed-class" value="2" /><b
-                >OVERDRIVE</b
-              ></label
-            >
+        <nav class="menu-steps" aria-label="Race setup">
+          <button data-step="class" aria-current="step">01 CLASS</button>
+          <button data-step="track">02 CIRCUIT</button>
+          <button data-step="craft">03 CRAFT</button>
+        </nav>
+        <section
+          class="setup-stage"
+          data-panel="class"
+          aria-label="Choose speed class"
+        >
+          <div class="selection-label">
+            <span>SPEED CLASS</span><span>01 / 03</span>
           </div>
-        </fieldset>
-        <div class="mode-row">
+          <fieldset id="speed-class" class="menu-options">
+            <legend class="sr-only">SPEED CLASS</legend>
+            <div class="choices speed-choices">
+              <label class="choice"
+                ><input type="radio" name="speed-class" value="0" checked /><b
+                  >FLOW</b
+                ></label
+              >
+              <label class="choice"
+                ><input type="radio" name="speed-class" value="1" /><b
+                  >RUSH</b
+                ></label
+              >
+              <label class="choice"
+                ><input type="radio" name="speed-class" value="2" /><b
+                  >OVERDRIVE</b
+                ></label
+              >
+            </div>
+          </fieldset>
+        </section>
+        <section
+          class="setup-stage"
+          data-panel="track"
+          aria-label="Choose circuit"
+          hidden
+        >
+          <div class="selection-label">
+            <span>CIRCUIT</span><span id="track-count">7 SECTORS · 5 LAPS</span>
+          </div>
+          <div id="tracks" class="choices"></div>
+        </section>
+        <section
+          class="setup-stage"
+          data-panel="craft"
+          aria-label="Choose craft"
+          hidden
+        >
+          <div class="selection-label">
+            <span>PILOT SYSTEM</span><span id="craft-note"></span>
+          </div>
+          <div id="crafts" class="choices crafts"></div>
+        </section>
+        <div id="setup-options" class="mode-row">
           <fieldset id="mode" class="menu-options">
             <legend>FORMAT</legend>
             <div class="binary-options">
@@ -128,7 +153,11 @@
             </div>
           </fieldset>
         </div>
-        <button id="start" class="start">ENTER THE GRID</button>
+        <div class="setup-navigation">
+          <button id="setup-back" class="line-button" hidden>← BACK</button>
+          <button id="setup-next" class="start">CIRCUIT →</button>
+          <button id="start" class="start" hidden>ENTER THE GRID</button>
+        </div>
         <div class="menu-links">
           <button id="help-open">PILOT BRIEFING</button
           ><button id="music-open">SOUND SYSTEM</button
@@ -146,6 +175,15 @@
         <span>KEYBOARD / GAMEPAD / TOUCH</span
         ><span id="best">LOCAL RECORD / —</span>
       </footer>
+      <div
+        id="menu-model"
+        hidden
+        role="img"
+        aria-label="Rotating circuit model"
+      >
+        <span class="model-kicker">CIRCUIT / HOLOGRAPHIC SURVEY</span>
+        <strong id="model-name"></strong>
+      </div>
       <div class="world-caption">
         <span class="live-dot"></span> LIVE CIRCUIT FEED
         <strong id="circuit-name">KAISEKI COAST</strong

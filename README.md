@@ -6,6 +6,8 @@ Original browser-based anti-gravity combat racer. Six circuits, eight pilots, th
 
 https://belmondo.roybot.se
 
+Choose a speed class, circuit and craft in three fixed-screen stations. The live circuit feed starts on a random course; circuit selection adds a rotating 3D course model, and craft selection shows the actual ship. Back navigation retains selections. Format and low-res settings are on the class station; briefing and sound controls are available throughout.
+
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes, I nose down / K nose up, Space fire, V camera, Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, Y camera, Start pause.
 - **Touch:** automatic thrust; hold the coast button to release thrust without applying braking force. Two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and coast/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
@@ -43,6 +45,8 @@ npm run test:audio
 npm run test:music
 npm run build
 ```
+
+`GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the three-stage menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
 
 The browser test expects Vite at `http://127.0.0.1:5178`; start it with `npm run dev -- --port 5178`. Set `GAME_URL` to test another deployment. `npx playwright install chromium` installs its browser. SwiftShader is enabled for headless Linux without a GPU.
 

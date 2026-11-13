@@ -2,6 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 const inputMocks = process.env.INPUT_MOCKS === "1";
 
 // Actual application input only. Telemetry is read; no Race state is assigned.
@@ -148,8 +149,7 @@ async function open(device, heldFromMenu = false, viewport, label) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator('input[name="mode"][value="trial"]').check();
-  await page.locator("#quality").check();
+  await prepareRaceSetup(page, { mode: "trial", quality: true });
   if (device === "keyboard" && heldFromMenu) await page.keyboard.down("KeyW");
   if (label || (device === "keyboard" && !heldFromMenu))
     await page.screenshot({

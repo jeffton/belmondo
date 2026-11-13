@@ -45,6 +45,7 @@ async function actualUi(browser) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await page.locator("#quality").check();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const view = page.locator("#view");
@@ -84,6 +85,7 @@ async function actualUi(browser) {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await touch.locator("#quality").check();
+  await touch.locator('[data-step="craft"]').tap();
   await touch.locator("#start").tap();
   await touch.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   const touchView = touch.locator("#view");

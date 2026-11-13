@@ -44,6 +44,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

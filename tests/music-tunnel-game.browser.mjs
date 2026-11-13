@@ -43,7 +43,9 @@ try {
   for (const [index, config] of TRACKS.entries()) {
     const inside = (config.tunnel[0] + config.tunnel[1]) / 2;
     const outside = config.tunnel[0] / 2;
+    await page.locator('[data-step="track"]').click();
     await page.locator(`#tracks button[data-index="${index}"]`).click();
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#start").click();
     await page.waitForFunction(
       () => musicFixture.player.audio.currentTime > 0.1,

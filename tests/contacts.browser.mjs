@@ -284,6 +284,9 @@ try {
     () => window.nullVector?.telemetry.state === "menu",
   );
   await actual.locator("#quality").check();
+  await actual.locator('[data-step="track"]').click();
+  await actual.locator("#tracks button").first().click();
+  await actual.locator('[data-step="craft"]').click();
   await actual.locator("#start").click();
   await actual.keyboard.down("ArrowUp");
   await actual.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

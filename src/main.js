@@ -10,6 +10,7 @@ import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 import { localRecordKey } from "./records.js";
+import { MenuPreview } from "./menu-preview.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
@@ -41,6 +42,56 @@ try {
     `Could not initialize WebGL2. Enable hardware acceleration to race. ${error.message}`;
   throw error;
 }
+const menuPreview = new MenuPreview(world, $("menu-model"));
+let menuStage = "class";
+const menuStages = ["class", "track", "craft"];
+function setMenuStage(stage, focus = true) {
+  menuStage = stage;
+  $("menu").dataset.stage = stage;
+  for (const panel of document.querySelectorAll("[data-panel]"))
+    panel.hidden = panel.dataset.panel !== stage;
+  for (const button of document.querySelectorAll("[data-step]")) {
+    if (button.dataset.step === stage)
+      button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+  }
+  $("setup-options").hidden = stage !== "class";
+  $("setup-back").hidden = stage === "class";
+  $("setup-next").hidden = stage === "craft";
+  $("start").hidden = stage !== "craft";
+  $("setup-next").textContent = stage === "class" ? "CIRCUIT →" : "CRAFT →";
+  $("menu-model").hidden = stage === "class";
+  $("menu-model").setAttribute(
+    "aria-label",
+    stage === "craft"
+      ? "Rotating selected craft model"
+      : "Rotating selected circuit model",
+  );
+  $("menu-model").querySelector(".model-kicker").textContent =
+    stage === "craft"
+      ? "CRAFT / FLIGHT SYSTEM"
+      : "CIRCUIT / HOLOGRAPHIC SURVEY";
+  menuPreview.setStage(stage);
+  updateModelName();
+  if (focus)
+    document
+      .querySelector(
+        `[data-panel="${stage}"] .active, [data-panel="${stage}"] input:checked`,
+      )
+      .focus({ preventScroll: true });
+}
+function updateModelName() {
+  $("model-name").textContent =
+    menuStage === "craft"
+      ? CRAFT[selectedCraft].name
+      : TRACKS[selectedTrack].name;
+}
+$("setup-back").onclick = () =>
+  setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
+$("setup-next").onclick = () =>
+  setMenuStage(menuStages[menuStages.indexOf(menuStage) + 1]);
+for (const button of document.querySelectorAll("[data-step]"))
+  button.onclick = () => setMenuStage(button.dataset.step);
 let selectedTrack = 0,
   selectedCraft = 0,
   selectedSpeedClass = 0,
@@ -141,6 +192,8 @@ function selectTrack(i) {
   selectedTrack = i;
   track = makeTrack(i);
   world.build(track);
+  menuPreview.setTrack(track);
+  updateModelName();
   race = new Race(
     track,
     selectedCraft,
@@ -172,6 +225,8 @@ for (const [i, c] of CRAFT.entries()) {
   button.innerHTML = `<i class="craft-icon" style="--craft:#${c.color.toString(16)}"></i><span><b>${c.name}</b><small>${c.team}</small></span>`;
   button.onclick = () => {
     selectedCraft = i;
+    menuPreview.setCraft(i);
+    updateModelName();
     for (const [j, b] of [...$("crafts").children].entries()) {
       b.classList.toggle("active", i === j);
       b.setAttribute("aria-pressed", String(i === j));
@@ -182,7 +237,8 @@ for (const [i, c] of CRAFT.entries()) {
   $("crafts").append(button);
 }
 $("crafts").children[0].click();
-selectTrack(0);
+selectTrack(Math.floor(Math.random() * TRACKS.length));
+setMenuStage("class", false);
 $("mode").onchange = updateRecord;
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
@@ -682,6 +738,7 @@ function animate(now) {
       r.contactS = r.s;
     }
     world.draw(race, dt, true);
+    menuPreview.draw(dt);
   } else {
     const controls = input();
     lastControls = controls;
@@ -851,6 +908,9 @@ window.nullVector = {
   get telemetry() {
     return {
       state,
+      menuStage,
+      selectedTrack,
+      selectedCraft,
       paused,
       time: race.time,
       position: race.position,
@@ -899,6 +959,14 @@ window.nullVector = {
       height: race.player.h,
       shield: race.player.shield,
       weapon: race.player.weapon,
+      menuModelRotation:
+        state === "menu" && menuStage !== "class"
+          ? (menuStage === "craft"
+              ? menuPreview.craft
+              : menuPreview.coursePivot
+            ).rotation.y
+          : null,
+      resources: { ...world.renderer.info.memory },
       drawCalls: world.renderer.info.render.calls,
       triangles: world.renderer.info.render.triangles,
       render: world.quality,

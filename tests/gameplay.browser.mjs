@@ -48,9 +48,13 @@ async function open(context) {
   );
   await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
+  await page.locator('[data-step="track"]').click();
+  await page.locator("#tracks button").first().click();
+  await page.locator('[data-step="class"]').click();
   return page;
 }
 async function start(page) {
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await keys(page, ["ArrowUp"]);
   await page.waitForFunction(

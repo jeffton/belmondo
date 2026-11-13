@@ -104,6 +104,7 @@ try {
       });
     }
     await page.keyboard.press("Escape");
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#start").click();
     await page.keyboard.down("KeyW");
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);

@@ -22,15 +22,26 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await expect(page.locator("#tracks button")).toHaveCount(7);
-  await expect(page.locator("#crafts button")).toHaveCount(3);
+  await expect(page.locator('[data-panel="class"]')).toBeVisible();
+  await expect(page.locator("#tracks")).toBeHidden();
+  await expect(page.locator("#crafts")).toBeHidden();
+  await expect(page.locator("#start")).toBeHidden();
   await page.screenshot({ path: "test-artifacts/desktop-menu.png" });
+  await page.locator('#speed-class input[value="1"]').check();
+  await page.locator("#quality").check();
+  await page.locator("#setup-next").click();
+  await expect(page.locator('[data-panel="track"]')).toBeVisible();
+  await expect(page.locator("#tracks button")).toHaveCount(7);
   await page.locator("#tracks button").nth(1).click();
   await expect(page.locator("#circuit-name")).toHaveText("SOLAR ARRAY");
   await page.locator("#tracks button").nth(2).click();
   await expect(page.locator("#circuit-name")).toHaveText("NOCTILUCENT");
   await page.locator("#tracks button").first().click();
-  await page.locator("#quality").check();
+  await page.locator("#setup-next").click();
+  await expect(page.locator('[data-panel="craft"]')).toBeVisible();
+  await expect(page.locator("#crafts button")).toHaveCount(3);
+  await expect(page.locator("#start")).toBeVisible();
+  await page.locator("#crafts button").nth(1).click();
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.2,
@@ -120,8 +131,22 @@ try {
   m.on("pageerror", (e) => errors.push(e.message));
   await m.goto(url);
   await m.waitForFunction(() => window.nullVector?.telemetry.state === "menu");
+  await expect(m.locator('[data-panel="class"]')).toBeVisible();
+  await expect(m.locator("#tracks")).toBeHidden();
+  await expect(m.locator("#crafts")).toBeHidden();
+  await expect(m.locator("#start")).toBeHidden();
+  await m.locator('#speed-class input[value="2"]').check();
   await m.locator("#quality").check();
-  await m.locator("#start").click();
+  await m.locator("#setup-next").tap();
+  await expect(m.locator('[data-panel="track"]')).toBeVisible();
+  await expect(m.locator("#tracks button")).toHaveCount(7);
+  await m.locator("#tracks button").first().tap();
+  await m.locator("#setup-next").tap();
+  await expect(m.locator('[data-panel="craft"]')).toBeVisible();
+  await expect(m.locator("#crafts button")).toHaveCount(3);
+  await expect(m.locator("#start")).toBeVisible();
+  await m.locator("#crafts button").first().tap();
+  await m.locator("#start").tap();
   await m.waitForFunction(() => window.nullVector.telemetry.state === "race");
   const cdp = await mobile.newCDPSession(m);
   const coastBox = await m.locator('[data-control="coast"]').boundingBox();

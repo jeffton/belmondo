@@ -1,4 +1,5 @@
 import { chromium, expect } from "@playwright/test";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5215";
 const browser = await chromium.launch({
@@ -43,7 +44,7 @@ try {
     await page.waitForFunction(
       () => window.nullVector?.telemetry.state === "menu",
     );
-    await page.locator('input[name="mode"][value="trial"]').check();
+    await prepareRaceSetup(page, { mode: "trial" });
     await page.locator("#start").click();
     await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
     const visibility = async (visible) => {

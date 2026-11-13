@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { makeTrack } from "../src/track.js";
 import { getTrackPickups } from "../src/pickups.js";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 const inputMocks = process.env.INPUT_MOCKS === "1";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5188";
@@ -27,9 +28,7 @@ async function ready(context, mode = "trial", trackIndex = 0) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator(`#tracks button:nth-child(${trackIndex + 1})`).click();
-  await page.locator(`input[name="mode"][value="${mode}"]`).check();
-  await page.locator("#quality").check();
+  await prepareRaceSetup(page, { mode, quality: true, trackIndex });
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   return page;

@@ -56,6 +56,7 @@ try {
     );
     // Music remains on: this is the actual mixed game, not a speech-only harness.
     await page.locator('input[name="mode"][value="trial"]').check();
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#start").click();
     await page.waitForFunction(() => window.voiceStarts.length === 1);
     if (mobile) await page.locator("#pause").tap();

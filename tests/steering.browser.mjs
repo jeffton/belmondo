@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -18,8 +19,7 @@ async function ready(page) {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator('input[name="mode"][value="trial"]').check();
-  await page.locator("#quality").check();
+  await prepareRaceSetup(page, { mode: "trial", quality: true });
 }
 async function start(page) {
   await page.locator("#start").click();

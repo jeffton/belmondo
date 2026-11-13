@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5197";
 const output = "test-artifacts/instruments";
@@ -45,6 +46,7 @@ try {
     expect(
       (await cdp.send("Page.getInstallabilityErrors")).installabilityErrors,
     ).toEqual([]);
+    await prepareRaceSetup(page);
     await page.locator("#start").click();
     await expect(page.locator("#hud")).toBeVisible();
     await expect(page.locator("#hud-track")).toBeHidden();

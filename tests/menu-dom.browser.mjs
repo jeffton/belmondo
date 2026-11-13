@@ -81,6 +81,9 @@ try {
     });
     await page.goto(url);
     await page.waitForFunction(() => window.menuQA);
+    await page.locator('[data-step="track"]').click();
+    await page.locator("#tracks button").first().click();
+    await page.locator('[data-step="class"]').click();
     await expect(page.locator("#best")).toHaveText("LOCAL RECORD / 01:40.00");
     await expect(page.locator("#speed-class label b")).toHaveText([
       "FLOW",
@@ -95,8 +98,10 @@ try {
     ).toBeChecked();
     await page.locator('input[name="mode"][value="trial"]').check();
     await expect(page.locator("#best")).toHaveText("LOCAL RECORD / 02:00.00");
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#crafts button").nth(1).click();
     await expect(page.locator("#best")).toHaveText("LOCAL RECORD / 02:10.00");
+    await page.locator('[data-step="class"]').click();
     await page.locator("#quality").check();
     expect(await page.evaluate(() => window.menuQA().quality)).toBe("retro");
     await page.locator("#quality").click();
@@ -108,10 +113,16 @@ try {
     );
     await page.reload();
     await page.waitForFunction(() => window.menuQA);
+    await page.locator('[data-step="track"]').click();
+    await page.locator("#tracks button").first().click();
+    await page.locator('[data-step="class"]').click();
     await expect(page.locator("#quality")).not.toBeChecked();
     await page.locator("#quality").check();
     await page.reload();
     await page.waitForFunction(() => window.menuQA);
+    await page.locator('[data-step="track"]').click();
+    await page.locator("#tracks button").first().click();
+    await page.locator('[data-step="class"]').click();
     await expect(page.locator("#quality")).toBeChecked();
     await page.locator('input[name="speed-class"][value="2"]').check();
     await page.locator('input[name="mode"][value="trial"]').check();
@@ -133,6 +144,7 @@ try {
       page.getByRole("heading", { name: "THE CIRCUIT", exact: true }),
     ).toHaveCount(0);
     await page.keyboard.press("Escape");
+    await page.locator('[data-step="craft"]').click();
     await page.locator("#start").click();
     expect(await page.evaluate(() => window.menuQA())).toMatchObject({
       selectedSpeedClass: 2,

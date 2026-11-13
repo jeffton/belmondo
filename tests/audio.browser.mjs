@@ -2,6 +2,7 @@ import { chromium } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { SFX_CUES } from "../src/generated-sfx.js";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const artifactDirectory = "test-artifacts";
@@ -35,8 +36,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await page.locator('input[name="mode"][value="trial"]').check();
-  await page.locator("#quality").check();
+  await prepareRaceSetup(page, { mode: "trial", quality: true });
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.2,

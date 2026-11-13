@@ -1,6 +1,18 @@
 // Real application DOM, input handlers and Race; only renderer/audio are replaced.
 // No WebGL context or audio assets are allocated by these input-only checks.
 export async function mockInputApp(page) {
+  await page.route("**/src/menu-preview.js**", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: `export class MenuPreview {
+        constructor() {
+          this.craft = { rotation: { y: 0 } };
+          this.coursePivot = { rotation: { y: 0 } };
+        }
+        setStage() {} setTrack() {} setCraft() {} draw() {} dispose() {}
+      }`,
+    }),
+  );
   await page.route("**/src/world.js", (route) =>
     route.fulfill({
       contentType: "text/javascript",

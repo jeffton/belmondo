@@ -87,6 +87,9 @@ async function drive(mobile, startupSeconds = null) {
   );
   await page.locator('input[name="mode"][value="trial"]').check();
   await page.locator("#quality").check();
+  await page.locator('[data-step="track"]').click();
+  await page.locator("#tracks button").first().click();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   if (!mobile) await page.keyboard.down("ArrowUp");
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
@@ -423,6 +426,7 @@ async function restartChecks() {
   );
   await page.locator("#quality").check();
   await page.locator('input[name="mode"][value="race"]').check();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/8");
@@ -432,9 +436,12 @@ async function restartChecks() {
   await expect(page.locator("#position")).toContainText("/8");
   await page.keyboard.press("Escape");
   await page.locator("#quit").click();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#crafts button").nth(1).click();
   await expect(page.locator("#crafts button").nth(1)).toHaveClass(/active/);
+  await page.locator('[data-step="class"]').click();
   await page.locator('input[name="mode"][value="trial"]').check();
+  await page.locator('[data-step="craft"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
   await expect(page.locator("#position")).toContainText("/1");

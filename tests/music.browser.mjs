@@ -2,6 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { soundtrack } from "../src/soundtrack.js";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -75,7 +76,7 @@ try {
 
   // A real menu gesture starts the default track; exercise actual HTMLMediaElement decoding/playback.
   await page.locator("#music-dialog .close").click();
-  await page.locator("#quality").check();
+  await prepareRaceSetup(page, { quality: true });
   await page.locator("#start").click();
   await page.waitForFunction(
     () =>

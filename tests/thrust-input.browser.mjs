@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { createServer } from "vite";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
+import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 // Exercise production input handlers + Race countdown without borrowing the GPU.
 const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
@@ -72,7 +73,7 @@ async function open(viewport, touch) {
     true,
   );
   await page.locator("#help-dialog .close").click();
-  await page.locator('input[name="mode"][value="trial"]').check();
+  await prepareRaceSetup(page, { mode: "trial" });
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "race",

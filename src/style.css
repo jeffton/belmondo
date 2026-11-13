@@ -1810,6 +1810,405 @@ body.touch .instrument-bar {
     font-size: 33px;
   }
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Three fixed setup stations leave the circuit feed visible throughout. */
+#menu {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
+}
+#menu .masthead {
+  padding: 16px 28px;
+}
+#menu .menu-body {
+  align-self: center;
+  width: min(520px, 46vw);
+  max-width: none;
+  padding: 18px 28px;
+}
+#menu h1.wordmark {
+  font-size: clamp(44px, 6.4vw, 86px);
+  margin: 0 0 22px;
+}
+.menu-steps {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 22px;
+}
+.menu-steps button {
+  flex: 1;
+  background: #132c38b8;
+  border-bottom: 2px solid #668392;
+  padding: 11px 2px;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.menu-steps button[aria-current] {
+  color: var(--mint);
+  border-color: var(--mint);
+}
+#menu .selection-label {
+  margin: 0 0 12px;
+  font-size: 10px;
+}
+#menu #speed-class {
+  margin: 0;
+}
+#menu .choice {
+  padding: 14px 9px;
+}
+#menu #tracks {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+#menu #tracks .choice b {
+  font-size: 16px;
+}
+#menu #tracks .choice small {
+  font-size: 8px;
+  margin-top: 4px;
+}
+#menu .crafts {
+  flex-direction: column;
+}
+#menu .crafts .choice {
+  padding: 15px;
+}
+#menu .mode-row {
+  margin-top: 20px;
+}
+.setup-navigation {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+#menu .setup-navigation .start {
+  flex: 1;
+  margin: 0;
+  padding: 14px 12px;
+  font-size: 19px;
+}
+#menu #setup-back {
+  margin: 0;
+  padding: 12px;
+  width: auto;
+}
+#menu .menu-links {
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+#menu .menu-links :is(button, a) {
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  padding: 8px 0;
+}
+#menu footer {
+  padding: 12px 28px;
+}
+#menu .world-caption {
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(64px, env(safe-area-inset-bottom));
+  display: block;
+}
+#menu .world-caption small,
+#menu[data-stage="track"] .world-caption strong {
+  display: none;
+}
+#menu-model {
+  position: absolute;
+  left: 49%;
+  right: 4%;
+  top: 19%;
+  bottom: 23%;
+  pointer-events: none;
+  border-top: 1px solid #9bffd966;
+  border-bottom: 1px solid #9bffd944;
+}
+.model-kicker {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--mint);
+  text-shadow: 0 1px 3px #10202c;
+}
+#model-name {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  font: 700 26px var(--display);
+  text-shadow: 0 2px 5px #10202c;
+}
+@media (max-width: 700px) and (orientation: portrait) {
+  #menu {
+    background: linear-gradient(0deg, #10202cf5, #10202ce8 58%, #10202c00 85%);
+  }
+  #menu .masthead {
+    padding: 10px 16px;
+    font-size: 7px;
+    gap: 8px;
+  }
+  #menu .brand-symbol {
+    font-size: 25px;
+  }
+  #menu .lab-mascot {
+    font-size: 25px;
+  }
+  #menu .menu-body {
+    width: 100%;
+    padding: 12px 16px;
+    align-self: end;
+  }
+  #menu h1.wordmark {
+    font-size: 44px;
+    margin-bottom: 12px;
+  }
+  #menu .menu-steps {
+    margin-bottom: 14px;
+  }
+  #menu .menu-steps button {
+    padding: 9px 1px;
+  }
+  #menu .choice {
+    padding: 12px 8px;
+  }
+  #menu #tracks .choice {
+    padding: 9px 8px;
+  }
+  #menu #tracks .choice b {
+    font-size: 14px;
+  }
+  #menu #tracks .choice small {
+    display: none;
+  }
+  #menu .crafts {
+    flex-direction: row;
+  }
+  #menu .crafts .choice {
+    padding: 12px 6px;
+    gap: 5px;
+  }
+  #menu .crafts .choice b {
+    font-size: 14px;
+  }
+  #menu .crafts .choice small {
+    font-size: 8px;
+  }
+  #menu .craft-icon {
+    width: 12px;
+    height: 23px;
+  }
+  #menu .mode-row {
+    margin-top: 12px;
+  }
+  #menu .binary-options span {
+    min-height: 30px;
+  }
+  #menu .setup-navigation {
+    margin-top: 12px;
+  }
+  #menu .setup-navigation .start {
+    font-size: 17px;
+    padding: 12px;
+  }
+  #menu .menu-links {
+    margin-top: 8px;
+  }
+  #menu footer {
+    padding: 8px 16px;
+    font-size: 8px;
+  }
+  #menu footer span:first-child {
+    display: none;
+  }
+  #menu .world-caption {
+    top: calc(env(safe-area-inset-top) + 72px);
+    bottom: auto;
+    right: 16px;
+    font-size: 7px;
+  }
+  #menu .world-caption strong {
+    font-size: 20px;
+    margin: 3px 0;
+  }
+  #menu-model {
+    left: 10%;
+    right: 10%;
+    top: calc(env(safe-area-inset-top) + 110px);
+    bottom: auto;
+    height: max(110px, calc(100dvh - 620px));
+  }
+  #menu-model .model-kicker {
+    font-size: 7px;
+    top: 6px;
+  }
+  #menu-model #model-name {
+    font-size: 16px;
+    bottom: 5px;
+  }
+}
+@media (max-height: 700px) and (orientation: landscape) {
+  #menu .masthead {
+    padding: 7px 18px;
+    font-size: 7px;
+  }
+  #menu .brand-symbol {
+    font-size: 24px;
+  }
+  #menu .lab-mascot {
+    font-size: 24px;
+  }
+  #menu .menu-body {
+    width: 49%;
+    padding: 8px 18px;
+  }
+  #menu h1.wordmark {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
+  #menu .menu-steps {
+    margin-bottom: 10px;
+  }
+  #menu .menu-steps button {
+    padding: 7px 1px;
+    font-size: 9px;
+  }
+  #menu .selection-label {
+    margin-bottom: 7px;
+    font-size: 9px;
+  }
+  #menu #tracks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #menu .choice,
+  #menu #tracks .choice {
+    padding: 7px 6px;
+  }
+  #menu #tracks .choice b {
+    font-size: 12px;
+  }
+  #menu #tracks .choice small {
+    display: none;
+  }
+  #menu .crafts {
+    flex-direction: row;
+  }
+  #menu .crafts .choice {
+    padding: 9px 5px;
+  }
+  #menu .crafts .choice b {
+    font-size: 13px;
+  }
+  #menu .crafts .choice small {
+    font-size: 8px;
+  }
+  #menu .craft-icon {
+    width: 12px;
+    height: 20px;
+  }
+  #menu .mode-row {
+    margin-top: 9px;
+  }
+  #menu .mode-row legend {
+    margin-bottom: 4px;
+  }
+  #menu .binary-options span {
+    min-height: 26px;
+  }
+  #menu .setup-navigation {
+    margin-top: 9px;
+  }
+  #menu .setup-navigation .start {
+    padding: 9px;
+    font-size: 16px;
+  }
+  #menu #setup-back {
+    padding: 8px;
+  }
+  #menu .menu-links {
+    margin-top: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    padding: 5px 0;
+    font-size: 8px;
+  }
+  #menu footer {
+    padding: 7px 18px;
+  }
+  #menu .world-caption {
+    bottom: 45px;
+  }
+  #menu .world-caption strong {
+    font-size: 25px;
+  }
+  #menu-model {
+    top: 21%;
+    bottom: 26%;
+  }
+}
+@media (max-height: 360px) and (orientation: landscape) {
+  #menu {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  #menu .masthead {
+    display: none;
+  }
+  #menu .menu-links {
+    gap: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    font-size: 7px;
+    letter-spacing: 0;
+  }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  #menu h1.wordmark {
+    display: none;
+  }
+}
+@media (max-height: 690px) and (orientation: portrait) {
+  #menu:not([data-stage="class"]) h1.wordmark {
+    display: none;
+  }
+  #menu .menu-links {
+    gap: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  #menu .masthead {
+    display: none;
+  }
+  #menu {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  #menu .world-caption {
+    top: max(12px, env(safe-area-inset-top));
+  }
+  #menu-model {
+    top: calc(env(safe-area-inset-top) + 58px);
+    height: max(92px, calc(100dvh - 480px));
+  }
+  #menu h1.wordmark {
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+}
 /* Safe-area insets protect modal/menu content without cropping the world. */
 body.touch #menu {
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
