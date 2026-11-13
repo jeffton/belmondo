@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
 import { COURSE_LIGHTING } from "./course-lighting.js";
+import { buildSectionalValues } from "./sectional-values.js";
 
 export function celestialDirection(course) {
   return new THREE.Vector3(...COURSE_LIGHTING[course].direction).normalize();
@@ -13,6 +14,7 @@ export function buildTrackLighting(scene, track) {
     track.config.name === "NOCTILUCENT" || track.config.biome === "metropolis";
   const palette = COURSE_LIGHTING[track.config.name];
   const direction = celestialDirection(track.config.name);
+  const sectionalValues = buildSectionalValues(track, direction);
   scene.add(new THREE.HemisphereLight(...palette.hemisphere, 0.85));
   const key = new THREE.DirectionalLight(...palette.key);
   key.position.copy(direction).multiplyScalar(1000);
@@ -209,22 +211,25 @@ export function buildTrackLighting(scene, track) {
       poolGeometry.setIndex(indices);
       const lightPool = new THREE.Mesh(poolGeometry, poolMaterial);
       scene.add(mast, head, lens, beam, lightPool);
-      pools.push({ p: f.p, right: f.right, tangent: f.tangent });
+      pools.push({ p: f.p, right: f.right, tangent: f.tangent, up: f.up });
     }
   }
   return {
     shade(point, color) {
-      if (!night || track.config.biome === "metropolis") return color;
+      const sectional = sectionalValues(point);
+      if (!night || track.config.biome === "metropolis")
+        return new THREE.Color(color).multiplyScalar(sectional).getHex();
       let strength = 0;
       for (const pool of pools) {
         const delta = point.clone().sub(pool.p);
         const radius =
           (delta.dot(pool.right) / 30) ** 2 +
-          (delta.dot(pool.tangent) / 40) ** 2;
+          (delta.dot(pool.tangent) / 40) ** 2 +
+          (delta.dot(pool.up) / 12) ** 2;
         strength = Math.max(strength, Math.max(0, 1 - radius) ** 2);
       }
       return new THREE.Color(color)
-        .multiplyScalar(0.7 + strength * 1.3)
+        .multiplyScalar(sectional * (0.7 + strength * 1.3))
         .getHex();
     },
     update(camera) {
