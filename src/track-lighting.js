@@ -9,7 +9,11 @@ export function celestialDirection(course) {
 
 // A single directional key, not a bank of per-pixel lights. Night projector pools
 // are baked into the deck vertices; their physical luminaires sit over each pool.
-export function buildTrackLighting(scene, track) {
+export function buildTrackLighting(
+  scene,
+  track,
+  { createLensflare = () => new Lensflare() } = {},
+) {
   const night =
     track.config.name === "NOCTILUCENT" || track.config.biome === "metropolis";
   const palette = COURSE_LIGHTING[track.config.name];
@@ -93,7 +97,7 @@ export function buildTrackLighting(scene, track) {
   if (palette.flare) {
     // Three's flare samples depth occlusion at its actual world-space source.
     // It vanishes behind track architecture and never follows the screen centre.
-    flare = new Lensflare();
+    flare = createLensflare();
     // Put the source just in front of its own sun disc; scenery still occludes it.
     flare.position.copy(direction).multiplyScalar(-(sunRadius + 3));
     flare.addElement(
