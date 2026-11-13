@@ -10,9 +10,12 @@ import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 import { localRecordKey } from "./records.js";
+import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
 import { frameDelta } from "./frame-clock.js";
+import { halfstickPosition } from "./touch-halfstick.js";
 
+installZoomPolicy();
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
 const updateWeaponHUD = createWeaponHUD(
@@ -56,17 +59,15 @@ function setMenuStage(stage, focus = true) {
   $("setup-next").hidden = stage === "craft";
   $("start").hidden = stage !== "craft";
   $("setup-next").textContent = stage === "class" ? "CIRCUIT →" : "CRAFT →";
-  $("menu-model").hidden = stage === "class";
+  $("menu-model").hidden = false;
   $("menu-model").setAttribute(
     "aria-label",
-    stage === "craft"
-      ? "Rotating selected craft model"
-      : "Rotating selected circuit model",
+    stage === "class"
+      ? "Rotating selected speed class emblem"
+      : stage === "craft"
+        ? "Rotating selected craft model"
+        : "Rotating selected circuit model",
   );
-  $("menu-model").querySelector(".model-kicker").textContent =
-    stage === "craft"
-      ? "CRAFT / FLIGHT SYSTEM"
-      : "CIRCUIT / HOLOGRAPHIC SURVEY";
   menuPreview.setStage(stage);
   updateModelName();
   if (focus)
@@ -78,9 +79,11 @@ function setMenuStage(stage, focus = true) {
 }
 function updateModelName() {
   $("model-name").textContent =
-    menuStage === "craft"
-      ? CRAFT[selectedCraft].name
-      : TRACKS[selectedTrack].name;
+    menuStage === "class"
+      ? SPEED_CLASSES[selectedSpeedClass].name
+      : menuStage === "craft"
+        ? CRAFT[selectedCraft].name
+        : TRACKS[selectedTrack].name;
 }
 $("setup-back").onclick = () =>
   setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
@@ -142,11 +145,13 @@ document.addEventListener("visibilitychange", updateAppFocus);
 let demoDistance = 50,
   renderFrames = 0,
   renderTime = 0;
-const keys = new Set(),
-  held = new Set();
+const keys = new Set();
 let touchSteer = 0,
   touchPitch = 0,
   steerPointer = null,
+  airPointer = null,
+  touchAir = 0,
+  touchCoast = 0,
   touchLaunchArmed = false;
 const touchLayout = matchMedia("(pointer: coarse)").matches;
 let touch = touchLayout;
@@ -163,11 +168,8 @@ function setInputMode(mode) {
     touchSteer = 0;
     touchPitch = 0;
     steerPointer = null;
+    resetAirStick();
     touchLaunchArmed = false;
-    held.clear();
-    document
-      .querySelectorAll("[data-control].pressed")
-      .forEach((button) => button.classList.remove("pressed"));
     $("steer-pad").querySelector("i").style.transform = "";
   }
 }
@@ -200,10 +202,6 @@ function recordKey(mode = selectedMode(), speedClass = selectedSpeedClass) {
     LAPS,
   );
 }
-function updateRecord() {
-  const r = records[recordKey()];
-  $("best").textContent = `LOCAL RECORD / ${r ? formatTime(r) : "—"}`;
-}
 function selectTrack(i) {
   selectedTrack = i;
   track = makeTrack(i);
@@ -225,7 +223,6 @@ function selectTrack(i) {
     b.classList.toggle("active", active);
     b.setAttribute("aria-pressed", String(active));
   }
-  updateRecord();
 }
 for (const [i, t] of TRACKS.entries()) {
   const button = document.createElement("button");
@@ -248,19 +245,19 @@ for (const [i, c] of CRAFT.entries()) {
       b.setAttribute("aria-pressed", String(i === j));
     }
     $("craft-note").textContent = c.text.split("/")[0].trim().toUpperCase();
-    updateRecord();
   };
   $("crafts").append(button);
 }
 $("crafts").children[0].click();
+menuPreview.setClass(selectedSpeedClass);
 selectTrack(Math.floor(Math.random() * TRACKS.length));
 setMenuStage("class", false);
-$("mode").onchange = updateRecord;
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
     document.querySelector('input[name="speed-class"]:checked').value,
   );
-  updateRecord();
+  menuPreview.setClass(selectedSpeedClass);
+  updateModelName();
 };
 const qualityToggle = $("quality");
 qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
@@ -277,10 +274,10 @@ $("render-quality").onchange = () => {
 window.addEventListener("resize", () => world.resize());
 function clearInput() {
   keys.clear();
-  held.clear();
   touchSteer = 0;
   touchPitch = 0;
   steerPointer = null;
+  resetAirStick();
   touchLaunchArmed = false;
   for (const b of document.querySelectorAll(".pressed"))
     b.classList.remove("pressed");
@@ -467,25 +464,44 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden && state === "race") setPaused(true);
   last = null;
 });
-for (const b of document.querySelectorAll("[data-control]")) {
-  b.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    b.setPointerCapture(e.pointerId);
-    if (b.dataset.control === "coast") touchLaunchArmed = false;
-    held.add(b.dataset.control);
-    b.classList.add("pressed");
-  });
-  for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
-    b.addEventListener(event, () => {
-      if (b.dataset.control === "coast" && race?.countdown > 0) {
-        if (event === "pointerup" && held.has("coast")) touchLaunchArmed = true;
-        else if (event === "pointercancel" || held.has("coast"))
-          touchLaunchArmed = false;
-      }
-      held.delete(b.dataset.control);
-      b.classList.remove("pressed");
-    });
+const airPad = $("air-pad");
+function resetAirStick() {
+  airPointer = null;
+  touchAir = 0;
+  touchCoast = 0;
+  airPad.classList.remove("pressed");
+  airPad.querySelector("i").style.transform = "";
 }
+function moveAir(e) {
+  if (airPointer !== e.pointerId) return;
+  const rect = airPad.getBoundingClientRect();
+  const radius = rect.width * 0.375;
+  const position = halfstickPosition(
+    (e.clientX - rect.left - rect.width / 2) / radius,
+    (e.clientY - rect.top - 16) / radius,
+  );
+  touchAir = position.x;
+  touchCoast = position.y;
+  if (touchCoast > 0) touchLaunchArmed = false;
+  airPad.querySelector("i").style.transform =
+    `translate(${touchAir * radius}px, ${touchCoast * radius}px)`;
+}
+airPad.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (airPointer !== null) return;
+  airPointer = e.pointerId;
+  airPad.setPointerCapture(e.pointerId);
+  airPad.classList.add("pressed");
+  moveAir(e);
+});
+airPad.addEventListener("pointermove", moveAir);
+for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
+  airPad.addEventListener(event, (e) => {
+    if (airPointer !== e.pointerId) return;
+    if (race?.countdown > 0)
+      touchLaunchArmed = event === "pointerup" && touchCoast > 0;
+    resetAirStick();
+  });
 const steerPad = $("steer-pad");
 function moveSteer(e) {
   if (steerPointer !== e.pointerId) return;
@@ -559,11 +575,11 @@ function input() {
   let steer = keyboardSteer + touchSteer;
   if (keyboardSteer) steeringKind = "digital";
   if (touchSteer !== 0) steeringKind = "analog";
-  let airRight = down("KeyL") || held.has("airRight") ? 1 : 0;
-  let airLeft = down("KeyJ") || held.has("airLeft") ? 1 : 0;
+  let airRight = Math.max(Number(down("KeyL")), touchAir);
+  let airLeft = Math.max(Number(down("KeyJ")), -touchAir);
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
   let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
-  let throttle = touch ? Number(!held.has("coast")) : Number(launchIntent);
+  let throttle = touch ? 1 - touchCoast : Number(launchIntent);
   if (pad) {
     if (Math.abs(pad.axes[0]) > 0.12) {
       steer = pad.axes[0];
@@ -595,7 +611,7 @@ function input() {
     airLeft,
     airRight,
     pitch: clamp(pitch, -1, 1),
-    throttle: race?.countdown > 0 ? throttle : Boolean(throttle),
+    throttle: touch || race?.countdown > 0 ? throttle : Boolean(throttle),
     launchIntent,
   };
 }
@@ -680,7 +696,6 @@ function showResults() {
     row.append(l, v);
     $("result-data").append(row);
   }
-  updateRecord();
 }
 function updateHUD(now) {
   const p = race.player;
@@ -975,10 +990,12 @@ window.nullVector = {
       shield: race.player.shield,
       weapon: race.player.weapon,
       menuModelRotation:
-        state === "menu" && menuStage !== "class"
-          ? (menuStage === "craft"
-              ? menuPreview.craft
-              : menuPreview.coursePivot
+        state === "menu"
+          ? (menuStage === "class"
+              ? menuPreview.classModel
+              : menuStage === "craft"
+                ? menuPreview.craft
+                : menuPreview.coursePivot
             ).rotation.y
           : null,
       resources: { ...world.renderer.info.memory },

@@ -91,9 +91,7 @@ try {
           "#pause",
           "#steer-pad",
           "#touch-fire",
-          '[data-control="airLeft"]',
-          '[data-control="airRight"]',
-          '[data-control="coast"]',
+          "#air-pad",
           ".velocity",
           ".shield",
         ];

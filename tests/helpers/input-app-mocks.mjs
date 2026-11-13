@@ -6,10 +6,11 @@ export async function mockInputApp(page) {
       contentType: "text/javascript",
       body: `export class MenuPreview {
         constructor() {
+          this.classModel = { rotation: { y: 0 } };
           this.craft = { rotation: { y: 0 } };
           this.coursePivot = { rotation: { y: 0 } };
         }
-        setStage() {} setTrack() {} setCraft() {} draw() {} dispose() {}
+        setStage() {} setClass() {} setTrack() {} setCraft() {} draw() {} dispose() {}
       }`,
     }),
   );
@@ -31,10 +32,26 @@ export async function mockInputApp(page) {
               position: new Vector3(), rotation: { z: 0 }
             }));
           }
+          async prepare(track, _prepared, isCurrent, setup) {
+            const candidate = new World();
+            candidate.build(track);
+            setup(candidate);
+            return isCurrent() ? candidate : null;
+          }
+          adopt(candidate) { Object.assign(this, candidate); }
           draw(race) {
             race.racers.forEach((racer, i) => this.ships[i].position.copy(racer.position));
           }
         }`,
+    }),
+  );
+  await page.route("**/src/course-preparation.js**", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: `export class CoursePreparation {
+        async load() { return { workerMs: 0 }; }
+        cancel() {}
+      }`,
     }),
   );
   await page.route("**/src/audio.js", (route) =>

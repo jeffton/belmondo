@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { SPEED_CLASSES } from "./speed-classes.js";
 import { createCraft, collectCraftResources } from "./craft.js";
 import { CRAFT } from "./race.js";
 
@@ -33,7 +35,7 @@ function lightScene(scene) {
   scene.add(key, rim);
 }
 
-function trackModel(track) {
+function trackModel(track, materials) {
   const positions = [];
   const edges = [];
   const { config, length } = track;
@@ -102,30 +104,187 @@ function trackModel(track) {
     new THREE.Float32BufferAttribute(positions, 3),
   );
   geometry.computeVertexNormals();
-  const deck = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({
-      color: 0xaac3cc,
-      metalness: 0.35,
-      roughness: 0.55,
-      side: THREE.DoubleSide,
-      flatShading: true,
-    }),
-  );
+  const deck = new THREE.Mesh(geometry, materials.deck);
   const edgeGeometry = new THREE.BufferGeometry();
   edgeGeometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(edges, 3),
   );
   const group = new THREE.Group();
-  group.add(
-    deck,
-    new THREE.LineSegments(
-      edgeGeometry,
-      new THREE.LineBasicMaterial({ color: config.color }),
-    ),
-  );
+  group.add(deck, new THREE.LineSegments(edgeGeometry, materials.edge));
   return group;
+}
+
+function classSymbol(index) {
+  const parts = new Map();
+  const add = (
+    geometry,
+    material,
+    position = [0, 0, 0],
+    rotation = [0, 0, 0],
+    scale = [1, 1, 1],
+  ) => {
+    const transform = new THREE.Matrix4().compose(
+      new THREE.Vector3(...position),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)),
+      new THREE.Vector3(...scale),
+    );
+    let baked = geometry;
+    if (geometry.index) {
+      baked = geometry.toNonIndexed();
+      geometry.dispose();
+    }
+    baked.deleteAttribute("uv");
+    baked.applyMatrix4(transform);
+    if (!parts.has(material)) parts.set(material, []);
+    parts.get(material).push(baked);
+  };
+  if (index === 0) {
+    // INDUCTION: an open laminated stator, two terminal shoes and a suspended
+    // diamond armature. The large horseshoe aperture remains open as it turns.
+    const arc = Math.PI * 1.5;
+    const turn = Math.PI * 0.75;
+    add(
+      new THREE.TorusGeometry(0.65, 0.15, 6, 24, arc),
+      "shell",
+      [0, 0, 0],
+      [0, 0, turn],
+    );
+    add(
+      new THREE.TorusGeometry(0.65, 0.044, 4, 24, arc),
+      "emitter",
+      [0, 0, 0.143],
+      [0, 0, turn],
+    );
+    add(
+      new THREE.TorusGeometry(0.65, 0.044, 4, 24, arc),
+      "emitter",
+      [0, 0, -0.143],
+      [0, 0, turn],
+    );
+    for (const angle of [Math.PI * 0.25, Math.PI * 0.75]) {
+      add(
+        new THREE.BoxGeometry(0.25, 0.19, 0.34),
+        "copper",
+        [Math.cos(angle) * 0.65, Math.sin(angle) * 0.65, 0],
+        [0, 0, angle],
+      );
+    }
+    add(
+      new THREE.OctahedronGeometry(0.27),
+      "ferrite",
+      [0, 0, 0],
+      [0, 0, 0],
+      [0.75, 1.9, 0.75],
+    );
+    add(
+      new THREE.OctahedronGeometry(0.16),
+      "emitter",
+      [0, 0.12, 0],
+      [0, 0, 0],
+      [0.6, 1.6, 0.6],
+    );
+    add(new THREE.BoxGeometry(0.24, 0.12, 0.32), "ferrite", [0, -0.77, 0]);
+  } else if (index === 1) {
+    // RESONANCE: three orthogonal hexagonal resonators with exposed tuning
+    // shoes. Unlike the open stator this is an airy, interlocking spatial knot.
+    for (const [rotation, material] of [
+      [[0, 0, Math.PI / 6], "shell"],
+      [[Math.PI / 2, 0, Math.PI / 6], "copper"],
+      [[0, Math.PI / 2, Math.PI / 6], "shell"],
+    ]) {
+      add(
+        new THREE.TorusGeometry(0.68, 0.075, 4, 6),
+        material,
+        [0, 0, 0],
+        rotation,
+      );
+    }
+    for (const side of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.2, 0.12, 0.24), "ferrite", [
+        side * 0.65,
+        0,
+        0,
+      ]);
+      add(new THREE.BoxGeometry(0.12, 0.045, 0.25), "emitter", [
+        side * 0.65,
+        0.08,
+        0,
+      ]);
+    }
+    add(
+      new THREE.OctahedronGeometry(0.23),
+      "emitter",
+      [0, 0, 0],
+      [0, Math.PI / 4, 0],
+      [1, 1.6, 1],
+    );
+    add(new THREE.CylinderGeometry(0.055, 0.055, 1.1, 6), "ferrite");
+  } else {
+    // SINGULARITY: disconnected trihedral containment jaws frame a compressed
+    // dark core. Gaps at every edge midpoint make a cubic negative-space cage,
+    // rather than another set of rings or a solid box.
+    for (const x of [-1, 1])
+      for (const y of [-1, 1])
+        for (const z of [-1, 1]) {
+          const corner = new THREE.Vector3(x, y, z).multiplyScalar(0.5);
+          add(new THREE.OctahedronGeometry(0.09), "copper", corner.toArray());
+          for (let axis = 0; axis < 3; axis++) {
+            const center = corner.clone();
+            center.setComponent(axis, center.getComponent(axis) * 0.58);
+            const size = [0.065, 0.065, 0.065];
+            size[axis] = 0.42;
+            add(new THREE.BoxGeometry(...size), "shell", center.toArray());
+          }
+        }
+    add(
+      new THREE.OctahedronGeometry(0.34),
+      "ferrite",
+      [0, 0, 0],
+      [0, Math.PI / 4, 0],
+    );
+    // A single tilted accretion collar, deliberately smaller than the jaws.
+    add(
+      new THREE.TorusGeometry(0.4, 0.035, 4, 12),
+      "emitter",
+      [0, 0, 0],
+      [Math.PI / 3, 0, Math.PI / 6],
+    );
+    add(new THREE.OctahedronGeometry(0.08), "emitter", [0, 0.35, 0]);
+    add(new THREE.OctahedronGeometry(0.08), "emitter", [0, -0.35, 0]);
+  }
+  const group = new THREE.Group();
+  group.name = SPEED_CLASSES[index].name;
+  const colors = {
+    shell: 0xd5e1df,
+    ferrite: 0x172a36,
+    copper: 0xca9561,
+    emitter: 0x8affd6,
+  };
+  for (const [kind, geometries] of parts) {
+    const geometry = mergeGeometries(geometries);
+    geometries.forEach((part) => part.dispose());
+    const material = new THREE.MeshStandardMaterial({
+      color: colors[kind],
+      metalness: kind === "emitter" ? 0.15 : 0.65,
+      roughness: kind === "ferrite" ? 0.36 : 0.28,
+      emissive: kind === "emitter" ? colors[kind] : 0x000000,
+      emissiveIntensity: 0.7,
+      flatShading: true,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = kind;
+    group.add(mesh);
+  }
+  const box = new THREE.Box3().setFromObject(group);
+  const center = box.getCenter(new THREE.Vector3());
+  const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+  const pivot = new THREE.Group();
+  group.position.copy(center).multiplyScalar(-1 / radius);
+  group.scale.setScalar(1 / radius);
+  pivot.name = group.name;
+  pivot.add(group);
+  return pivot;
 }
 
 /** Native-resolution transparent inset, independent of World's LOWRES canvas. */
@@ -138,9 +297,13 @@ export class MenuPreview {
     this.time = 0;
     this.trackScene = new THREE.Scene();
     this.craftScene = new THREE.Scene();
+    this.classScene = new THREE.Scene();
     lightScene(this.trackScene);
     lightScene(this.craftScene);
+    lightScene(this.classScene);
     this.crafts = new Map();
+    this.classes = new Map();
+    this.trackMaterials = null;
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
     this.camera.position.set(0, 1.25, 1.8).normalize().multiplyScalar(5);
     this.camera.lookAt(0, 0, 0);
@@ -148,10 +311,25 @@ export class MenuPreview {
 
   setTrack(track) {
     if (this.track === track) return;
-    releaseScene(this.trackScene);
-    lightScene(this.trackScene);
+    if (this.coursePivot) {
+      this.trackScene.remove(this.coursePivot);
+      this.course.traverse((object) => object.geometry?.dispose());
+    }
+    // Course selection changes geometry/color, not shader programs. Retain both
+    // material instances until final disposal to keep their compiled programs.
+    this.trackMaterials ??= {
+      deck: new THREE.MeshStandardMaterial({
+        color: 0xaac3cc,
+        metalness: 0.35,
+        roughness: 0.55,
+        side: THREE.DoubleSide,
+        flatShading: true,
+      }),
+      edge: new THREE.LineBasicMaterial(),
+    };
+    this.trackMaterials.edge.color.set(track.config.color);
     this.track = track;
-    this.course = trackModel(track);
+    this.course = trackModel(track, this.trackMaterials);
     this.trackScene.add(this.course);
     const box = new THREE.Box3().setFromObject(this.course);
     const center = box.getCenter(new THREE.Vector3());
@@ -185,9 +363,19 @@ export class MenuPreview {
     this.craft.visible = true;
   }
 
+  setClass(index) {
+    if (this.classModel) this.classModel.visible = false;
+    if (!this.classes.has(index)) {
+      const model = classSymbol(index);
+      this.classes.set(index, model);
+      this.classScene.add(model);
+    }
+    this.classModel = this.classes.get(index);
+    this.classModel.visible = true;
+  }
+
   setStage(stage) {
     this.stage = stage;
-    if (this.renderer) this.renderer.domElement.hidden = stage === "class";
   }
 
   createRenderer() {
@@ -214,8 +402,12 @@ export class MenuPreview {
   }
 
   draw(dt) {
-    if (this.stage === "class" || this.element.ownerDocument.hidden) return;
-    const model = this.stage === "craft" ? this.craft : this.coursePivot;
+    if (this.element.ownerDocument.hidden) return;
+    const model = {
+      class: this.classModel,
+      track: this.coursePivot,
+      craft: this.craft,
+    }[this.stage];
     if (!model) return;
     const rect = this.element.getBoundingClientRect();
     const view = this.element.ownerDocument.defaultView;
@@ -256,7 +448,8 @@ export class MenuPreview {
     }
 
     this.time += dt;
-    model.rotation.y = this.time * (this.stage === "craft" ? 0.32 : 0.16);
+    model.rotation.y =
+      this.time * { class: 0.25, track: 0.16, craft: 0.32 }[this.stage];
     const aspect = canvas.width / canvas.height;
     const span = 1.16;
     this.camera.left = -span * Math.max(1, aspect);
@@ -266,7 +459,11 @@ export class MenuPreview {
     this.camera.updateProjectionMatrix();
 
     renderer.render(
-      this.stage === "craft" ? this.craftScene : this.trackScene,
+      {
+        class: this.classScene,
+        track: this.trackScene,
+        craft: this.craftScene,
+      }[this.stage],
       this.camera,
     );
   }
@@ -274,8 +471,11 @@ export class MenuPreview {
   dispose() {
     releaseScene(this.trackScene);
     releaseScene(this.craftScene);
+    releaseScene(this.classScene);
     this.crafts.clear();
-    this.course = this.coursePivot = this.craft = null;
+    this.classes.clear();
+    this.trackMaterials = null;
+    this.course = this.coursePivot = this.craft = this.classModel = null;
     if (this.renderer) {
       this.renderer.dispose();
       this.renderer.forceContextLoss();

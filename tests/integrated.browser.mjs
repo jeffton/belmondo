@@ -16,6 +16,10 @@ const preservedRecords = {
   "solar-2-0-trial-c1-5laps": 444.44,
   "noctilucent-2-0-trial-c1-5laps": 555.55,
 };
+const uiRecords = {
+  ...preservedRecords,
+  [recordKey(TRACKS[0].layoutId, "c1")]: 111.11,
+};
 function validateLayout(t, track) {
   expect(t.layoutId).toBe(track.config.layoutId);
   expect(t.trackLength).toBeCloseTo(track.length, 4);
@@ -240,15 +244,16 @@ async function input(page, context, device) {
   } else {
     const session = await context.newCDPSession(page),
       box = await page.locator("#steer-pad").boundingBox(),
-      coast = await page.locator('[data-control="coast"]').boundingBox();
+      airPad = await page.locator("#air-pad").boundingBox(),
+      airRadius = airPad.width * 0.375;
     await session.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
         { id: 1, x: box.x + box.width * 0.6, y: box.y + box.height * 0.4 },
         {
           id: 2,
-          x: coast.x + coast.width / 2,
-          y: coast.y + coast.height / 2,
+          x: airPad.x + airPad.width / 2,
+          y: airPad.y + 16 + airRadius,
         },
       ],
     });
@@ -358,20 +363,22 @@ async function ui() {
         process.env.INTEGRATED_CLASSES.split(",").includes(String(speedClass)),
     )) {
       await chooseClass(page, speedClass, device);
-      await expect(page.locator("#best")).toHaveText(
-        [
-          "LOCAL RECORD / 01:51.11",
-          "LOCAL RECORD / 03:42.22",
-          "LOCAL RECORD / 05:33.33",
-        ][speedClass],
-      );
+      expect(
+        await page.evaluate(() =>
+          JSON.parse(localStorage.getItem("nv-records")),
+        ),
+      ).toEqual(uiRecords);
       // Craft and class are independent: changing craft must not change class.
       await goToSetupStage(page, "craft");
       await page.locator("#crafts button").nth(1).click();
       await expect(
         page.locator('input[name="speed-class"]:checked'),
       ).toHaveValue(String(speedClass));
-      await expect(page.locator("#best")).toHaveText("LOCAL RECORD / —");
+      expect(
+        await page.evaluate(() =>
+          JSON.parse(localStorage.getItem("nv-records")),
+        ),
+      ).toEqual(uiRecords);
       await page.locator("#crafts button").first().click();
       await start(page);
       const before = await telemetry(page);
@@ -863,22 +870,15 @@ async function drive() {
   const tag = `${track.config.layoutId}-${classSpec.id}-${device}`;
   let touchSession,
     touchPad,
-    touchButtons,
+    airPad,
+    airRadius,
     touchMask = "",
     touching = false;
   if (device === "touch") {
     touchSession = await context.newCDPSession(page);
     touchPad = await page.locator("#steer-pad").boundingBox();
-    touchButtons = {};
-    for (const control of ["coast", "airLeft", "airRight"]) {
-      const box = await page
-        .locator(`[data-control="${control}"]`)
-        .boundingBox();
-      touchButtons[control] = {
-        x: box.x + box.width / 2,
-        y: box.y + box.height / 2,
-      };
-    }
+    airPad = await page.locator("#air-pad").boundingBox();
+    airRadius = airPad.width * 0.375;
   }
   async function command(steer, coast, air) {
     if (device === "keyboard") {
@@ -921,9 +921,19 @@ async function drive() {
             x: touchPad.x + touchPad.width * (0.5 - steer * 0.4),
             y: touchPad.y + touchPad.height * 0.5,
           },
-          ...(coast ? [{ id: 2, ...touchButtons.coast }] : []),
-          ...(air
-            ? [{ id: 3, ...touchButtons[air > 0 ? "airLeft" : "airRight"] }]
+          ...(coast || air
+            ? (() => {
+                const x = air > 0 ? -1 : air < 0 ? 1 : 0;
+                const y = coast ? 1 : 0;
+                const length = Math.max(1, Math.hypot(x, y));
+                return [
+                  {
+                    id: 2,
+                    x: airPad.x + airPad.width / 2 + (x / length) * airRadius,
+                    y: airPad.y + 16 + (y / length) * airRadius,
+                  },
+                ];
+              })()
             : []),
         ],
       });
@@ -1224,10 +1234,9 @@ async function drive() {
     await goToSetupStage(page, "track");
     await page.locator("#tracks button").first().click();
     await chooseClass(page, 1, device);
-    const otherRecord = records[recordKey(TRACKS[0].layoutId, "c2")];
-    await expect(page.locator("#best")).toHaveText(
-      `LOCAL RECORD / ${otherRecord ? `${String(Math.floor(otherRecord / 60)).padStart(2, "0")}:${(otherRecord % 60).toFixed(2).padStart(5, "0")}` : "—"}`,
-    );
+    expect(
+      await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
+    ).toEqual(records);
   } else
     await page.screenshot({
       path: `test-artifacts/integrated-${tag}-one-lap.png`,

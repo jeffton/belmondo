@@ -8,6 +8,7 @@ const inputMocks = process.env.INPUT_MOCKS === "1";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5188";
 const gamepadOnly = process.env.INPUT_SCOPE === "gamepad";
+const touchOnly = process.env.INPUT_SCOPE === "touch";
 await mkdir("test-artifacts", { recursive: true });
 const browser = await chromium.launch({
   headless: true,
@@ -57,182 +58,186 @@ async function controls(page, name, expected) {
   return telemetry;
 }
 try {
-  const desktop = await browser.newContext({
-    viewport: { width: 800, height: 500 },
-  });
-  await desktop.addInitScript(() => {
-    // Synthetic standard browser input, not writable app/racer hooks.
-    window.chordPad = { axes: [0, 0, 0, 0], buttons: [], values: {} };
-    Object.defineProperty(navigator, "getGamepads", {
-      value: () => [
-        {
-          axes: window.chordPad.axes,
-          connected: true,
-          mapping: "standard",
-          buttons: Array.from({ length: 17 }, (_, i) => ({
-            pressed: window.chordPad.buttons.includes(i),
-            value:
-              window.chordPad.values[i] ??
-              (window.chordPad.buttons.includes(i) ? 1 : 0),
-          })),
-        },
-      ],
+  if (!touchOnly) {
+    const desktop = await browser.newContext({
+      viewport: { width: 800, height: 500 },
     });
-  });
-  const page = await ready(desktop);
-  for (const key of ["KeyW", "KeyD", "KeyJ", "KeyK"])
-    await page.keyboard.down(key);
-  await controls(page, "W+D+J+K", {
-    throttle: true,
-    steer: -1,
-    airLeft: 1,
-    airRight: 0,
-    air: 1,
-    pitch: -1,
-  });
-  await page.waitForFunction(
-    () => window.nullVector.telemetry.pitch < -0.03,
-    {},
-    { timeout: 10000 },
-  );
-  samples.push({
-    name: "nose-up-body-response",
-    ...(await page.evaluate(() => ({
-      bodyPitch: window.nullVector.telemetry.pitch,
-      controls: window.nullVector.telemetry.controls,
-    }))),
-  });
-  for (const key of ["KeyD", "KeyK"]) await page.keyboard.up(key);
-  await page.keyboard.down("KeyL");
-  await controls(page, "W+J+L", {
-    throttle: true,
-    steer: 0,
-    airLeft: 1,
-    airRight: 1,
-    air: 0,
-    pitch: 0,
-  });
-  for (const key of ["KeyJ", "KeyL"]) await page.keyboard.up(key);
-  for (const key of ["KeyQ", "KeyE", "KeyS", "ArrowDown"]) {
-    await page.keyboard.down(key);
-    await controls(page, `W+${key}: unbound`, {
+    await desktop.addInitScript(() => {
+      // Synthetic standard browser input, not writable app/racer hooks.
+      window.chordPad = { axes: [0, 0, 0, 0], buttons: [], values: {} };
+      Object.defineProperty(navigator, "getGamepads", {
+        value: () => [
+          {
+            axes: window.chordPad.axes,
+            connected: true,
+            mapping: "standard",
+            buttons: Array.from({ length: 17 }, (_, i) => ({
+              pressed: window.chordPad.buttons.includes(i),
+              value:
+                window.chordPad.values[i] ??
+                (window.chordPad.buttons.includes(i) ? 1 : 0),
+            })),
+          },
+        ],
+      });
+    });
+    const page = await ready(desktop);
+    for (const key of ["KeyW", "KeyD", "KeyJ", "KeyK"])
+      await page.keyboard.down(key);
+    await controls(page, "W+D+J+K", {
       throttle: true,
+      steer: -1,
+      airLeft: 1,
+      airRight: 0,
+      air: 1,
+      pitch: -1,
+    });
+    await page.waitForFunction(
+      () => window.nullVector.telemetry.pitch < -0.03,
+      {},
+      { timeout: 10000 },
+    );
+    samples.push({
+      name: "nose-up-body-response",
+      ...(await page.evaluate(() => ({
+        bodyPitch: window.nullVector.telemetry.pitch,
+        controls: window.nullVector.telemetry.controls,
+      }))),
+    });
+    for (const key of ["KeyD", "KeyK"]) await page.keyboard.up(key);
+    await page.keyboard.down("KeyL");
+    await controls(page, "W+J+L", {
+      throttle: true,
+      steer: 0,
+      airLeft: 1,
+      airRight: 1,
+      air: 0,
+      pitch: 0,
+    });
+    for (const key of ["KeyJ", "KeyL"]) await page.keyboard.up(key);
+    for (const key of ["KeyQ", "KeyE", "KeyS", "ArrowDown"]) {
+      await page.keyboard.down(key);
+      await controls(page, `W+${key}: unbound`, {
+        throttle: true,
+        steer: 0,
+        pitch: 0,
+        airLeft: 0,
+        airRight: 0,
+        air: 0,
+      });
+      await page.keyboard.up(key);
+    }
+    await page.keyboard.down("KeyI");
+    await controls(page, "W+I", { throttle: true, pitch: 1, air: 0 });
+    await page.waitForFunction(
+      () => window.nullVector.telemetry.pitch > 0.03,
+      {},
+      { timeout: 10000 },
+    );
+    samples.push({
+      name: "nose-down-body-response",
+      ...(await page.evaluate(() => ({
+        bodyPitch: window.nullVector.telemetry.pitch,
+        controls: window.nullVector.telemetry.controls,
+      }))),
+    });
+    for (const key of ["KeyW", "KeyI"]) await page.keyboard.up(key);
+    await controls(page, "keyboard-release", {
+      throttle: false,
+      pitch: 0,
+      steer: 0,
+      airLeft: 0,
+      airRight: 0,
+    });
+    for (const [key, expected] of [
+      ["ArrowUp", { throttle: true }],
+      ["ArrowLeft", { steer: 1 }],
+      ["ArrowRight", { steer: -1 }],
+    ]) {
+      await page.keyboard.down(key);
+      await controls(page, key, expected);
+      await page.keyboard.up(key);
+      await controls(page, `${key}-released`, {
+        throttle: false,
+        steer: 0,
+      });
+    }
+    await page.keyboard.press("KeyP");
+    await expect(page.locator("#pause-panel")).toBeHidden();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#pause-panel")).toBeVisible();
+    // P cannot resume a paused race either.
+    await page.keyboard.press("KeyP");
+    await expect(page.locator("#pause-panel")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#pause-panel")).toBeHidden();
+    await page.evaluate(() => {
+      window.chordPad.axes = [0.6, -0.75, 0, 0];
+      window.chordPad.buttons = [0, 4, 5];
+    });
+    await controls(page, "gamepad-left-stick-up+steer+both-brakes", {
+      throttle: true,
+      steer: -0.6,
+      pitch: 0.75,
+      airLeft: 1,
+      airRight: 1,
+      air: 0,
+    });
+    await page.evaluate(() => {
+      window.chordPad.axes = [-0.4, 0.65, 0, 0];
+      window.chordPad.buttons = [];
+    });
+    await controls(page, "gamepad-left-stick-down+steer", {
+      throttle: false,
+      steer: 0.4,
+      pitch: -0.65,
+      air: 0,
+    });
+    await page.waitForFunction(() => window.nullVector.telemetry.pitch < -0.03);
+    await page.evaluate(() => {
+      window.chordPad.axes = [0.55, -0.7, -0.9, 0.85];
+      window.chordPad.buttons = [1];
+      window.chordPad.values = { 4: 0.4, 5: 0.8, 7: 0.65 };
+    });
+    await controls(page, "gamepad-two-axis+R2+analog-airbrakes+B", {
+      throttle: true,
+      steer: -0.55,
+      pitch: 0.7,
+      airLeft: 0.4,
+      airRight: 0.8,
+      air: -0.4,
+    });
+    await page.waitForFunction(() => window.nullVector.telemetry.pitch > 0.03);
+    await page.screenshot({
+      path: "test-artifacts/gamepad-left-stick-chord.png",
+    });
+    await page.evaluate(() => {
+      window.chordPad.axes = [0.12, -0.12, 0.85, -0.95];
+      window.chordPad.buttons = [];
+      window.chordPad.values = {};
+    });
+    await controls(page, "gamepad-deadzone-and-right-stick-ignored", {
+      throttle: false,
       steer: 0,
       pitch: 0,
       airLeft: 0,
       airRight: 0,
       air: 0,
     });
-    await page.keyboard.up(key);
-  }
-  await page.keyboard.down("KeyI");
-  await controls(page, "W+I", { throttle: true, pitch: 1, air: 0 });
-  await page.waitForFunction(
-    () => window.nullVector.telemetry.pitch > 0.03,
-    {},
-    { timeout: 10000 },
-  );
-  samples.push({
-    name: "nose-down-body-response",
-    ...(await page.evaluate(() => ({
-      bodyPitch: window.nullVector.telemetry.pitch,
-      controls: window.nullVector.telemetry.controls,
-    }))),
-  });
-  for (const key of ["KeyW", "KeyI"]) await page.keyboard.up(key);
-  await controls(page, "keyboard-release", {
-    throttle: false,
-    pitch: 0,
-    steer: 0,
-    airLeft: 0,
-    airRight: 0,
-  });
-  for (const [key, expected] of [
-    ["ArrowUp", { throttle: true }],
-    ["ArrowLeft", { steer: 1 }],
-    ["ArrowRight", { steer: -1 }],
-  ]) {
-    await page.keyboard.down(key);
-    await controls(page, key, expected);
-    await page.keyboard.up(key);
-    await controls(page, `${key}-released`, {
-      throttle: false,
-      steer: 0,
+    await page.evaluate(() => {
+      window.chordPad.axes = [0, 0, 0, 0];
+      window.chordPad.buttons = [];
     });
+    await page.screenshot({
+      path: "test-artifacts/hud-actual-desktop-race.png",
+    });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => window.nullVector.telemetry.paused);
+    await page.screenshot({
+      path: "test-artifacts/hud-actual-desktop-pause.png",
+    });
+    await desktop.close();
   }
-  await page.keyboard.press("KeyP");
-  await expect(page.locator("#pause-panel")).toBeHidden();
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#pause-panel")).toBeVisible();
-  // P cannot resume a paused race either.
-  await page.keyboard.press("KeyP");
-  await expect(page.locator("#pause-panel")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#pause-panel")).toBeHidden();
-  await page.evaluate(() => {
-    window.chordPad.axes = [0.6, -0.75, 0, 0];
-    window.chordPad.buttons = [0, 4, 5];
-  });
-  await controls(page, "gamepad-left-stick-up+steer+both-brakes", {
-    throttle: true,
-    steer: -0.6,
-    pitch: 0.75,
-    airLeft: 1,
-    airRight: 1,
-    air: 0,
-  });
-  await page.evaluate(() => {
-    window.chordPad.axes = [-0.4, 0.65, 0, 0];
-    window.chordPad.buttons = [];
-  });
-  await controls(page, "gamepad-left-stick-down+steer", {
-    throttle: false,
-    steer: 0.4,
-    pitch: -0.65,
-    air: 0,
-  });
-  await page.waitForFunction(() => window.nullVector.telemetry.pitch < -0.03);
-  await page.evaluate(() => {
-    window.chordPad.axes = [0.55, -0.7, -0.9, 0.85];
-    window.chordPad.buttons = [1];
-    window.chordPad.values = { 4: 0.4, 5: 0.8, 7: 0.65 };
-  });
-  await controls(page, "gamepad-two-axis+R2+analog-airbrakes+B", {
-    throttle: true,
-    steer: -0.55,
-    pitch: 0.7,
-    airLeft: 0.4,
-    airRight: 0.8,
-    air: -0.4,
-  });
-  await page.waitForFunction(() => window.nullVector.telemetry.pitch > 0.03);
-  await page.screenshot({
-    path: "test-artifacts/gamepad-left-stick-chord.png",
-  });
-  await page.evaluate(() => {
-    window.chordPad.axes = [0.12, -0.12, 0.85, -0.95];
-    window.chordPad.buttons = [];
-    window.chordPad.values = {};
-  });
-  await controls(page, "gamepad-deadzone-and-right-stick-ignored", {
-    throttle: false,
-    steer: 0,
-    pitch: 0,
-    airLeft: 0,
-    airRight: 0,
-    air: 0,
-  });
-  await page.evaluate(() => {
-    window.chordPad.axes = [0, 0, 0, 0];
-    window.chordPad.buttons = [];
-  });
-  await page.screenshot({ path: "test-artifacts/hud-actual-desktop-race.png" });
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(() => window.nullVector.telemetry.paused);
-  await page.screenshot({
-    path: "test-artifacts/hud-actual-desktop-pause.png",
-  });
-  await desktop.close();
 
   if (!gamepadOnly) {
     const mobile = await browser.newContext({
@@ -263,7 +268,7 @@ try {
     ]) {
       await send("touchStart", [point(1, x, y)]);
       await controls(touch, `CDP-stick-${x}-${y}`, {
-        throttle: true,
+        throttle: 1,
         launchIntent: false,
         steer: -x,
         pitch: y,
@@ -297,54 +302,81 @@ try {
       expect(box, selector).not.toBeNull();
       return { id, x: box.x + box.width / 2, y: box.y + box.height / 2 };
     };
-    const leftBrake = await center('[data-control="airLeft"]', 2);
-    const rightBrake = await center('[data-control="airRight"]', 3);
-    const fire = await center("#touch-fire", 4);
-    const coast = await center('[data-control="coast"]', 5);
-    await send("touchStart", [owner, leftBrake, rightBrake, fire, coast]);
-    await controls(
-      touch,
-      "CDP-five-finger-diagonal+coast+both-airbrakes+fire",
-      {
-        throttle: false,
-        launchIntent: false,
-        steer: 0.75,
-        pitch: 0.75,
-        airLeft: 1,
-        airRight: 1,
-        air: 0,
-      },
-    );
+    const airBox = await touch.locator("#air-pad").boundingBox();
+    const halfPoint = (id, x, y) => ({
+      id,
+      x: airBox.x + airBox.width / 2 + x * airBox.width * 0.375,
+      y: airBox.y + 16 + y * airBox.width * 0.375,
+    });
+    const fire = await center("#touch-fire", 3);
+    const leftCoast = halfPoint(2, -0.6, 0.8);
+    await send("touchStart", [owner, leftCoast, fire]);
+    await controls(touch, "CDP-three-finger-diagonal+analog-left-coast+fire", {
+      throttle: 0.2,
+      launchIntent: false,
+      steer: 0.75,
+      pitch: 0.75,
+      airLeft: 0.6,
+      airRight: 0,
+      air: 0.6,
+    });
     await touch.screenshot({
       path: "test-artifacts/input-mobile-diagonal-chord.png",
     });
     await send("touchEnd", [fire]);
-    samples.push({
-      name: "CDP-fire-tap-during-chord",
-      ...(await touch.evaluate(() => ({
-        weapon: window.nullVector.telemetry.weapon,
-        controls: window.nullVector.telemetry.controls,
-      }))),
+    await controls(touch, "CDP-fire-release-keeps-both-sticks", {
+      throttle: 0.2,
+      steer: 0.75,
+      pitch: 0.75,
+      airLeft: 0.6,
+    });
+    await send("touchMove", [owner, halfPoint(2, 0.6, 0.8)]);
+    await controls(touch, "CDP-right-coast-diagonal", {
+      throttle: 0.2,
+      airLeft: 0,
+      airRight: 0.6,
+      air: -0.6,
+    });
+    // A second finger cannot steal the right stick or release its owner.
+    const intruder = halfPoint(3, -0.5, 0.3);
+    await send("touchStart", [owner, halfPoint(2, 0.6, 0.8), intruder]);
+    await send("touchEnd", [intruder]);
+    await controls(touch, "CDP-halfstick-nonowner-release", {
+      throttle: 0.2,
+      airLeft: 0,
+      airRight: 0.6,
+      air: -0.6,
+    });
+    await send("touchEnd", [halfPoint(2, 0.6, 0.8)]);
+    await controls(touch, "CDP-halfstick-release-keeps-flightstick", {
+      throttle: 1,
+      steer: 0.75,
+      pitch: 0.75,
+      airLeft: 0,
+      airRight: 0,
     });
     await send("touchCancel", []);
     await controls(touch, "CDP-all-cancel", {
+      throttle: 1,
       steer: 0,
       pitch: 0,
       airLeft: 0,
       airRight: 0,
     });
-    await send("touchStart", [owner, leftBrake, rightBrake]);
+    await send("touchStart", [owner, leftCoast]);
     await controls(touch, "CDP-before-blur", {
+      throttle: 0.2,
       steer: 0.75,
       pitch: 0.75,
-      airLeft: 1,
-      airRight: 1,
+      airLeft: 0.6,
+      airRight: 0,
     });
     // Exercise browser blur cleanup explicitly; not a physical-device app switch.
     await touch.evaluate(() => window.dispatchEvent(new Event("blur")));
     await touch.waitForFunction(() => window.nullVector.telemetry.paused);
     await touch.locator("#resume").click();
     await controls(touch, "blur-cleared-on-resume", {
+      throttle: 1,
       steer: 0,
       pitch: 0,
       airLeft: 0,
@@ -363,9 +395,7 @@ try {
     const armed = await ready(armedContext, "race", 1);
     const armedCdp = await armedContext.newCDPSession(armed);
     const armedPad = await armed.locator("#steer-pad").boundingBox();
-    const coastBox = await armed
-      .locator('[data-control="coast"]')
-      .boundingBox();
+    const coastBox = await armed.locator("#air-pad").boundingBox();
     const track = makeTrack(1);
     const authoredPickups = getTrackPickups(track);
     let touching = false,
@@ -422,7 +452,7 @@ try {
                 {
                   id: 2,
                   x: coastBox.x + coastBox.width / 2,
-                  y: coastBox.y + coastBox.height / 2,
+                  y: coastBox.y + 16 + coastBox.width * 0.375,
                 },
               ]
             : []),
@@ -462,8 +492,12 @@ try {
       const box = await armed.locator(selector).boundingBox();
       return { id, x: box.x + box.width / 2, y: box.y + box.height / 2 };
     };
-    const fireFinger = await armedCenter("#touch-fire", 4);
-    const coastFinger = await armedCenter('[data-control="coast"]', 5);
+    const fireFinger = await armedCenter("#touch-fire", 3);
+    const coastFinger = {
+      id: 2,
+      x: coastBox.x + coastBox.width / 2 - 0.6 * coastBox.width * 0.375,
+      y: coastBox.y + 16 + 0.8 * coastBox.width * 0.375,
+    };
     await armedCdp.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
@@ -472,19 +506,17 @@ try {
           x: armedPad.x + armedPad.width * 0.65,
           y: armedPad.y + armedPad.height * 0.35,
         },
-        await armedCenter('[data-control="airLeft"]', 2),
-        await armedCenter('[data-control="airRight"]', 3),
-        fireFinger,
         coastFinger,
+        fireFinger,
       ],
     });
-    await controls(armed, "equipped-diagonal+coast+both-airbrakes+fire", {
-      throttle: false,
+    await controls(armed, "equipped-three-finger-diagonal+analog-coast+fire", {
+      throttle: 0.2,
       launchIntent: false,
       steer: -0.375,
       pitch: 0.375,
-      airLeft: 1,
-      airRight: 1,
+      airLeft: 0.6,
+      airRight: 0,
     });
     await armedCdp.send("Input.dispatchTouchEvent", {
       type: "touchEnd",
@@ -498,7 +530,7 @@ try {
     await expect(armed.locator("#touch-fire")).toBeVisible();
     await expect(armed.locator("#touch-fire")).toBeDisabled();
     samples.push({
-      name: "five-finger-chord-weapon-consumed",
+      name: "three-finger-chord-weapon-consumed",
       previousWeapon: equipped.weapon,
       ...(await armed.evaluate(() => ({
         weapon: window.nullVector.telemetry.weapon,
@@ -523,7 +555,7 @@ try {
   console.log(
     gamepadOnly
       ? `Input chords: ${samples.length} keyboard/gamepad observations passed; simultaneous left-stick X/Y, nose response, deadzone, right-stick independence, analog airbrakes, R2 thrust and unbound B/S/Down.`
-      : `Input chords: ${samples.length} raw-controls/body-pitch observations passed; keyboard, both airbrake pairs, standard left-stick X/Y, real CDP two-axis stick, five-finger chords, held coast, ownership, release/cancel and blur cleanup.`,
+      : `Input chords: ${samples.length} raw-controls/body-pitch observations passed; keyboard, both airbrake pairs, standard left-stick X/Y, real CDP two-axis sticks, three-finger chords, analog coast/airbrakes, ownership, release/cancel and blur cleanup.`,
   );
 } finally {
   await writeFile(

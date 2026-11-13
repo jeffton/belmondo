@@ -81,6 +81,8 @@ try {
         "#weapon",
         "#steer-pad",
         ".touch-actions",
+        "#touch-fire",
+        "#air-pad",
         "#view",
         "#pause",
       ];
@@ -115,6 +117,8 @@ try {
         "#weapon",
         "#steer-pad",
         ".touch-actions",
+        "#touch-fire",
+        "#air-pad",
         "#view",
         "#pause",
       ]) {

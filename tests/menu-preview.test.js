@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { MenuPreview } from "../src/menu-preview.js";
 import { makeTrack, TRACKS } from "../src/track.js";
 import { createCraft } from "../src/craft.js";
+import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { localRecordKey } from "../src/records.js";
 
 const rect = (left, top, width, height) => ({
   left,
@@ -52,7 +54,8 @@ function fixture() {
       canvas.height = Math.floor(height * pixelRatio);
       calls.push(["resize", width, height, pixelRatio]);
     },
-    render() {
+    render(scene) {
+      this.lastScene = scene;
       this.info.render.frame++;
       calls.push("render");
     },
@@ -122,18 +125,18 @@ test("native inset lazily creates one canvas below labels, tracks CSS size/DPR a
   assert.equal(preview.renderer, null);
 });
 
-test("class, hidden menu/tab and offscreen preview do not render; returning to track reuses renderer", () => {
-  const { preview, renderer, canvas, document, setBounds } = fixture();
+test("hidden menu/tab and offscreen preview do not render; all three stages reuse renderer", () => {
+  const { preview, renderer, document, setBounds } = fixture();
   preview.setTrack(makeTrack(0));
   preview.setStage("track");
   preview.draw(1);
   assert.equal(renderer.info.render.frame, 1);
+  preview.setClass(0);
   preview.setStage("class");
-  assert.equal(canvas.hidden, true);
   preview.draw(1);
-  assert.equal(renderer.info.render.frame, 1);
+  assert.equal(renderer.info.render.frame, 2);
+  assert.equal(renderer.lastScene, preview.classScene);
   preview.setStage("track");
-  assert.equal(canvas.hidden, false);
   document.hidden = true;
   preview.draw(1);
   document.hidden = false;
@@ -141,10 +144,11 @@ test("class, hidden menu/tab and offscreen preview do not render; returning to t
   preview.draw(1);
   setBounds(rect(1500, 0, 300, 200));
   preview.draw(1);
-  assert.equal(renderer.info.render.frame, 1);
+  assert.equal(renderer.info.render.frame, 2);
   setBounds(rect(0, 0, 300, 200));
   preview.draw(1);
-  assert.equal(renderer.info.render.frame, 2);
+  assert.equal(renderer.info.render.frame, 3);
+  assert.equal(renderer.lastScene, preview.trackScene);
   assert.equal(preview.renderer, renderer);
   preview.dispose();
 });
@@ -211,6 +215,9 @@ test("preview craft caches and disposal never own World's craft resources", (t) 
   const first = preview.crafts.get(0);
   preview.setCraft(0);
   assert.equal(preview.craft, first);
+  preview.setStage("craft");
+  preview.draw(0.25);
+  assert.equal(preview.renderer.lastScene, preview.craftScene);
   preview.craftScene.traverse((object) => {
     if (object.geometry) previewResources.add(object.geometry);
     if (object.material) {
@@ -228,4 +235,108 @@ test("preview craft caches and disposal never own World's craft resources", (t) 
   preview.dispose();
   assert.ok([...counts.values()].every((count) => count === 1));
   assert.equal(worldDisposals, 0);
+});
+
+test("class sculptures are distinct spatial silhouettes, cached and disposed without creating extra contexts", () => {
+  const { preview, calls, renderer } = fixture();
+  const signatures = new Set();
+  const releases = new Map();
+  for (let i = 0; i < 3; i++) {
+    const previous = preview.classModel;
+    preview.setClass(i);
+    if (previous) assert.equal(previous.visible, false);
+    assert.equal(preview.classModel.visible, true);
+    assert.equal(preview.classModel.name, SPEED_CLASSES[i].name);
+    assert.equal(
+      preview.classModel.children[0].children.length,
+      4,
+      "four merged material batches per sculpture",
+    );
+    const box = new THREE.Box3().setFromObject(preview.classModel);
+    const size = box.getSize(new THREE.Vector3());
+    assert.ok(
+      size.x > 0.8 && size.y > 0.8 && size.z > 0.3,
+      "actual volumes, not planar logos",
+    );
+    const meshes = preview.classModel.children[0].children;
+    signatures.add(
+      meshes
+        .map((mesh) => {
+          const position = mesh.geometry.getAttribute("position");
+          const samples = Array.from(position.array).filter(
+            (_, j) => j % 9 === 0,
+          );
+          return `${position.count}:${samples.reduce((sum, value) => sum + value * value, 0).toFixed(4)}`;
+        })
+        .join("/"),
+    );
+    for (const mesh of meshes)
+      for (const resource of [mesh.geometry, mesh.material]) {
+        releases.set(resource, 0);
+        resource.addEventListener("dispose", () =>
+          releases.set(resource, releases.get(resource) + 1),
+        );
+      }
+    preview.draw(0.5);
+    assert.equal(preview.renderer, renderer);
+    assert.ok(preview.classModel.rotation.y > 0);
+  }
+  assert.equal(
+    signatures.size,
+    3,
+    "geometry differs, not only material colors",
+  );
+  const first = preview.classes.get(0);
+  preview.setClass(0);
+  assert.equal(preview.classModel, first);
+  assert.equal(calls.filter((call) => call === "create").length, 1);
+  preview.dispose();
+  assert.ok([...releases.values()].every((count) => count === 1));
+  assert.equal(preview.classes.size, 0);
+});
+
+test("course switches preserve compiled-material ownership and release only replaced geometry", () => {
+  const { preview } = fixture();
+  preview.setTrack(makeTrack(0));
+  const materials = preview.course.children.map((mesh) => mesh.material);
+  const materialDisposals = new Map(materials.map((material) => [material, 0]));
+  for (const material of materials)
+    material.addEventListener("dispose", () =>
+      materialDisposals.set(material, materialDisposals.get(material) + 1),
+    );
+  for (let i = 1; i < TRACKS.length; i++) {
+    const replaced = preview.course.children.map((mesh) => mesh.geometry);
+    let disposed = 0;
+    for (const geometry of replaced)
+      geometry.addEventListener("dispose", () => disposed++);
+    const track = makeTrack(i);
+    preview.setTrack(track);
+    assert.equal(disposed, 2, "old deck and edge buffers are released");
+    for (const [j, mesh] of preview.course.children.entries())
+      assert.equal(mesh.material, materials[j]);
+    assert.equal(
+      preview.trackMaterials.edge.color.getHex(),
+      track.config.color,
+    );
+    assert.ok([...materialDisposals.values()].every((count) => count === 0));
+  }
+  preview.dispose();
+  assert.ok([...materialDisposals.values()].every((count) => count === 1));
+});
+
+test("class identity and record scopes survive the field-tech naming", () => {
+  assert.deepEqual(
+    SPEED_CLASSES.map(({ name }) => name),
+    ["INDUCTION", "RESONANCE", "SINGULARITY"],
+  );
+  for (let i = 0; i < 3; i++) {
+    assert.equal(
+      localRecordKey("layout", 2, "trial", SPEED_CLASSES[i], 5),
+      [
+        "layout-2-trial-c1-5laps-pace1.2",
+        "layout-2-trial-c2-5laps-pace1.4",
+        "layout-2-trial-c3-5laps-pace1.6",
+      ][i],
+    );
+  }
 });

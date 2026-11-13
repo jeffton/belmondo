@@ -189,23 +189,24 @@ try {
     });
     await reset(t);
   }
-  for (const [control, direction] of [
-    ["airLeft", -1],
-    ["airRight", 1],
+  for (const [name, direction] of [
+    ["left airbrake", -1],
+    ["right airbrake", 1],
   ]) {
     const before = await start(t),
-      button = await t.locator(`[data-control=${control}]`).boundingBox();
+      airPad = await t.locator("#air-pad").boundingBox(),
+      airRadius = airPad.width * 0.375;
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchStart",
       touchPoints: [
         {
           id: 1,
-          x: button.x + button.width / 2,
-          y: button.y + button.height / 2,
+          x: airPad.x + airPad.width / 2 + direction * airRadius,
+          y: airPad.y + 16,
         },
       ],
     });
-    await checkDirection(t, before, direction, `touch ${control}`);
+    await checkDirection(t, before, direction, `touch ${name}`);
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchEnd",
       touchPoints: [],

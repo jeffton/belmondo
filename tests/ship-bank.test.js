@@ -94,6 +94,8 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     held: new Set(),
     touchSteer: 0,
     touchPitch: 0,
+    touchAir: 0,
+    touchCoast: 0,
     steerPointer: null,
     touch: false,
     race: { countdown: 0 },

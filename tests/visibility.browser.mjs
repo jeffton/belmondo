@@ -97,8 +97,10 @@ async function actualUi(browser) {
     path: `${artifacts}/visibility-ui-mobile-first-person.png`,
   });
   const speed = await touch.locator("#speed").boundingBox();
-  for (const button of await touch.locator(".touch-actions button").all()) {
-    const rect = await button.boundingBox();
+  for (const control of await touch
+    .locator("#air-pad, .touch-actions button")
+    .all()) {
+    const rect = await control.boundingBox();
     const overlapX =
       Math.min(speed.x + speed.width, rect.x + rect.width) -
       Math.max(speed.x, rect.x);

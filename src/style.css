@@ -20,9 +20,15 @@
 * {
   box-sizing: border-box;
 }
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: clip;
+  overscroll-behavior: none;
+}
 body {
   margin: 0;
-  overflow: hidden;
 }
 button,
 input,
@@ -1202,13 +1208,50 @@ body.touch[data-input-mode="touch"] #touch-controls {
 .touch-actions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
 }
-.touch-actions > div {
-  display: flex;
-  gap: 6px;
+#air-pad {
+  position: relative;
+  width: 128px;
+  height: 80px;
+  pointer-events: auto;
+  touch-action: none;
+  border: 1px solid #b8d1d166;
+  border-radius: 12px 12px 72px 72px;
+  background: radial-gradient(
+    circle at 50% 16px,
+    #10242e22 34px,
+    #9bc9d830 35px,
+    transparent 37px
+  );
+}
+#air-pad .stick-reticle {
+  position: absolute;
+  inset: 15px 15px 15px;
+  border: 1px dashed #b7cdd444;
+  border-top-style: solid;
+  border-radius: 0 0 50px 50px;
+}
+#air-pad i {
+  position: absolute;
+  left: calc(50% - 13px);
+  top: 3px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #d8ede8;
+  border-radius: 50%;
+  background: #88c9d344;
+  box-shadow:
+    0 0 0 4px #9ccbd811,
+    inset 0 0 10px #b7e8ee33;
+}
+#air-pad.pressed i {
+  border-color: var(--lime);
+  background: #b9dd8544;
 }
 .touch-actions button {
+  pointer-events: auto;
   touch-action: none;
   display: grid;
   place-items: center;
@@ -1222,6 +1265,8 @@ body.touch[data-input-mode="touch"] #touch-controls {
   box-shadow: inset 0 1px #e4f4f31a;
 }
 .touch-actions #touch-fire {
+  width: 44px;
+  height: 44px;
   background: color-mix(in srgb, var(--weapon-color) 22%, #10242e);
   color: var(--weapon-color);
   border-color: var(--weapon-color);
@@ -1712,7 +1757,7 @@ body.touch .weapon-name {
   font-size: 17px;
 }
 body.touch .hud-bottom {
-  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 124px);
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 136px);
   left: max(14px, env(safe-area-inset-left));
   right: max(14px, env(safe-area-inset-right));
   gap: 12px;
@@ -1828,14 +1873,27 @@ body.touch .instrument-bar {
 /* Three fixed setup stations leave the circuit feed visible throughout. */
 #menu {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  overflow: hidden;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: clip;
+  padding: 0;
+  --footer-pad: 8px;
+  --footer-height: calc(
+    44px + 2 * var(--footer-pad) + env(safe-area-inset-bottom) + 1px
+  );
   background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
+}
+#menu .menu-layout {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 #menu .masthead {
   --masthead-top: 16px;
+  --masthead-side: 28px;
   padding: 16px 28px;
 }
 #menu .menu-body {
@@ -1905,11 +1963,25 @@ body.touch .instrument-bar {
   padding: 8px 0;
 }
 #menu footer {
-  padding: 12px 28px;
+  display: block;
+  padding: var(--footer-pad) calc(28px + env(safe-area-inset-right))
+    calc(var(--footer-pad) + env(safe-area-inset-bottom))
+    calc(28px + env(safe-area-inset-left));
+  background: #10202c;
+}
+#menu footer .menu-links {
+  width: 100%;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+#menu footer .menu-links :is(button, a) {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
 }
 #menu .world-caption {
   right: max(28px, env(safe-area-inset-right));
-  bottom: max(64px, env(safe-area-inset-bottom));
+  bottom: calc(var(--footer-height) + 12px);
   display: block;
 }
 #menu .world-caption small,
@@ -1919,21 +1991,12 @@ body.touch .instrument-bar {
 #menu-model {
   position: absolute;
   left: 49%;
-  right: 4%;
+  right: max(4%, env(safe-area-inset-right));
   top: 19%;
-  bottom: 23%;
+  bottom: max(23%, calc(var(--footer-height) + 84px));
   pointer-events: none;
   border-top: 1px solid #9bffd966;
   border-bottom: 1px solid #9bffd944;
-}
-.model-kicker {
-  position: absolute;
-  top: 12px;
-  left: 0;
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--mint);
-  text-shadow: 0 1px 3px #10202c;
 }
 #model-name {
   position: absolute;
@@ -1948,6 +2011,7 @@ body.touch .instrument-bar {
   }
   #menu .masthead {
     --masthead-top: 10px;
+    --masthead-side: 16px;
     padding: 10px 16px;
     font-size: 7px;
     gap: 8px;
@@ -2012,12 +2076,14 @@ body.touch .instrument-bar {
   #menu .menu-links {
     margin-top: 8px;
   }
-  #menu footer {
-    padding: 8px 16px;
-    font-size: 8px;
+  #menu {
+    --footer-pad: 4px;
   }
-  #menu footer span:first-child {
-    display: none;
+  #menu footer {
+    padding: var(--footer-pad) calc(16px + env(safe-area-inset-right))
+      calc(var(--footer-pad) + env(safe-area-inset-bottom))
+      calc(16px + env(safe-area-inset-left));
+    font-size: 8px;
   }
   #menu .world-caption {
     top: calc(env(safe-area-inset-top) + 72px);
@@ -2041,10 +2107,6 @@ body.touch .instrument-bar {
       )
     );
   }
-  #menu-model .model-kicker {
-    font-size: 7px;
-    top: 6px;
-  }
   #menu-model #model-name {
     font-size: 16px;
     bottom: 5px;
@@ -2053,6 +2115,7 @@ body.touch .instrument-bar {
 @media (max-height: 700px) and (orientation: landscape) {
   #menu .masthead {
     --masthead-top: 7px;
+    --masthead-side: 18px;
     padding: 7px 18px;
     font-size: 7px;
   }
@@ -2129,27 +2192,23 @@ body.touch .instrument-bar {
     padding: 5px 0;
     font-size: 8px;
   }
-  #menu footer {
-    padding: 7px 18px;
+  #menu {
+    --footer-pad: 6px;
   }
-  #menu .world-caption {
-    bottom: 45px;
+  #menu footer {
+    padding: var(--footer-pad) calc(18px + env(safe-area-inset-right))
+      calc(var(--footer-pad) + env(safe-area-inset-bottom))
+      calc(18px + env(safe-area-inset-left));
   }
   #menu .world-caption strong {
     font-size: 25px;
   }
   #menu-model {
     top: 21%;
-    bottom: 26%;
+    bottom: max(26%, calc(var(--footer-height) + 84px));
   }
 }
 @media (max-height: 360px) and (orientation: landscape) {
-  #menu {
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-  #menu .masthead {
-    display: none;
-  }
   #menu .menu-links {
     gap: 6px;
   }
@@ -2174,12 +2233,6 @@ body.touch .instrument-bar {
     font-size: 8px;
     letter-spacing: 0;
   }
-  #menu .masthead {
-    display: none;
-  }
-  #menu {
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
   #menu .world-caption {
     top: max(12px, env(safe-area-inset-top));
   }
@@ -2197,27 +2250,34 @@ body.touch .instrument-bar {
     margin-bottom: 10px;
   }
 }
-/* Keep the opaque header box at the viewport edge, with its safe inset inside. */
-#menu,
-body.touch #menu {
-  padding-top: 0;
-}
+/* Paint chrome to viewport edges; safe insets belong to its content. */
 #menu .masthead {
   padding-top: calc(var(--masthead-top) + env(safe-area-inset-top));
+  padding-left: calc(var(--masthead-side) + env(safe-area-inset-left));
+  padding-right: calc(var(--masthead-side) + env(safe-area-inset-right));
 }
 @media (max-height: 360px) and (orientation: landscape),
   (max-height: 690px) and (orientation: portrait) {
-  #menu,
-  body.touch #menu {
-    padding-top: env(safe-area-inset-top);
+  /* WebKit's solid edge-color sampling requires a box taller than 10px. */
+  #menu .masthead {
+    height: calc(12px + env(safe-area-inset-top));
+    min-height: 12px;
+    padding: env(safe-area-inset-top) 0 0;
+  }
+  #menu .masthead > * {
+    display: none;
   }
 }
-/* Safe-area insets protect modal/menu content without cropping the world. */
-body.touch #menu {
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
+#menu,
+dialog,
+.overlay {
+  touch-action: pan-y;
 }
+#game,
+#hud {
+  touch-action: none;
+}
+/* Safe-area insets protect modal content without cropping the world. */
 body.touch dialog:not(#pause-panel) {
   width: calc(
     100% - max(20px, env(safe-area-inset-left)) -

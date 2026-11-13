@@ -423,13 +423,13 @@ try {
       let press, release, numeric;
       if (spec.device === "touch" && spec.when) {
         const cdp = await context.newCDPSession(page);
-        const box = await page.locator('[data-control="coast"]').boundingBox();
+        const box = await page.locator("#air-pad").boundingBox();
         const finger = {
           id: 1,
           x: box.x + box.width / 2,
-          y: box.y + box.height / 2,
+          y: box.y + 16 + box.width * 0.375,
         };
-        await page.locator('[data-control="coast"]').evaluate((button) => {
+        await page.locator("#air-pad").evaluate((button) => {
           button.addEventListener(
             "pointerdown",
             (event) => {
@@ -459,7 +459,7 @@ try {
             touchPoints: [{ ...finger, x: finger.x + 10 }],
           });
           await page
-            .locator('[data-control="coast"]')
+            .locator("#air-pad")
             .evaluate((button) =>
               button.releasePointerCapture(button.testPointerId),
             );
@@ -569,7 +569,9 @@ try {
       );
       expect(accelerationSample.time).toBeGreaterThanOrEqual(0.4);
       expect(accelerationSample.time).toBeLessThan(0.5);
-      expect(typeof running.controls.throttle).toBe("boolean");
+      expect(typeof running.controls.throttle).toBe(
+        spec.device === "touch" ? "number" : "boolean",
+      );
       if (spec.success || spec.name === "touch-coast-early")
         expect(
           await page

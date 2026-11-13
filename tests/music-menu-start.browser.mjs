@@ -58,6 +58,22 @@ try {
           body: `export class World {
             environment = { terrain: undefined }; view = 'chase';
             build() {} setupRacers() {} resize() {}
+            async prepare(track, _prepared, isCurrent, setup) {
+              const candidate = new World();
+              candidate.build(track);
+              setup(candidate);
+              return isCurrent() ? candidate : null;
+            }
+            adopt(candidate) { Object.assign(this, candidate); }
+          }`,
+        }),
+      );
+      await page.route("**/src/course-preparation.js**", (route) =>
+        route.fulfill({
+          contentType: "text/javascript",
+          body: `export class CoursePreparation {
+            async load() { return { workerMs: 0 }; }
+            cancel() {}
           }`,
         }),
       );
@@ -65,7 +81,8 @@ try {
         route.fulfill({
           contentType: "text/javascript",
           body: `export class MenuPreview {
-            setStage() {} setTrack() {} setCraft() {}
+            classModel = { rotation: { y: 0 } };
+            setStage() {} setClass() {} setTrack() {} setCraft() {}
           }`,
         }),
       );

@@ -469,7 +469,7 @@ export class Race {
         (boostTarget - r.boost) *
         (1 - Math.exp(-classDt / (boostTarget ? 0.35 : 1.1)));
       const thrust =
-        ((controls.throttle ? spec.thrust : 0) + r.boost * 65) *
+        (Number(controls.throttle) * spec.thrust + r.boost * 65) *
         pace2 *
         // Electrical disruption briefly attenuates engine force, not momentum
         // direction. Control and thrust return continuously; no lateral shove.
