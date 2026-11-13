@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createNearestPointIndex } from "./nearest-point-index.js";
 import { getWaterfrontDistricts } from "./course-geography.js";
 import {
   newCourseRecipe,
@@ -32,8 +33,14 @@ export function groundedGeometryOffset(
   return Math.min(...feet.map((p) => heightAt(p.x, p.z) - p.y)) - embed;
 }
 
-/** One indexed surface is shared by scenery foundations and the rendered land. */
-export function createTerrain(track) {
+/**
+ * One indexed surface is shared by scenery foundations and the rendered land.
+ * `prepared` is the transferable CPU result from another createTerrain(track):
+ * { heights: Float32Array, geometries: [{ attributes, index }] }, where each
+ * attribute/index is { array: TypedArray, itemSize, normalized }. Hydration
+ * skips earthworks and mesh generation; queries retain the exact same surface.
+ */
+export function createTerrain(track, prepared) {
   assertKnownEnvironment(track);
   const recipe = newCourseRecipe(track);
   const desert = track.config.name === "SOLAR ARRAY";
@@ -114,17 +121,12 @@ export function createTerrain(track) {
       (1 - smooth(100, 230, across))
     );
   }
+  const nearestIndex =
+    !prepared && createNearestPointIndex(samples.map((f) => f.p));
   function nearest(x, z) {
-    let best = samples[0],
-      distance2 = Infinity;
-    for (const f of samples) {
-      const d = (x - f.p.x) ** 2 + (z - f.p.z) ** 2;
-      if (d < distance2) {
-        distance2 = d;
-        best = f;
-      }
-    }
-    return { frame: best, distance: Math.sqrt(distance2) };
+    const frame = samples[nearestIndex(x, z)];
+    const distance2 = (x - frame.p.x) ** 2 + (z - frame.p.z) ** 2;
+    return { frame, distance: Math.sqrt(distance2) };
   }
   function landHeight(x, z) {
     const { frame: f, distance } = nearest(x, z);
@@ -180,111 +182,121 @@ export function createTerrain(track) {
     }
     return y;
   }
-  const heights = new Float32Array(STRIDE * STRIDE);
-  for (let iz = 0; iz <= CELLS; iz++)
-    for (let ix = 0; ix <= CELLS; ix++) {
-      heights[iz * STRIDE + ix] = landHeight(
-        -EXTENT + ix * STEP,
-        -EXTENT + iz * STEP,
-      );
-    }
-  // Constrain whole triangles intersecting ANY deck, including both split branches.
-  // Clamping only a nearest centreline or individual vertices misses lower routes.
-  const lowerCell = (x, z, ceiling) => {
-    const ix = Math.floor((x + EXTENT) / STEP),
-      iz = Math.floor((z + EXTENT) / STEP);
-    if (ix < 0 || iz < 0 || ix >= CELLS || iz >= CELLS) return;
-    for (const index of [
-      iz * STRIDE + ix,
-      iz * STRIDE + ix + 1,
-      (iz + 1) * STRIDE + ix,
-      (iz + 1) * STRIDE + ix + 1,
-    ]) {
-      const vertexX = -EXTENT + (index % STRIDE) * STEP;
-      const vertexZ = -EXTENT + Math.floor(index / STRIDE) * STEP;
-      heights[index] = Math.min(
-        heights[index],
-        typeof ceiling === "function" ? ceiling(vertexX, vertexZ) : ceiling,
-      );
-    }
-  };
-  if (recipe?.biome === "hydraulic") {
-    // Excavate the full authored flume beneath its visible water mesh. Apply
-    // the cut through lowerCell so heightAt and the rendered terrain triangles
-    // share the same earthworks; the gravity path and water elevation stay put.
-    const [start, end] = track.config.sections.spillwayDive;
-    const count = Math.ceil(((end - start) * track.length) / 12);
-    for (let i = 0; i <= count; i++) {
-      const u = start + ((end - start) * i) / count;
-      const f = track.frame(u * track.length);
-      const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
-      for (let offset = f.width + 6; offset <= f.width + 59; offset += 3) {
-        const p = f.p.clone().addScaledVector(right, offset);
-        lowerCell(p.x, p.z, f.p.y - 3.5);
+  const heights = prepared?.heights ?? new Float32Array(STRIDE * STRIDE);
+  if (!prepared) {
+    for (let iz = 0; iz <= CELLS; iz++)
+      for (let ix = 0; ix <= CELLS; ix++) {
+        heights[iz * STRIDE + ix] = landHeight(
+          -EXTENT + ix * STEP,
+          -EXTENT + iz * STEP,
+        );
+      }
+    // Constrain whole triangles intersecting ANY deck, including both split branches.
+    // Clamping only a nearest centreline or individual vertices misses lower routes.
+    const lowerCell = (x, z, ceiling) => {
+      const ix = Math.floor((x + EXTENT) / STEP),
+        iz = Math.floor((z + EXTENT) / STEP);
+      if (ix < 0 || iz < 0 || ix >= CELLS || iz >= CELLS) return;
+      for (const index of [
+        iz * STRIDE + ix,
+        iz * STRIDE + ix + 1,
+        (iz + 1) * STRIDE + ix,
+        (iz + 1) * STRIDE + ix + 1,
+      ]) {
+        const vertexX = -EXTENT + (index % STRIDE) * STEP;
+        const vertexZ = -EXTENT + Math.floor(index / STRIDE) * STEP;
+        heights[index] = Math.min(
+          heights[index],
+          typeof ceiling === "function" ? ceiling(vertexX, vertexZ) : ceiling,
+        );
+      }
+    };
+    if (recipe?.biome === "hydraulic") {
+      // Excavate the full authored flume beneath its visible water mesh. Apply
+      // the cut through lowerCell so heightAt and the rendered terrain triangles
+      // share the same earthworks; the gravity path and water elevation stay put.
+      const [start, end] = track.config.sections.spillwayDive;
+      const count = Math.ceil(((end - start) * track.length) / 12);
+      for (let i = 0; i <= count; i++) {
+        const u = start + ((end - start) * i) / count;
+        const f = track.frame(u * track.length);
+        const right = new THREE.Vector3(
+          f.tangent.z,
+          0,
+          -f.tangent.x,
+        ).normalize();
+        for (let offset = f.width + 6; offset <= f.width + 59; offset += 3) {
+          const p = f.p.clone().addScaledVector(right, offset);
+          lowerCell(p.x, p.z, f.p.y - 3.5);
+        }
       }
     }
-  }
-  for (const f of samples) {
-    const bounds = track.bounds(f.u * track.length, f.branch);
-    // Grade against the actual sloped/banked deck plane at each CELL CORNER.
-    // A single centreline ceiling either clips the lowered edge or leaves the
-    // raised edge floating; banking rotates right/up but not the centreline.
-    const deckCeiling = (x, z) =>
-      f.p.y - (f.up.x * (x - f.p.x) + f.up.z * (z - f.p.z)) / f.up.y - 4.5;
-    for (let x = bounds.clipMin - 7; x <= bounds.clipMax + 7; x += 3) {
-      lowerCell(f.p.x + f.right.x * x, f.p.z + f.right.z * x, deckCeiling);
-    }
-  }
-  if (!recipe && !desert && !harbor) {
-    // Occupied waterfront floors are authored relative to the road. Clear their
-    // basements in the land itself; do not push terrain through existing shops.
-    const galleries = getWaterfrontDistricts(track);
-    for (const [start, end, branch, side] of galleries) {
-      // Match the occupied basement slabs emitted by buildFlagship: each bay
-      // has one horizontal longitudinal axis, not a continuously climbing floor.
-      const bays = Math.ceil(((end - start) * track.length) / 25);
-      for (let i = 0; i < bays; i++) {
-        const a = track.frame(
-          (start + ((end - start) * i) / bays) * track.length,
-          branch,
-        );
-        const b = track.frame(
-          (start + ((end - start) * (i + 1)) / bays) * track.length,
-          branch,
-        );
-        const f = track.frame(
-          (start + ((end - start) * (i + 0.5)) / bays) * track.length,
-          branch,
-        );
-        const forward = new THREE.Vector2(f.tangent.x, f.tangent.z).normalize();
-        const determinant = f.right.x * forward.y - f.right.z * forward.x;
-        const ceiling = (px, pz) => {
-          const localX =
-            ((px - f.p.x) * forward.y - (pz - f.p.z) * forward.x) / determinant;
-          return f.p.y + f.right.y * localX - 6.5;
-        };
-        const half = a.p.distanceTo(b.p) * 0.45 + 3;
-        for (let x = f.width + 3; x <= f.width + 39; x += 3)
-          for (let z = -half; z <= half + 3; z += 3)
-            lowerCell(
-              f.p.x + side * f.right.x * x + forward.x * z,
-              f.p.z + side * f.right.z * x + forward.y * z,
-              ceiling,
-            );
+    for (const f of samples) {
+      const bounds = track.bounds(f.u * track.length, f.branch);
+      // Grade against the actual sloped/banked deck plane at each CELL CORNER.
+      // A single centreline ceiling either clips the lowered edge or leaves the
+      // raised edge floating; banking rotates right/up but not the centreline.
+      const deckCeiling = (x, z) =>
+        f.p.y - (f.up.x * (x - f.p.x) + f.up.z * (z - f.p.z)) / f.up.y - 4.5;
+      for (let x = bounds.clipMin - 7; x <= bounds.clipMax + 7; x += 3) {
+        lowerCell(f.p.x + f.right.x * x, f.p.z + f.right.z * x, deckCeiling);
       }
     }
-    const terminal = track.frame(0.232 * track.length);
-    const forward = new THREE.Vector2(
-      terminal.tangent.x,
-      terminal.tangent.z,
-    ).normalize();
-    for (let x = terminal.width + 22; x <= terminal.width + 133; x += 5)
-      for (let z = -80; z <= 80; z += 5)
-        lowerCell(
-          terminal.p.x + terminal.right.x * x + forward.x * z,
-          terminal.p.z + terminal.right.z * x + forward.y * z,
-          terminal.p.y - 10,
-        );
+    if (!recipe && !desert && !harbor) {
+      // Occupied waterfront floors are authored relative to the road. Clear their
+      // basements in the land itself; do not push terrain through existing shops.
+      const galleries = getWaterfrontDistricts(track);
+      for (const [start, end, branch, side] of galleries) {
+        // Match the occupied basement slabs emitted by buildFlagship: each bay
+        // has one horizontal longitudinal axis, not a continuously climbing floor.
+        const bays = Math.ceil(((end - start) * track.length) / 25);
+        for (let i = 0; i < bays; i++) {
+          const a = track.frame(
+            (start + ((end - start) * i) / bays) * track.length,
+            branch,
+          );
+          const b = track.frame(
+            (start + ((end - start) * (i + 1)) / bays) * track.length,
+            branch,
+          );
+          const f = track.frame(
+            (start + ((end - start) * (i + 0.5)) / bays) * track.length,
+            branch,
+          );
+          const forward = new THREE.Vector2(
+            f.tangent.x,
+            f.tangent.z,
+          ).normalize();
+          const determinant = f.right.x * forward.y - f.right.z * forward.x;
+          const ceiling = (px, pz) => {
+            const localX =
+              ((px - f.p.x) * forward.y - (pz - f.p.z) * forward.x) /
+              determinant;
+            return f.p.y + f.right.y * localX - 6.5;
+          };
+          const half = a.p.distanceTo(b.p) * 0.45 + 3;
+          for (let x = f.width + 3; x <= f.width + 39; x += 3)
+            for (let z = -half; z <= half + 3; z += 3)
+              lowerCell(
+                f.p.x + side * f.right.x * x + forward.x * z,
+                f.p.z + side * f.right.z * x + forward.y * z,
+                ceiling,
+              );
+        }
+      }
+      const terminal = track.frame(0.232 * track.length);
+      const forward = new THREE.Vector2(
+        terminal.tangent.x,
+        terminal.tangent.z,
+      ).normalize();
+      for (let x = terminal.width + 22; x <= terminal.width + 133; x += 5)
+        for (let z = -80; z <= 80; z += 5)
+          lowerCell(
+            terminal.p.x + terminal.right.x * x + forward.x * z,
+            terminal.p.z + terminal.right.z * x + forward.y * z,
+            terminal.p.y - 10,
+          );
+    }
   }
   function cellAt(x, z) {
     const gx = (x + EXTENT) / STEP,
@@ -378,56 +390,97 @@ export function createTerrain(track) {
     return null;
   }
   // Spatial chunks cull distant land instead of drawing the entire heightfield.
-  const geometries = [];
-  const chunkCells = 20;
-  for (let row = 0; row < CELLS; row += chunkCells)
-    for (let col = 0; col < CELLS; col += chunkCells) {
-      const geometry = new THREE.PlaneGeometry(
-        chunkCells * STEP,
-        chunkCells * STEP,
-        chunkCells,
-        chunkCells,
-      );
-      geometry.rotateX(-Math.PI / 2);
-      const positions = geometry.attributes.position;
-      const uv = geometry.attributes.uv;
-      const colors = [];
-      const tint = new THREE.Color();
-      for (let iz = 0; iz <= chunkCells; iz++)
-        for (let ix = 0; ix <= chunkCells; ix++) {
-          const index = iz * (chunkCells + 1) + ix;
-          const x = -EXTENT + (col + ix) * STEP,
-            z = -EXTENT + (row + iz) * STEP;
-          const h = heights[(row + iz) * STRIDE + col + ix];
-          positions.setXYZ(index, x, h, z);
-          uv.setXY(index, x / 45, z / 45);
-          const variation = Math.sin(x * 0.021) * Math.cos(z * 0.017) * 0.025;
-          if (recipe) {
-            const [hue, saturation, lightness] = recipe.ground;
-            const ice = recipe.biome === "polar";
-            const sulfur =
-              recipe.biome === "volcanic" &&
-              Math.sin(x * 0.013 + z * 0.009) > 0.94;
-            tint.setHSL(
-              sulfur ? 0.15 : hue,
-              sulfur ? 0.48 : saturation,
-              lightness + variation + (ice ? Math.max(0, h) * 0.0005 : 0),
-            );
-          } else if (desert)
-            tint.setHSL(0.072, 0.31, 0.43 + h * 0.0006 + variation);
-          else if (harbor) tint.setHSL(0.58, 0.12, 0.29 + variation);
-          else if (h < 0) tint.setHSL(0.12, 0.15, 0.5 + variation);
-          else tint.setHSL(0.25, 0.25, 0.31 + h * 0.0005 + variation);
-          colors.push(tint.r, tint.g, tint.b);
-        }
-      geometry.setAttribute(
-        "color",
-        new THREE.Float32BufferAttribute(colors, 3),
-      );
-      geometry.computeVertexNormals();
-      geometry.computeBoundingSphere();
-      geometries.push(geometry);
-    }
+  const geometries = prepared
+    ? prepared.geometries.map((data) => {
+        const geometry = new THREE.BufferGeometry();
+        for (const [name, attribute] of Object.entries(data.attributes))
+          geometry.setAttribute(
+            name,
+            new THREE.BufferAttribute(
+              attribute.array,
+              attribute.itemSize,
+              attribute.normalized,
+            ),
+          );
+        geometry.setIndex(
+          new THREE.BufferAttribute(
+            data.index.array,
+            data.index.itemSize,
+            data.index.normalized,
+          ),
+        );
+        geometry.computeBoundingSphere();
+        return geometry;
+      })
+    : [];
+  if (!prepared) {
+    const chunkCells = 20;
+    for (let row = 0; row < CELLS; row += chunkCells)
+      for (let col = 0; col < CELLS; col += chunkCells) {
+        const geometry = new THREE.PlaneGeometry(
+          chunkCells * STEP,
+          chunkCells * STEP,
+          chunkCells,
+          chunkCells,
+        );
+        geometry.rotateX(-Math.PI / 2);
+        const positions = geometry.attributes.position;
+        const uv = geometry.attributes.uv;
+        const colors = [];
+        const tint = new THREE.Color();
+        for (let iz = 0; iz <= chunkCells; iz++)
+          for (let ix = 0; ix <= chunkCells; ix++) {
+            const index = iz * (chunkCells + 1) + ix;
+            const x = -EXTENT + (col + ix) * STEP,
+              z = -EXTENT + (row + iz) * STEP;
+            const h = heights[(row + iz) * STRIDE + col + ix];
+            positions.setXYZ(index, x, h, z);
+            uv.setXY(index, x / 45, z / 45);
+            const variation = Math.sin(x * 0.021) * Math.cos(z * 0.017) * 0.025;
+            if (recipe) {
+              const [hue, saturation, lightness] = recipe.ground;
+              const ice = recipe.biome === "polar";
+              const sulfur =
+                recipe.biome === "volcanic" &&
+                Math.sin(x * 0.013 + z * 0.009) > 0.94;
+              tint.setHSL(
+                sulfur ? 0.15 : hue,
+                sulfur ? 0.48 : saturation,
+                lightness + variation + (ice ? Math.max(0, h) * 0.0005 : 0),
+              );
+            } else if (desert)
+              tint.setHSL(0.072, 0.31, 0.43 + h * 0.0006 + variation);
+            else if (harbor) tint.setHSL(0.58, 0.12, 0.29 + variation);
+            else if (h < 0) tint.setHSL(0.12, 0.15, 0.5 + variation);
+            else tint.setHSL(0.25, 0.25, 0.31 + h * 0.0005 + variation);
+            colors.push(tint.r, tint.g, tint.b);
+          }
+        geometry.setAttribute(
+          "color",
+          new THREE.Float32BufferAttribute(colors, 3),
+        );
+        geometry.computeVertexNormals();
+        geometry.computeBoundingSphere();
+        geometries.push(geometry);
+      }
+  }
+  const serializeAttribute = (attribute) => ({
+    array: attribute.array,
+    itemSize: attribute.itemSize,
+    normalized: attribute.normalized,
+  });
+  const result = prepared ?? {
+    heights,
+    geometries: geometries.map((geometry) => ({
+      attributes: Object.fromEntries(
+        Object.entries(geometry.attributes).map(([name, attribute]) => [
+          name,
+          serializeAttribute(attribute),
+        ]),
+      ),
+      index: serializeAttribute(geometry.index),
+    })),
+  };
   function supportClearAt(u, branch = 0) {
     const f = track.frame(u * track.length, branch);
     const foot = heightAt(f.p.x, f.p.z) - 3;
@@ -448,6 +501,7 @@ export function createTerrain(track) {
   return {
     heightAt,
     sweepSurface,
+    prepared: result,
     geometries,
     samples,
     bridgeAt,
