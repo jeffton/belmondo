@@ -108,66 +108,29 @@ export function circuitTextures(accent) {
     ridge(187, 32, "#c4c6bd");
   });
   const road = raster(256, 256, (ctx) => {
-    // Rolled induction alloy, not asphalt. Broad sheen and directional abrasion
-    // retain values in night lighting without reinstating pixel-gravel noise.
-    const bases = [155, 165, 159, 169];
+    // Satin induction alloy: broad, non-directional finish, not painted lanes.
+    // Periodic fields meet at the world-UV tile boundaries without a hard seam.
     for (let y = 0; y < 256; y++)
       for (let x = 0; x < 256; x++) {
-        const plate = Math.floor(x / 64);
-        const localX = x % 64;
-        const rolled = Math.sin((localX / 64) * Math.PI * 2) * 10;
-        const polish =
-          Math.sin(
-            (x / 256) * Math.PI * 12 + Math.sin((y / 256) * Math.PI * 2) * 0.35,
-          ) * 6;
-        const lengthwise = Math.cos((y / 256) * Math.PI * 2 + plate) * 4;
-        const value = Math.round(bases[plate] + rolled + polish + lengthwise);
+        const u = (x / 256) * Math.PI * 2;
+        const v = (y / 256) * Math.PI * 2;
+        const sheen =
+          Math.sin(u + Math.sin(v)) * Math.cos(v) * 4 +
+          Math.cos(u * 2 - v * 2) * 2;
+        const value = Math.round(162 + sheen);
         ctx.fillStyle = `rgb(${value - 3},${value},${value + 4})`;
         ctx.fillRect(x, y, 1, 1);
       }
-    // Plate joints are staggered, but all details respect the repeating world UV.
-    // No assumed lane margins, centreline, arrows or luminous pickup-like marks.
-    for (const [plate, station] of [0, 96, 176, 48].entries()) {
-      const x = plate * 64;
-      ctx.fillStyle = "#677580";
-      ctx.fillRect(x, 0, 2, 256);
-      ctx.fillRect(x, station, 64, 3);
-      ctx.fillStyle = "#c0c7c7";
-      ctx.fillRect(x + 2, station + 3, 62, 2);
-      ctx.fillStyle = "#afb7b9";
-      ctx.fillRect(x + 2, 0, 2, 256);
-      // Anodized service lip, with a broad polished shoulder instead of a line.
-      ctx.fillStyle = "#828e97";
-      ctx.fillRect(x + 57, 0, 7, 256);
-      ctx.fillStyle = "#a6b0b4";
-      ctx.fillRect(x + 54, 0, 3, 256);
-    }
-    // Soft, long service scuffs break the plate fill without adding random chips.
-    for (const [x, y, width, length] of [
-      [14, 31, 15, 174],
-      [84, 86, 9, 133],
-      [139, 14, 18, 194],
-      [210, 58, 13, 157],
-    ]) {
-      const wear = ctx.createLinearGradient(0, y, 0, y + length);
-      wear.addColorStop(0, "#e0e3dc00");
-      wear.addColorStop(0.25, "#e0e3dc24");
-      wear.addColorStop(0.7, "#e0e3dc34");
-      wear.addColorStop(1, "#e0e3dc00");
-      ctx.fillStyle = wear;
-      ctx.fillRect(x, y, width, length);
-    }
+    // Shallow expansion joints cross the travel direction. Staggered half-bays
+    // supply scale without long service lips, grooves or repeated lane stripes.
     for (const [x, y] of [
-      [12, 32],
-      [232, 160],
+      [0, 48],
+      [128, 176],
     ]) {
-      ctx.fillStyle = "#758590";
-      ctx.fillRect(x, y, 14, 32);
-      ctx.fillStyle = "#bdc5c7";
-      ctx.fillRect(x, y, 14, 2);
-      ctx.fillStyle = "#52636f";
-      for (let slit = 0; slit < 3; slit++)
-        ctx.fillRect(x + 3, y + 7 + slit * 7, 8, 3);
+      ctx.fillStyle = "#98a1a6";
+      ctx.fillRect(x, y, 128, 1);
+      ctx.fillStyle = "#a9b0b2";
+      ctx.fillRect(x, y + 1, 128, 1);
     }
   });
   const edge = raster(128, 128, (ctx) => {
