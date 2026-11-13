@@ -32,7 +32,7 @@ export function buildCity(scene, track, textures, environment) {
     metal: surface(desert ? 0xb65d40 : 0x527c8b, textures.paint),
     glass: surface(harbor ? 0x264b6a : 0x36798c, textures.facade),
     cream: surface(0xe1d8bd, textures.paint),
-    rock: surface(desert ? 0xb47f65 : 0x697665, textures.concrete),
+    rock: surface(desert ? 0xb47f65 : 0x697665, textures.rock),
     green: surface(0x4c7459),
     cargo: surface(harbor ? 0xb24b64 : 0x366b79, textures.paint),
     light: new THREE.MeshBasicMaterial({ color: desert ? 0xffc67a : 0x68d9d6 }),

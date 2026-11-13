@@ -15,6 +15,7 @@ import { circuitTextures } from "./materials.js";
 import { buildTrackLighting } from "./track-lighting.js";
 import { createSky } from "./sky.js";
 import { buildEnvironment } from "./environment.js";
+import { buildRacingInfrastructure } from "./racing-infrastructure.js";
 import { buildCity } from "./city.js";
 import { buildVegetation } from "./vegetation.js";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.js";
@@ -152,6 +153,7 @@ export class World {
     this.scene.add(sea);
     const environment = buildEnvironment(this.scene, track, textures);
     this.environment = environment;
+    buildRacingInfrastructure(this.scene, track, textures, environment);
     const quads = [];
     const roadPoint = (frame, x, y) => {
       const inner =
