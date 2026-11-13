@@ -4,6 +4,7 @@ import { buildHydraulicLock, LOCK_WATER_LEVEL } from "./hydraulic-lock.js";
 import { terrainFootprint } from "./terrain-footprint.js";
 import { groundedGeometryOffset } from "./terrain.js";
 import { biomeGroundTexture } from "./biome-ground-texture.js";
+import { buildCinderVolcanoes } from "./cinder-volcanoes.js";
 
 /** One visible heightfield is also the collision/foundation surface. */
 export function buildNewTerrainSurface(scene, track, textures, terrain) {
@@ -40,6 +41,8 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
   scene.add(root);
   if (recipe.biome === "hydraulic")
     buildHydraulicLock(root, track, textures, environment);
+  if (recipe.biome === "volcanic")
+    buildCinderVolcanoes(root, track, environment);
   const materials = Object.fromEntries(
     [
       ["wall", recipe.wall],
