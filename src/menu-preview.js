@@ -289,8 +289,7 @@ function classSymbol(index) {
 
 /** Native-resolution transparent inset, independent of World's LOWRES canvas. */
 export class MenuPreview {
-  constructor(element, { createRenderer } = {}) {
-    this.rendererFactory = createRenderer;
+  constructor(element) {
     this.renderer = null;
     this.size = { width: 0, height: 0, pixelRatio: 0 };
     this.element = element;
@@ -380,7 +379,6 @@ export class MenuPreview {
   }
 
   createRenderer() {
-    if (this.rendererFactory) return this.rendererFactory();
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
@@ -398,12 +396,8 @@ export class MenuPreview {
       width: this.renderer?.domElement.width ?? 0,
       height: this.renderer?.domElement.height ?? 0,
       pixelRatio: this.size.pixelRatio,
-      renderCalls: this.renderer?.backend?.isWebGPUBackend
-        ? this.renderer.info.render.drawCalls
-        : (this.renderer?.info.render.calls ?? 0),
-      frames: this.renderer?.backend?.isWebGPUBackend
-        ? this.renderer.info.frame
-        : (this.renderer?.info.render.frame ?? 0),
+      renderCalls: this.renderer?.info.render.calls ?? 0,
+      frames: this.renderer?.info.render.frame ?? 0,
     };
   }
 
@@ -464,7 +458,6 @@ export class MenuPreview {
     this.camera.bottom = -this.camera.top;
     this.camera.updateProjectionMatrix();
 
-    if (renderer.backend?.isWebGPUBackend) renderer.info.reset();
     renderer.render(
       {
         class: this.classScene,
@@ -485,8 +478,7 @@ export class MenuPreview {
     this.course = this.coursePivot = this.craft = this.classModel = null;
     if (this.renderer) {
       this.renderer.dispose();
-      if (!this.renderer.backend?.isWebGPUBackend)
-        this.renderer.forceContextLoss();
+      this.renderer.forceContextLoss();
       this.renderer.domElement.remove();
       this.renderer = null;
     }

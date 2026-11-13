@@ -15,11 +15,6 @@ import { MenuPreview } from "./menu-preview.js";
 import { frameDelta } from "./frame-clock.js";
 import { halfstickPosition } from "./touch-halfstick.js";
 import { CoursePreparation } from "./course-preparation.js";
-import {
-  selectedRenderer,
-  selectRenderer,
-  showRendererFailure,
-} from "./renderer-selection.js";
 
 installZoomPolicy();
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -43,57 +38,16 @@ music.volume = 0.65;
 music.setMenu(true);
 music.loadTracks(soundtrack, { shuffle: true });
 let musicEnabled = true;
-const rendererMode = selectedRenderer();
-$("renderer-select").value = rendererMode;
-$("renderer-select").onchange = (event) => selectRenderer(event.target.value);
 let world;
-let gpuEngine;
-let renderingFailed = false;
-let startGeneration = 0;
-function failRendering(error) {
-  if (renderingFailed) return;
-  renderingFailed = true;
-  ++startGeneration;
-  console.error(error);
-  sound.setPaused(true);
-  musicEnabled = false;
-  music.pause();
-  for (const dialog of document.querySelectorAll("dialog[open]"))
-    dialog.close();
-  for (const element of document.body.children)
-    if (element !== $("fatal")) element.inert = true;
-  showRendererFailure($("fatal"), rendererMode, error);
-}
 try {
-  if (rendererMode === "webgpu") {
-    const { createWebGPUEngine } = await import("./webgpu-engine.js");
-    gpuEngine = await createWebGPUEngine($("game"));
-  }
-  world = new World($("game"), {
-    renderer: gpuEngine?.worldRenderer,
-    createLensflare: gpuEngine?.createLensflare,
-  });
+  world = new World($("game"));
 } catch (error) {
-  showRendererFailure($("fatal"), rendererMode, error);
+  $("fatal").hidden = false;
+  $("fatal").textContent =
+    `Could not initialize WebGL2. Enable hardware acceleration to race. ${error.message}`;
   throw error;
 }
-if (gpuEngine) {
-  for (const renderer of [gpuEngine.worldRenderer, gpuEngine.previewRenderer]) {
-    const onDeviceLost = renderer.onDeviceLost.bind(renderer);
-    const onError = renderer.onError.bind(renderer);
-    renderer.onDeviceLost = (info) => {
-      onDeviceLost(info);
-      failRendering(new Error(`WebGPU device lost. ${info.message}`));
-    };
-    renderer.onError = (info) => {
-      onError(info);
-      failRendering(new Error(info.message || info.type));
-    };
-  }
-}
-const menuPreview = new MenuPreview($("menu-model"), {
-  createRenderer: gpuEngine ? () => gpuEngine.previewRenderer : undefined,
-});
+const menuPreview = new MenuPreview($("menu-model"));
 let menuStage = "class";
 const menuStages = ["class", "track", "craft"];
 function setMenuStage(stage, focus = true) {
@@ -170,7 +124,6 @@ let state = "menu",
   previousCount = "armed";
 let musicInterrupted = false;
 function startMenuMusic(event) {
-  if (renderingFailed) return;
   if (
     !event.isTrusted ||
     state !== "menu" ||
@@ -193,7 +146,6 @@ function startMenuMusic(event) {
 $("menu").addEventListener("click", startMenuMusic, { capture: true });
 $("menu").addEventListener("keydown", startMenuMusic, { capture: true });
 function updateAppFocus() {
-  if (renderingFailed) return;
   const inactive = document.hidden || !document.hasFocus();
   document.body.classList.toggle(
     "race-active",
@@ -282,10 +234,9 @@ let trackLoading = false;
 let loadedTrack = -1;
 let trackLoadTiming = null;
 async function selectTrack(i) {
-  if (renderingFailed) return;
   selectedTrack = i;
   const generation = ++trackGeneration;
-  const isCurrent = () => generation === trackGeneration && !renderingFailed;
+  const isCurrent = () => generation === trackGeneration;
   const start = performance.now();
   trackLoading = true;
   $("start").disabled = true;
@@ -334,11 +285,8 @@ async function selectTrack(i) {
     };
   } catch (error) {
     if (!isCurrent()) return;
-    if (rendererMode === "webgpu") failRendering(error);
-    else {
-      $("fatal").hidden = false;
-      $("fatal").textContent = `Could not prepare circuit: ${error.message}`;
-    }
+    $("fatal").hidden = false;
+    $("fatal").textContent = `Could not prepare circuit: ${error.message}`;
     throw error;
   } finally {
     if (isCurrent()) {
@@ -407,8 +355,9 @@ function clearInput() {
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
 }
+let startGeneration = 0;
 async function start(event) {
-  if (renderingFailed || trackLoading || loadedTrack !== selectedTrack) return;
+  if (trackLoading || loadedTrack !== selectedTrack) return;
   const generation = ++startGeneration;
   const courseGeneration = trackGeneration;
   const button = event.currentTarget;
@@ -461,7 +410,6 @@ async function start(event) {
   if (document.hidden || !document.hasFocus()) setPaused(true);
 }
 function setPaused(value) {
-  if (renderingFailed) return;
   if (state !== "race" || race.finished || paused === value) return;
   paused = value;
   updateAppFocus();
@@ -545,7 +493,6 @@ $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
 window.addEventListener("keydown", (e) => {
-  if (renderingFailed) return;
   if (document.querySelector("dialog[open]:not(#pause-panel)")) return;
   if (state !== "race") return;
   if (
@@ -966,11 +913,7 @@ function animate(now) {
     renderFrames++;
     renderTime += dt;
     if (renderTime >= 2.5) {
-      if (
-        rendererMode === "webgl" &&
-        renderTime / renderFrames > 0.027 &&
-        world.quality === "clean"
-      ) {
+      if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
         world.quality = "retro";
         qualityToggle.checked = true;
         world.resize();
@@ -979,22 +922,12 @@ function animate(now) {
       renderTime = 0;
     }
   }
-  requestAnimationFrame(renderFrame);
-}
-function renderFrame(now) {
-  if (renderingFailed) return;
-  try {
-    animate(now);
-  } catch (error) {
-    if (rendererMode !== "webgpu") throw error;
-    failRendering(error);
-  }
+  requestAnimationFrame(animate);
 }
 
 async function loadFiles(files) {
-  if (renderingFailed) return;
   await music.loadFiles(files);
-  if (files.length && !renderingFailed) {
+  if (files.length) {
     musicEnabled = true;
     musicInterrupted = false;
     await music.play();
@@ -1057,7 +990,6 @@ async function readEntry(entry) {
 }
 window.addEventListener("drop", async (e) => {
   e.preventDefault();
-  if (renderingFailed) return;
   dragDepth = 0;
   $("drop-zone").hidden = true;
   if (state === "race") setPaused(true);
@@ -1077,7 +1009,7 @@ window.addEventListener("drop", async (e) => {
 });
 await selectTrack(Math.floor(Math.random() * TRACKS.length));
 await initialCourseReady;
-requestAnimationFrame(renderFrame);
+requestAnimationFrame(animate);
 
 // Read-only telemetry for the pilot and browser smoke tests. No external services.
 window.nullVector = {
@@ -1149,16 +1081,9 @@ window.nullVector = {
           : null,
       resources: { ...world.renderer.info.memory },
       previewResources: menuPreview.resources,
-      drawCalls: world.renderer.backend?.isWebGPUBackend
-        ? world.renderer.info.render.drawCalls
-        : world.renderer.info.render.calls,
+      drawCalls: world.renderer.info.render.calls,
       triangles: world.renderer.info.render.triangles,
       render: world.quality,
-      renderer: rendererMode,
-      backend: world.renderer.backend?.isWebGPUBackend ? "webgpu" : "webgl",
-      previewBackend: menuPreview.renderer?.backend?.isWebGPUBackend
-        ? "webgpu"
-        : "webgl",
     };
   },
 };

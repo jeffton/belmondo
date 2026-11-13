@@ -268,27 +268,12 @@ h1.wordmark {
 }
 .mode-row {
   display: grid;
-  grid-template-columns: 1.3fr 1.5fr 0.8fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 12px;
   margin-top: 18px;
   font-size: 10px;
   font-weight: 600;
   color: #b3c5cd;
-}
-.renderer-options select {
-  width: 100%;
-  min-width: 0;
-  min-height: 30px;
-  font-size: 16px;
-}
-@media (max-width: 360px) {
-  #menu .mode-row {
-    grid-template-columns: 1.5fr 1fr;
-  }
-  #menu .renderer-options {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
 }
 .mode-row legend {
   display: block;

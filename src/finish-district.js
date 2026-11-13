@@ -320,7 +320,6 @@ export function buildFinishDistrict(scene, track, textures, environment) {
     side: THREE.DoubleSide,
     flatShading: true,
   });
-  crowdMaterial.userData.finishCrowdTime = time;
   crowdMaterial.onBeforeCompile = (shader) => {
     shader.uniforms.finishCrowdTime = time;
     shader.vertexShader =
