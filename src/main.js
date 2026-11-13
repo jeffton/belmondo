@@ -46,6 +46,21 @@ let musicEnabled = true;
 const rendererMode = selectedRenderer();
 let world;
 let gpuEngine;
+let renderingFailed = false;
+let startGeneration = 0;
+function failRendering(error) {
+  if (renderingFailed) return;
+  renderingFailed = true;
+  ++startGeneration;
+  console.error(error);
+  sound.setPaused(true);
+  musicEnabled = false;
+  music.pause();
+  for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+  for (const element of document.body.children)
+    if (element !== $("fatal")) element.inert = true;
+  showRendererFailure($("fatal"), rendererMode, error);
+}
 try {
   if (rendererMode === "webgpu") {
     const { createWebGPUEngine } = await import("./webgpu-engine.js");
@@ -61,9 +76,15 @@ try {
 }
 if (gpuEngine) {
   for (const renderer of [gpuEngine.worldRenderer, gpuEngine.previewRenderer]) {
+    const onDeviceLost = renderer.onDeviceLost.bind(renderer);
+    const onError = renderer.onError.bind(renderer);
     renderer.onDeviceLost = (info) => {
-      console.error("WebGPU device lost", info);
-      showRendererFailure($("fatal"), rendererMode, new Error(info.message));
+      onDeviceLost(info);
+      failRendering(new Error(`WebGPU device lost. ${info.message}`));
+    };
+    renderer.onError = (info) => {
+      onError(info);
+      failRendering(new Error(info.message || info.type));
     };
   }
 }
@@ -127,6 +148,7 @@ let state = "menu",
   previousCount = "armed";
 let musicInterrupted = false;
 function startMenuMusic(event) {
+  if (renderingFailed) return;
   if (
     !event.isTrusted ||
     state !== "menu" ||
@@ -149,6 +171,7 @@ function startMenuMusic(event) {
 $("menu").addEventListener("click", startMenuMusic, { capture: true });
 $("menu").addEventListener("keydown", startMenuMusic, { capture: true });
 function updateAppFocus() {
+  if (renderingFailed) return;
   const inactive = document.hidden || !document.hasFocus();
   document.body.classList.toggle(
     "race-active",
@@ -357,9 +380,8 @@ function clearInput() {
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i").style.transform = "";
 }
-let startGeneration = 0;
 async function start(event) {
-  if (trackLoading || loadedTrack !== selectedTrack) return;
+  if (renderingFailed || trackLoading || loadedTrack !== selectedTrack) return;
   const generation = ++startGeneration;
   const courseGeneration = trackGeneration;
   const button = event.currentTarget;
@@ -412,6 +434,7 @@ async function start(event) {
   if (document.hidden || !document.hasFocus()) setPaused(true);
 }
 function setPaused(value) {
+  if (renderingFailed) return;
   if (state !== "race" || race.finished || paused === value) return;
   paused = value;
   updateAppFocus();
@@ -495,6 +518,7 @@ $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
 window.addEventListener("keydown", (e) => {
+  if (renderingFailed) return;
   if (document.querySelector("dialog[open]:not(#pause-panel)")) return;
   if (state !== "race") return;
   if (
@@ -924,12 +948,22 @@ function animate(now) {
       renderTime = 0;
     }
   }
-  requestAnimationFrame(animate);
+  requestAnimationFrame(renderFrame);
+}
+function renderFrame(now) {
+  if (renderingFailed) return;
+  try {
+    animate(now);
+  } catch (error) {
+    if (rendererMode !== "webgpu") throw error;
+    failRendering(error);
+  }
 }
 
 async function loadFiles(files) {
+  if (renderingFailed) return;
   await music.loadFiles(files);
-  if (files.length) {
+  if (files.length && !renderingFailed) {
     musicEnabled = true;
     musicInterrupted = false;
     await music.play();
@@ -992,6 +1026,7 @@ async function readEntry(entry) {
 }
 window.addEventListener("drop", async (e) => {
   e.preventDefault();
+  if (renderingFailed) return;
   dragDepth = 0;
   $("drop-zone").hidden = true;
   if (state === "race") setPaused(true);
@@ -1011,7 +1046,7 @@ window.addEventListener("drop", async (e) => {
 });
 await selectTrack(Math.floor(Math.random() * TRACKS.length));
 await initialCourseReady;
-requestAnimationFrame(animate);
+requestAnimationFrame(renderFrame);
 
 // Read-only telemetry for the pilot and browser smoke tests. No external services.
 window.nullVector = {

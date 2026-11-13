@@ -113,6 +113,47 @@ try {
       await page.screenshot({
         path: `${output}/${backend}-${index}-start.png`,
       });
+      if (index === 0) {
+        await page.evaluate(async () => {
+          const world = window.parityWorld;
+          const celestial = world.scene.getObjectByName("low-sun");
+          world.camera.lookAt(celestial.position);
+          world.renderer.render(world.scene, world.camera);
+          if (world.renderer.backend?.isWebGPUBackend) await world.renderer.backend.device.queue.onSubmittedWorkDone();
+          else world.renderer.getContext().finish();
+        });
+        await page.screenshot({ path: `${output}/${backend}-${index}-flare.png` });
+        await page.evaluate(async () => {
+          const THREE = await import("three");
+          const world = window.parityWorld;
+          const source = world.scene.getObjectByName("spectators");
+          const scene = new THREE.Scene();
+          scene.background = new THREE.Color(0x203040);
+          scene.add(new THREE.HemisphereLight(0xffffff, 0x808080, 2));
+          const crowd = new THREE.InstancedMesh(source.geometry, source.material, 2);
+          const transform = new THREE.Object3D();
+          transform.position.set(-6, 1, 0);
+          transform.rotation.set(0, 0.2, 0.05);
+          transform.scale.setScalar(1.1);
+          transform.updateMatrix();
+          crowd.setMatrixAt(0, transform.matrix);
+          transform.position.set(6, -1, 1);
+          transform.rotation.set(0, -0.65, -0.15);
+          transform.scale.setScalar(0.85);
+          transform.updateMatrix();
+          crowd.setMatrixAt(1, transform.matrix);
+          crowd.setColorAt(0, new THREE.Color(0xffffff));
+          crowd.setColorAt(1, new THREE.Color(0xc6a17d));
+          scene.add(crowd);
+          const camera = new THREE.OrthographicCamera(-12, 12, 8, -7, 0.1, 100);
+          camera.position.set(0, 0, 20);
+          world.finishDistrict.update(1.25);
+          world.renderer.render(scene, camera);
+          if (world.renderer.backend?.isWebGPUBackend) await world.renderer.backend.device.queue.onSubmittedWorkDone();
+          else world.renderer.getContext().finish();
+        });
+        await page.screenshot({ path: `${output}/${backend}-${index}-crowd.png` });
+      }
       result.errors = errors;
       reports.push(result);
       await writeFile(
