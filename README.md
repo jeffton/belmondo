@@ -29,6 +29,8 @@ Grandstands and road-integrated checkerboard line each complete home straight. B
 
 ## Renderer
 
+WebGPU is an isolated experiment, not part of the production release. The server's SwiftShader adapter loses its device on first submission, including a raw WebGPU canvas clear without Three.js. Visual parity and performance remain unverified; this branch is not release-ready.
+
 The class station offers **WebGL** and **WebGPU · Test**. Changing renderer reloads the game; records and low-res preference stay local. WebGL is the default. WebGPU requires an actual GPU adapter in a secure context and never silently switches to WebGL. Startup, device and rendering failures offer an explicit **Use WebGL** action.
 
 Both paths retain the same world geometry, textures, effects and simulation. The WebGPU path translates the animated instanced crowd to TSL and uses Three's node-based, occlusion-aware lens flare. Menu models render at display resolution; the live feed and race retain the selected low-res setting. WebGPU preserves the selected resolution rather than applying WebGL's adaptive resolution reduction.

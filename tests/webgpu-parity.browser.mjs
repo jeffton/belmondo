@@ -26,6 +26,7 @@ try {
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("console", (message) => {
+        console.log(message.type(), message.text());
         if (message.type() === "error") errors.push(message.text());
       });
       await page.route("**/parity", (route) =>
@@ -44,7 +45,9 @@ try {
           if (backend === "webgpu") {
             const { createWebGPUEngine } =
               await import("/src/webgpu-engine.js");
+            console.log("GPU probe: initializing engine");
             engine = await createWebGPUEngine(document.querySelector("canvas"));
+            console.log("GPU probe: engine initialized");
           }
           const world = new World(document.querySelector("canvas"), {
             renderer: engine?.worldRenderer,
@@ -52,12 +55,16 @@ try {
           });
           const track = makeTrack(index);
           const start = performance.now();
+          console.log("GPU probe: building world");
           await world.build(track);
+          console.log("GPU probe: world built");
           const buildMs = performance.now() - start;
           const race = new Race(track, 0, "race", 2, world.environment.terrain);
           world.setupRacers(race, CRAFT);
           const first = performance.now();
+          console.log("GPU probe: first render");
           world.draw(race, 0, true);
+          console.log("GPU probe: first render submitted");
           if (engine)
             await world.renderer.backend.device.queue.onSubmittedWorkDone();
           const firstFrameMs = performance.now() - first;
