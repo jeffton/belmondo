@@ -46,9 +46,9 @@ try {
   await page.keyboard.down("ArrowRight");
   await page.waitForTimeout(400);
   await page.keyboard.up("ArrowRight");
-  await page.keyboard.down("KeyE");
+  await page.keyboard.down("KeyL");
   await page.waitForTimeout(300);
-  await page.keyboard.up("KeyE");
+  await page.keyboard.up("KeyL");
   await page.keyboard.up("ArrowUp");
   await page.screenshot({ path: "test-artifacts/desktop-race.png" });
   await page.keyboard.press("KeyP");

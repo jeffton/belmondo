@@ -141,7 +141,7 @@ async function skilled() {
     if (direction) input.push(direction);
     if (t.speed > targetSpeed + 4 || Math.abs(error) > 0.7)
       input.push("ArrowDown");
-    if (Math.abs(error) > 0.38) input.push(error > 0 ? "KeyQ" : "KeyE");
+    if (Math.abs(error) > 0.38) input.push(error > 0 ? "KeyJ" : "KeyL");
     await keys(page, input);
     samples.push({
       ...t,

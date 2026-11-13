@@ -213,7 +213,7 @@ async function lap(page, device) {
     if (demand > 0.055) wanted.add("ArrowLeft");
     if (demand < -0.055) wanted.add("ArrowRight");
     if (t.speed > target + 4 || Math.abs(error) > 0.7) wanted.add("ArrowDown");
-    if (Math.abs(error) > 0.38) wanted.add(error > 0 ? "KeyQ" : "KeyE");
+    if (Math.abs(error) > 0.38) wanted.add(error > 0 ? "KeyJ" : "KeyL");
     for (const key of held) if (!wanted.has(key)) await page.keyboard.up(key);
     for (const key of wanted) if (!held.has(key)) await page.keyboard.down(key);
     held.clear();

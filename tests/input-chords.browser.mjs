@@ -111,14 +111,18 @@ try {
     pitch: 0,
   });
   for (const key of ["KeyJ", "KeyL"]) await page.keyboard.up(key);
-  for (const key of ["KeyQ", "KeyE"]) await page.keyboard.down(key);
-  await controls(page, "W+Q+E", {
-    throttle: true,
-    airLeft: 1,
-    airRight: 1,
-    air: 0,
-  });
-  for (const key of ["KeyQ", "KeyE"]) await page.keyboard.up(key);
+  for (const key of ["KeyQ", "KeyE"]) {
+    await page.keyboard.down(key);
+    await controls(page, `W+${key}: unbound`, {
+      throttle: true,
+      steer: 0,
+      pitch: 0,
+      airLeft: 0,
+      airRight: 0,
+      air: 0,
+    });
+    await page.keyboard.up(key);
+  }
   await page.keyboard.down("KeyI");
   await controls(page, "W+I", { throttle: true, pitch: 1, air: 0 });
   await page.waitForFunction(

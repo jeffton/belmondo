@@ -6,7 +6,7 @@ Original browser-based anti-gravity combat racer. Six circuits, eight pilots, th
 
 https://belmondo.roybot.se
 
-- **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes (Q/E also work), I nose down / K nose up, S/↓ brake, Space fire, V camera, P/Esc pause.
+- **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes, I nose down / K nose up, S/↓ brake, Space fire, V camera, P/Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, B brake, Y camera, Start pause.
 - **Touch:** automatic thrust, two-axis flight stick: left/right steers, push up lowers the nose, pull down raises it. Separate airbrakes and brake/fire buttons work while holding the stick. VIEW switches chase/first-person; landscape recommended.
 

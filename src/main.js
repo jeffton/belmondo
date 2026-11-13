@@ -409,8 +409,8 @@ function input() {
   let steer = keyboardSteer + touchSteer;
   if (keyboardSteer) steeringKind = "digital";
   if (touchSteer !== 0) steeringKind = "analog";
-  let airRight = down("KeyL", "KeyE") || held.has("airRight") ? 1 : 0;
-  let airLeft = down("KeyJ", "KeyQ") || held.has("airLeft") ? 1 : 0;
+  let airRight = down("KeyL") || held.has("airRight") ? 1 : 0;
+  let airLeft = down("KeyJ") || held.has("airLeft") ? 1 : 0;
   let pitch = (down("KeyI") ? 1 : 0) - (down("KeyK") ? 1 : 0) + touchPitch;
   let launchIntent = down("ArrowUp", "KeyW") || (touch && touchLaunchArmed);
   let throttle = touch || down("ArrowUp", "KeyW") ? 1 : 0;

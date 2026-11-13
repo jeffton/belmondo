@@ -160,7 +160,7 @@ async function drive(mobile, startupSeconds = null) {
       if (demand > 0.055) wanted.add("ArrowLeft");
       else if (demand < -0.055) wanted.add("ArrowRight");
       if (needBrake) wanted.add("ArrowDown");
-      if (Math.abs(error) > 0.38) wanted.add(error > 0 ? "KeyQ" : "KeyE");
+      if (Math.abs(error) > 0.38) wanted.add(error > 0 ? "KeyJ" : "KeyL");
       for (const key of held) if (!wanted.has(key)) await page.keyboard.up(key);
       for (const key of wanted)
         if (!held.has(key)) await page.keyboard.down(key);

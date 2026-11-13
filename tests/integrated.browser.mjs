@@ -864,8 +864,8 @@ async function drive() {
       if (steer > 0) wanted.add("ArrowLeft");
       if (steer < 0) wanted.add("ArrowRight");
       if (brake) wanted.add("ArrowDown");
-      if (air > 0) wanted.add("KeyQ");
-      if (air < 0) wanted.add("KeyE");
+      if (air > 0) wanted.add("KeyJ");
+      if (air < 0) wanted.add("KeyL");
       for (const key of held) if (!wanted.has(key)) await page.keyboard.up(key);
       for (const key of wanted)
         if (!held.has(key)) await page.keyboard.down(key);

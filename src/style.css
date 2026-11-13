@@ -733,18 +733,37 @@ footer {
   position: absolute;
   top: 214px;
   right: 35px;
-  background: #162a35aa;
-  border: 1px solid #b0c8d266;
-  width: 38px;
-  height: 34px;
-  font-size: 17px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 40px;
+  padding: 7px;
+  color: #d5e5e5;
+  background: linear-gradient(145deg, #24404b99, #10242e66);
+  border: 1px solid #b8d1d166;
+  border-radius: 3px 10px 3px 10px;
+  box-shadow: inset 0 1px #e4f4f31a;
+  touch-action: manipulation;
+}
+#view svg,
+#pause svg,
+.touch-actions svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: square;
+  stroke-linejoin: bevel;
+  pointer-events: none;
+}
+#pause .control-solid {
+  fill: currentColor;
+  stroke: none;
 }
 #view {
-  transform: translateX(-48px);
-  width: 58px;
-  font-size: 12px;
-  letter-spacing: 0.5px;
-  touch-action: manipulation;
+  transform: translateX(-52px);
 }
 #view[aria-pressed="true"] {
   color: var(--lime);
@@ -888,7 +907,6 @@ dialog::backdrop {
 }
 .brief-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 30px;
 }
 h3 {
@@ -920,112 +938,126 @@ kbd,
   min-width: 0;
 }
 .keyboard-diagram {
-  min-height: 160px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 22px;
+  padding: 20px 12px;
+  background: #0c1a2466;
+  border-top: 2px solid var(--mint);
+}
+.key-cluster {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-areas: ". top ." "left bottom right";
+  gap: 10px 4px;
+}
+.key-top {
+  grid-area: top;
+}
+.key-left {
+  grid-area: left;
+}
+.key-bottom {
+  grid-area: bottom;
+}
+.key-right {
+  grid-area: right;
+}
+.key-action,
+.utility-keys > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: #0c1a2466;
+  gap: 5px;
 }
-.keyboard-diagram kbd {
-  width: 39px;
-  height: 37px;
-  color: var(--mint);
-}
-.keyboard-diagram > span {
-  margin-top: 9px;
-  font-size: 9px;
-  letter-spacing: 1px;
-}
-.control-list {
-  margin: 16px 0 0;
-  font-size: 11px;
-}
-.control-list > div {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  border-bottom: 1px solid #68829033;
-}
-.control-list dt,
-.control-list dd {
+.key-action kbd {
+  width: 42px;
+  height: 36px;
   margin: 0;
+  color: var(--mint);
+  border-bottom: 3px solid #75b5b3;
+  background: linear-gradient(135deg, #284750, #152b38);
 }
-.control-list dd small {
-  display: block;
-  margin-top: 4px;
-  line-height: 1.5;
-  color: #b3c5cd;
-}
-.gamepad-diagram {
-  position: relative;
-  width: min(270px, 100%);
-  height: 160px;
-  margin: 0 auto;
-  border: 2px solid #91a8b1;
-  border-radius: 38px 38px 48px 48px;
-  background: #233c4a;
-}
-.gamepad-diagram > span {
-  position: absolute;
-  display: grid;
-  place-content: center;
-  font: 700 11px var(--interface);
-}
-.pad-shoulder {
-  top: 10px;
-  padding: 4px 9px;
-  border: 1px solid var(--mint);
-  border-radius: 4px;
-}
-.pad-left {
-  left: 19px;
-}
-.pad-right {
-  right: 15px;
-}
-.pad-stick {
-  width: 57px;
-  height: 57px;
-  border: 2px solid var(--mint);
-  border-radius: 50%;
-  top: 57px;
-  left: 22px;
+.key-action span,
+.utility-keys span {
+  font-size: 10px;
+  line-height: 1.3;
+  color: #d0dfe5;
   text-align: center;
 }
-.pad-stick small {
-  margin-top: 4px;
-  letter-spacing: 3px;
+.alternate-keys {
+  border-left: 1px solid #68829055;
+  padding-left: 12px;
 }
-.pad-start {
-  top: 59px;
-  left: 43%;
-  font-size: 8px !important;
+.diagram-caption {
+  display: block;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #9eb7c2;
+  margin-bottom: 12px;
 }
-.pad-face {
-  width: 27px;
-  height: 27px;
-  border: 1px solid var(--lilac);
-  border-radius: 50%;
+.utility-keys {
+  display: flex;
+  justify-content: space-around;
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px solid #68829055;
 }
-.pad-y {
-  top: 44px;
-  right: 43px;
+.controller-map {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  height: auto;
+  background: #0c1a2466;
+  border-top: 2px solid var(--lilac);
 }
-.pad-x {
-  top: 73px;
-  right: 72px;
+.pad-shell {
+  fill: #203b49;
+  stroke: #658190;
+  stroke-width: 2;
 }
-.pad-b {
-  top: 73px;
-  right: 14px;
+.pad-wires {
+  fill: none;
+  stroke: #aebfcf;
+  stroke-width: 1.25;
 }
-.pad-a {
-  top: 102px;
-  right: 43px;
+.pad-labels {
+  fill: #d5e6ef;
+  font: 600 14px var(--interface);
+  letter-spacing: 0.4px;
 }
+.pad-buttons {
+  fill: #102531;
+  stroke: var(--mint);
+  stroke-width: 1.5;
+}
+.pad-glyphs {
+  fill: var(--mint);
+  font: 700 12px var(--interface);
+}
+.pad-note {
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .keyboard-diagram {
+    grid-template-columns: 1fr;
+  }
+  .alternate-keys {
+    border-left: 0;
+    border-top: 1px solid #68829055;
+    padding: 12px 0 0;
+  }
+  .pad-labels {
+    font-size: 16px;
+  }
+  .pad-note {
+    font-size: 13px;
+  }
+}
+
 .arsenal {
   display: grid;
   grid-template-columns: 126px 1fr;
@@ -1157,10 +1189,10 @@ body.touch #touch-controls {
   touch-action: none;
   width: 112px;
   height: 112px;
-  border: 1px solid #b7cdd477;
+  border: 1px solid #b8d1d166;
   background:
-    radial-gradient(circle, #9bc9d80c 46%, transparent 47%),
-    radial-gradient(circle, transparent 65%, #9bc9d824 66%, transparent 69%);
+    radial-gradient(circle, #10242e22 46%, transparent 47%),
+    radial-gradient(circle, transparent 65%, #9bc9d830 66%, transparent 69%);
   position: relative;
   border-radius: 50%;
   display: grid;
@@ -1170,15 +1202,16 @@ body.touch #touch-controls {
   position: absolute;
   inset: 13px;
   border-radius: 50%;
+  border: 1px dashed #b7cdd433;
   background:
-    linear-gradient(#b7cdd455, #b7cdd455) center / 1px 100% no-repeat,
-    linear-gradient(90deg, #b7cdd455, #b7cdd455) center / 100% 1px no-repeat;
+    linear-gradient(#b7cdd466, #b7cdd466) center / 1px 12px no-repeat,
+    linear-gradient(90deg, #b7cdd466, #b7cdd466) center / 12px 1px no-repeat;
 }
 #steer-pad i {
   position: absolute;
   width: 34px;
   height: 34px;
-  border: 2px solid #d8ede8;
+  border: 1px solid #d8ede8;
   border-radius: 50%;
   left: calc(50% - 17px);
   top: calc(50% - 17px);
@@ -1198,24 +1231,16 @@ body.touch #touch-controls {
 }
 .touch-actions button {
   touch-action: none;
-  font-family: var(--display);
-  font-weight: 700;
+  display: grid;
+  place-items: center;
   width: 54px;
   height: 50px;
   padding: 10px;
-  background: #10242e55;
+  background: linear-gradient(145deg, #24404b77, #10242e44);
   border: 1px solid #b8d1d166;
   color: #d5e5e5;
-  border-radius: 14px 4px;
-}
-.touch-actions svg {
-  width: 28px;
-  height: 28px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: square;
-  stroke-linejoin: bevel;
+  border-radius: 3px 10px 3px 10px;
+  box-shadow: inset 0 1px #e4f4f31a;
 }
 .touch-actions #touch-fire {
   background: color-mix(in srgb, var(--weapon-color) 22%, #10242e);
@@ -1680,15 +1705,11 @@ body.touch #pause {
   top: max(12px, env(safe-area-inset-top));
   left: auto;
   right: max(14px, env(safe-area-inset-right));
-  width: 40px;
+  width: 44px;
   height: 44px;
-  border: 0;
-  background: #10242e44;
-  border-bottom: 1px solid #b8d1d177;
 }
 body.touch #view {
-  transform: translateX(-48px);
-  font-size: 10px;
+  transform: translateX(-52px);
 }
 body.touch .weapon {
   position: absolute;

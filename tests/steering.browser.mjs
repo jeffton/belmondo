@@ -69,8 +69,8 @@ try {
     ["ArrowRight", 1],
     ["KeyA", -1],
     ["KeyD", 1],
-    ["KeyQ", -1],
-    ["KeyE", 1],
+    ["KeyJ", -1],
+    ["KeyL", 1],
   ]) {
     const before = await start(page);
     await page.keyboard.down("ArrowUp");
