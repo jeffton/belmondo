@@ -2011,6 +2011,52 @@ body.touch .instrument-bar {
   border-top: 1px solid #9bffd966;
   border-bottom: 1px solid #9bffd944;
 }
+/* Craft specifications replace the redundant feed caption below the preview. */
+#menu[data-stage="craft"] .world-caption {
+  display: none;
+}
+/* Specifications sit below, not over, the native-resolution craft preview. */
+#craft-stats {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 24px);
+  margin: 0;
+  padding: 0;
+}
+.craft-stat {
+  min-width: 0;
+}
+.craft-stat dt {
+  color: #b3c8ce;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  line-height: 12px;
+}
+.craft-stat dd {
+  margin: 0;
+}
+.craft-stat-value {
+  display: block;
+  color: var(--paper);
+  font: 700 19px/23px var(--display);
+  text-shadow: 0 2px 5px #10202c;
+}
+.craft-stat-track {
+  display: block;
+  height: 3px;
+  margin-top: 3px;
+  background: #9bffd92b;
+}
+.craft-stat-track i {
+  display: block;
+  height: 100%;
+  background: var(--craft-accent);
+}
 #model-name {
   position: absolute;
   bottom: 12px;

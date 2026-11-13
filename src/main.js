@@ -107,6 +107,7 @@ function setMenuStage(stage, focus = true) {
   $("start").hidden = stage !== "craft";
   $("setup-next").textContent = stage === "class" ? "CIRCUIT →" : "CRAFT →";
   $("menu-model").hidden = false;
+  $("craft-stats").hidden = stage !== "craft";
   $("menu-model").setAttribute(
     "aria-label",
     stage === "class"
@@ -124,7 +125,27 @@ function setMenuStage(stage, focus = true) {
       )
       .focus({ preventScroll: true });
 }
+function updateCraftStats() {
+  const craft = CRAFT[selectedCraft];
+  $("craft-stats").style.setProperty(
+    "--craft-accent",
+    `#${craft.color.toString(16).padStart(6, "0")}`,
+  );
+  $("craft-stats").innerHTML = [
+    ["thrust", "THRUST"],
+    ["handling", "HANDLING"],
+    ["armor", "ARMOR"],
+  ]
+    .map(([key, label]) => {
+      const value = craft[key];
+      const max = Math.max(...CRAFT.map((c) => c[key]));
+      const display = key === "thrust" ? String(value) : `${value.toFixed(2)}×`;
+      return `<div class="craft-stat" data-stat="${key}"><dt>${label}</dt><dd><span class="craft-stat-value">${display}</span><span class="craft-stat-track" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${value}" aria-valuetext="${display}"><i style="width:${(value / max) * 100}%"></i></span></dd></div>`;
+    })
+    .join("");
+}
 function updateModelName() {
+  $("craft-circuit").textContent = TRACKS[selectedTrack].name;
   $("model-name").textContent =
     menuStage === "class"
       ? SPEED_CLASSES[selectedSpeedClass].name
@@ -342,6 +363,7 @@ for (const [i, c] of CRAFT.entries()) {
   button.onclick = () => {
     selectedCraft = i;
     menuPreview.setCraft(i);
+    updateCraftStats();
     updateModelName();
     for (const [j, b] of [...$("crafts").children].entries()) {
       b.classList.toggle("active", i === j);
