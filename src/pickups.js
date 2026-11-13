@@ -97,6 +97,13 @@ const layouts = {
     ],
     [0.75, 0, -7, "weapon", "Post-landing inside recovery line"],
     [0.91, 0, 5, "weapon", "Outside armament before the final sector"],
+    [
+      0.968,
+      0,
+      6,
+      "boost",
+      "Final transmission-corner exit: hold the inside release onto the straight",
+    ],
   ],
   WHITEOUT: [
     [
@@ -154,6 +161,13 @@ const layouts = {
       "Accessible city approach armament before the long descent",
     ],
     [
+      0.205,
+      0,
+      -6,
+      "boost",
+      "Spillway descent exit: inside release after the grade levels into the lock",
+    ],
+    [
       0.26,
       0,
       6,
@@ -202,6 +216,13 @@ const layouts = {
       "Compression-valley exit acceleration, not a blind crest pad",
     ],
     [
+      0.465,
+      0,
+      -6,
+      "boost",
+      "Caldera exit: finish the banked arc before accelerating onto the runway",
+    ],
+    [
       0.49,
       0,
       8,
@@ -244,6 +265,13 @@ const layouts = {
       -9,
       "boost",
       "Landing-runout acceleration toward the upper bridge",
+    ],
+    [
+      0.79,
+      0,
+      -6,
+      "boost",
+      "Upper-bridge exit: hold the left release before the descent setup",
     ],
     [
       0.91,
