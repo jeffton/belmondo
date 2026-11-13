@@ -186,72 +186,81 @@ function classSymbol(index) {
     );
     add(new THREE.BoxGeometry(0.24, 0.12, 0.32), "ferrite", [0, -0.77, 0]);
   } else if (index === 1) {
-    // RESONANCE: three orthogonal hexagonal resonators with exposed tuning
-    // shoes. Unlike the open stator this is an airy, interlocking spatial knot.
-    for (const [rotation, material] of [
-      [[0, 0, Math.PI / 6], "shell"],
-      [[Math.PI / 2, 0, Math.PI / 6], "copper"],
-      [[0, Math.PI / 2, Math.PI / 6], "shell"],
-    ]) {
+    // RESONANCE: two substantial splayed tuning blades on one solid foot.
+    // The broad open notch reads as a fork, without crossing bars or loops.
+    const plate = (points, depth) => {
+      const shape = new THREE.Shape(
+        points.map(([x, y]) => new THREE.Vector2(x, y)),
+      );
+      return new THREE.ExtrudeGeometry(shape, {
+        depth,
+        bevelEnabled: false,
+        steps: 1,
+      }).translate(0, 0, -depth / 2);
+    };
+    for (const side of [-1, 1]) {
+      const outline = [
+        [0.2, -0.47],
+        [0.52, 0.76],
+        [0.79, 0.67],
+        [0.46, -0.47],
+      ];
       add(
-        new THREE.TorusGeometry(0.68, 0.075, 4, 6),
-        material,
-        [0, 0, 0],
-        rotation,
+        plate(
+          outline.map(([x, y]) => [side * x, y]),
+          0.38,
+        ),
+        "shell",
+      );
+      const inlay = [
+        [0.24, -0.38],
+        [0.52, 0.65],
+        [0.57, 0.63],
+        [0.29, -0.38],
+      ];
+      for (const face of [-1, 1]) {
+        add(
+          plate(
+            inlay.map(([x, y]) => [side * x, y]),
+            0.012,
+          ),
+          "emitter",
+          [0, 0, face * 0.196],
+        );
+      }
+      add(
+        new THREE.BoxGeometry(0.31, 0.1, 0.43),
+        "copper",
+        [side * 0.655, 0.715, 0],
+        [0, 0, -side * 0.32],
       );
     }
+    add(new THREE.BoxGeometry(0.98, 0.23, 0.5), "ferrite", [0, -0.55, 0]);
+    add(new THREE.BoxGeometry(0.72, 0.055, 0.51), "copper", [0, -0.55, 0]);
+  } else {
+    // SINGULARITY: one dense faceted gravity seed, not a containment cage.
+    // Its filled double-pyramid silhouette stays solid throughout rotation.
     for (const side of [-1, 1]) {
-      add(new THREE.BoxGeometry(0.2, 0.12, 0.24), "ferrite", [
-        side * 0.65,
-        0,
-        0,
-      ]);
-      add(new THREE.BoxGeometry(0.12, 0.045, 0.25), "emitter", [
-        side * 0.65,
-        0.08,
-        0,
-      ]);
+      add(
+        new THREE.ConeGeometry(0.67, 0.66, 4),
+        "shell",
+        [0, side * 0.38, 0],
+        [side < 0 ? Math.PI : 0, Math.PI / 4, 0],
+      );
+      add(new THREE.OctahedronGeometry(0.075), "copper", [0, side * 0.71, 0]);
     }
     add(
-      new THREE.OctahedronGeometry(0.23),
-      "emitter",
-      [0, 0, 0],
-      [0, Math.PI / 4, 0],
-      [1, 1.6, 1],
-    );
-    add(new THREE.CylinderGeometry(0.055, 0.055, 1.1, 6), "ferrite");
-  } else {
-    // SINGULARITY: disconnected trihedral containment jaws frame a compressed
-    // dark core. Gaps at every edge midpoint make a cubic negative-space cage,
-    // rather than another set of rings or a solid box.
-    for (const x of [-1, 1])
-      for (const y of [-1, 1])
-        for (const z of [-1, 1]) {
-          const corner = new THREE.Vector3(x, y, z).multiplyScalar(0.5);
-          add(new THREE.OctahedronGeometry(0.09), "copper", corner.toArray());
-          for (let axis = 0; axis < 3; axis++) {
-            const center = corner.clone();
-            center.setComponent(axis, center.getComponent(axis) * 0.58);
-            const size = [0.065, 0.065, 0.065];
-            size[axis] = 0.42;
-            add(new THREE.BoxGeometry(...size), "shell", center.toArray());
-          }
-        }
-    add(
-      new THREE.OctahedronGeometry(0.34),
+      new THREE.CylinderGeometry(0.64, 0.64, 0.1, 4),
       "ferrite",
       [0, 0, 0],
       [0, Math.PI / 4, 0],
     );
-    // A single tilted accretion collar, deliberately smaller than the jaws.
     add(
-      new THREE.TorusGeometry(0.4, 0.035, 4, 12),
+      new THREE.CylinderGeometry(0.65, 0.65, 0.025, 4),
       "emitter",
       [0, 0, 0],
-      [Math.PI / 3, 0, Math.PI / 6],
+      [0, Math.PI / 4, 0],
     );
-    add(new THREE.OctahedronGeometry(0.08), "emitter", [0, 0.35, 0]);
-    add(new THREE.OctahedronGeometry(0.08), "emitter", [0, -0.35, 0]);
   }
   const group = new THREE.Group();
   group.name = SPEED_CLASSES[index].name;

@@ -295,6 +295,33 @@ test("class sculptures are distinct spatial silhouettes, cached and disposed wit
   assert.equal(preview.classes.size, 0);
 });
 
+test("resonance has an open fork notch while singularity stays a filled volume through rotation", () => {
+  const { preview } = fixture();
+  const ray = new THREE.Raycaster(
+    new THREE.Vector3(0, 0.2, 3),
+    new THREE.Vector3(0, 0, -1),
+  );
+  preview.setClass(1);
+  preview.classModel.updateMatrixWorld(true);
+  assert.equal(
+    ray.intersectObject(preview.classModel, true).length,
+    0,
+    "the fork has a broad clear notch, not a tangle around a center jewel",
+  );
+  preview.setClass(2);
+  for (let i = 0; i < 8; i++) {
+    preview.classModel.rotation.y = (i * Math.PI) / 4;
+    preview.classModel.updateMatrixWorld(true);
+    assert.ok(
+      ray
+        .intersectObject(preview.classModel, true)
+        .some(({ object }) => object.name === "shell"),
+      `the solid gravity seed cannot turn into a hollow cage at heading ${i}`,
+    );
+  }
+  preview.dispose();
+});
+
 test("course switches preserve compiled-material ownership and release only replaced geometry", () => {
   const { preview } = fixture();
   preview.setTrack(makeTrack(0));
