@@ -413,18 +413,25 @@ export class Race {
           Math.sqrt((25 * pace2) / Math.max(crest, 0.0001)),
         );
         // Heading correction requests yaw, not a craft-independent stick angle.
-        // Use airbrakes only for rotation that the ordinary stick cannot supply;
-        // releasing that residual promptly avoids dragging through the whole turn.
+        // Differential airbrakes supply rotation beyond the ordinary stick;
+        // paired airbrakes shed speed without inventing a separate AI brake.
         const yawDemand = error * 6 - (r.yawRate * 0.25) / pace;
         const steer = clamp(yawDemand / (0.9 * spec.handling), -1, 1);
+        const air = clamp(
+          (yawDemand - steer * 0.9 * spec.handling) / 0.5,
+          -1,
+          1,
+        );
+        const slowing = Math.max(
+          clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
+          Math.abs(error) > 0.7 ? 1 : 0,
+        );
+        const pairedAir = slowing * (1 - Math.abs(air));
         controls = {
-          throttle: true,
+          throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
           steer,
-          air: clamp((yawDemand - steer * 0.9 * spec.handling) / 0.5, -1, 1),
-          brake: Math.max(
-            clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
-            Math.abs(error) > 0.7 ? 1 : 0,
-          ),
+          airLeft: pairedAir + Math.max(0, air),
+          airRight: pairedAir + Math.max(0, -air),
         };
         r.aiFire -= classDt;
         if (r.aiFire <= 0) {
@@ -470,7 +477,6 @@ export class Race {
       const drag =
         0.02 * pace +
         Math.hypot(r.velocity.x, r.velocity.z) * 0.0024 +
-        (controls.brake || 0) * 0.85 * pace +
         airDrag * 0.22 * pace;
       r.velocity.x +=
         (fx * thrust + rx * lateralForce - r.velocity.x * drag) * dt;

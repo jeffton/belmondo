@@ -15,9 +15,12 @@ const browser = await chromium.launch({
 const errors = [];
 const layout = makeTrack(0).config.layoutId;
 const records = {
-  [`${layout}-0-race-c1-5laps`]: 100,
-  [`${layout}-0-trial-c2-5laps`]: 120,
-  [`${layout}-1-trial-c2-5laps`]: 130,
+  [`${layout}-0-race-c1-5laps`]: 1,
+  [`${layout}-0-trial-c2-5laps`]: 2,
+  [`${layout}-0-trial-c3-5laps`]: 3,
+  [`${layout}-0-race-c1-5laps-pace1.2`]: 100,
+  [`${layout}-0-trial-c2-5laps-pace1.4`]: 120,
+  [`${layout}-1-trial-c2-5laps-pace1.4`]: 130,
 };
 try {
   for (const viewport of [
@@ -48,6 +51,7 @@ try {
         contentType: "text/javascript",
         body: `export class AudioEngine {
           async start() {} setMuted() {} setPaused() {} setVolume() {}
+          stopSamples() {} stopEngine() {} stopCrowd() {}
         }`,
       }),
     );
@@ -55,7 +59,7 @@ try {
       route.fulfill({
         contentType: "text/javascript",
         body: `export class MusicPlayer {
-          loadTracks() {} setTunnel() {} async play() {} pause() {}
+          audio = { paused: true }; loadTracks() {} setMenu() {} setTunnel() {} async play() {} pause() {}
         }`,
       }),
     );
@@ -65,8 +69,14 @@ try {
         response,
         body: `${await response.text()}\nwindow.menuQA = () => ({
           selectedSpeedClass, mode: selectedMode(), quality: world.quality,
-          raceClass: race.speedClass, raceMode: race.mode
-        });`,
+          raceClass: race.speedClass, raceMode: race.mode,
+          pace: race.classSpec.pace, className: race.classSpec.name
+        });
+        window.finishQA = () => {
+          race.player.finished = race.finished = true;
+          race.resultTime = 42.12;
+          showResults();
+        };`,
       });
     });
     await page.goto(url);
@@ -105,6 +115,10 @@ try {
     await expect(page.locator("#quality")).toBeChecked();
     await page.locator('input[name="speed-class"][value="2"]').check();
     await page.locator('input[name="mode"][value="trial"]').check();
+    await expect(page.locator("#best")).toHaveText("LOCAL RECORD / —");
+    expect(
+      await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
+    ).toEqual(records);
     await page.locator("#help-open").click();
     await expect(
       page.getByRole("heading", { name: "KEYBOARD", exact: true }),
@@ -123,9 +137,19 @@ try {
     expect(await page.evaluate(() => window.menuQA())).toMatchObject({
       selectedSpeedClass: 2,
       raceClass: 2,
+      pace: 1.6,
+      className: "C3 OVERDRIVE",
       raceMode: "trial",
       mode: "trial",
     });
+    await page.evaluate(() => window.finishQA());
+    await expect(page.locator("#results")).toBeVisible();
+    await expect(page.locator("#result-data")).toContainText(
+      "C3 OVERDRIVE / 5 LAPS",
+    );
+    expect(
+      await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
+    ).toEqual({ ...records, [`${layout}-0-trial-c3-5laps-pace1.6`]: 42.12 });
     console.log(
       `Menu DOM/input/records/persistence PASS ${viewport.width}×${viewport.height}`,
     );

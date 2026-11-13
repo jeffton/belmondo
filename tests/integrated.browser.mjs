@@ -4,7 +4,7 @@ import { makeTrack, TRACKS } from "../src/track.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
 
 const recordKey = (layoutId, classId, craft = 0) =>
-  `${layoutId}-${craft}-trial-${classId}-5laps`;
+  `${layoutId}-${craft}-trial-${classId}-5laps-pace${SPEED_CLASSES.find((spec) => spec.id === classId).pace}`;
 const preservedRecords = {
   "0-0-trial": 0.1,
   "0-0-trial-c1-5laps": 0.2,
@@ -93,17 +93,16 @@ async function open(
   });
   if (recordMode !== "none")
     await context.addInitScript(
-      ({ mode, records, layoutId, classId }) => {
-        if (mode === "ui") records[`${layoutId}-0-trial-c1-5laps`] = 111.11;
-        if (mode === "drive")
-          delete records[`${layoutId}-0-trial-${classId}-5laps`];
+      ({ mode, records, activeKey, uiKey }) => {
+        if (mode === "ui") records[uiKey] = 111.11;
+        if (mode === "drive") delete records[activeKey];
         localStorage.setItem("nv-records", JSON.stringify(records));
       },
       {
         mode: recordMode,
         records: preservedRecords,
-        layoutId: activeLayout,
-        classId: activeClass,
+        activeKey: recordKey(activeLayout, activeClass),
+        uiKey: recordKey(activeLayout, "c1"),
       },
     );
   if (device === "controller")
@@ -1174,7 +1173,7 @@ async function drive() {
     for (let lap = 1; lap <= 5; lap++)
       await expect(page.locator("#result-data")).toContainText(`LAP / ${lap}`);
     await expect(page.locator("#result-data")).toContainText(
-      `${classSpec.id.toUpperCase()} / 5 LAPS`,
+      `${classSpec.name} / 5 LAPS`,
     );
     await page.screenshot({
       path: `test-artifacts/integrated-${tag}-five-lap-results.png`,

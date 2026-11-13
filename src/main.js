@@ -9,6 +9,7 @@ import { getCrowdMix } from "./crowd.js";
 import { MusicPlayer } from "./music.js";
 import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
+import { localRecordKey } from "./records.js";
 
 await document.fonts.load('700 16px "Noto Sans JP"');
 const $ = (id) => document.getElementById(id);
@@ -124,7 +125,13 @@ function selectedMode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
 function recordKey(mode = selectedMode(), speedClass = selectedSpeedClass) {
-  return `${TRACKS[selectedTrack].layoutId}-${selectedCraft}-${mode}-${SPEED_CLASSES[speedClass].id}-${LAPS}laps`;
+  return localRecordKey(
+    TRACKS[selectedTrack].layoutId,
+    selectedCraft,
+    mode,
+    SPEED_CLASSES[speedClass],
+    LAPS,
+  );
 }
 function updateRecord() {
   const r = records[recordKey()];
@@ -587,7 +594,7 @@ function showResults() {
         : `POSITION / ${race.position}`;
   $("result-data").replaceChildren();
   const lines = [
-    ["CLASS", `${race.classSpec.id.toUpperCase()} / ${LAPS} LAPS`],
+    ["CLASS", `${race.classSpec.name} / ${LAPS} LAPS`],
     [
       race.player.eliminated ? "ELAPSED / DNF" : "TOTAL TIME",
       formatTime(race.resultTime),

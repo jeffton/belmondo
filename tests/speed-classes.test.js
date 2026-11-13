@@ -5,7 +5,7 @@ import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
 import { makeTrack } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 
-const neutral = { throttle: true, steer: 0, air: 0, brake: 0 };
+const neutral = { throttle: true, steer: 0, air: 0 };
 function straight(width = 100) {
   return {
     length: 1_000_000,
@@ -52,6 +52,27 @@ test("class pace accelerates physical motion, not the race/countdown clocks", ()
   }
 });
 
+test("lifting thrust and paired airbrakes slow every class without a legacy brake channel", () => {
+  for (let c = 0; c < SPEED_CLASSES.length; c++) {
+    const [coast, paired, legacy] = Array.from({ length: 3 }, () => setup(c));
+    for (const race of [coast, paired, legacy]) matchedDrive(race, 12);
+    const initialSpeed = coast.player.speed;
+    matchedDrive(coast, 0.5, { ...neutral, throttle: false });
+    matchedDrive(paired, 0.5, {
+      ...neutral,
+      throttle: false,
+      airLeft: 1,
+      airRight: 1,
+    });
+    matchedDrive(legacy, 0.5, { ...neutral, throttle: false, brake: 1 });
+    assert(coast.player.speed < initialSpeed);
+    assert(paired.player.speed < coast.player.speed - 10);
+    near(paired.player.yaw, coast.player.yaw);
+    near(legacy.player.speed, coast.player.speed);
+    assert(legacy.player.position.distanceTo(coast.player.position) < 1e-7);
+  }
+});
+
 test("all craft retain their acceleration and handling distinctions across classes", () => {
   for (let c = 0; c < 3; c++) {
     const racers = CRAFT.map((_, craft) => setup(c, straight(), craft));
@@ -74,7 +95,6 @@ test("boost, pitch, braking, yaw and inertia share the same geometric envelope",
     matchedDrive(race, 0.5, { ...neutral, steer: 0.2, pitch: -0.5 });
     matchedDrive(race, 0.5, {
       ...neutral,
-      brake: 0.5,
       airLeft: 0.6,
       airRight: 0.3,
     });
@@ -84,9 +104,9 @@ test("boost, pitch, braking, yaw and inertia share the same geometric envelope",
     const p = race.player,
       pace = race.classSpec.pace;
     assert(p.position.distanceTo(base.position) < 1e-7);
-    near(p.speed / pace, base.speed);
+    near(p.speed / pace, base.speed / races[0].classSpec.pace);
     near(p.yaw, base.yaw);
-    near(p.yawRate / pace, base.yawRate);
+    near(p.yawRate / pace, base.yawRate / races[0].classSpec.pace);
     near(p.boost, base.boost);
     near(p.surge, base.surge);
     const slip = setup(race.speedClass);
