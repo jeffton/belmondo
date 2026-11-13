@@ -70,14 +70,17 @@ function quadGeometry(quads, lighting) {
 }
 
 export class World {
-  constructor(canvas) {
+  constructor(canvas, { renderer, createLensflare } = {}) {
+    this.createLensflare = createLensflare;
     this.flagshipAssets = loadFlagshipAssets();
     this.assetTextures = new Set(Object.values(this.flagshipAssets));
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: false,
-      powerPreference: "high-performance",
-    });
+    this.renderer =
+      renderer ??
+      new THREE.WebGLRenderer({
+        canvas,
+        antialias: false,
+        powerPreference: "high-performance",
+      });
     this.renderer.setPixelRatio(1);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.setClearColor(0xb7c7d5);
@@ -188,7 +191,9 @@ export class World {
     this.textures = textures;
     this.scene.background = createSky(cfg, fogColor, prepared?.sky);
     this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
-    this.lighting = buildTrackLighting(this.scene, track);
+    this.lighting = buildTrackLighting(this.scene, track, {
+      createLensflare: this.createLensflare,
+    });
     const sea = new THREE.Mesh(
       new THREE.PlaneGeometry(12000, 12000, 1, 1),
       mat(cfg.sea, { map: textures.water }),
