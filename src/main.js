@@ -399,6 +399,7 @@ for (const b of document.querySelectorAll("[data-control]")) {
   b.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     b.setPointerCapture(e.pointerId);
+    if (b.dataset.control === "coast") touchLaunchArmed = false;
     held.add(b.dataset.control);
     b.classList.add("pressed");
   });
@@ -406,7 +407,8 @@ for (const b of document.querySelectorAll("[data-control]")) {
     b.addEventListener(event, () => {
       if (b.dataset.control === "coast" && race?.countdown > 0) {
         if (event === "pointerup" && held.has("coast")) touchLaunchArmed = true;
-        else if (event === "pointercancel") touchLaunchArmed = false;
+        else if (event === "pointercancel" || held.has("coast"))
+          touchLaunchArmed = false;
       }
       held.delete(b.dataset.control);
       b.classList.remove("pressed");
