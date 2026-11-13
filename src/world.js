@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mod, clamp } from "./track.js";
 import { steeringBank, updateShipBank } from "./ship-bank.js";
+import { clearChaseCamera } from "./chase-camera.js";
 import { RAIL_PROFILE } from "./rail-profile.js";
 import { railPoint, railBackDepth, railHeight } from "./rail-geometry.js";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.js";
@@ -691,6 +692,8 @@ export class World {
         .addScaledVector(f.tangent, -40);
       ahead.copy(f.p).addScaledVector(f.tangent, 65);
     }
+    if (!demo)
+      clearChaseCamera(desired, track, player, this.environment.terrain, 3.8);
     if (!this.cameraReady) {
       this.camera.position.copy(desired);
       this.cameraReady = true;
@@ -698,6 +701,16 @@ export class World {
       this.camera.position.add(focus.clone().sub(this.cameraFocus));
       this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
     }
+    // Focus transport follows sudden drops immediately; constrain the final
+    // smoothed position too, so it cannot be carried through the deck.
+    if (!demo)
+      clearChaseCamera(
+        this.camera.position,
+        track,
+        player,
+        this.environment.terrain,
+        1.2,
+      );
     this.cameraFocus = focus;
     this.camera.up.lerp(f.up, 1 - Math.exp(-dt * 7)).normalize();
     this.camera.lookAt(ahead);
