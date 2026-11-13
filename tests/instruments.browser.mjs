@@ -26,14 +26,28 @@ try {
       isMobile: touch,
     });
     const page = await context.newPage();
+    const insets = touch
+      ? height > width
+        ? { top: 59, bottom: 34, left: 0, right: 0 }
+        : { top: 0, bottom: 21, left: 59, right: 59 }
+      : { top: 0, bottom: 0, left: 0, right: 0 };
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url);
     await page.waitForFunction(
       () => window.nullVector?.telemetry.state === "menu",
     );
+    const manifest = await cdp.send("Page.getAppManifest");
+    expect(manifest.errors).toEqual([]);
+    expect(JSON.parse(manifest.data).short_name).toBe("BELMONDO");
+    expect(
+      (await cdp.send("Page.getInstallabilityErrors")).installabilityErrors,
+    ).toEqual([]);
     await page.locator("#start").click();
     await expect(page.locator("#hud")).toBeVisible();
+    await expect(page.locator("#hud-track")).toBeHidden();
     if (touch) {
       await expect(page.locator("#launch-status")).toBeVisible();
       const hint = await page.locator("#launch-status").boundingBox();
@@ -103,10 +117,12 @@ try {
     });
     for (const selector of [".shield-instrument", ".velocity"]) {
       const b = boxes[selector];
-      expect(b.x, `${name} ${selector} left`).toBeGreaterThanOrEqual(0);
-      expect(b.y).toBeGreaterThanOrEqual(0);
-      expect(b.right).toBeLessThanOrEqual(width);
-      expect(b.bottom).toBeLessThanOrEqual(height);
+      expect(b.x, `${name} ${selector} left`).toBeGreaterThanOrEqual(
+        insets.left,
+      );
+      expect(b.y).toBeGreaterThanOrEqual(insets.top);
+      expect(b.right).toBeLessThanOrEqual(width - insets.right);
+      expect(b.bottom).toBeLessThanOrEqual(height - insets.bottom);
       for (const control of [
         "#weapon",
         "#steer-pad",
@@ -152,7 +168,7 @@ try {
     expect(warning.x + warning.width).toBeLessThanOrEqual(value.x);
     await page.screenshot({ path: `${output}/${name}-critical.png` });
     expect(errors).toEqual([]);
-    report.push({ name, boxes, errors });
+    report.push({ name, insets, boxes, errors });
     await context.close();
   }
 } finally {

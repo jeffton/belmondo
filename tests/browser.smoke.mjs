@@ -22,7 +22,7 @@ try {
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
-  await expect(page.locator("#tracks button")).toHaveCount(3);
+  await expect(page.locator("#tracks button")).toHaveCount(7);
   await expect(page.locator("#crafts button")).toHaveCount(3);
   await page.screenshot({ path: "test-artifacts/desktop-menu.png" });
   await page.locator("#tracks button").nth(1).click();
