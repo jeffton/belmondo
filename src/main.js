@@ -51,15 +51,26 @@ let state = "menu",
   last = performance.now(),
   messageUntil = 0,
   previousCount = "armed";
-function updateRaceCursor() {
+let musicInterrupted = false;
+function updateAppFocus() {
+  const inactive = document.hidden || !document.hasFocus();
   document.body.classList.toggle(
     "race-active",
-    state === "race" && !paused && document.hasFocus() && !document.hidden,
+    state === "race" && !paused && !inactive,
   );
+  if (inactive) {
+    if (!music.audio.paused) {
+      musicInterrupted = true;
+      music.pause();
+    }
+  } else if (musicInterrupted) {
+    musicInterrupted = false;
+    if (musicEnabled) music.play();
+  }
 }
-window.addEventListener("blur", updateRaceCursor);
-window.addEventListener("focus", updateRaceCursor);
-document.addEventListener("visibilitychange", updateRaceCursor);
+window.addEventListener("blur", updateAppFocus);
+window.addEventListener("focus", updateAppFocus);
+document.addEventListener("visibilitychange", updateAppFocus);
 let demoDistance = 50,
   renderFrames = 0,
   renderTime = 0;
@@ -203,7 +214,7 @@ async function start(event) {
   state = "race";
   music.setMenu(false);
   paused = false;
-  updateRaceCursor();
+  updateAppFocus();
   accumulator = 0;
   previousCount = "armed";
   messageUntil = 0;
@@ -222,20 +233,21 @@ async function start(event) {
 function setPaused(value) {
   if (state !== "race" || race.finished || paused === value) return;
   paused = value;
-  updateRaceCursor();
+  updateAppFocus();
   clearInput();
   if (paused) $("pause-panel").showModal();
   else $("pause-panel").close();
   sound.setPaused(paused);
   music.setMenu(paused);
   if (paused) music.setTunnel(false);
-  else if (musicEnabled) music.play();
+  else if (musicEnabled && !document.hidden && document.hasFocus())
+    music.play();
 }
 function quit() {
   ++startGeneration;
   state = "menu";
   paused = false;
-  updateRaceCursor();
+  updateAppFocus();
   clearInput();
   $("menu").hidden = false;
   $("hud").hidden = true;
@@ -480,7 +492,7 @@ function drawMap() {
 }
 function showResults() {
   state = "results";
-  updateRaceCursor();
+  updateAppFocus();
   music.setMenu(true);
   music.setTunnel(false);
   sound.stopEngine();
@@ -683,6 +695,7 @@ async function loadFiles(files) {
   await music.loadFiles(files);
   if (files.length) {
     musicEnabled = true;
+    musicInterrupted = false;
     await music.play();
   }
 }
@@ -690,16 +703,19 @@ $("folder").onchange = (e) => loadFiles(e.target.files);
 $("files").onchange = (e) => loadFiles(e.target.files);
 $("music-play").onclick = () => {
   musicEnabled = music.audio.paused;
+  musicInterrupted = false;
   if (musicEnabled) music.play();
   else music.pause();
 };
 $("music-next").onclick = () => {
   musicEnabled = true;
+  musicInterrupted = false;
   music.next();
 };
 $("music-default").onclick = () => {
   music.loadTracks(soundtrack, { shuffle: true });
   musicEnabled = true;
+  musicInterrupted = false;
   music.play();
 };
 $("volume").oninput = (e) => (music.volume = Number(e.target.value));
