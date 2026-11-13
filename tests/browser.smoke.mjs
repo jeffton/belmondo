@@ -41,7 +41,7 @@ try {
   await expect(page.locator('[data-panel="craft"]')).toBeVisible();
   await expect(page.locator("#crafts button")).toHaveCount(3);
   await expect(page.locator("#start")).toBeVisible();
-  await page.locator("#crafts button").nth(1).click();
+  await page.locator('#crafts button[data-craft-index="1"]').click();
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.2,
@@ -145,7 +145,7 @@ try {
   await expect(m.locator('[data-panel="craft"]')).toBeVisible();
   await expect(m.locator("#crafts button")).toHaveCount(3);
   await expect(m.locator("#start")).toBeVisible();
-  await m.locator("#crafts button").first().tap();
+  await m.locator('#crafts button[data-craft-index="0"]').tap();
   await m.locator("#start").tap();
   await m.waitForFunction(() => window.nullVector.telemetry.state === "race");
   const cdp = await mobile.newCDPSession(m);

@@ -370,7 +370,7 @@ async function ui() {
       ).toEqual(uiRecords);
       // Craft and class are independent: changing craft must not change class.
       await goToSetupStage(page, "craft");
-      await page.locator("#crafts button").nth(1).click();
+      await page.locator('#crafts button[data-craft-index="1"]').click();
       await expect(
         page.locator('input[name="speed-class"]:checked'),
       ).toHaveValue(String(speedClass));
@@ -379,7 +379,7 @@ async function ui() {
           JSON.parse(localStorage.getItem("nv-records")),
         ),
       ).toEqual(uiRecords);
-      await page.locator("#crafts button").first().click();
+      await page.locator('#crafts button[data-craft-index="0"]').click();
       await start(page);
       const before = await telemetry(page);
       validateLayout(before, makeTrack(0));

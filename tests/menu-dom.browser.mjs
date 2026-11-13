@@ -155,7 +155,7 @@ try {
     ).toBeChecked();
     await page.locator('input[name="mode"][value="trial"]').check();
     await goToSetupStage(page, "craft");
-    await page.locator("#crafts button").nth(1).click();
+    await page.locator('#crafts button[data-craft-index="1"]').click();
     await goToSetupStage(page, "class");
     await page.locator("#quality").check();
     expect(await page.evaluate(() => window.menuQA().quality)).toBe("retro");
@@ -200,7 +200,7 @@ try {
     await page.keyboard.press("Escape");
     await page.locator('input[name="speed-class"][value="1"]').check();
     await goToSetupStage(page, "craft");
-    await page.locator("#crafts button").nth(1).click();
+    await page.locator('#crafts button[data-craft-index="1"]').click();
     await page.locator("#start").click();
     await page.waitForFunction(
       () => window.nullVector.telemetry.state === "race",
@@ -233,7 +233,7 @@ try {
 
     await page.locator("#result-quit").click();
     await goToSetupStage(page, "craft");
-    await page.locator("#crafts button").nth(1).click();
+    await page.locator('#crafts button[data-craft-index="1"]').click();
     await page.locator("#start").click();
     await page.waitForFunction(
       () => window.nullVector.telemetry.state === "race",

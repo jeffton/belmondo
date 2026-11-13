@@ -93,8 +93,8 @@ function updateCraftStats() {
     .map(([key, label]) => {
       const value = craft[key];
       const max = Math.max(...CRAFT.map((c) => c[key]));
-      const display = key === "thrust" ? String(value) : `${value.toFixed(2)}×`;
-      return `<div class="craft-stat" data-stat="${key}"><dt>${label}</dt><dd><span class="craft-stat-value">${display}</span><span class="craft-stat-track" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${value}" aria-valuetext="${display}"><i style="width:${(value / max) * 100}%"></i></span></dd></div>`;
+      const score = Math.round((value / max) * 100);
+      return `<div class="craft-stat" data-stat="${key}"><dt>${label}</dt><dd><span class="craft-stat-value">${score}</span><span class="craft-stat-track" role="meter" aria-label="${label}" aria-valuemin="1" aria-valuemax="100" aria-valuenow="${score}" aria-valuetext="${score} out of 100"><i style="width:${score}%"></i></span></dd></div>`;
     })
     .join("");
 }
@@ -112,7 +112,7 @@ $("setup-back").onclick = () =>
 $("setup-next").onclick = () =>
   setMenuStage(menuStages[menuStages.indexOf(menuStage) + 1]);
 let selectedTrack = 0,
-  selectedCraft = 0,
+  selectedCraft = 2,
   selectedSpeedClass = 0,
   track,
   race;
@@ -304,18 +304,22 @@ for (const [i, t] of TRACKS.entries()) {
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
 }
-for (const [i, c] of CRAFT.entries()) {
+// Menu order is independent of the stable physics, AI and record craft IDs.
+for (const i of [2, 0, 1]) {
+  const c = CRAFT[i];
   const button = document.createElement("button");
   button.className = "choice";
+  button.dataset.craftIndex = i;
   button.innerHTML = `<i class="craft-icon" style="--craft:#${c.color.toString(16)}"></i><span><b>${c.name}</b><small>${c.team}</small></span>`;
   button.onclick = () => {
     selectedCraft = i;
     menuPreview.setCraft(i);
     updateCraftStats();
     updateModelName();
-    for (const [j, b] of [...$("crafts").children].entries()) {
-      b.classList.toggle("active", i === j);
-      b.setAttribute("aria-pressed", String(i === j));
+    for (const b of $("crafts").children) {
+      const active = Number(b.dataset.craftIndex) === i;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-pressed", String(active));
     }
     $("craft-note").textContent = c.text.split("/")[0].trim().toUpperCase();
   };

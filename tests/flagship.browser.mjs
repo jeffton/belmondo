@@ -437,8 +437,10 @@ async function restartChecks() {
   await page.keyboard.press("Escape");
   await page.locator("#quit").click();
   await goToSetupStage(page, "craft");
-  await page.locator("#crafts button").nth(1).click();
-  await expect(page.locator("#crafts button").nth(1)).toHaveClass(/active/);
+  await page.locator('#crafts button[data-craft-index="1"]').click();
+  await expect(
+    page.locator('#crafts button[data-craft-index="1"]'),
+  ).toHaveClass(/active/);
   await goToSetupStage(page, "class");
   await page.locator('input[name="mode"][value="trial"]').check();
   await goToSetupStage(page, "craft");

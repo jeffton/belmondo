@@ -2,6 +2,8 @@ import { chromium, webkit, expect } from "@playwright/test";
 import { createServer } from "vite";
 import { CRAFT } from "../src/race.js";
 import { TRACKS } from "../src/track.js";
+import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { localRecordKey } from "../src/records.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real markup, CSS and menu handlers; no WebGL/GPU allocation or RAF rendering.
@@ -33,6 +35,9 @@ try {
         await page.addInitScript(() => {
           window.requestAnimationFrame = () => 0;
           localStorage.setItem("nv-records", '{"preserved":42}');
+          Object.defineProperty(navigator, "getGamepads", {
+            get: () => () => (window.testPad ? [window.testPad] : []),
+          });
         });
         for (const [module, body] of Object.entries({
           "world.js": `export class World {
@@ -54,6 +59,7 @@ try {
           }`,
           "audio.js": `export class AudioEngine {
             async start() {} setMuted() {} setPaused() {} setVolume() {}
+            stopSamples() {} stopCrowd() {}
           }`,
           "music.js": `export class MusicPlayer {
             audio = {paused: true}; loadTracks() {} setMenu() {} setTunnel() {}
@@ -64,6 +70,18 @@ try {
             route.fulfill({ contentType: "text/javascript", body }),
           );
         }
+        await page.route("**/src/main.js", async (route) => {
+          const response = await route.fetch();
+          await route.fulfill({
+            response,
+            body: `${await response.text()}
+            window.craftQA = () => ({
+              state, selectedCraft, raceCraft: race.player.craft,
+              opponents: race.racers.slice(1).map(r => r.craft),
+              key: recordKey(), controls: input()
+            });`,
+          });
+        });
         await page.goto(server.resolvedUrls.local[0]);
         await page.waitForFunction(() => window.nullVector);
         await expect(page.locator("#craft-stats")).toBeHidden();
@@ -74,8 +92,47 @@ try {
         await expect(page.locator("#craft-stats")).toBeVisible();
         await expect(page.locator(".world-caption")).toBeHidden();
         const preview = await page.locator("#menu-model").boundingBox();
-        for (let i = 0; i < CRAFT.length; i++) {
-          await page.locator("#crafts button").nth(i).click();
+        await expect(page.locator("#crafts button b")).toHaveText([
+          "WRAITH",
+          "STRIKER",
+          "RAPTOR",
+        ]);
+        await expect(page.locator("#crafts button.active")).toHaveAttribute(
+          "data-craft-index",
+          "2",
+        );
+        // Native focus/activation follows the visible order, not physics indices.
+        await expect(
+          page.locator('#crafts [data-craft-index="2"]'),
+        ).toBeFocused();
+        for (const identity of [0, 1]) {
+          await page.keyboard.press("Tab");
+          await expect(
+            page.locator(`#crafts [data-craft-index="${identity}"]`),
+          ).toBeFocused();
+          await page.keyboard.press("Enter");
+          expect(
+            await page.evaluate(() => window.craftQA().selectedCraft),
+          ).toBe(identity);
+        }
+        await page.keyboard.press("Shift+Tab");
+        await page.keyboard.press("Shift+Tab");
+        await page.keyboard.press("Enter");
+        expect(await page.evaluate(() => window.craftQA().selectedCraft)).toBe(
+          2,
+        );
+        expect(CRAFT.map((craft) => craft.name)).toEqual([
+          "STRIKER",
+          "RAPTOR",
+          "WRAITH",
+        ]);
+        const expectedScores = [
+          [84, 81, 87],
+          [100, 67, 74],
+          [58, 100, 100],
+        ];
+        for (const i of [2, 0, 1]) {
+          await page.locator(`#crafts button[data-craft-index="${i}"]`).click();
           const craft = CRAFT[i];
           await expect(page.locator("#model-name")).toHaveText(craft.name);
           await expect(page.locator("#craft-circuit")).toHaveText(
@@ -84,19 +141,17 @@ try {
           expect(await page.evaluate(() => window.previewCraft)).toBe(i);
           for (const key of ["thrust", "handling", "armor"]) {
             const stat = page.locator(`[data-stat="${key}"]`);
-            const max = Math.max(...CRAFT.map((c) => c[key]));
-            const text =
-              key === "thrust"
-                ? String(craft[key])
-                : `${craft[key].toFixed(2)}×`;
+            const score =
+              expectedScores[i][["thrust", "handling", "armor"].indexOf(key)];
+            const text = String(score);
             await expect(stat.locator(".craft-stat-value")).toHaveText(text);
             await expect(stat.getByRole("meter")).toHaveAttribute(
               "aria-valuenow",
-              String(craft[key]),
+              text,
             );
             await expect(stat.getByRole("meter")).toHaveAttribute(
               "aria-valuemax",
-              String(max),
+              "100",
             );
             const ratio = await stat.evaluate(
               (el) =>
@@ -104,7 +159,7 @@ try {
                 el.querySelector(".craft-stat-track").getBoundingClientRect()
                   .width,
             );
-            expect(ratio).toBeCloseTo(craft[key] / max, 2);
+            expect(ratio).toBeCloseTo(score / 100, 2);
           }
           const bounds = await page.evaluate(() => {
             const rect = (selector) => {
@@ -140,6 +195,38 @@ try {
             bounds.stats.bottom > bounds.body.top;
           expect(intersectsBody).toBe(false);
           expect(bounds.scroll[0]).toBeLessThanOrEqual(bounds.scroll[1]);
+          const key = localRecordKey(
+            TRACKS[2].layoutId,
+            i,
+            "race",
+            SPEED_CLASSES[0],
+            5,
+          );
+          expect((await page.evaluate(() => window.craftQA())).key).toBe(key);
+          await page.locator("#start").click();
+          await page.waitForFunction(() => window.craftQA().state === "race");
+          await page.evaluate(() => {
+            window.testPad = {
+              axes: [0.5, 0],
+              buttons: Array.from({ length: 16 }, (_, index) => ({
+                pressed: index === 0,
+                value: index === 0 ? 1 : 0,
+              })),
+            };
+          });
+          const actual = await page.evaluate(() => window.craftQA());
+          expect(actual).toMatchObject({
+            selectedCraft: i,
+            raceCraft: i,
+            key,
+            opponents: [1, 2, 0, 1, 2, 0, 1],
+          });
+          expect(actual.controls).toMatchObject({ throttle: 1, steer: -0.5 });
+          await page.evaluate(() => {
+            window.testPad = null;
+          });
+          await page.keyboard.press("Escape");
+          await page.locator("#quit").click();
         }
         expect(
           await page.evaluate(() => localStorage.getItem("nv-records")),
@@ -150,7 +237,7 @@ try {
         await goToSetupStage(page, "craft");
         await expect(page.locator("#craft-circuit")).toHaveText(TRACKS[6].name);
         await expect(page.locator("#craft-stats .craft-stat-value")).toHaveText(
-          ["44", "1.23×", "1.15×"],
+          ["100", "67", "74"],
         );
         console.log(
           `Craft stats PASS ${engine.name()} ${viewport.width}×${viewport.height}`,

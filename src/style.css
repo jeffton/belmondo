@@ -2032,6 +2032,12 @@ body.touch .instrument-bar {
   font: 700 19px/23px var(--display);
   text-shadow: 0 2px 5px #10202c;
 }
+.craft-stat-value::after {
+  content: "/100";
+  margin-left: 3px;
+  color: #b3c8ce;
+  font: 600 9px var(--interface);
+}
 .craft-stat-track {
   display: block;
   height: 3px;

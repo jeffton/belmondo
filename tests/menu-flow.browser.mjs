@@ -54,7 +54,7 @@ try {
     for (const stage of ["track", "craft"]) {
       if (stage === "track")
         await page.locator("#tracks button").nth(6).click();
-      else await page.locator("#crafts button").nth(2).click();
+      else await page.locator('#crafts button[data-craft-index="2"]').click();
       await expect(page.locator("#menu")).toHaveAttribute("data-stage", stage);
       await expect(page.locator("#menu-model")).toBeVisible();
       const rotation = await page.evaluate(
@@ -187,10 +187,9 @@ try {
     ).toBeChecked();
     await page.locator("#setup-next").click();
     await page.locator("#setup-next").click();
-    await expect(page.locator("#crafts button").nth(2)).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(
+      page.locator('#crafts button[data-craft-index="2"]'),
+    ).toHaveAttribute("aria-pressed", "true");
     await page.locator("#help-open").click();
     await expect(page.locator("#help-dialog")).toBeVisible();
     await page.locator("#help-dialog .close").click();

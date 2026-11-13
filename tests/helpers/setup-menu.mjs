@@ -29,6 +29,7 @@ export async function prepareRaceSetup(
   await page.locator(`#tracks button:nth-child(${trackIndex + 1})`).click();
   await page.locator("#setup-next").click();
   await page.locator('[data-panel="craft"]').waitFor({ state: "visible" });
-  if (craftIndex !== 0)
-    await page.locator(`#crafts button:nth-child(${craftIndex + 1})`).click();
+  await page
+    .locator(`#crafts button[data-craft-index="${craftIndex}"]`)
+    .click();
 }
