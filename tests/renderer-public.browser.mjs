@@ -1,7 +1,16 @@
 import { chromium, expect } from "@playwright/test";
+import { preview } from "vite";
 
-const url = process.env.GAME_URL;
-if (!url) throw new Error("Set GAME_URL to the built game URL.");
+let server;
+let url = process.env.GAME_URL;
+if (process.env.GAME_ROOT) {
+  server = await preview({
+    root: process.env.GAME_ROOT,
+    preview: { host: "127.0.0.1", port: 0 },
+  });
+  url = server.resolvedUrls.local[0];
+}
+if (!url) throw new Error("Set GAME_URL or GAME_ROOT to the built game.");
 const viewport =
   process.env.QA_VIEWPORT === "mobile"
     ? { width: 390, height: 844 }
@@ -105,4 +114,5 @@ try {
   await context.close();
 } finally {
   await browser.close();
+  if (server) await new Promise((resolve) => server.httpServer.close(resolve));
 }
