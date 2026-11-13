@@ -63,6 +63,7 @@ try {
   await expect(unsupported.locator("#fatal")).toContainText(
     "WebGPU is unavailable",
   );
+  await expect(unsupported.locator("#renderer-select")).toHaveValue("webgpu");
   await unsupported.getByRole("button", { name: "USE WEBGL" }).click();
   await expect(unsupported.locator("#renderer-select")).toHaveValue("webgl");
   expect(

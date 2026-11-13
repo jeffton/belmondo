@@ -44,6 +44,8 @@ music.setMenu(true);
 music.loadTracks(soundtrack, { shuffle: true });
 let musicEnabled = true;
 const rendererMode = selectedRenderer();
+$("renderer-select").value = rendererMode;
+$("renderer-select").onchange = (event) => selectRenderer(event.target.value);
 let world;
 let gpuEngine;
 let renderingFailed = false;
@@ -92,8 +94,6 @@ if (gpuEngine) {
 const menuPreview = new MenuPreview($("menu-model"), {
   createRenderer: gpuEngine ? () => gpuEngine.previewRenderer : undefined,
 });
-$("renderer-select").value = rendererMode;
-$("renderer-select").onchange = (event) => selectRenderer(event.target.value);
 let menuStage = "class";
 const menuStages = ["class", "track", "craft"];
 function setMenuStage(stage, focus = true) {
