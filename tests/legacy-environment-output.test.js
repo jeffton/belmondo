@@ -7,19 +7,20 @@ import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 
-// Legacy-v4 branch worlds with finish-end timing stripe/approach signs
-// (96251d6) and Solar's ridged bored mountain (e11b2f1). Exact emitted-output
-// regression; separate clearance/terrain contracts and visual acceptance remain.
+// Legacy-v4 branch worlds, finish-end districts and Solar's ridged mountain.
+// Exact output includes authored wet/mineral ground-map pixels; independent
+// clearance/terrain contracts and visual acceptance cover the driving corridors.
 const BASELINE = [
-  "8a63bb605ac41802b407b4bd85031da4512953c6b411256bf767eb77e2af0ab4",
-  "4fd1bc958c3ccdcbb32bd60a3917f987aed357e24444958e6686ae38067234fe",
-  "298a092be875552f65e24c3a0f5734479939d6923b3d8314955092386bf0e2d2",
+  "069a3b56de873b4f0899ebd81ceddcb96081c80f1fa05831b0494e58a95b51ca",
+  "7123459c27ab2ebd313e49fd96250bd687c628bb6f1c0815e8d842de1744085e",
+  "4d964ccfe8b14dc4e3fe8dfa96f8f0d01655152f83d73a78aa6fa16a7b10ac09",
 ];
 export function environmentDigest(index) {
   const scene = new THREE.Scene();
   const track = makeTrack(index);
   const textures = {
     concrete: null,
+    rock: null,
     road: null,
     paint: null,
     facade: null,

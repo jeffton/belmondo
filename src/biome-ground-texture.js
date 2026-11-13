@@ -11,9 +11,9 @@ export function biomeGroundTexture(biome) {
       const basin = Math.cos(v + Math.sin(u) * 0.5);
       let value;
       if (biome === "polar") {
-        // Unbroken snowfields with broad blue-grey exposed rock shelves.
-        const shelf = Math.sin(v * 2 + fold * 0.8);
-        value = shelf > 0.55 ? 192 + fold * 5 : 235 + basin * 5;
+        // Quiet wind-scoured snow; exposed rock belongs to the terrain palette,
+        // not a repeating hard-edged stripe painted across every mountain.
+        value = 225 + basin * 5 + fold * 4 + Math.sin(u * 3 + v * 2) * 2;
       } else if (biome === "hydraulic") {
         // Damp silt basins against drier mineral ledges, not mottled noise.
         value = basin + fold * 0.45 > 0.15 ? 223 : 193;

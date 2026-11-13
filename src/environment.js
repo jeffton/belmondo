@@ -24,6 +24,7 @@ export function buildEnvironment(scene, track, textures) {
   const asphalt = material(desert ? 0x756858 : 0x56656a, textures.road);
   const metal = material(harbor ? 0x44586a : 0x73868a, textures.facade);
   const paint = material(track.config.color, textures.paint);
+  const vegetated = !desert && !harbor;
   const pixels = new Uint8Array(64 * 64 * 4);
   for (let y = 0; y < 64; y++)
     for (let x = 0; x < 64; x++) {
@@ -34,11 +35,11 @@ export function buildEnvironment(scene, track, textures) {
       // Authored mineral beds and wet/dry masses, not per-pixel gravel.
       const stratum = Math.sin(v * (desert ? 3 : 2) + fold);
       const value = Math.round(
-        (desert ? 219 : 222) +
-          fold * (desert ? 6 : 16) +
-          basin * (desert ? 7 : 14) -
+        (vegetated ? 222 : 219) +
+          fold * (vegetated ? 16 : 6) +
+          basin * (vegetated ? 14 : 7) -
           (desert && stratum > 0.92 ? 17 : 0) -
-          (!desert && basin + fold * 0.4 < -0.5 ? 20 : 0),
+          (!desert && basin + fold * 0.4 < -0.5 ? (vegetated ? 20 : 8) : 0),
       );
       pixels.set([value, value, value, 255], (y * 64 + x) * 4);
     }
