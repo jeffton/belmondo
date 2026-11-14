@@ -411,6 +411,41 @@ try {
         "data-keyboard-hint",
         "ENTER",
       );
+      await page.locator("#restart").dispatchEvent("pointerdown", {
+        pointerType: "touch",
+        pointerId: 1,
+        isPrimary: true,
+        button: 0,
+      });
+      await expect(page.locator("body")).toHaveAttribute(
+        "data-input-mode",
+        "touch",
+      );
+      await expect(page.locator("#resume")).toHaveCSS(
+        "background-color",
+        "rgb(255, 101, 77)",
+      );
+      await expect(page.locator("#restart")).toHaveCSS(
+        "background-color",
+        "rgba(0, 0, 0, 0)",
+      );
+      expect(
+        await page
+          .locator("#restart")
+          .evaluate((button) => getComputedStyle(button, "::after").visibility),
+      ).toBe("hidden");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.locator("#pause-music")).toHaveCSS(
+        "background-color",
+        "rgb(255, 101, 77)",
+      );
+      expect(
+        await page
+          .locator("#pause-music")
+          .evaluate((button) => getComputedStyle(button, "::after").visibility),
+      ).toBe("visible");
+      await page.keyboard.press("ArrowUp");
+      await page.keyboard.press("ArrowUp");
       await page.evaluate(() => {
         window.menuGamepadQA();
         window.menuGamepadQA(0, 1);

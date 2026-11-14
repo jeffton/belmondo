@@ -2593,6 +2593,33 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
 :is(#pause-panel, #results) .panel > button.menu-cursor::after {
   visibility: visible;
 }
+body[data-input-mode="touch"]
+  #pause-panel
+  .panel
+  > button.menu-cursor:not(.start) {
+  color: var(--paper);
+  background: transparent;
+  border-color: #71919d77;
+}
+body[data-input-mode="touch"] #pause-panel .panel > button.menu-cursor::after {
+  visibility: hidden;
+}
+body[data-input-mode="touch"] #pause-panel .panel > button.start {
+  color: #111e27;
+  background: var(--orange);
+  border-color: var(--orange);
+}
+body[data-input-mode="touch"]
+  #pause-panel:has(.menu-cursor:not(.choice))
+  .panel
+  > button.start:not(.menu-cursor) {
+  color: #111e27;
+  background: var(--orange);
+  border-color: var(--orange);
+}
+body[data-input-mode="touch"] #pause-panel .panel > button.start::after {
+  visibility: hidden;
+}
 @media (max-height: 480px) {
   #pause-panel .panel {
     padding: 14px 18px;
