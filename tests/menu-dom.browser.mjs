@@ -8,7 +8,7 @@ import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Exercise the real menu and Race constructor without allocating a WebGL context.
 const server = await createServer({
-  server: { host: "127.0.0.1", port: 0 },
+  server: { host: "127.0.0.1", port: 0, hmr: false },
 });
 await server.listen();
 const url = server.resolvedUrls.local[0];
@@ -220,7 +220,17 @@ try {
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
     await page.keyboard.press("Enter");
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
-    await page.keyboard.press("ArrowRight");
+    const classDirection = await page
+      .locator("#speed-class label")
+      .evaluateAll((labels) =>
+        Math.abs(
+          labels[0].getBoundingClientRect().top -
+            labels[1].getBoundingClientRect().top,
+        ) < 2
+          ? "ArrowRight"
+          : "ArrowDown",
+      );
+    await page.keyboard.press(classDirection);
     await expect(
       page.locator('input[name="speed-class"][value="1"]'),
     ).toBeChecked();
@@ -297,20 +307,21 @@ try {
     const modeCursor = page.locator("#mode label.menu-cursor input");
     if ((await modeCursor.getAttribute("value")) === "trial")
       await page.keyboard.press("Enter");
-    else await page.keyboard.press("ArrowRight");
+    else await page.keyboard.press("ArrowDown");
     await expect(
       page.locator('input[name="mode"][value="trial"]'),
     ).toBeChecked();
-    await page.evaluate(() => window.menuCursorQA("#quality-clean"));
-    await expect(page.locator("#render-quality label.menu-cursor")).toHaveCount(
-      1,
-    );
-    const qualityCursor = page.locator(
-      "#render-quality label.menu-cursor input",
-    );
-    if ((await qualityCursor.getAttribute("value")) === "clean")
-      await page.keyboard.press("ArrowRight");
-    else await page.keyboard.press("Enter");
+    await page.evaluate(() => window.menuCursorQA("#quality"));
+    await expect(page.locator("#render-quality.menu-cursor")).toHaveCount(1);
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.locator("#quality")).not.toBeChecked();
+    await page.keyboard.press("ArrowLeft");
+    await expect(
+      page.locator('a[aria-label="BELMONDO on GitHub"]'),
+    ).toHaveClass(/menu-cursor/);
+    await page.keyboard.press("ArrowRight");
+    await expect(page.locator("#render-quality")).toHaveClass(/menu-cursor/);
+    await page.keyboard.press("ArrowRight");
     await expect(page.locator("#quality")).toBeChecked();
     await page.evaluate(() => window.menuCursorQA("#help-open"));
     await expect(page.locator("#help-open.menu-cursor")).toHaveCount(1);
@@ -412,9 +423,8 @@ try {
     await page.locator("#quality").check();
     expect(await page.evaluate(() => window.menuQA().quality)).toBe("retro");
     await page.locator("#quality").click();
-    expect(await page.evaluate(() => window.menuQA().quality)).toBe("retro");
-    await page.locator("#quality-clean").check();
-    await page.locator("#quality-clean").click();
+    expect(await page.evaluate(() => window.menuQA().quality)).toBe("clean");
+    await expect(page.locator("#quality-state")).toHaveText("OFF");
     expect(await page.evaluate(() => localStorage.getItem("nv-render"))).toBe(
       "clean",
     );

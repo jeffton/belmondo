@@ -215,16 +215,12 @@ try {
         assert.equal(observed.footer.left, 0, detail);
         assert.equal(observed.footer.right, width, detail);
         assert.equal(observed.footer.bottom, height, detail);
-        assert.equal(
-          observed.footer.height,
-          (width <= 600 ? 43 : 29) + bottom,
-          detail,
-        );
+        assert.equal(observed.footer.height, 45 + bottom, detail);
         assert.equal(observed.toolControls.length, 4, detail);
         for (const control of observed.toolControls) {
-          assert.equal(control.height, width <= 600 ? 21 : 28, detail);
+          assert.equal(control.height, 44, detail);
           assert.equal(control.border, "none", detail);
-          assert.equal(control.fontSize, width <= 600 ? "8px" : "9px", detail);
+          assert.equal(control.fontSize, "10px", detail);
         }
         assert.equal(observed.footerAtSample, true, detail);
         assert.equal(observed.obsoleteFeedLabel, false, detail);

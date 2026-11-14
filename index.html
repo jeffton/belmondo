@@ -125,7 +125,7 @@
             hidden
           >
             <div class="selection-label">
-              <span id="craft-circuit"></span><span id="craft-note"></span>
+              <span id="craft-circuit"></span>
             </div>
             <div id="crafts" class="choices crafts"></div>
           </section>
@@ -160,36 +160,28 @@
         </div>
       </div>
       <footer class="menu-footer">
-        <div
-          id="render-quality"
-          class="menu-options"
-          role="group"
-          aria-label="Low resolution"
-        >
-          <span class="quality-label">LOW-RES</span>
-          <div class="binary-options">
-            <label
-              ><input
-                id="quality-clean"
-                type="radio"
-                name="quality"
-                value="clean"
-              /><span>OFF</span></label
-            >
-            <label
-              ><input
-                id="quality"
-                type="radio"
-                name="quality"
-                value="retro"
-              /><span>ON</span></label
-            >
-          </div>
-        </div>
+        <label id="render-quality" class="menu-options">
+          <input
+            id="quality"
+            type="checkbox"
+            name="quality"
+            value="retro"
+            checked
+          />
+          <span class="quality-label"
+            >LOW-RES <b id="quality-state">ON</b></span
+          >
+        </label>
         <nav class="menu-links" aria-label="Menu tools">
-          <button id="help-open">PILOT BRIEFING</button>
-          <button id="music-open">SOUND SYSTEM</button>
-          <button id="art-open">DESIGN STUDY</button>
+          <button id="help-open" aria-label="Pilot briefing">
+            <span class="footer-long">PILOT </span>BRIEFING
+          </button>
+          <button id="music-open" aria-label="Sound system">
+            SOUND<span class="footer-long"> SYSTEM</span>
+          </button>
+          <button id="art-open" aria-label="Design study">
+            DESIGN<span class="footer-long"> STUDY</span>
+          </button>
           <a
             href="https://github.com/jeffton/belmondo"
             target="_blank"

@@ -365,7 +365,7 @@ for (const i of [2, 0, 1]) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.craftIndex = i;
-  button.innerHTML = `<span><b>${c.name}</b><small>${c.team}</small></span>`;
+  button.innerHTML = `<span><b>${c.name}</b><small>${c.text.split("/")[0].trim().toUpperCase()}</small></span>`;
   button.onclick = () => {
     selectedCraft = i;
     menuPreview.setCraft(i);
@@ -376,7 +376,6 @@ for (const i of [2, 0, 1]) {
       b.classList.toggle("active", active);
       b.setAttribute("aria-pressed", String(active));
     }
-    $("craft-note").textContent = c.text.split("/")[0].trim().toUpperCase();
   };
   $("crafts").append(button);
 }
@@ -394,8 +393,8 @@ $("speed-class").onchange = () => {
 };
 const qualityToggle = $("quality");
 qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
-$("quality-clean").checked = !qualityToggle.checked;
 function applyQuality() {
+  $("quality-state").textContent = qualityToggle.checked ? "ON" : "OFF";
   world.quality = qualityToggle.checked ? "retro" : "clean";
   menuPreview.quality = world.quality;
   world.resize();
@@ -1103,10 +1102,8 @@ function animate(now) {
     renderTime += dt;
     if (renderTime >= 2.5) {
       if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
-        world.quality = "retro";
-        menuPreview.quality = world.quality;
         qualityToggle.checked = true;
-        world.resize();
+        applyQuality();
       }
       renderFrames = 0;
       renderTime = 0;

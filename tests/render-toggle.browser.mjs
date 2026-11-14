@@ -54,7 +54,7 @@ try {
     await expect(toggle).toBeChecked();
     await expect(page.locator("select#quality")).toHaveCount(0);
     await rendered(true);
-    await page.locator("#quality-clean").check();
+    await toggle.uncheck();
     await expect(toggle).not.toBeChecked();
     await rendered(false);
     if (mobile) await toggle.tap();
@@ -143,8 +143,8 @@ try {
     await expect(pauseDialog).not.toBeVisible();
     await expect(page.locator("#start")).toBeFocused();
     await ready();
-    if (mobile) await page.locator("#quality-clean").tap();
-    else await page.locator("#quality-clean").check();
+    if (mobile) await toggle.tap();
+    else await toggle.uncheck();
     await expect(toggle).not.toBeChecked();
     await rendered(false);
     expect(await page.evaluate(() => localStorage.getItem("nv-render"))).toBe(

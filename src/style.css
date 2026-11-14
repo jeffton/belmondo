@@ -1940,14 +1940,18 @@ body.touch .instrument-bar {
   padding: 16px 28px;
 }
 #menu .menu-body {
-  align-self: center;
+  align-self: end;
   width: min(520px, 46vw);
   max-width: none;
   padding: 18px 28px;
 }
 #menu h1.wordmark {
+  display: block;
   font-size: clamp(44px, 6.4vw, 86px);
   margin: 0 0 22px;
+}
+#menu:not([data-stage="mode"]) h1.wordmark {
+  display: none;
 }
 #menu .selection-label {
   margin: 0 0 12px;
@@ -1956,8 +1960,34 @@ body.touch .instrument-bar {
 #menu #speed-class {
   margin: 0;
 }
+#menu .speed-choices,
+#menu .crafts {
+  flex-direction: column;
+}
+#menu .speed-choices .choice {
+  text-align: left;
+}
 #menu .choice {
   padding: 14px 9px;
+}
+#menu #mode .binary-options {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  border: 0;
+  background: none;
+}
+#menu #mode .binary-options label {
+  border: 1px solid #68829055;
+  background: #172a35b8;
+}
+#menu #mode .binary-options label:has(input:checked) {
+  border-color: var(--paper);
+}
+#menu #mode .binary-options span {
+  justify-content: flex-start;
+  padding: 14px 9px;
+  font: 700 17px/1.15 var(--display);
+  text-align: left;
 }
 #menu #tracks {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1982,7 +2012,8 @@ body.touch .instrument-bar {
   margin-top: 20px;
 }
 .setup-navigation {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 18px;
 }
@@ -2036,7 +2067,7 @@ body.touch .instrument-bar {
   display: block;
 }
 #menu .world-caption small,
-#menu[data-stage="class"] .world-caption,
+#menu:is([data-stage="mode"], [data-stage="class"]) .world-caption,
 #menu[data-stage="track"] .world-caption strong {
   display: none;
 }
@@ -2166,13 +2197,18 @@ body.touch .instrument-bar {
     display: none;
   }
   #menu .crafts {
-    flex-direction: row;
+    flex-direction: column;
   }
   #menu .crafts .choice {
-    padding: 12px 6px;
+    padding: 12px 8px;
     gap: 5px;
   }
-  #menu .crafts .choice b {
+  #menu .crafts .choice b,
+  #menu .speed-choices .choice b {
+    font-size: 14px;
+  }
+  #menu #mode .binary-options span {
+    padding: 12px 8px;
     font-size: 14px;
   }
   #menu .crafts .choice small {
@@ -2232,6 +2268,15 @@ body.touch .instrument-bar {
       )
     );
   }
+  #menu[data-stage="craft"] #menu-model {
+    height: max(
+      110px,
+      calc(
+        var(--app-height) - 484px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
   #menu-model #model-name {
     font-size: 16px;
     bottom: 5px;
@@ -2276,12 +2321,17 @@ body.touch .instrument-bar {
     display: none;
   }
   #menu .crafts {
-    flex-direction: row;
+    flex-direction: column;
   }
   #menu .crafts .choice {
-    padding: 9px 5px;
+    padding: 9px 6px;
   }
-  #menu .crafts .choice b {
+  #menu .crafts .choice b,
+  #menu .speed-choices .choice b {
+    font-size: 13px;
+  }
+  #menu #mode .binary-options span {
+    padding: 9px 6px;
     font-size: 13px;
   }
   #menu .crafts .choice small {
@@ -2331,6 +2381,9 @@ body.touch .instrument-bar {
   }
 }
 @media (max-height: 360px) and (orientation: landscape) {
+  #menu #tracks .choice {
+    padding: 5px 6px;
+  }
   #menu .menu-links {
     gap: 6px;
   }
@@ -2341,12 +2394,16 @@ body.touch .instrument-bar {
 }
 @media (max-height: 600px) and (orientation: landscape) {
   #menu h1.wordmark {
-    display: none;
+    font-size: 40px;
   }
 }
 @media (max-height: 690px) and (orientation: portrait) {
-  #menu:not([data-stage="class"]) h1.wordmark {
+  #menu:not([data-stage="mode"]) h1.wordmark {
     display: none;
+  }
+  #menu .speed-choices,
+  #menu .crafts {
+    flex-direction: row;
   }
   #menu .menu-links {
     gap: 6px;
@@ -2433,13 +2490,13 @@ body.touch :is(dialog, .overlay) {
 }
 
 /* Keep the primary action quiet while a different action is selected. */
-:is(#menu, #pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
+:is(#pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
   .start:not(.menu-cursor) {
   color: var(--paper);
   background: transparent;
   box-shadow: none;
 }
-:is(#menu, #pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
+:is(#pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
   .start:not(.menu-cursor)::after {
   visibility: hidden;
 }
@@ -2465,7 +2522,7 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 0;
+  width: 100%;
   min-width: 44px;
   height: 44px;
   margin-top: 0;
@@ -2475,6 +2532,14 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   color: #b4c7ce;
   font: 600 10px/1.2 var(--interface);
   letter-spacing: 1px;
+}
+#menu .setup-navigation #setup-back {
+  grid-column: 1;
+  grid-row: 1;
+}
+#menu .setup-navigation :is(#setup-next, #start) {
+  grid-column: 2;
+  grid-row: 1;
 }
 #menu .setup-navigation [data-keyboard-hint]::before {
   order: -1;
@@ -2555,62 +2620,82 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
 .close[data-keyboard-hint]::before {
   order: -1;
 }
+#menu {
+  --footer-height: calc(45px + env(safe-area-inset-bottom));
+}
 #menu footer {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 6px;
+  padding-inline: max(8px, env(safe-area-inset-left))
+    max(8px, env(safe-area-inset-right));
 }
 #menu footer .menu-links {
+  display: flex;
   flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   min-width: 0;
 }
+#menu footer .menu-links :is(button, a) {
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 2px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0;
+}
 #menu footer #render-quality {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   order: 1;
   flex-shrink: 0;
-  gap: 6px;
+  min-width: 78px;
+  min-height: 44px;
+  cursor: pointer;
+}
+#menu footer #quality {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 #menu footer #render-quality .quality-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 0;
-  font-size: 8px;
-  letter-spacing: 0.3px;
+  white-space: nowrap;
+  font-size: 10px;
+  letter-spacing: 0;
 }
-#menu footer #render-quality .binary-options {
-  border: 0;
-  background: transparent;
+#quality-state {
+  min-width: 20px;
+  color: var(--paper);
 }
-#menu footer #render-quality .binary-options span {
-  min-height: 24px;
-  padding: 4px 6px;
-  font-size: 8px;
+#quality:checked + .quality-label #quality-state {
+  color: var(--mint);
 }
-#menu footer .menu-links :is(button, a).menu-cursor {
-  padding-inline: 4px;
+@media (max-width: 700px) {
+  #menu footer .footer-long {
+    display: none;
+  }
 }
-@media (max-width: 600px) {
-  #menu {
-    --footer-height: calc(43px + env(safe-area-inset-bottom));
-  }
-  #menu footer {
-    gap: 10px;
-  }
-  #menu footer .menu-links {
-    display: grid;
-    grid-template-columns: repeat(2, max-content);
-    justify-content: space-between;
-    gap: 0 8px;
-  }
-  #menu footer .menu-links :is(button, a) {
-    min-height: 21px;
-    padding-block: 3px;
-    font-size: 8px;
-    letter-spacing: 0;
-  }
-  #menu footer #render-quality {
-    gap: 4px;
-  }
-  #menu footer #render-quality .binary-options span {
-    padding-inline: 4px;
-  }
+body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
+  border: 1px solid #7896a477;
+  background: #1b3540cc;
+  color: var(--paper);
+  font-size: 12px;
+}
+body[data-input-mode="touch"] #menu .setup-navigation button:active {
+  background: #2b4a56;
+  border-color: var(--mint);
 }

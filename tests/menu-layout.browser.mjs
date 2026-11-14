@@ -16,17 +16,61 @@ try {
     hasTouch: viewport[0] < 900,
   });
   const errors = [];
+  const navigationBoxes = [];
+  const captureNavigation = async (stage) => {
+    const boxes = await page
+      .locator(".setup-navigation button:visible")
+      .evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const { x, y, width, height } = button.getBoundingClientRect();
+          return { id: button.id, x, y, width, height };
+        }),
+      );
+    const select = boxes.find((box) => box.id !== "setup-back");
+    const previous = navigationBoxes[0]?.select;
+    if (previous)
+      for (const key of ["x", "y", "width", "height"])
+        expect(
+          Math.abs(select[key] - previous[key]),
+          `${stage} Select ${key}`,
+        ).toBeLessThan(1);
+    const back = boxes.find((box) => box.id === "setup-back");
+    const previousBack = navigationBoxes.find((entry) => entry.back)?.back;
+    if (back && previousBack)
+      for (const key of ["x", "y", "width", "height"])
+        expect(
+          Math.abs(back[key] - previousBack[key]),
+          `${stage} Back ${key}`,
+        ).toBeLessThan(1);
+    navigationBoxes.push({ stage, select, back });
+  };
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(process.env.GAME_URL || server.resolvedUrls.local[0]);
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
   );
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
+  await captureNavigation("mode");
+  await expect(page.locator("h1.wordmark")).toBeVisible();
+  await expect(page.locator(".world-caption")).toBeHidden();
   await page.screenshot({ path: `${output}/${viewport.join("x")}-mode.png` });
   await page.keyboard.press("Enter");
-  await page.keyboard.press("ArrowRight");
+  await captureNavigation("class");
+  const classDirection = await page
+    .locator("#speed-class label")
+    .evaluateAll((labels) =>
+      Math.abs(
+        labels[0].getBoundingClientRect().top -
+          labels[1].getBoundingClientRect().top,
+      ) < 2
+        ? "ArrowRight"
+        : "ArrowDown",
+    );
+  await page.keyboard.press(classDirection);
   await page.keyboard.press("Enter");
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+  await captureNavigation("track");
+  await expect(page.locator("h1.wordmark")).toBeHidden();
   await page.waitForFunction(() => !window.nullVector.telemetry.trackLoading);
   const sizes = await page.locator("#tracks button").evaluateAll((buttons) =>
     buttons.map((button) => {
@@ -43,6 +87,65 @@ try {
       Math.min(...sizes.map((size) => size.width)),
   ).toBeLessThan(1);
   await expect(page.locator("#render-quality .quality-label")).toBeVisible();
+  const footerTargets = await page
+    .locator(".menu-footer .menu-links > *, #render-quality")
+    .evaluateAll((controls) =>
+      controls
+        .map((control) => {
+          const box = control.getBoundingClientRect();
+          return {
+            id: control.id,
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            bottom: box.bottom,
+            width: box.width,
+            height: box.height,
+          };
+        })
+        .sort((a, b) => a.left - b.left),
+    );
+  expect(footerTargets).toHaveLength(5);
+  expect(
+    footerTargets.every(
+      (control) =>
+        control.width >= 44 &&
+        control.height >= 44 &&
+        Math.abs(control.top - footerTargets[0].top) < 1,
+    ),
+  ).toBe(true);
+  for (let i = 1; i < footerTargets.length; i++)
+    expect(footerTargets[i].left).toBeGreaterThanOrEqual(
+      footerTargets[i - 1].right,
+    );
+  expect(footerTargets[0].left).toBeGreaterThanOrEqual(0);
+  expect(footerTargets.at(-1).right).toBeLessThanOrEqual(viewport[0]);
+  for (const dialog of ["help", "music", "art"]) {
+    await page.locator(`#${dialog}-open`).click();
+    await expect(page.locator(`#${dialog}-dialog`)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator(`#${dialog}-dialog`)).not.toBeVisible();
+  }
+  await page.context().route("https://github.com/jeffton/belmondo", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<title>BELMONDO repository</title>",
+    }),
+  );
+  const popupPromise = page.waitForEvent("popup");
+  await page.locator('a[aria-label="BELMONDO on GitHub"]').click();
+  const popup = await popupPromise;
+  await popup.waitForURL("https://github.com/jeffton/belmondo");
+  await popup.close();
+  await page.bringToFront();
+  if (viewport[0] < 900) {
+    await page.locator("#quality").tap();
+    await expect(page.locator("#quality")).not.toBeChecked();
+    await expect(page.locator("#quality-state")).toHaveText("OFF");
+    await page.locator("#quality").tap();
+    await expect(page.locator("#quality")).toBeChecked();
+    await expect(page.locator("#quality-state")).toHaveText("ON");
+  }
   const signatures = await page
     .locator(".setup-navigation button:visible")
     .evaluateAll((buttons) =>
@@ -52,17 +155,34 @@ try {
         border: getComputedStyle(button).borderTopWidth,
       })),
     );
+  const touchInput =
+    (await page.locator("body").getAttribute("data-input-mode")) === "touch";
   expect(
     signatures.every(
       (control) =>
         control.height >= 44 &&
-        control.background === "rgba(0, 0, 0, 0)" &&
-        control.border === "0px",
+        (touchInput
+          ? control.border === "1px" &&
+            control.background !== "rgba(0, 0, 0, 0)" &&
+            control.background !== "rgb(255, 101, 77)"
+          : control.background === "rgba(0, 0, 0, 0)" &&
+            control.border === "0px"),
     ),
   ).toBe(true);
   if (viewport[0] < 900) await page.locator("#setup-back").tap();
   else await page.locator("#setup-back").click();
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+  if (viewport[0] < 900) {
+    await expect(page.locator("#setup-next")).toHaveCSS(
+      "border-top-width",
+      "1px",
+    );
+    expect(
+      await page
+        .locator("#setup-next")
+        .evaluate((button) => getComputedStyle(button).backgroundColor),
+    ).not.toBe("rgb(255, 101, 77)");
+  }
   if (viewport[0] < 900) await page.locator("#setup-next").tap();
   else await page.locator("#setup-next").click();
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
@@ -72,7 +192,18 @@ try {
   await page.screenshot({ path: `${output}/${viewport.join("x")}-track.png` });
   await page.keyboard.press("Enter");
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");
+  await captureNavigation("craft");
+  await expect(page.locator("h1.wordmark")).toBeHidden();
   await expect(page.locator("#crafts .active")).toHaveClass(/menu-cursor/);
+  await expect(page.locator("#crafts button small")).toHaveText([
+    "AGILE",
+    "BALANCED",
+    "HIGH VELOCITY",
+  ]);
+  await expect(page.locator("#craft-note")).toHaveCount(0);
+  await expect(page.locator("#menu-model")).not.toContainText(
+    /AGILE|BALANCED|HIGH VELOCITY/,
+  );
   const actionTextFits = await page.locator("#start").evaluate((button) => {
     const rect = button.getBoundingClientRect();
     return [...button.childNodes]
@@ -117,7 +248,7 @@ try {
   await expect(page.locator(".world-caption")).toBeHidden();
   await page.screenshot({ path: `${output}/${viewport.join("x")}-class.png` });
   // The actual quality control updates the independently rendered model buffer.
-  await page.locator("#quality-clean").check();
+  await page.locator("#quality").uncheck();
   await page.waitForFunction(() => {
     const t = window.nullVector.telemetry;
     return t.previewResources.pixelRatio === devicePixelRatio;
@@ -128,8 +259,11 @@ try {
     return t.previewResources.pixelRatio === 0.55;
   });
   await page.keyboard.press("Escape");
+  await expect(page.locator("h1.wordmark")).toBeVisible();
+  await expect(page.locator(".world-caption")).toBeHidden();
   await page.keyboard.press("Enter");
-  await page.evaluate(() => {
+  await expect(page.locator("h1.wordmark")).toBeHidden();
+  await page.evaluate((direction) => {
     window.virtualMenuPad = {
       axes: [0, 0],
       buttons: Array.from({ length: 16 }, () => ({ pressed: false, value: 0 })),
@@ -138,14 +272,16 @@ try {
       configurable: true,
       value: () => [null, window.virtualMenuPad],
     });
-    window.virtualMenuPad.buttons[14].pressed = true;
-  });
+    window.virtualMenuPad.buttons[direction === "ArrowDown" ? 12 : 14].pressed =
+      true;
+  }, classDirection);
   await expect(
     page.locator('input[name="speed-class"][value="0"]'),
   ).toBeChecked();
-  await page.evaluate(() => {
-    window.virtualMenuPad.buttons[14].pressed = false;
-  });
+  await page.evaluate((direction) => {
+    window.virtualMenuPad.buttons[direction === "ArrowDown" ? 12 : 14].pressed =
+      false;
+  }, classDirection);
   await expect(page.locator("body")).toHaveAttribute(
     "data-gamepad-connected",
     "true",

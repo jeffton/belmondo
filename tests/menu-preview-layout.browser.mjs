@@ -7,7 +7,9 @@ import { createServer } from "vite";
 const output =
   process.env.PREVIEW_ARTIFACTS || "/var/tmp/belmondo-preview-layout";
 await mkdir(output, { recursive: true });
-const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+const server = await createServer({
+  server: { host: "127.0.0.1", port: 0, hmr: false },
+});
 await server.listen();
 const browser = await chromium.launch({
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
@@ -20,8 +22,9 @@ try {
   );
   for (const [name, width, height] of [
     ["desktop", 1280, 800],
-    ["portrait", 390, 844],
-    ["landscape", 844, 390],
+    ["portrait", 393, 852],
+    ["portrait-390", 390, 844],
+    ["landscape", 852, 393],
     ["small-landscape", 568, 320],
     ["small-portrait", 390, 568],
     ["narrow-portrait", 320, 568],
@@ -40,9 +43,12 @@ try {
         (t) =>
           `<button class="choice"><b>${t.name}</b><small class="track-progress">★ BEST / 1ST</small></button>`,
       ).join("");
-      document.querySelector("#crafts").innerHTML = CRAFT.map(
-        (t) => `<button class="choice"><b>${t.name}</b></button>`,
-      ).join("");
+      document.querySelector("#crafts").innerHTML = [2, 0, 1]
+        .map(
+          (index) =>
+            `<button class="choice"><span><b>${CRAFT[index].name}</b><small>${CRAFT[index].text.split("/")[0].trim().toUpperCase()}</small></span></button>`,
+        )
+        .join("");
       document.querySelector("#craft-stats").innerHTML = [
         "SPEED",
         "HANDLING",
@@ -72,6 +78,47 @@ try {
       };
     });
     measurements[name] = [];
+    await page.evaluate(() => {
+      document.querySelector("#menu").dataset.stage = "mode";
+      document.querySelectorAll(".setup-stage").forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== "mode";
+      });
+      document.querySelector("#menu-model").hidden = true;
+      if (
+        getComputedStyle(document.querySelector("h1.wordmark")).display ===
+        "none"
+      )
+        throw new Error("first mode screen must show BELMONDO logo");
+      if (
+        getComputedStyle(document.querySelector(".world-caption")).display !==
+        "none"
+      )
+        throw new Error("mode must not show a circuit caption");
+      const choices = [
+        ...document.querySelectorAll("#mode .binary-options label"),
+      ];
+      const [first, second] = choices.map((choice) =>
+        choice.getBoundingClientRect(),
+      );
+      if (second.top < first.bottom) throw new Error("mode choices must stack");
+      if (
+        choices.some(
+          (choice) => getComputedStyle(choice).borderTopStyle !== "solid",
+        )
+      )
+        throw new Error("mode choices must have individual card borders");
+      const body = document.querySelector(".menu-body").getBoundingClientRect();
+      const header = document
+        .querySelector(".masthead")
+        .getBoundingClientRect();
+      const footer = document.querySelector("footer").getBoundingClientRect();
+      if (body.top < header.bottom || body.bottom > footer.top)
+        throw new Error("mode controls overlap header/footer");
+    });
+    await page.screenshot({ path: `${output}/${name}-mode.png` });
+    await page.evaluate(() => {
+      document.querySelector("#menu-model").hidden = false;
+    });
     for (const [stage, count] of [
       ["craft", 3],
       ["class", 3],
@@ -84,6 +131,13 @@ try {
               window.previewTest;
             const menu = document.querySelector("#menu");
             menu.dataset.stage = stage;
+            if (
+              getComputedStyle(document.querySelector("h1.wordmark"))
+                .display !== "none"
+            )
+              throw new Error(
+                `${stage}: BELMONDO logo belongs only to mode screen`,
+              );
             document.querySelectorAll(".setup-stage").forEach((panel) => {
               panel.hidden = panel.dataset.panel !== stage;
             });
@@ -148,6 +202,35 @@ try {
             const footer = document
               .querySelector("footer")
               .getBoundingClientRect();
+            const header = document
+              .querySelector(".masthead")
+              .getBoundingClientRect();
+            if (body.top < header.bottom || body.bottom > footer.top)
+              throw new Error(
+                `${stage}/${index}: controls overlap header/footer: body ${body.top}–${body.bottom}, header ${header.bottom}, footer ${footer.top}`,
+              );
+            if (
+              document.documentElement.scrollWidth > innerWidth ||
+              document.documentElement.scrollHeight > innerHeight
+            )
+              throw new Error(`${stage}/${index}: document overflow`);
+            const choices = [
+              ...document.querySelectorAll(
+                stage === "craft"
+                  ? "#crafts .choice"
+                  : stage === "class"
+                    ? "#speed-class .choice"
+                    : "#tracks .choice",
+              ),
+            ];
+            const rects = choices.map((choice) =>
+              choice.getBoundingClientRect(),
+            );
+            const stacked = !(innerWidth < innerHeight && innerHeight <= 690);
+            if (stage !== "track" && stacked && rects[1].top < rects[0].bottom)
+              throw new Error(`${stage}/${index}: choices should stack`);
+            if (stage === "track" && rects[1].top !== rects[0].top)
+              throw new Error("tracks must retain their grid");
             const bottom = Math.max(
               element.bottom,
               stats.hidden ? 0 : stats.getBoundingClientRect().bottom,
@@ -194,7 +277,20 @@ try {
           });
       }
     }
-    await page.evaluate(() => window.previewTest.preview.dispose());
+    await page.evaluate(() => {
+      document.querySelector("#menu").dataset.stage = "mode";
+      if (
+        getComputedStyle(document.querySelector("h1.wordmark")).display ===
+        "none"
+      )
+        throw new Error("returning to mode must restore BELMONDO logo");
+      if (
+        getComputedStyle(document.querySelector(".world-caption")).display !==
+        "none"
+      )
+        throw new Error("returning to mode must hide circuit caption");
+      window.previewTest.preview.dispose();
+    });
     console.log(
       name,
       measurements[name]

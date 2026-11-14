@@ -52,13 +52,11 @@ try {
     await ready();
     await expect(page.locator("#quality")).toBeChecked();
     await render("retro");
-    await page.locator("#quality").click();
-    await render("retro");
-    await page.locator("#quality-clean").check();
+    await page.locator("#quality").uncheck();
     await render("clean");
     await page.reload();
     await ready();
-    await expect(page.locator("#quality-clean")).toBeChecked();
+    await expect(page.locator("#quality")).not.toBeChecked();
     await render("clean");
     await page.locator("#quality").check();
     await page.reload();

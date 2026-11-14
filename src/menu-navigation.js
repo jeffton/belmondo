@@ -87,6 +87,15 @@ export class MenuNavigation {
         ? this.cursor
         : null;
     if (
+      input?.type === "checkbox" &&
+      (direction === "left" || direction === "right")
+    ) {
+      if (input.checked !== (direction === "right")) {
+        input.click();
+        return;
+      }
+    }
+    if (
       input?.type === "range" &&
       (direction === "left" || direction === "right")
     ) {
