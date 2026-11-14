@@ -2664,13 +2664,14 @@ body[data-input-mode="touch"] #pause-panel .panel > button.start::after {
   flex: 1;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 0;
   min-width: 0;
 }
-#menu footer .menu-links :is(button, a) {
+#menu footer .menu-links > :is(button, a) {
+  flex: 1 1 20%;
   justify-content: center;
   gap: 3px;
-  min-width: 44px;
+  min-width: 0;
   min-height: 44px;
   padding: 2px;
   white-space: nowrap;
@@ -2680,11 +2681,10 @@ body[data-input-mode="touch"] #pause-panel .panel > button.start::after {
 #menu footer #render-quality {
   position: relative;
   display: flex;
+  flex: 1 1 20%;
   align-items: center;
   justify-content: center;
-  order: 1;
-  flex-shrink: 0;
-  min-width: 78px;
+  min-width: 0;
   min-height: 44px;
   cursor: pointer;
 }

@@ -44,6 +44,7 @@ try {
   for (const viewport of [
     { width: 1280, height: 800 },
     { width: 1000, height: 625 },
+    { width: 320, height: 568 },
     { width: 390, height: 844 },
     { width: 844, height: 390 },
   ]) {
@@ -494,6 +495,22 @@ try {
       'a[aria-label="BELMONDO on GitHub"]',
     ])
       await expect(footer.locator(selector)).toBeVisible();
+    const footerItems = footer.locator(".menu-links > *");
+    await expect(footerItems).toHaveCount(5);
+    const footerGeometry = await footerItems.evaluateAll((items) =>
+      items.map((item) => {
+        const { x, y, width, height } = item.getBoundingClientRect();
+        return { x, y, width, height };
+      }),
+    );
+    expect(
+      Math.max(...footerGeometry.map(({ width }) => width)) -
+        Math.min(...footerGeometry.map(({ width }) => width)),
+    ).toBeLessThan(1);
+    expect(footerGeometry.every(({ height }) => height >= 44)).toBe(true);
+    expect(footerGeometry.every(({ y }) => y === footerGeometry[0].y)).toBe(
+      true,
+    );
     await goToSetupStage(page, "track");
     await page.locator('#tracks button[data-index="0"]').click();
     await goToSetupStage(page, "class");
