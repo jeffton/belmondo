@@ -156,7 +156,11 @@ test("finishers precede all DNF; unfinished racers continue after player result 
   approachFinish(race, race.racers[1]);
   race.update(1 / 120, {});
   assert.equal(race.racers[1].finalPosition, 1);
-  assert.equal(race.position, 2);
+  assert.equal(
+    race.position,
+    7,
+    "last-grid player only passes the eliminated racer",
+  );
   approachFinish(race, race.player);
   race.update(1 / 120, {});
   assert.equal(race.position, 2);

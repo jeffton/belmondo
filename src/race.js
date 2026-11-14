@@ -52,6 +52,8 @@ export const CRAFT = [
 export const WEAPONS = ["MISSILE", "PULSE", "MINE", "SHIELD", "TURBO"];
 export const LAPS_BY_CLASS = Object.freeze([3, 4, 5]);
 export const CRITICAL_SHIELD = 25;
+// A small engine-input handicap offsets the player's last-place grid slot.
+export const AI_THROTTLE = 0.96;
 
 export class Race {
   constructor(track, craft = 0, mode = "race", speedClass = 0, terrain = null) {
@@ -81,7 +83,7 @@ export class Race {
     this.racers = Array.from({ length: mode === "trial" ? 1 : 8 }, (_, i) => ({
       id: i,
       craft: i ? i % 3 : craft,
-      s: track.finishS - 18 - i * 9,
+      s: track.finishS - 18 - (mode === "trial" ? 0 : i === 0 ? 7 : i - 1) * 9,
       x: i % 2 ? -3 : 3,
       vx: 0,
       speed: 0,
@@ -429,7 +431,8 @@ export class Race {
         );
         const pairedAir = slowing * (1 - Math.abs(air));
         controls = {
-          throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
+          throttle:
+            r.speed < cornerSpeed && Math.abs(error) < 0.7 ? AI_THROTTLE : 0,
           steer,
           airLeft: pairedAir + Math.max(0, air),
           airRight: pairedAir + Math.max(0, -air),

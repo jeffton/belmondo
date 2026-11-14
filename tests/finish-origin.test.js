@@ -59,7 +59,8 @@ for (let course = 0; course < TRACKS.length; course++) {
     for (let speedClass = 0; speedClass < 3; speedClass++) {
       const race = new Race(track, 0, "race", speedClass);
       for (const racer of race.racers) {
-        assert.equal(racer.s, track.finishS - 18 - racer.id * 9);
+        const gridSlot = racer.id === 0 ? 7 : racer.id - 1;
+        assert.equal(racer.s, track.finishS - 18 - gridSlot * 9);
         assert.equal(racer.checkpoint.s, racer.s);
         assert.equal(racer.gate, 1);
         const f = track.frame(racer.s);
