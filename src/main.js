@@ -28,6 +28,12 @@ import { frameDelta } from "./frame-clock.js";
 import { toKilometresPerHour } from "./units.js";
 import { halfstickPosition } from "./touch-halfstick.js";
 import { CoursePreparation } from "./course-preparation.js";
+import { gamepadFlightControls } from "./gamepad-controls.js";
+import { GamepadRumble } from "./gamepad-rumble.js";
+
+const rumble = new GamepadRumble();
+window.addEventListener("gamepaddisconnected", () => rumble.stop());
+window.addEventListener("pagehide", () => rumble.stop());
 
 installZoomPolicy();
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -423,6 +429,7 @@ $("render-quality").onchange = () => {
 };
 window.addEventListener("resize", () => world.resize());
 function clearInput() {
+  rumble.stop();
   keys.clear();
   touchSteer = 0;
   touchPitch = 0;
@@ -650,6 +657,10 @@ function connectedGamepad() {
 }
 function pollMenuGamepad() {
   const pad = connectedGamepad();
+  rumble.connect(
+    pad,
+    state === "race" && !paused && !document.hidden && document.hasFocus(),
+  );
   const connected = String(Boolean(pad));
   if (document.body.dataset.gamepadConnected !== connected)
     document.body.dataset.gamepadConnected = connected;
@@ -794,7 +805,7 @@ function input() {
           !padAxesConsumed && Math.abs(value) > 0.12 ? value : 0,
         ),
       ...pad.buttons.map((button, index) =>
-        [4, 5, 7].includes(index)
+        [6, 7].includes(index)
           ? button.value > 0.1
             ? button.value
             : 0
@@ -830,14 +841,12 @@ function input() {
       steeringKind = "analog";
     }
     if (!padAxesConsumed && Math.abs(pad.axes[1]) > 0.12) pitch = -pad.axes[1];
-    airRight = Math.max(airRight, pad.buttons[5]?.value || 0);
-    airLeft = Math.max(airLeft, pad.buttons[4]?.value || 0);
-    const padThrust =
-      (pad.buttons[0]?.pressed && !padAConsumed ? 1 : 0) ||
-      pad.buttons[7]?.value ||
-      0;
-    throttle = Math.max(throttle, padThrust > 0.1 ? padThrust : 0);
-    launchIntent ||= padThrust > 0.1;
+    const flight = gamepadFlightControls(pad, padAConsumed);
+    airRight = Math.max(airRight, flight.airRight);
+    airLeft = Math.max(airLeft, flight.airLeft);
+    // Connected controllers always hold A for thrust, including touch devices.
+    throttle = Math.max(Number(down("ArrowUp", "KeyW")), flight.throttle);
+    launchIntent = down("ArrowUp", "KeyW") || flight.throttle > 0;
     if (state === "race") {
       if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
       padFire = pad.buttons[2]?.pressed;
@@ -908,6 +917,7 @@ function drawMap() {
   }
 }
 function showResults() {
+  rumble.stop();
   state = "results";
   updateAppFocus();
   music.setMenu(true);
@@ -1066,8 +1076,10 @@ function animate(now) {
       // Dispatch on the same frame as the physical board, not the HUD cadence.
       const count = countdownBoardStage(race);
       if (count !== previousCount) {
-        if (count === "GO") sound.effect("go");
-        else if (typeof count === "number") sound.effect("countdown", count);
+        if (count === "GO") {
+          sound.effect("go");
+          if (race.launch.success) race.events.push({ kind: "launch" });
+        } else if (typeof count === "number") sound.effect("countdown", count);
         previousCount = count;
       }
       music.setTunnel(
@@ -1079,6 +1091,7 @@ function animate(now) {
           world.burst(race.player, event.kind, event.text);
         sound.raceEvent(event, race, race.lapCount);
       }
+      rumble.events(race.events, now);
       race.events.length = 0;
       sound.update(
         race.player.speed / (175 * race.classSpec.pace),

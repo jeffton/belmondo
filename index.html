@@ -415,16 +415,16 @@
           >
             <title id="pad-map-title">Standard gamepad controls</title>
             <desc id="pad-map-desc">
-              Left stick steers and pitches: up nose down, down nose up. L1 left
-              airbrake, R1 right airbrake. A or R2 thrust. X fire, Y view. Start
-              pauses.
+              Left stick steers and pitches: up nose down, down nose up. L2 left
+              airbrake, R2 right airbrake. Hold A for thrust; release to coast.
+              X fire, Y view. Start pauses.
             </desc>
             <path
               class="pad-shell"
               d="M126 121 Q105 117 96 150 L65 263 Q59 304 85 308 Q104 314 143 266 H297 Q336 314 355 308 Q381 304 375 263 L344 150 Q335 117 314 121 Z"
             />
             <g class="pad-wires">
-              <path d="M143 136 V72 H22 M297 136 V72 H418 M315 113 V34 H418" />
+              <path d="M143 136 V72 H22 M297 136 V72 H418" />
               <path d="M139 206 H90 V343 H22 M220 178 V101 H196" />
               <path
                 d="M305 171 V92 H360 M277 199 H250 V319 H228 M305 227 V285 H418"
@@ -433,11 +433,13 @@
             <g class="pad-labels">
               <text x="22" y="61">LEFT AIRBRAKE</text>
               <text x="418" y="61" text-anchor="end">RIGHT AIRBRAKE</text>
-              <text x="418" y="23" text-anchor="end">THRUST</text>
               <text x="196" y="93" text-anchor="end">PAUSE</text>
               <text x="365" y="94">VIEW</text>
               <text x="230" y="335">FIRE</text>
-              <text x="418" y="280" text-anchor="end">THRUST</text>
+              <text x="418" y="305" text-anchor="end">HOLD: THRUST</text>
+              <text class="pad-note" x="418" y="324" text-anchor="end">
+                Release: coast
+              </text>
               <text x="22" y="363">STEER + PITCH</text>
               <text class="pad-note" x="22" y="383">
                 ↑ Nose down · ↓ Nose up
@@ -446,7 +448,6 @@
             <g class="pad-buttons">
               <rect x="118" y="123" width="50" height="25" rx="7" />
               <rect x="272" y="123" width="50" height="25" rx="7" />
-              <rect x="294" y="101" width="42" height="20" rx="6" />
               <circle cx="139" cy="206" r="29" />
               <rect x="204" y="167" width="32" height="20" rx="8" />
               <circle cx="305" cy="171" r="15" />
@@ -455,9 +456,8 @@
               <circle cx="305" cy="227" r="15" />
             </g>
             <g class="pad-glyphs" text-anchor="middle">
-              <text x="143" y="140">L1</text>
-              <text x="297" y="140">R1</text>
-              <text x="315" y="115">R2</text>
+              <text x="143" y="140">L2</text>
+              <text x="297" y="140">R2</text>
               <text x="139" y="204">L</text>
               <text x="139" y="221">↔ ↕</text>
               <text class="pad-note" x="220" y="181">START</text>
