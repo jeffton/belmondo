@@ -14,6 +14,16 @@
   cursor: pointer;
 }
 
+body:has(#menu[hidden]) #circuit-test-access {
+  top: calc(env(safe-area-inset-top, 0px) + 1px);
+  right: 50%;
+  transform: translateX(50%);
+  min-height: 0;
+  padding: 2px 4px;
+  font-size: 7px;
+  pointer-events: none;
+}
+
 #circuit-test-access[hidden] {
   display: none;
 }

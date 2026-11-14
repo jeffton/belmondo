@@ -85,7 +85,14 @@ try {
       await testCircuitQA.start();
     });
     expect(await page.evaluate(() => testCircuitQA.snapshot())).toBe(true);
-    await page.locator("#circuit-test-access").click();
+    expect(
+      await page
+        .locator("#circuit-test-access")
+        .evaluate((badge) => getComputedStyle(badge).pointerEvents),
+    ).toBe("none");
+    await page
+      .locator("#circuit-test-access")
+      .evaluate((badge) => badge.click());
     expect(await page.evaluate(() => testCircuitQA.access())).toBe(true);
     await page.evaluate(() => testCircuitQA.result());
     expect(
