@@ -576,9 +576,11 @@ try {
     });
     await page.evaluate(() => window.finishQA(140, 2));
     await expect(page.locator("#results")).toBeVisible();
-    await expect(page.locator("#result-data")).toContainText(
-      "RESONANCE / 4 LAPS",
-    );
+    const classRow = page.locator("#result-data > div").filter({
+      hasText: "CLASS",
+    });
+    await expect(classRow.locator("b")).toHaveText("RESONANCE");
+    await expect(classRow).not.toContainText("LAPS");
     await expect(page.locator("#result-data .best-lap-mark")).toHaveCount(2);
     await expect(page.locator("#result-data")).not.toContainText(
       "LOCAL RECORD",
@@ -627,7 +629,28 @@ try {
     await page.evaluate(() => window.finishQA(42.12, 1));
     await expect(page.locator("#results")).toBeVisible();
     await expect(totalRow.locator(".new-record-mark")).toHaveText("NEW RECORD");
+    expect(
+      await totalRow
+        .locator("b")
+        .evaluate((value) =>
+          Array.from(
+            value.children,
+            (child) => child.className || child.textContent,
+          ),
+        ),
+    ).toEqual(["result-mark new-record-mark", "00:42.12"]);
     await expect(page.locator("#result-data .best-lap-mark")).toHaveCount(2);
+    expect(
+      await page
+        .locator("#result-data .best-lap-mark")
+        .first()
+        .evaluate((mark) =>
+          Array.from(
+            mark.parentElement.children,
+            (child) => child.className || child.textContent,
+          ),
+        ),
+    ).toEqual(["result-mark best-lap-mark", "00:39.00"]);
     await expect(page.locator("#result-title")).toHaveText("YOU WON");
     for (const [rank, title] of [
       [1, "YOU WON"],

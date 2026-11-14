@@ -316,7 +316,50 @@ export class Race {
       }
     }
   }
+  advanceFinishers(dt) {
+    const { track } = this;
+    const { pace } = this.classSpec;
+    for (const r of this.finishers) {
+      // Cooldown laps are presentation-only: no gates, pickups, weapons or
+      // hull contacts can change a result or interfere with racers still racing.
+      const cruise = Math.sqrt(CRAFT[r.craft].thrust / 0.0024) * pace * 0.72;
+      r.speed += (cruise - r.speed) * (1 - Math.exp(-dt / 2));
+      r.s = r.contactS += r.speed * dt;
+      const u = mod(r.contactS, track.length) / track.length;
+      const [start, end] = track.config.split;
+      if (u <= start || u >= end) r.branch = 0;
+      else if (!r.branch) r.branch = r.id % 2 ? -1 : 1;
+      const f = track.frame(r.contactS, r.branch);
+      const bounds = roadBounds(track, r.contactS, r.branch);
+      const lane = clamp(
+        ((r.id % 4) - 1.5) * 2,
+        bounds.wallMin + 2,
+        bounds.wallMax - 2,
+      );
+      r.x += (lane - r.x) * (1 - Math.exp(-dt));
+      r.finishOffset.multiplyScalar(Math.exp(-dt * 3));
+      const previous = r.position.clone();
+      r.position.copy(f.p).addScaledVector(f.right, r.x);
+      r.position.y += HOVER;
+      r.position.add(r.finishOffset);
+      r.velocity.copy(r.position).sub(previous).divideScalar(dt);
+      const turn =
+        angle(Math.atan2(f.tangent.x, f.tangent.z) - r.yaw) *
+        (1 - Math.exp(-dt * 6));
+      r.yaw += turn;
+      r.yawRate = turn / dt;
+      r.pitch += (-Math.asin(f.tangent.y) - r.pitch) * (1 - Math.exp(-dt * 6));
+      r.h *= Math.exp(-dt * 3);
+      r.vx = r.velocity.dot(f.right);
+      r.vy = r.velocity.y;
+      r.grounded = !track.gap(u);
+      r.protect = Math.max(0, r.protect - dt * pace);
+      r.surge = Math.max(0, r.surge - dt * pace);
+      r.boost *= Math.exp(-dt * pace);
+    }
+  }
   update(dt, input) {
+    this.advanceFinishers(dt);
     if (this.complete) return;
     for (const r of this.racers) if (r.shield <= 0) this.eliminate(r);
     this.updateCriticalShield();
@@ -874,8 +917,10 @@ export class Race {
       r.finalPosition = this.finishers.length + 1;
       this.finishers.push(r);
       r.weapon = null;
-      r.speed = r.boost = r.surge = 0;
-      r.velocity.set(0, 0, 0);
+      const f = track.frame(r.contactS, r.branch);
+      const hover = f.p.clone().addScaledVector(f.right, r.x);
+      hover.y += HOVER;
+      r.finishOffset = r.position.clone().sub(hover);
     }
     this.complete = this.racers.every((r) => r.eliminated || r.finished);
     this.settlePlayerResult();

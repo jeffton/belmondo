@@ -264,7 +264,7 @@ try {
   );
   await expect(page.locator("#music-status")).toContainText("8 TRACKS");
 
-  // Music slider does not alter effects volume or mute; effects mute does not pause music.
+  // Music and effects volume are independent; zero effects does not pause music.
   await page.locator("#music-dialog .close").click();
   await page.locator("#resume").click();
   await page.waitForFunction(() => !window.musicAudioElements.at(-1).paused);
@@ -275,9 +275,9 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicOutputGain.gain.value))
     .toBeCloseTo(0.31, 5);
-  await page.locator("#mute").evaluate((element) => {
-    element.checked = true;
-    element.dispatchEvent(new Event("change", { bubbles: true }));
+  await page.locator("#effects-volume").evaluate((element) => {
+    element.value = "0";
+    element.dispatchEvent(new Event("input", { bubbles: true }));
   });
   await expect
     .poll(() => page.evaluate(() => window.effectMasterGain.gain.value))
@@ -285,9 +285,9 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicAudioElements.at(-1).paused))
     .toBe(false);
-  await page.locator("#mute").evaluate((element) => {
-    element.checked = false;
-    element.dispatchEvent(new Event("change", { bubbles: true }));
+  await page.locator("#effects-volume").evaluate((element) => {
+    element.value = "0.22";
+    element.dispatchEvent(new Event("input", { bubbles: true }));
   });
   await expect
     .poll(() => page.evaluate(() => window.effectMasterGain.gain.value))

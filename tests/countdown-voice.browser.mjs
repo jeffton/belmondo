@@ -107,15 +107,15 @@ try {
     );
     assert((await outputRms()) > 0.001, "gesture produces audible effects PCM");
     await page.evaluate(() => {
-      const mute = document.querySelector("#mute");
-      mute.checked = true;
-      mute.dispatchEvent(new Event("change"));
+      const volume = document.querySelector("#effects-volume");
+      volume.value = "0";
+      volume.dispatchEvent(new Event("input"));
     });
     assert((await outputRms()) < 0.0001, "mute silences actual effects output");
     await page.evaluate(() => {
-      const mute = document.querySelector("#mute");
-      mute.checked = false;
-      mute.dispatchEvent(new Event("change"));
+      const volume = document.querySelector("#effects-volume");
+      volume.value = "0.8";
+      volume.dispatchEvent(new Event("input"));
     });
     assert((await outputRms()) > 0.001, "unmute restores effects output");
     await writeFile(

@@ -432,7 +432,6 @@ async function start(event) {
   const audioStart = sound.start();
   sound.stopSamples();
   const musicStart = musicEnabled ? music.play() : Promise.resolve();
-  sound.setMuted($("mute").checked);
   sound.setPaused(false);
   try {
     await Promise.all([audioStart, musicStart]);
@@ -917,7 +916,7 @@ function showResults() {
         : `${race.position}${{ 2: "ND", 3: "RD" }[race.position] || "TH"} PLACE`;
   $("result-data").replaceChildren();
   const lines = [
-    ["CLASS", `${race.classSpec.name} / ${race.lapCount} LAPS`],
+    ["CLASS", race.classSpec.name],
     [
       race.player.eliminated ? "ELAPSED / DNF" : "TOTAL TIME",
       formatTime(race.resultTime),
@@ -936,22 +935,22 @@ function showResults() {
     row.className = "result-line";
     const l = document.createElement("span");
     l.textContent = label;
+    const v = document.createElement("b");
     if (isBestLap) {
       const mark = document.createElement("small");
       mark.className = "result-mark best-lap-mark";
       mark.textContent = "BEST LAP";
-      l.append(mark);
+      v.append(mark);
     }
-    const v = document.createElement("b");
-    const time = document.createElement("span");
-    time.textContent = value;
-    v.append(time);
     if (isNewRecord) {
       const mark = document.createElement("small");
       mark.className = "result-mark new-record-mark";
       mark.textContent = "NEW RECORD";
       v.append(mark);
     }
+    const time = document.createElement("span");
+    time.textContent = value;
+    v.append(time);
     row.append(l, v);
     $("result-data").append(row);
   }
@@ -1086,7 +1085,7 @@ function animate(now) {
         updateHUD(now);
         showResults();
       }
-    } else if (state === "results" && !race.complete) {
+    } else if (state === "results") {
       accumulator += dt;
       while (accumulator >= 1 / 120) {
         race.update(1 / 120, {});
@@ -1139,10 +1138,19 @@ $("music-default").onclick = () => {
   musicInterrupted = false;
   music.play();
 };
-$("volume").oninput = (e) => (music.volume = Number(e.target.value));
-$("effects-volume").oninput = (e) => sound.setVolume(Number(e.target.value));
-sound.setVolume(0.8);
-$("mute").onchange = (e) => sound.setMuted(e.target.checked);
+for (const [id, applyVolume] of [
+  ["volume", (value) => (music.volume = value)],
+  ["effects-volume", (value) => sound.setVolume(value)],
+]) {
+  const slider = $(id);
+  const saved = localStorage.getItem(`nv-${id}`);
+  if (saved !== null) slider.value = saved;
+  applyVolume(Number(slider.value));
+  slider.oninput = () => {
+    applyVolume(Number(slider.value));
+    localStorage.setItem(`nv-${id}`, slider.value);
+  };
+}
 let dragDepth = 0;
 window.addEventListener("dragenter", (e) => {
   if (e.dataTransfer.types.includes("Files")) {

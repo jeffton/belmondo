@@ -58,16 +58,16 @@ try {
   const live = { racing: await rms() };
   assert(live.racing > 0.02, "Start gesture must unlock audible game PCM");
   await page.evaluate(() => {
-    const mute = document.querySelector("#mute");
-    mute.checked = true;
-    mute.dispatchEvent(new Event("change"));
+    const volume = document.querySelector("#effects-volume");
+    volume.value = "0";
+    volume.dispatchEvent(new Event("input"));
   });
   live.muted = await rms();
   assert(live.muted < 0.0001, "Muted game must be silent");
   await page.evaluate(() => {
-    const mute = document.querySelector("#mute");
-    mute.checked = false;
-    mute.dispatchEvent(new Event("change"));
+    const volume = document.querySelector("#effects-volume");
+    volume.value = "0.8";
+    volume.dispatchEvent(new Event("input"));
   });
   await page.keyboard.up("ArrowUp");
   await page.keyboard.press("Escape");
