@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 
 const legacy = [
@@ -189,7 +189,7 @@ for (const { index, id, technical, turbo } of legacy) {
 }
 
 test("legacy redesign retains Night's grade-separated figure eight and bored lower fork", () => {
-  const track = makeTrack(2);
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT);
   const [crossing] = track.config.sections.crossings;
   assert.equal(track.config.sections.crossings.length, 1);
   assert(crossing.clearance > 250);

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Launch } from "../src/launch.js";
 import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 const idle = {
   throttle: 0,
@@ -110,7 +110,7 @@ test("released thrust decays and GO locks the outcome against later input", () =
 });
 
 test("Race samples precisely at GO, keeps the grid still, and accelerates smoothly", () => {
-  const race = new Race(makeTrack(0), 0, "trial");
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
   const start = race.player.position.clone();
   // Choose an exact final countdown slice so crossing GO can be tested separately.
   race.update(4.6, idle);
@@ -134,7 +134,7 @@ test("Race samples precisely at GO, keeps the grid still, and accelerates smooth
 
 test("GO timing and reward are independent of countdown update frequency", () => {
   for (const step of [1 / 30, 1 / 60, 1 / 120, 0.137]) {
-    const race = new Race(makeTrack(0), 0, "trial");
+    const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
     advance(race, 4.62, idle, step);
     advance(race, 0.59, press, step);
     assert.equal(race.launch.resolved, true);
@@ -146,7 +146,7 @@ test("GO timing and reward are independent of countdown update frequency", () =>
 });
 
 test("held throttle produces a normal start without launch or repeated rewards", () => {
-  const race = new Race(makeTrack(0), 0, "trial");
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
   race.update(5.2, press);
   assert.equal(race.launch.success, false);
   assert.equal(race.player.surge, 0);

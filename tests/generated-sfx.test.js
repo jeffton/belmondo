@@ -4,7 +4,7 @@ import test from "node:test";
 import { AudioEngine } from "../src/audio.js";
 import { SFX_CUES } from "../src/generated-sfx.js";
 import { Race, LAPS_BY_CLASS } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 globalThis.window = undefined;
 const LAPS = LAPS_BY_CLASS[2];
@@ -321,7 +321,7 @@ test("spoken lap entry follows earned player gates, including final lap and fini
   );
   const audio = new Engine();
   await audio.start();
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const placeBeforeGate = (racer, lap) => {
     const s = track.finishS + lap * track.length - 1;
     const frame = track.frame(s);
@@ -398,7 +398,7 @@ test("real jump and landing retain simulation events without event audio", async
   );
   const audio = new Engine();
   await audio.start();
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track, 1, "trial");
   race.countdown = 0;
   const player = race.player;

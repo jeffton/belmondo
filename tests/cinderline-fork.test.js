@@ -2,12 +2,12 @@ import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { MathUtils } from "three";
-import { makeTrack, clamp, mod } from "../src/track.js";
+import { makeTrack, clamp, mod, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { getTrackPickups } from "../src/pickups.js";
 import { createTerrain } from "../src/terrain.js";
 
-const track = makeTrack(5);
+const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);
 const lowerWeapon = getTrackPickups(track).find((pad) =>
   pad.purpose.includes("Inner geothermal return-fork armament"),

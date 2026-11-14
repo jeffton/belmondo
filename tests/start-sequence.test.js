@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { gridApproachBlend } from "../src/start-sequence.js";
 import { countdownBoardStage } from "../src/start-gantry.js";
 
@@ -9,7 +9,7 @@ const released = { throttle: 0, launchIntent: false };
 const pressed = { throttle: 1, launchIntent: true };
 
 test("camera approach is two smooth seconds before the untouched launch window", () => {
-  const race = new Race(makeTrack(0), 0, "trial");
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
   const position = race.player.position.clone();
   assert.equal(race.countdown, 5.2);
   assert.equal(gridApproachBlend(race.countdown), 1);
@@ -35,7 +35,7 @@ test("camera approach is two smooth seconds before the untouched launch window",
 
 test("approach expiry and launch charging are independent of frame boundaries and restart", () => {
   for (const step of [1 / 30, 1 / 60, 1 / 120, 0.137]) {
-    const race = new Race(makeTrack(0), 0, "trial");
+    const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
     let elapsed = 0;
     while (elapsed < 2.5) {
       const dt = Math.min(step, 2.5 - elapsed);

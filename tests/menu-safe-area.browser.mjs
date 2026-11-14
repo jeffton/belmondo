@@ -86,13 +86,16 @@ try {
         },
       );
       await page.evaluate(() => document.fonts.ready);
-      for (const stage of ["class", "track", "craft"]) {
+      for (const stage of ["mode", "class", "track", "craft"]) {
         await page.evaluate((stage) => {
           document.getElementById("menu").dataset.stage = stage;
           for (const panel of document.querySelectorAll("[data-panel]"))
             panel.hidden = panel.dataset.panel !== stage;
-          document.getElementById("setup-options").hidden = stage !== "class";
-          document.getElementById("setup-back").hidden = stage === "class";
+          document.getElementById("setup-back").hidden = stage === "mode";
+          document.getElementById("menu-model").hidden = stage === "mode";
+          document.getElementById("model-subtitle").hidden = stage !== "track";
+          document.getElementById("model-subtitle").textContent =
+            "VERTICAL NEON METROPOLIS";
           document.getElementById("setup-next").hidden = stage === "craft";
           document.getElementById("start").hidden = stage !== "craft";
           document.getElementById("model-name").textContent =
@@ -212,12 +215,16 @@ try {
         assert.equal(observed.footer.left, 0, detail);
         assert.equal(observed.footer.right, width, detail);
         assert.equal(observed.footer.bottom, height, detail);
-        assert.equal(observed.footer.height, 29 + bottom, detail);
+        assert.equal(
+          observed.footer.height,
+          (width <= 600 ? 43 : 29) + bottom,
+          detail,
+        );
         assert.equal(observed.toolControls.length, 4, detail);
         for (const control of observed.toolControls) {
-          assert.equal(control.height, 28, detail);
+          assert.equal(control.height, width <= 600 ? 21 : 28, detail);
           assert.equal(control.border, "none", detail);
-          assert.equal(control.fontSize, "9px", detail);
+          assert.equal(control.fontSize, width <= 600 ? "8px" : "9px", detail);
         }
         assert.equal(observed.footerAtSample, true, detail);
         assert.equal(observed.obsoleteFeedLabel, false, detail);
@@ -226,10 +233,12 @@ try {
         assert.ok(observed.overflow <= 1, detail);
         assert.ok(observed.toolsInFooter, detail);
         assert.ok(observed.body.bottom <= observed.footer.top + 1, detail);
-        assert.ok(
-          observed.model.width > 0 && observed.model.height > 0,
-          detail,
-        );
+        if (stage === "mode") assert.equal(observed.model.width, 0, detail);
+        else
+          assert.ok(
+            observed.model.width > 0 && observed.model.height > 0,
+            detail,
+          );
         for (const control of observed.controls) {
           assert.ok(
             control.left >= left - 1 &&

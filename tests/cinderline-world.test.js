@@ -1,13 +1,13 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import { getTrackPickups } from "../src/pickups.js";
 import { getTrackAdvertisingLayout } from "../src/advertising.js";
 import { newCourseRecipe } from "../src/new-course-recipes.js";
 
-const track = makeTrack(5);
+const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);
 const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const meshes = terrain.geometries.map(

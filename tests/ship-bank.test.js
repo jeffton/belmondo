@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { Race, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { steeringBank, updateShipBank } from "../src/ship-bank.js";
 
 function trajectory(steer, digital, fps = 120, speedClass = 0) {
-  const race = new Race(makeTrack(0), 0, "trial", speedClass);
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial", speedClass);
   race.countdown = 0;
   let lean = 0;
   const samples = [];

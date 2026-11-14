@@ -39,7 +39,7 @@
   <body>
     <canvas id="game" aria-label="3D anti-gravity race"></canvas>
     <div class="scanlines" aria-hidden="true"></div>
-    <main id="menu" data-stage="class">
+    <main id="menu" data-stage="mode">
       <header class="masthead">
         <span class="brand-symbol" aria-hidden="true">B<span>/</span></span
         ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
@@ -58,8 +58,30 @@
           <h1 class="wordmark">BELMONDO</h1>
           <section
             class="setup-stage"
+            data-panel="mode"
+            aria-label="Choose race format"
+          >
+            <fieldset id="mode" class="menu-options">
+              <legend>FORMAT</legend>
+              <div class="binary-options">
+                <label
+                  ><input type="radio" name="mode" value="race" checked /><span
+                    >COMBAT</span
+                  ></label
+                >
+                <label
+                  ><input type="radio" name="mode" value="trial" /><span
+                    >TIME ATTACK</span
+                  ></label
+                >
+              </div>
+            </fieldset>
+          </section>
+          <section
+            class="setup-stage"
             data-panel="class"
             aria-label="Choose speed class"
+            hidden
           >
             <div class="selection-label">
               <span>SPEED CLASS</span>
@@ -107,52 +129,63 @@
             </div>
             <div id="crafts" class="choices crafts"></div>
           </section>
-          <div id="setup-options" class="mode-row">
-            <fieldset id="mode" class="menu-options">
-              <legend>FORMAT</legend>
-              <div class="binary-options">
-                <label
-                  ><input type="radio" name="mode" value="race" checked /><span
-                    >COMBAT</span
-                  ></label
-                >
-                <label
-                  ><input type="radio" name="mode" value="trial" /><span
-                    >TIME ATTACK</span
-                  ></label
-                >
-              </div>
-            </fieldset>
-            <fieldset id="render-quality" class="menu-options">
-              <legend>LOW-RES</legend>
-              <div class="binary-options">
-                <label
-                  ><input
-                    id="quality-clean"
-                    type="radio"
-                    name="quality"
-                    value="clean"
-                  /><span>OFF</span></label
-                >
-                <label
-                  ><input
-                    id="quality"
-                    type="radio"
-                    name="quality"
-                    value="retro"
-                  /><span>ON</span></label
-                >
-              </div>
-            </fieldset>
-          </div>
           <div class="setup-navigation">
-            <button id="setup-back" class="line-button" hidden>← BACK</button>
-            <button id="setup-next" class="start">CIRCUIT →</button>
-            <button id="start" class="start" hidden>ENTER THE GRID</button>
+            <button
+              id="setup-back"
+              class="line-button"
+              data-keyboard-hint="ESC"
+              data-gamepad-hint="Ⓑ"
+              hidden
+            >
+              ← BACK
+            </button>
+            <button
+              id="setup-next"
+              class="start"
+              data-keyboard-hint="ENTER"
+              data-gamepad-hint="Ⓐ"
+            >
+              SELECT
+            </button>
+            <button
+              id="start"
+              class="start"
+              data-keyboard-hint="ENTER"
+              data-gamepad-hint="Ⓐ"
+              hidden
+            >
+              ENTER THE GRID
+            </button>
           </div>
         </div>
       </div>
       <footer class="menu-footer">
+        <div
+          id="render-quality"
+          class="menu-options"
+          role="group"
+          aria-label="Low resolution"
+        >
+          <span class="quality-label">LOW-RES</span>
+          <div class="binary-options">
+            <label
+              ><input
+                id="quality-clean"
+                type="radio"
+                name="quality"
+                value="clean"
+              /><span>OFF</span></label
+            >
+            <label
+              ><input
+                id="quality"
+                type="radio"
+                name="quality"
+                value="retro"
+              /><span>ON</span></label
+            >
+          </div>
+        </div>
         <nav class="menu-links" aria-label="Menu tools">
           <button id="help-open">PILOT BRIEFING</button>
           <button id="music-open">SOUND SYSTEM</button>
@@ -173,6 +206,7 @@
         aria-label="Rotating circuit model"
       >
         <strong id="model-name"></strong>
+        <small id="model-subtitle" hidden></small>
         <dl id="craft-stats" aria-label="Craft specifications" hidden></dl>
       </div>
       <div class="world-caption">
@@ -287,10 +321,36 @@
       <div class="panel">
         <p class="eyebrow">RACE CONTROL</p>
         <h2 id="pause-title">PAUSED</h2>
-        <button id="resume" class="start" autofocus>RESUME</button
-        ><button id="restart" class="line-button">RESTART RACE</button
-        ><button id="pause-music" class="line-button">SOUND SYSTEM</button
-        ><button id="quit" class="line-button">RETURN TO PADDOCK</button>
+        <button
+          id="resume"
+          class="start"
+          data-keyboard-hint="ESC"
+          data-gamepad-hint="Ⓐ / Ⓑ"
+          autofocus
+        >
+          RESUME</button
+        ><button
+          id="restart"
+          class="line-button"
+          data-keyboard-hint="ENTER"
+          data-gamepad-hint="Ⓐ"
+        >
+          RESTART RACE</button
+        ><button
+          id="pause-music"
+          class="line-button"
+          data-keyboard-hint="ENTER"
+          data-gamepad-hint="Ⓐ"
+        >
+          SOUND SYSTEM</button
+        ><button
+          id="quit"
+          class="line-button"
+          data-keyboard-hint="ENTER"
+          data-gamepad-hint="Ⓐ"
+        >
+          RETURN TO PADDOCK
+        </button>
       </div>
     </dialog>
     <section id="results" class="overlay" hidden>
@@ -298,12 +358,32 @@
         <p class="eyebrow">RACE REPORT</p>
         <h2 id="result-title">FINISH.</h2>
         <div id="result-data"></div>
-        <button id="again" class="start">RACE AGAIN</button
-        ><button id="result-quit" class="line-button">RETURN TO PADDOCK</button>
+        <button
+          id="again"
+          class="start"
+          data-keyboard-hint="ENTER"
+          data-gamepad-hint="Ⓐ"
+        >
+          RACE AGAIN</button
+        ><button
+          id="result-quit"
+          class="line-button"
+          data-keyboard-hint="ESC"
+          data-gamepad-hint="Ⓑ"
+        >
+          RETURN TO PADDOCK
+        </button>
       </div>
     </section>
     <dialog id="help-dialog">
-      <button class="close" aria-label="Close briefing">×</button>
+      <button
+        class="close"
+        data-keyboard-hint="ESC"
+        data-gamepad-hint="Ⓑ"
+        aria-label="Close briefing"
+      >
+        ×
+      </button>
       <p class="eyebrow">PILOT / FIELD MANUAL</p>
       <h2>PILOT CONTROLS</h2>
       <div class="brief-grid">
@@ -415,7 +495,14 @@
       <div id="weapon-roster" class="arsenal"></div>
     </dialog>
     <dialog id="music-dialog">
-      <button class="close" aria-label="Close sound system">×</button>
+      <button
+        class="close"
+        data-keyboard-hint="ESC"
+        data-gamepad-hint="Ⓑ"
+        aria-label="Close sound system"
+      >
+        ×
+      </button>
       <p class="eyebrow">AUDIO / BELMONDO</p>
       <h2>SOUND SYSTEM</h2>
       <p>
@@ -465,7 +552,14 @@
       >
     </dialog>
     <dialog id="art-dialog">
-      <button class="close" aria-label="Close design study">×</button>
+      <button
+        class="close"
+        data-keyboard-hint="ESC"
+        data-gamepad-hint="Ⓑ"
+        aria-label="Close design study"
+      >
+        ×
+      </button>
       <p class="eyebrow">VISUAL DEVELOPMENT / OPENAI IMAGE</p>
       <h2>BELMONDO</h2>
       <img

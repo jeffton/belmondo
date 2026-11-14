@@ -53,7 +53,9 @@ function trackModel(track, materials) {
     ]),
   ].sort((a, b) => a - b);
   const point = (frame, bounds, side, depth = 0) => {
-    const x = side < 0 ? bounds.clipMin : bounds.clipMax;
+    // Diagram-scale road width keeps small previews legible; route centers,
+    // elevation, banking, jump openings and connected split seams stay authored.
+    const x = (side < 0 ? bounds.clipMin : bounds.clipMax) * 2.3;
     const p =
       bounds.connected && side === bounds.innerSide
         ? bounds.seam.clone()
@@ -80,11 +82,11 @@ function trackModel(track, materials) {
       const ar = point(a, ba, 1);
       const bl = point(b, bb, -1);
       const br = point(b, bb, 1);
-      // Closed slab: real deck width/banking/height, not a flattened route line.
-      const dal = point(a, ba, -1, -5);
-      const dar = point(a, ba, 1, -5);
-      const dbl = point(b, bb, -1, -5);
-      const dbr = point(b, bb, 1, -5);
+      // A substantial slab reads as a road rather than a thin route wire.
+      const dal = point(a, ba, -1, -9);
+      const dar = point(a, ba, 1, -9);
+      const dbl = point(b, bb, -1, -9);
+      const dbr = point(b, bb, 1, -9);
       quad(al, ar, br, bl);
       quad(dal, dbl, dbr, dar);
       quad(al, bl, dbl, dal);
@@ -296,13 +298,14 @@ function classSymbol(index) {
   return pivot;
 }
 
-/** Native-resolution transparent inset, independent of World's LOWRES canvas. */
+/** Transparent model inset sharing World's LOWRES/clean quality selection. */
 export class MenuPreview {
   constructor(element) {
     this.renderer = null;
     this.size = { width: 0, height: 0, pixelRatio: 0 };
     this.element = element;
     this.stage = "class";
+    this.quality = "retro";
     this.time = 0;
     this.trackScene = new THREE.Scene();
     this.craftScene = new THREE.Scene();
@@ -342,7 +345,19 @@ export class MenuPreview {
     this.trackScene.add(this.course);
     const box = new THREE.Box3().setFromObject(this.course);
     const center = box.getCenter(new THREE.Vector3());
-    const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+    // A box's diagonal sphere wastes space on elongated courses. Fit actual
+    // vertices instead: rotation remains bounded without changing route shape.
+    let radius = 0;
+    const vertex = new THREE.Vector3();
+    this.course.traverse((object) => {
+      const positions = object.geometry?.getAttribute("position");
+      if (!positions) return;
+      for (let i = 0; i < positions.count; i++)
+        radius = Math.max(
+          radius,
+          vertex.fromBufferAttribute(positions, i).distanceTo(center),
+        );
+    });
     // Uniform scale preserves the actual elevation changes and route proportions.
     this.course.position.copy(center).multiplyScalar(-1 / radius);
     this.course.scale.setScalar(1 / radius);
@@ -390,7 +405,7 @@ export class MenuPreview {
   createRenderer() {
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: true,
+      antialias: false,
       powerPreference: "high-performance",
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -440,13 +455,14 @@ export class MenuPreview {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
+        imageRendering: "pixelated",
       });
       // Existing positioned labels follow the canvas in paint order.
       this.element.prepend(canvas);
     }
     const renderer = this.renderer;
     const canvas = renderer.domElement.getBoundingClientRect();
-    const pixelRatio = view.devicePixelRatio;
+    const pixelRatio = this.quality === "retro" ? 0.55 : view.devicePixelRatio;
     if (
       canvas.width !== this.size.width ||
       canvas.height !== this.size.height ||
@@ -460,7 +476,12 @@ export class MenuPreview {
     model.rotation.y =
       this.time * { class: 0.25, track: 0.16, craft: 0.32 }[this.stage];
     const aspect = canvas.width / canvas.height;
-    const span = 1.16;
+    const span = this.stage === "track" ? 1.06 : 1.16;
+    this.camera.position
+      .set(0, this.stage === "track" ? 2.15 : 1.25, 1.8)
+      .normalize()
+      .multiplyScalar(5);
+    this.camera.lookAt(0, 0, 0);
     this.camera.left = -span * Math.max(1, aspect);
     this.camera.right = -this.camera.left;
     this.camera.top = span * Math.max(1, 1 / aspect);

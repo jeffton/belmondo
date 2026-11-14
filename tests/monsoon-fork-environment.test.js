@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildHydraulicLock } from "../src/hydraulic-lock.js";
 import { terrainFootprint } from "../src/terrain-footprint.js";
@@ -9,8 +9,8 @@ import { terrainFootprint } from "../src/terrain-footprint.js";
 function fixture() {
   // Parent owns route configuration; exercise its refined contract without
   // editing that owner's file in this isolated architecture worktree.
-  const original = TRACKS[4];
-  TRACKS[4] = {
+  const original = TRACKS[TRACK_INDEX.MONSOON];
+  TRACKS[TRACK_INDEX.MONSOON] = {
     ...original,
     fork: {
       ...original.fork,
@@ -23,9 +23,9 @@ function fixture() {
       reservoirWalkway: [0.81, 0.9],
     },
   };
-  const track = makeTrack(4),
+  const track = makeTrack(TRACK_INDEX.MONSOON),
     scene = new THREE.Scene();
-  TRACKS[4] = original;
+  TRACKS[TRACK_INDEX.MONSOON] = original;
   const textures = Object.fromEntries(
     ["concrete", "road", "paint", "edge", "facade"].map((name) => [
       name,

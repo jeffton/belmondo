@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { countdownBoardStage } from "../src/start-gantry.js";
 import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 test("race clock crosses each physical countdown stage once, with no wall timer", () => {
-  const race = new Race(makeTrack(0), 0, "trial");
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial");
   let previous = countdownBoardStage(race);
   const announcements = [];
   const tick = () => {

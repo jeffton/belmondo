@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Vector3 } from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import { chaseCameraSurface, clearChaseCamera } from "../src/chase-camera.js";
 
 const up = new Vector3(0, 1, 0);
 
 test("Night drop camera clears the upstream deck after focus transport", () => {
-  const track = makeTrack(2);
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT);
   const terrain = createTerrain(track);
   const branch = -1;
   const contactS = 0.87145 * track.length;
@@ -61,7 +61,7 @@ test("all course forks keep chase clearance through moving drop approaches", () 
 });
 
 test("Night lower crossing remains attached to its own deck, not the overpass", () => {
-  const track = makeTrack(2);
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT);
   const terrain = createTerrain(track);
   const s = track.config.sections.crossings[0].lowerU * track.length;
   const f = track.frame(s);
@@ -88,7 +88,7 @@ test("projected floors match independently authored banked road points", () => {
 });
 
 test("flat chase framing and airborne height stay unchanged", () => {
-  const track = makeTrack(2);
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT);
   const terrain = createTerrain(track);
   const player = { contactS: track.finishS, branch: 0 };
   const f = track.frame(player.contactS);

@@ -1,18 +1,24 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { TRACKS, makeTrack } from "../src/track.js";
+import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
 // Intentional integrated legacy-v4, Whiteout-2, Cinderline-2 and Vesper configs.
 const unchanged = {
-  0: "8511931749978e55e724f0f88f78291e33597f439c08e457fd738dc5f5935bcf",
-  1: "d715040db09c0fe2c065393c76f13c461d9edea6ff329dd39605e8571e9741ca",
-  2: "7cb03942ffa0f9a8d9ab32a731146b129c94136a8554fc4fca438aee6e6fd787",
-  3: "0681393a868d69e29f13f7059cd3bcc9ff48ff5763d83fc45681f86cad280c82",
-  5: "712c4f96e379f6460ffedbe759c66773bbff0c8623741f0ec483b47621af1c44",
-  6: "344855ae9bcd3c7a939c68cb6d520778f96df9f96b914eb48366622896b266ae",
+  [TRACK_INDEX.COAST]:
+    "ccb3d5351736806ceef9ce3d89231eff87b121a9cbe1e53c829a400c3e6702ba",
+  [TRACK_INDEX.SOLAR]:
+    "d1a4f918838d752ec499ab451d58502eb0ea2722df44186d5a0ab42c06393be4",
+  [TRACK_INDEX.NOCTILUCENT]:
+    "e6fb6ea0c7709b5f1d71ab5901bf381cf9f1bbabc324a9fb81e4c3bb4c300ef5",
+  [TRACK_INDEX.WHITEOUT]:
+    "40cfe755a8ac3d13b07c34c573fbbe04ee664f854ba1508d124aa3ac64261e8f",
+  [TRACK_INDEX.CINDERLINE]:
+    "7d68b1bb0ed934cf222faa78fdb5e403dad98e0fb2c281615e376fa36debab56",
+  [TRACK_INDEX.VESPER]:
+    "344855ae9bcd3c7a939c68cb6d520778f96df9f96b914eb48366622896b266ae",
 };
 test("the other six integrated course configurations match their accepted authored versions", () => {
   for (const [index, hash] of Object.entries(unchanged))
@@ -22,7 +28,7 @@ test("the other six integrated course configurations match their accepted author
     );
 });
 
-const track = makeTrack(4);
+const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 test("spillway is a steep continuous dry descent with a low curved lock and climbing fork", () => {

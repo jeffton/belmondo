@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const sourceUrl = process.env.SOURCE_URL || "http://127.0.0.1:5178";
@@ -46,7 +46,7 @@ try {
         import(threePath),
       ]);
     const world = new World(document.querySelector("canvas"));
-    const track = makeTrack(0),
+    const track = makeTrack(TRACK_INDEX.COAST),
       cases = [],
       images = [];
     let race, submissions;
@@ -291,7 +291,7 @@ try {
   await actual.locator("#start").click();
   await actual.keyboard.down("ArrowUp");
   await actual.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
-  const planningTrack = makeTrack(0),
+  const planningTrack = makeTrack(TRACK_INDEX.COAST),
     began = Date.now();
   let held = null,
     t;

@@ -1,7 +1,7 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { TRACKS, makeTrack } from "../src/track.js";
+import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 import { getJumpMarkingLayout } from "../src/jump-markings.js";
@@ -14,7 +14,11 @@ const originalHashes = [
   "d2be34d1fcaee87b1edca63e0fd9f094786db15d6f432e87912d3a1dbb93d142",
   "44251c842a0f69edb88d9959b0ec4b45c6bb81951bac666829262d95314a2123",
 ];
-for (let index = 0; index < 3; index++) {
+for (const [hashIndex, index] of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+].entries()) {
   test(`legacy-v4 course ${index}: sampled physical outputs match the accepted route`, () => {
     const track = makeTrack(index);
     const rows = [track.length, track.physicalLengths];
@@ -31,12 +35,17 @@ for (let index = 0; index < 3; index++) {
     }
     assert.equal(
       createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
-      originalHashes[index],
+      originalHashes[hashIndex],
     );
   });
 }
 
-for (const index of [3, 4, 5]) {
+const integratedCourseIndexes = [
+  TRACK_INDEX.WHITEOUT,
+  TRACK_INDEX.MONSOON,
+  TRACK_INDEX.CINDERLINE,
+];
+for (const index of integratedCourseIndexes) {
   const config = TRACKS[index];
   const terrain = createTerrain(makeTrack(index));
   after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
@@ -46,8 +55,8 @@ for (const index of [3, 4, 5]) {
       new Set(TRACKS.map((course) => course.layoutId)).size,
       TRACKS.length,
     );
-    if (index !== 4) assert.equal(config.tunnel, null);
-    if (index !== 5) {
+    if (index !== TRACK_INDEX.MONSOON) assert.equal(config.tunnel, null);
+    if (index !== TRACK_INDEX.CINDERLINE) {
       assert.equal(config.jump, null);
       assert.equal(config.ramp, null);
       assert.equal(config.sections.runway, null);
@@ -60,14 +69,16 @@ for (const index of [3, 4, 5]) {
       const s = u * track.length;
       assert.equal(
         track.gap(u),
-        index === 5 && u >= config.jump && u < config.jump + config.gapLength,
+        index === TRACK_INDEX.CINDERLINE &&
+          u >= config.jump &&
+          u < config.jump + config.gapLength,
       );
       for (const branch of u > config.split[0] && u < config.split[1]
         ? [-1, 1]
         : [0]) {
         const frame = track.frame(s, branch);
         const next = track.frame(s + 3, branch);
-        if (index !== 5)
+        if (index !== TRACK_INDEX.CINDERLINE)
           assert(
             frame.p.distanceTo(next.p) < 4.5,
             "continuous connected deck outside the physical gap",
@@ -75,16 +86,19 @@ for (const index of [3, 4, 5]) {
         assert(
           Math.abs(track.curvature(s, branch)) <=
             1 /
-              (index === 4
+              (index === TRACK_INDEX.MONSOON
                 ? 80
-                : index === 5 && u >= 0.17 && u <= 0.34
+                : index === TRACK_INDEX.CINDERLINE && u >= 0.17 && u <= 0.34
                   ? 95
                   : 150),
           `radius below authored readable-turn envelope at ${u}, branch ${branch}`,
         );
         assert.equal(
           track.isTunnel(s, branch),
-          index === 4 && branch === -1 && frame.u > 0.81 && frame.u < 0.9,
+          index === TRACK_INDEX.MONSOON &&
+            branch === -1 &&
+            frame.u > 0.81 &&
+            frame.u < 0.9,
         );
         if (i % 100 === 0) {
           const body = frame.p.clone().addScaledVector(frame.up, 2.2);
@@ -97,7 +111,7 @@ for (const index of [3, 4, 5]) {
         }
       }
     }
-    if (index === 5) {
+    if (index === TRACK_INDEX.CINDERLINE) {
       // Probe both sides of every generated frame-segment boundary, including
       // the wrap. Normalized station spacing is not physical deck spacing.
       const segments = Math.ceil(track.length / 3);
@@ -136,7 +150,7 @@ for (const index of [3, 4, 5]) {
           [0.275, 0.49],
           [0.3, 0.58],
           [0.5, 0.7],
-        ][index - 3],
+        ][integratedCourseIndexes.indexOf(index)],
       ]) {
         test(`${config.name}: class ${speedClass + 1}, fork ${branch}, ${boostAt === null ? "ordinary" : `TURBO at ${boostAt}`} earns a whole lap`, () => {
           const track = makeTrack(index);
@@ -203,7 +217,7 @@ for (const index of [3, 4, 5]) {
 }
 
 test("WHITEOUT: original basin plan descends through a real 270-degree spiral", () => {
-  const spiral = TRACKS[3].points.slice(6, 19);
+  const spiral = TRACKS[TRACK_INDEX.WHITEOUT].points.slice(6, 19);
   let turn = 0;
   for (let i = 0; i < spiral.length; i++) {
     const [x, y, z] = spiral[i];
@@ -218,7 +232,7 @@ test("WHITEOUT: original basin plan descends through a real 270-degree spiral", 
 });
 
 test("MONSOON: technical fork is physically shorter than the outside line", () => {
-  const track = makeTrack(4);
+  const track = makeTrack(TRACK_INDEX.MONSOON);
   assert(track.physicalLengths[-1] + 100 < track.physicalLengths[1]);
   const [start, end] = track.config.sections.dryLock;
   for (let u = start + 0.06; u < end; u += 0.01)
@@ -229,7 +243,7 @@ test("MONSOON: technical fork is physically shorter than the outside line", () =
 });
 
 test("CINDERLINE: the ballistic crest has a straight aligned downhill landing", () => {
-  const track = makeTrack(5);
+  const track = makeTrack(TRACK_INDEX.CINDERLINE);
   for (const [start, end] of [[0.52, 0.538]]) {
     let top = { y: -Infinity, s: 0 };
     for (let u = start; u < end; u += 0.0005) {

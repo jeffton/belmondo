@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { TRACKS } from "../src/track.js";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5196";
 const output = process.env.MENU_ARTIFACTS || "/var/tmp/belmondo-menu-flow";
@@ -29,6 +30,22 @@ try {
       hasTouch: width < 900,
       isMobile: width < 900,
     });
+    await context.addInitScript(
+      (layoutIds) => {
+        localStorage.setItem(
+          "nv-progression",
+          JSON.stringify({
+            version: 1,
+            classes: {
+              c3: Object.fromEntries(
+                layoutIds.map((id) => [id, { bestPosition: 1, won: true }]),
+              ),
+            },
+          }),
+        );
+      },
+      TRACKS.map((track) => track.layoutId),
+    );
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url);
@@ -38,6 +55,8 @@ try {
     const landing = await page.evaluate(
       () => window.nullVector.telemetry.menuRacers[0].s,
     );
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
+    await page.locator("#setup-next").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
     await expect(
       page.locator(".menu-steps, [data-step], #track-count"),
@@ -112,10 +131,10 @@ try {
           };
         });
       expect(nativePreview.width).toBeGreaterThanOrEqual(
-        Math.floor(nativePreview.cssWidth * nativePreview.dpr),
+        Math.floor(nativePreview.cssWidth * 0.55),
       );
       expect(nativePreview.height).toBeGreaterThanOrEqual(
-        Math.floor(nativePreview.cssHeight * nativePreview.dpr),
+        Math.floor(nativePreview.cssHeight * 0.55),
       );
       const layout = await page.evaluate(() => {
         const menu = document.getElementById("menu");

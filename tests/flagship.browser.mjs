@@ -1,12 +1,12 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const gameUrl = process.env.GAME_URL || "http://127.0.0.1:5189";
 const sourceUrl = process.env.SOURCE_URL || "http://127.0.0.1:5178";
 const stage = process.env.FLAGSHIP_STAGE || "all";
-const track = makeTrack(0),
+const track = makeTrack(TRACK_INDEX.COAST),
   wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 await mkdir("test-artifacts", { recursive: true });
 const browser = await chromium.launch({
@@ -269,7 +269,7 @@ async function visuals(deltaOnly = false) {
       });
     const initialAssets = ready();
     const world = new World(document.querySelector("canvas"));
-    let track = makeTrack(0),
+    let track = makeTrack(TRACK_INDEX.COAST),
       race = new Race(track, 0, "trial");
     world.build(track);
     world.setupRacers(race, CRAFT);

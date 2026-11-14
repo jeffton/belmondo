@@ -1,7 +1,7 @@
 import { chromium, webkit, expect } from "@playwright/test";
 import { createServer } from "vite";
 import { CRAFT } from "../src/race.js";
-import { TRACKS } from "../src/track.js";
+import { TRACKS, TRACK_INDEX } from "../src/track.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
 import { localRecordKey } from "../src/records.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
@@ -136,7 +136,7 @@ try {
           const craft = CRAFT[i];
           await expect(page.locator("#model-name")).toHaveText(craft.name);
           await expect(page.locator("#craft-circuit")).toHaveText(
-            TRACKS[2].name,
+            TRACKS[TRACK_INDEX.COAST].name,
           );
           expect(await page.evaluate(() => window.previewCraft)).toBe(i);
           for (const key of ["thrust", "handling", "armor"]) {
@@ -196,7 +196,7 @@ try {
           expect(intersectsBody).toBe(false);
           expect(bounds.scroll[0]).toBeLessThanOrEqual(bounds.scroll[1]);
           const key = localRecordKey(
-            TRACKS[2].layoutId,
+            TRACKS[TRACK_INDEX.COAST].layoutId,
             i,
             "race",
             SPEED_CLASSES[0],

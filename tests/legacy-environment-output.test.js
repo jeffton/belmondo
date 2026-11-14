@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
@@ -73,7 +73,11 @@ export function environmentDigest(index) {
   maps.forEach((m) => m.dispose());
   return hash.digest("hex");
 }
-for (let index = 0; index < 3; index++)
+for (const [baselineIndex, index] of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+].entries())
   test(`legacy-v4 course ${index}: exact environment output matches world acceptance`, () => {
-    assert.equal(environmentDigest(index), BASELINE[index]);
+    assert.equal(environmentDigest(index), BASELINE[baselineIndex]);
   });

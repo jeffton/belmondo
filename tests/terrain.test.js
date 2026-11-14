@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { createTerrain, groundedGeometryOffset } from "../src/terrain.js";
 import { buildCity } from "../src/city.js";
 
@@ -180,7 +180,7 @@ test("banked earthworks follow both actual deck edges instead of a flat centreli
 });
 
 test("Solar's actual instanced outcrops touch final terrain and use distinct authored geometry", () => {
-  const track = makeTrack(1),
+  const track = makeTrack(TRACK_INDEX.SOLAR),
     terrain = createTerrain(track),
     scene = new THREE.Scene();
   const textures = Object.fromEntries(

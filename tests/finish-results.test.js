@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Race, LAPS_BY_CLASS } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { AudioEngine } from "../src/audio.js";
 
 function place(track, racer, s, speed = 80) {
@@ -28,7 +28,7 @@ function recorder() {
 
 for (let rank = 1; rank <= 8; rank++) {
   test(`earned finish announces final field rank ${rank} once`, () => {
-    const track = makeTrack(0);
+    const track = makeTrack(TRACK_INDEX.COAST);
     const race = new Race(track, 0, "race", 2);
     race.countdown = 0;
     const line = track.finishS + race.lapCount * track.length;
@@ -63,7 +63,7 @@ for (let rank = 1; rank <= 8; rank++) {
 }
 
 test("finish rank is captured after the later AI update, including a shared finish step", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track, 0, "race", 2);
   race.countdown = 0;
   const line = track.finishS + race.lapCount * track.length;
@@ -91,7 +91,7 @@ test("finish rank is captured after the later AI update, including a shared fini
 });
 
 test("trial uses its actual rank one; mute consumes the result without replay", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track, 0, "trial", 2);
   race.countdown = 0;
   place(track, race.player, track.finishS + race.lapCount * track.length - 0.1);
@@ -110,7 +110,7 @@ test("trial uses its actual rank one; mute consumes the result without replay", 
 });
 
 test("AI final crossing cannot emit a player finish result", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track, 0, "race", 2);
   race.countdown = 0;
   place(
@@ -126,7 +126,7 @@ test("AI final crossing cannot emit a player finish result", () => {
 
 test("each speed class completes its configured lap count and final-lap voice", () => {
   for (const [speedClass, lapCount] of LAPS_BY_CLASS.entries()) {
-    const track = makeTrack(0);
+    const track = makeTrack(TRACK_INDEX.COAST);
     const race = new Race(track, 0, "trial", speedClass);
     race.countdown = 0;
     const line = track.finishS + lapCount * track.length;
@@ -142,7 +142,7 @@ test("each speed class completes its configured lap count and final-lap voice", 
 });
 
 test("eliminations announce eliminated rather than their last-place voice", () => {
-  const race = new Race(makeTrack(0));
+  const race = new Race(makeTrack(TRACK_INDEX.COAST));
   race.damage(race.player, 200);
   assert(race.player.eliminated);
   const event = race.events.find((entry) => entry.kind === "finish");

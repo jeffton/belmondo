@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import {
@@ -20,7 +20,7 @@ test("Monsoon rounded uplands do not quantize neighboring samples into twelve-me
 });
 
 test("Monsoon's visible spillway and sluice machinery keep the real driving corridor clear", () => {
-  const track = makeTrack(4),
+  const track = makeTrack(TRACK_INDEX.MONSOON),
     scene = new THREE.Scene();
   const textures = Object.fromEntries(
     ["concrete", "road", "paint", "edge", "facade"].map((name) => [

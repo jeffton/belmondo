@@ -106,11 +106,23 @@ function layoutPoints(course) {
   }[course];
 }
 
+export const TRACK_INDEX = Object.freeze({
+  WHITEOUT: 0,
+  MONSOON: 1,
+  COAST: 2,
+  SOLAR: 3,
+  CINDERLINE: 4,
+  NOCTILUCENT: 5,
+  VESPER: 6,
+});
+
 export const TRACKS = [
+  { ...NEW_COURSES[0], subtitle: "01 / Polar observatory" },
+  { ...NEW_COURSES[1], subtitle: "02 / Hydraulic city" },
   {
     name: "KAISEKI COAST",
     curveType: "centripetal",
-    subtitle: "01 / Coastal megastructure",
+    subtitle: "03 / Coastal megastructure",
     color: 0x13d9e7,
     sky: 0x1e3859,
     fog: 0x657e9a,
@@ -140,7 +152,7 @@ export const TRACKS = [
   {
     name: "SOLAR ARRAY",
     curveType: "centripetal",
-    subtitle: "02 / High desert transmission",
+    subtitle: "04 / High desert transmission",
     color: 0xff853a,
     sky: 0x825c76,
     fog: 0xb7949b,
@@ -168,10 +180,11 @@ export const TRACKS = [
     jump: 0.64,
     tunnel: [0.2, 0.28],
   },
+  { ...NEW_COURSES[2], subtitle: "05 / Volcanic upland" },
   {
     name: "NOCTILUCENT",
     curveType: "centripetal",
-    subtitle: "03 / Midnight freight loop",
+    subtitle: "06 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x101b35,
     fog: 0x263652,
@@ -202,7 +215,7 @@ export const TRACKS = [
     jump: 0.48,
     tunnel: [0.34, 0.39],
   },
-  ...NEW_COURSES,
+  { ...NEW_COURSES[3], subtitle: "07 / Vertical neon metropolis" },
 ];
 export const mod = (n, m) => ((n % m) + m) % m;
 export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));

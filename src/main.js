@@ -55,20 +55,19 @@ try {
   throw error;
 }
 const menuPreview = new MenuPreview($("menu-model"));
-let menuStage = "class";
-const menuStages = ["class", "track", "craft"];
+let menuStage = "mode";
+const menuStages = ["mode", "class", "track", "craft"];
 let menuNavigator;
 function setMenuStage(stage) {
   menuStage = stage;
   $("menu").dataset.stage = stage;
   for (const panel of document.querySelectorAll("[data-panel]"))
     panel.hidden = panel.dataset.panel !== stage;
-  $("setup-options").hidden = stage !== "class";
-  $("setup-back").hidden = stage === "class";
+  $("setup-back").hidden = stage === "mode";
   $("setup-next").hidden = stage === "craft";
   $("start").hidden = stage !== "craft";
-  $("setup-next").textContent = stage === "class" ? "CIRCUIT →" : "CRAFT →";
-  $("menu-model").hidden = false;
+  $("setup-next").textContent = "SELECT";
+  $("menu-model").hidden = stage === "mode";
   $("craft-stats").hidden = stage !== "craft";
   $("menu-model").setAttribute(
     "aria-label",
@@ -78,9 +77,12 @@ function setMenuStage(stage) {
         ? "Rotating selected craft model"
         : "Rotating selected circuit model",
   );
-  menuPreview.setStage(stage);
+  menuPreview.setStage(stage === "mode" ? "class" : stage);
   updateModelName();
-  menuNavigator?.sync();
+  if (menuNavigator) {
+    menuNavigator.cursor = null;
+    menuNavigator.sync();
+  }
 }
 function updateCraftStats() {
   const craft = CRAFT[selectedCraft];
@@ -103,6 +105,10 @@ function updateCraftStats() {
 }
 function updateModelName() {
   $("craft-circuit").textContent = TRACKS[selectedTrack].name;
+  $("model-subtitle").textContent = TRACKS[selectedTrack].subtitle
+    .split("/")[1]
+    .trim();
+  $("model-subtitle").hidden = menuStage !== "track";
   $("model-name").textContent =
     menuStage === "class"
       ? SPEED_CLASSES[selectedSpeedClass].name
@@ -237,22 +243,24 @@ let trackGeneration = 0;
 let trackLoading = false;
 let loadedTrack = -1;
 let trackLoadTiming = null;
+function isTrackUnlocked(index) {
+  return trackIsUnlocked(
+    progression,
+    SPEED_CLASSES[selectedSpeedClass].id,
+    TRACKS[index].layoutId,
+    index,
+    TRACKS,
+  );
+}
 async function selectTrack(i) {
-  if (
-    !trackIsUnlocked(
-      progression,
-      SPEED_CLASSES[selectedSpeedClass].id,
-      TRACKS[i].layoutId,
-      i,
-      TRACKS,
-    )
-  )
-    return;
+  if (!isTrackUnlocked(i)) return;
+  if (i === selectedTrack && (trackLoading || loadedTrack === i)) return;
   selectedTrack = i;
   const generation = ++trackGeneration;
   const isCurrent = () => generation === trackGeneration;
   const start = performance.now();
   trackLoading = true;
+  document.body.classList.add("course-loading");
   $("start").disabled = true;
   $("tracks").setAttribute("aria-busy", "true");
   $("fatal").hidden = true;
@@ -267,7 +275,6 @@ async function selectTrack(i) {
     const prepared = await coursePreparation.load(i);
     if (!isCurrent()) return;
     const nextTrack = makeTrack(i);
-    menuPreview.setTrack(nextTrack);
     const buildStart = performance.now();
     let nextRace;
     const candidate = await world.prepare(
@@ -287,6 +294,7 @@ async function selectTrack(i) {
     );
     if (!candidate || !isCurrent()) return;
     world.adopt(candidate);
+    menuPreview.setTrack(nextTrack);
     track = nextTrack;
     race = nextRace;
     demoDistance = track.length * 0.02;
@@ -305,6 +313,10 @@ async function selectTrack(i) {
   } finally {
     if (isCurrent()) {
       trackLoading = false;
+      document.body.classList.toggle(
+        "course-loading",
+        loadedTrack !== selectedTrack,
+      );
       $("start").disabled = loadedTrack !== selectedTrack;
       $("tracks").setAttribute("aria-busy", "false");
     }
@@ -314,7 +326,7 @@ for (const [i, t] of TRACKS.entries()) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.index = i;
-  button.innerHTML = `<b>${t.name}</b><small>${t.subtitle.split("/")[1]}</small><small class="track-progress"></small><small class="track-lock" hidden>🔒 LOCKED</small>`;
+  button.innerHTML = `<b>${t.name}</b><small class="track-progress" hidden></small><small class="track-lock" hidden>🔒 LOCKED</small>`;
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
 }
@@ -323,13 +335,7 @@ function refreshTrackProgression() {
   for (const button of $("tracks").children) {
     const index = Number(button.dataset.index);
     const trackConfig = TRACKS[index];
-    const unlocked = trackIsUnlocked(
-      progression,
-      classId,
-      trackConfig.layoutId,
-      index,
-      TRACKS,
-    );
+    const unlocked = isTrackUnlocked(index);
     const progress = trackProgress(progression, classId, trackConfig.layoutId);
     button.disabled = !unlocked;
     button.classList.toggle("locked", !unlocked);
@@ -339,6 +345,7 @@ function refreshTrackProgression() {
         ? `★ BEST / ${progress.bestPosition}${{ 1: "ST", 2: "ND", 3: "RD" }[progress.bestPosition]}`
         : `BEST / ${progress.bestPosition}TH`
       : "";
+    button.querySelector(".track-progress").hidden = !progress;
     button.querySelector(".track-progress").className =
       `track-progress${progress && progress.bestPosition <= 3 ? ` trophy-${progress.bestPosition}` : ""}`;
     button.setAttribute(
@@ -346,19 +353,9 @@ function refreshTrackProgression() {
       `${trackConfig.name}${unlocked ? "" : ", locked"}${progress ? `, best place ${progress.bestPosition}` : ""}`,
     );
   }
-  if (
-    !trackIsUnlocked(
-      progression,
-      classId,
-      TRACKS[selectedTrack].layoutId,
-      selectedTrack,
-      TRACKS,
-    )
-  ) {
-    selectedTrack = TRACKS.findIndex((track, index) =>
-      trackIsUnlocked(progression, classId, track.layoutId, index, TRACKS),
-    );
-    void selectTrack(selectedTrack);
+  if (!isTrackUnlocked(selectedTrack)) {
+    const firstIndex = TRACKS.findIndex((_, index) => isTrackUnlocked(index));
+    void selectTrack(firstIndex);
   }
   menuNavigator?.sync();
 }
@@ -386,7 +383,7 @@ for (const i of [2, 0, 1]) {
 refreshTrackProgression();
 $("crafts").children[0].click();
 menuPreview.setClass(selectedSpeedClass);
-setMenuStage("class");
+setMenuStage("mode");
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
     document.querySelector('input[name="speed-class"]:checked').value,
@@ -400,6 +397,7 @@ qualityToggle.checked = localStorage.getItem("nv-render") !== "clean";
 $("quality-clean").checked = !qualityToggle.checked;
 function applyQuality() {
   world.quality = qualityToggle.checked ? "retro" : "clean";
+  menuPreview.quality = world.quality;
   world.resize();
 }
 applyQuality();
@@ -424,13 +422,7 @@ async function start(event) {
   if (
     trackLoading ||
     loadedTrack !== selectedTrack ||
-    !trackIsUnlocked(
-      progression,
-      SPEED_CLASSES[selectedSpeedClass].id,
-      TRACKS[selectedTrack].layoutId,
-      selectedTrack,
-      TRACKS,
-    )
+    !isTrackUnlocked(selectedTrack)
   )
     return;
   const generation = ++startGeneration;
@@ -588,7 +580,13 @@ menuNavigator = new MenuNavigation({
   onInput: setInputMode,
   onActivate: (cursor) => {
     if (state !== "menu") return false;
+    if (menuStage === "mode" && cursor.closest("#mode")) {
+      cursor.querySelector("input").click();
+      setMenuStage("class");
+      return true;
+    }
     if (menuStage === "class" && cursor.closest(".speed-choices")) {
+      cursor.querySelector("input").click();
       setMenuStage("track");
       return true;
     }
@@ -611,7 +609,7 @@ menuNavigator = new MenuNavigation({
       if (dialog.id === "pause-panel") setPaused(false);
       else dialog.close();
     } else if (state === "results") returnToPaddock();
-    else if (state === "menu" && menuStage !== "class")
+    else if (state === "menu" && menuStage !== "mode")
       setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
     menuNavigator.sync();
   },
@@ -631,8 +629,15 @@ function readMenuGamepad(pad, now = performance.now()) {
   if (!pad?.buttons?.[0]?.pressed) padAConsumed = false;
   if (!pad?.buttons?.[9]?.pressed) padPauseConsumed = false;
 }
+function connectedGamepad() {
+  return Array.from(navigator.getGamepads?.() || []).find(Boolean) || null;
+}
 function pollMenuGamepad() {
-  readMenuGamepad(navigator.getGamepads?.()[0] || null);
+  const pad = connectedGamepad();
+  const connected = String(Boolean(pad));
+  if (document.body.dataset.gamepadConnected !== connected)
+    document.body.dataset.gamepadConnected = connected;
+  readMenuGamepad(pad);
 }
 window.addEventListener("keydown", (e) => {
   if (menuNavigator?.keydown(e)) return;
@@ -764,7 +769,7 @@ let padPause = false,
   padPauseConsumed = false;
 let previousPadInput = [];
 function input() {
-  const pad = navigator.getGamepads?.()[0];
+  const pad = connectedGamepad();
   if (pad) {
     const values = [
       ...pad.axes
@@ -1099,6 +1104,7 @@ function animate(now) {
     if (renderTime >= 2.5) {
       if (renderTime / renderFrames > 0.027 && world.quality === "clean") {
         world.quality = "retro";
+        menuPreview.quality = world.quality;
         qualityToggle.checked = true;
         world.resize();
       }
@@ -1191,7 +1197,7 @@ window.addEventListener("drop", async (e) => {
     $("music-dialog").showModal();
   }
 });
-await selectTrack(0);
+await selectTrack(selectedTrack);
 await initialCourseReady;
 requestAnimationFrame(animate);
 

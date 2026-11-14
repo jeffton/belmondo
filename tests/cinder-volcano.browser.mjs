@@ -56,7 +56,7 @@ try {
         THREE.DefaultLoadingManager.onError = (url) => reject(new Error(url));
       });
       const world = new World(document.querySelector("canvas"));
-      const track = makeTrack(5),
+      const track = makeTrack(TRACK_INDEX.CINDERLINE),
         race = new Race(track, 0, "trial");
       race.countdown = 0;
       world.build(track);

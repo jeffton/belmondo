@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
-const track = makeTrack(0);
+const track = makeTrack(TRACK_INDEX.COAST);
 const terrain = createTerrain(track);
 import { after } from "node:test";
 after(() => terrain.geometries.forEach((g) => g.dispose()));

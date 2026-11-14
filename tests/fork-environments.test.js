@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import { buildEnvironment } from "../src/environment.js";
 
@@ -10,13 +10,15 @@ const textures = Object.fromEntries(
   ["concrete", "road", "paint", "facade", "edge"].map((name) => [name, null]),
 );
 
-for (const index of [0, 1]) {
+for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
   test(`fork ${index}: emitted shelter is lane-specific and clears the full airborne corridor`, () => {
     const track = makeTrack(index);
     const scene = new THREE.Scene();
     const environment = buildEnvironment(scene, track, textures);
     const root = scene.getObjectByName(
-      index === 0 ? "coastal-fork-geography" : "solar-fork-infrastructure",
+      index === TRACK_INDEX.COAST
+        ? "coastal-fork-geography"
+        : "solar-fork-infrastructure",
     );
     scene.updateMatrixWorld(true);
     const ray = new THREE.Raycaster();
@@ -102,7 +104,7 @@ for (const index of [0, 1]) {
       }
     });
     assert(grounded > 20, "near-field structures have real terrain contacts");
-    if (index === 0) {
+    if (index === TRACK_INDEX.COAST) {
       const f = track.frame(0.37 * track.length, 1);
       const p = f.p.clone().addScaledVector(f.right, f.width + 160);
       assert(
@@ -115,10 +117,22 @@ for (const index of [0, 1]) {
 
 // Accepted integrated Night-v4, Whiteout-2, Monsoon-4 and Cinderline-2 terrain.
 for (const [index, expected] of [
-  [2, "cc6affd35fc979a58fd73590b928f6dd563f720076e0ee96e7d96e0a622de954"],
-  [3, "8608f13cb20fc8387dd43f811d3f0f1cb1ee1fff273bdfa52f29549ec5212a37"],
-  [4, "118aa36d2e32c0031c1004b3285b19c3aff330b8c4e7d22d5cc017dcab775c8c"],
-  [5, "fd4066762d9886e2661518c9def35a4251a9819362ec2a00ab2a5e139c1890ce"],
+  [
+    TRACK_INDEX.NOCTILUCENT,
+    "cc6affd35fc979a58fd73590b928f6dd563f720076e0ee96e7d96e0a622de954",
+  ],
+  [
+    TRACK_INDEX.WHITEOUT,
+    "8608f13cb20fc8387dd43f811d3f0f1cb1ee1fff273bdfa52f29549ec5212a37",
+  ],
+  [
+    TRACK_INDEX.MONSOON,
+    "118aa36d2e32c0031c1004b3285b19c3aff330b8c4e7d22d5cc017dcab775c8c",
+  ],
+  [
+    TRACK_INDEX.CINDERLINE,
+    "fd4066762d9886e2661518c9def35a4251a9819362ec2a00ab2a5e139c1890ce",
+  ],
 ]) {
   test(`course ${index}: terrain output remains byte-identical`, () => {
     const terrain = createTerrain(makeTrack(index));

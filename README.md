@@ -1,29 +1,32 @@
 # BELMONDO
 
-Original browser-based anti-gravity combat racer. Six circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with Three.js and Vite. No account, backend, analytics or uploaded audio.
+Original browser-based anti-gravity combat racer. Seven circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with Three.js and Vite. No account, backend, analytics or uploaded audio.
 
 ## Play
 
 https://belmondo.roybot.se
 
-Choose a speed class, circuit and craft in three fixed-screen stations. The live circuit starts on Kaiseki Coast; circuit selection adds a rotating 3D course model, and craft selection shows the actual ship. Back navigation retains selections. Format and low-res settings are on the class station; briefing and sound controls are available throughout. The rotating class emblems, courses and craft render at display resolution independently of the live feed’s low-res setting. Class names are display labels; records use stable class IDs and physical pace.
+Choose format, speed class, circuit and craft. Arrows or D-pad/left stick select options and their previews directly; Enter/A confirms, Esc/B goes back. Navigation follows the visible layout and skips locked circuits. Pause and result actions use an orange selection and mascot. Touch and mouse select directly. LOWRES, briefing and sound controls are in the footer; LOWRES applies to the live circuit and rotating models. Class names are display labels; records use stable class IDs and physical pace.
 
 - **Keyboard:** W/↑ thrust, A/D or ←/→ steer, J/L airbrakes, I nose down / K nose up, Space fire, V camera, Esc pause.
 - **Gamepad:** left stick steers and pitches (up: nose down; down: nose up), A/R2 thrust, L1/R1 airbrakes, X fire, Y camera, Start pause.
 - **Touch:** automatic thrust. Left stick steers and pitches; push up to lower the nose. Right halfstick applies the corresponding airbrake sideways and reduces thrust downward; diagonals combine, release restores thrust. Fire sits above the right stick. VIEW switches chase/first-person; landscape recommended.
 
-INDUCTION (1.2×) runs 3 laps, RESONANCE (1.4×) 4, and SINGULARITY (1.6×) 5. Track unlocks are per class: each later circuit requires wins on every earlier one; Time Attack shares access but never unlocks tracks. Local records are separated by class, physical pace, craft and mode. The HUD separates SPEED and THRUST and shows current/completed lap times beside the lap counter.
+INDUCTION (1.2×) runs 3 laps, RESONANCE (1.4×) 4, and SINGULARITY (1.6×) 5. The first three circuits are open per class; each later circuit requires wins on every earlier one. Time Attack shares access but never unlocks tracks. Local records are separated by class, physical pace, craft and mode. The HUD separates SPEED and THRUST and shows current/completed lap times beside the lap counter.
 
 Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equipped items have individual silhouettes, names and colors: red MISSILE (homing), magenta PULSE, amber MINE, cyan SHIELD and electric-blue TURBO. Equipped items appear below the timer at the top of the HUD; the indicator disappears when unarmed. Fire with Space, the inventory button or the separate mobile FIRE control. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Records are stored locally per circuit layout, craft, mode and physical speed class; records from different layouts remain separate. The 1.2/1.4/1.6 scale replaces 1.0/1.2/1.4: C1 and C2 inherit the previous faster tiers, and C3 is 14.3% faster than the previous maximum. This breaks record comparability: previous records remain stored on-device, but the changed classes use a separate pace-qualified record key and start with an empty local record.
 
 ## Circuits
 
-- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a climbing reversal and a long ravine jump with an aligned landing straight.
-- **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
-- **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
+Difficulty progression:
+
 - **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and an ascending valley fork.
 - **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
+- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a climbing reversal and a long ravine jump with an aligned landing straight.
+- **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
 - **Cinderline — 8.2 km:** three continuous-deck compression waves, a banked caldera and grounded geothermal works.
+- **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
+- **Vesper Circuit:** tight elevated metropolitan turns, tunnels and sustained airbrake demands.
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
@@ -46,7 +49,7 @@ npm run test:music
 npm run build
 ```
 
-`GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the three-stage menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
+`GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
 
 The browser test expects Vite at `http://127.0.0.1:5178`; start it with `npm run dev -- --port 5178`. Set `GAME_URL` to test another deployment. `npx playwright install chromium` installs its browser. SwiftShader is enabled for headless Linux without a GPU.
 
@@ -66,6 +69,6 @@ OpenAI Image design boards are in `public/art/`; **Design study** opens the Japa
 
 ## Verification
 
-`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps across all six circuits, including authored terrain and class/fork/TURBO matrices. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `test:music` checks native MP3 playback, playlist advancement, local-file replacement, transport lifecycle and independent volume controls. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. `node tests/flagship.browser.mjs` checks authored scenery clearance, scene lifecycle, keyboard/touch driving and frame timings; landmark fixtures are separate from actual-play captures. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
+`npm test` checks passive corner failure versus planned steering, inertia, combined airbrakes, wall penalties, connected road projection, ordered lap gates, ballistic jumps, ramp lips, recovery, weapons and earned AI laps across all seven circuits, including authored terrain and class/fork/TURBO matrices. Browser smoke tests exercise desktop keyboard controls, all circuits, pause/blur, local-audio playback, dialogs, landscape touch controls and portrait layout. `test:steering` checks rendered screen-space displacement and inward banking for keyboard, touch and simulated gamepad steering/airbrakes, plus button selection and popup-free acceleration. `test:audio` measures the actual racing PCM bus and twenty rendered synthesis cases, including silence during mute/pause/blur. `test:music` checks native MP3 playback, playlist advancement, local-file replacement, transport lifecycle and independent volume controls. `node tests/gameplay.browser.mjs` drives through actual browser input and read-only telemetry; `node tests/visibility.browser.mjs` checks overtaking, frustum reentry, first-person camera banking and mobile HUD spacing with standalone rendered fixtures. `node tests/input-chords.browser.mjs` checks simultaneous steering, airbrakes and pitch across keyboard, gamepad and multitouch. `node tests/contacts.browser.mjs` renders reciprocal contacts, sustained barrier pressure and clean overtaking. `node tests/flagship.browser.mjs` checks authored scenery clearance, scene lifecycle, keyboard/touch driving and frame timings; landmark fixtures are separate from actual-play captures. Screenshots and audition audio are written to the untracked `test-artifacts/` directory.
 
 Headless software rendering validates functionality, not physical-phone GPU performance or subjective driving feel. Gamepad mappings are implemented but require a physical controller for hardware verification.

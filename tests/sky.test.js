@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { TRACKS } from "../src/track.js";
+import { TRACKS, TRACK_INDEX } from "../src/track.js";
 import { createSky, paintSky } from "../src/sky.js";
 import { celestialDirection } from "../src/track-lighting.js";
 
@@ -176,8 +176,8 @@ test("course paintings are deterministic and distinct", () => {
 });
 
 test("sky source textures are independently owned and disposable across course changes", () => {
-  const a = createSky(TRACKS[0], TRACKS[0].fog),
-    b = createSky(TRACKS[0], TRACKS[0].fog);
+  const a = createSky(TRACKS[TRACK_INDEX.COAST], TRACKS[TRACK_INDEX.COAST].fog),
+    b = createSky(TRACKS[TRACK_INDEX.COAST], TRACKS[TRACK_INDEX.COAST].fog);
   assert.notEqual(a.image.data, b.image.data);
   assert.equal(a.mapping, THREE.EquirectangularReflectionMapping);
   assert.equal(a.colorSpace, THREE.SRGBColorSpace);

@@ -1,15 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 import { buildFlagship } from "../src/flagship.js";
 import { getWaterfrontDistricts } from "../src/course-geography.js";
 
-for (let index = 0; index < 3; index++)
-  test(`legacy world ${index}: complete emitted architecture clears both authored driving corridors`, () => {
+for (const [legacyIndex, index] of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+].entries())
+  test(`legacy world ${legacyIndex}: complete emitted architecture clears both authored driving corridors`, () => {
     const track = makeTrack(index);
     const scene = new THREE.Scene();
     const textures = Object.fromEntries(
@@ -29,7 +33,7 @@ for (let index = 0; index < 3; index++)
     const environment = buildEnvironment(scene, track, textures);
     buildCity(scene, track, textures, environment);
     buildFinishDistrict(scene, track, textures, environment);
-    if (index === 0) {
+    if (index === TRACK_INDEX.COAST) {
       // CPU geometry acceptance does not fetch image pixels or create a DOM.
       const load = THREE.TextureLoader.prototype.load;
       try {
@@ -40,7 +44,7 @@ for (let index = 0; index < 3; index++)
       }
     }
     scene.updateMatrixWorld(true);
-    if (index === 0) {
+    if (index === TRACK_INDEX.COAST) {
       const frontage = scene.getObjectByName("kaiseki-waterfront");
       const basementRay = new THREE.Raycaster();
       basementRay.far = 0.1;

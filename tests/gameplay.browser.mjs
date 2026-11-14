@@ -1,14 +1,14 @@
 import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real browser input only: telemetry is read, never assigned; Race.update is never called.
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const stage = process.env.GAMEPLAY_STAGE || "all";
 const captureDuringLap = process.env.GAMEPLAY_CAPTURE_DURING_LAP === "1";
-const track = makeTrack(0);
+const track = makeTrack(TRACK_INDEX.COAST);
 const jump = track.config.jump;
 const [splitStart, splitEnd] = track.config.split;
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));

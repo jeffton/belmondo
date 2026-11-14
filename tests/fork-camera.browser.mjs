@@ -45,7 +45,7 @@ try {
       });
     const initial = loaded(),
       world = new World(document.querySelector("canvas"));
-    let track = makeTrack(0),
+    let track = makeTrack(TRACK_INDEX.COAST),
       race = new Race(track, 0, "trial");
     world.build(track);
     world.setupRacers(race, CRAFT);

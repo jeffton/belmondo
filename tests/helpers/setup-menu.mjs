@@ -1,4 +1,4 @@
-const setupStages = ["class", "track", "craft"];
+const setupStages = ["mode", "class", "track", "craft"];
 
 export async function goToSetupStage(page, target) {
   let current = await page.locator("#menu").getAttribute("data-stage");
@@ -22,10 +22,12 @@ export async function prepareRaceSetup(
   page,
   { mode, quality = false, trackIndex = 0, craftIndex = 0 } = {},
 ) {
-  if (mode) await page.locator(`input[name="mode"][value="${mode}"]`).check();
+  if (mode) {
+    await goToSetupStage(page, "mode");
+    await page.locator(`input[name="mode"][value="${mode}"]`).check();
+  }
   if (quality) await page.locator("#quality").check();
-  await page.locator("#setup-next").click();
-  await page.locator('[data-panel="track"]').waitFor({ state: "visible" });
+  await goToSetupStage(page, "track");
   await page.locator(`#tracks button:nth-child(${trackIndex + 1})`).click();
   await page.locator("#setup-next").click();
   await page.locator('[data-panel="craft"]').waitFor({ state: "visible" });

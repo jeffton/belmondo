@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { preview } from "vite";
 import { mkdir } from "node:fs/promises";
+import { TRACKS } from "../src/track.js";
 
 let server;
 let url = process.env.GAME_URL;
@@ -32,11 +33,25 @@ try {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.addInitScript(() => {
-    localStorage.setItem("nv-renderer", "webgpu");
-    if (!localStorage.getItem("nv-records"))
-      localStorage.setItem("nv-records", '{"menu-race-check":42}');
-  });
+  await page.addInitScript(
+    (layoutIds) => {
+      localStorage.setItem(
+        "nv-progression",
+        JSON.stringify({
+          version: 1,
+          classes: {
+            c3: Object.fromEntries(
+              layoutIds.map((id) => [id, { bestPosition: 1, won: true }]),
+            ),
+          },
+        }),
+      );
+      localStorage.setItem("nv-renderer", "webgpu");
+      if (!localStorage.getItem("nv-records"))
+        localStorage.setItem("nv-records", '{"menu-race-check":42}');
+    },
+    TRACKS.map((track) => track.layoutId),
+  );
   const target = new URL(url);
   target.searchParams.set("renderer", "webgpu");
   await page.goto(target.href, { waitUntil: "domcontentloaded" });
@@ -44,13 +59,16 @@ try {
     () => window.nullVector?.telemetry.state === "menu",
   );
   const records = await page.evaluate(() => localStorage.getItem("nv-records"));
-  await expect(page.locator("#setup-options fieldset")).toHaveCount(2);
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+  await expect(page.locator(".menu-footer #render-quality")).toBeVisible();
   await expect(page.locator(".menu-footer .menu-links > *")).toHaveCount(4);
   await page.locator('input[name="speed-class"][value="2"]').check();
   await page.locator("#setup-next").click();
   await expect(page.locator("#tracks button")).toHaveCount(7);
   for (const index of indices) {
-    await page.locator("#tracks button").nth(index).click();
+    await page.locator(`#tracks button[data-index="${index}"]`).click();
     await page.waitForFunction((index) => {
       const t = window.nullVector.telemetry;
       return (
@@ -73,8 +91,8 @@ try {
         track: t.loadedTrack,
         calls: t.drawCalls,
         preview: t.previewResources,
-        expectedWidth: Math.floor(canvas.width * devicePixelRatio),
-        expectedHeight: Math.floor(canvas.height * devicePixelRatio),
+        expectedWidth: Math.floor(canvas.width * 0.55),
+        expectedHeight: Math.floor(canvas.height * 0.55),
       };
     });
     expect(view.calls).toBeGreaterThan(0);
@@ -104,7 +122,7 @@ try {
       JSON.stringify({
         viewport,
         index,
-        menuAndNativePreview: true,
+        menuAndLowresPreview: true,
         raceStartPauseReturn: true,
       }),
     );

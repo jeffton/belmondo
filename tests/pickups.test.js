@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, roadBounds, TRACKS } from "../src/track.js";
+import { makeTrack, roadBounds, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import {
   getTrackPickups,
@@ -127,7 +127,7 @@ for (let course = 0; course < TRACKS.length; course++) {
 }
 
 test("Race grants the aimed pickup once per earned lap, preserving miss and branch semantics", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   for (const type of ["weapon", "boost"]) {
     const race = new Race(track);
     race.countdown = 0;
@@ -179,7 +179,7 @@ test("Race grants the aimed pickup once per earned lap, preserving miss and bran
 });
 
 test("AI inventory pickups never emit player weapon announcements", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track);
   race.countdown = 0;
   const ai = race.racers[1];
@@ -198,7 +198,7 @@ test("AI inventory pickups never emit player weapon announcements", () => {
 });
 
 test("lethal AI PULSE elimination cannot grant an unvisited pickup across the old checkpoint path", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track);
   race.countdown = 0;
   race.racers = race.racers.slice(0, 2);

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { halfstickPosition } from "../src/touch-halfstick.js";
 import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 test("halfstick preserves analog travel, projects diagonals to its arc and excludes up", () => {
   assert.deepEqual(halfstickPosition(-0.3, 0.4), { x: -0.3, y: 0.4 });
@@ -17,7 +17,7 @@ test("halfstick preserves analog travel, projects diagonals to its arc and exclu
 });
 
 test("omitted throttle remains finite and identical to explicit coast through countdown and racing", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const omitted = new Race(track, 0, "trial");
   const coast = new Race(track, 0, "trial");
   for (let step = 0; step < 1200; step++) {
@@ -48,7 +48,7 @@ test("omitted throttle remains finite and identical to explicit coast through co
 });
 
 test("partial touch thrust scales engine force without changing coast drag or boolean input", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const velocity = (throttle) => {
     const race = new Race(track, 0, "trial");
     race.countdown = 0;

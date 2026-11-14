@@ -75,12 +75,31 @@ button {
 button:hover {
   filter: brightness(1.13);
 }
+/* Console navigation uses the selected option, not a second focus cursor. */
+:is(#menu, dialog, #results) :focus {
+  outline: none;
+}
 .menu-cursor {
-  box-shadow: inset 0 -3px 0 var(--lime);
-  filter: brightness(1.12);
+  box-shadow: none;
+  text-shadow: none;
+}
+:is(#menu, dialog, #results)
+  :is(button, a, .file-buttons label).menu-cursor:not(.choice) {
+  color: var(--ink);
+  background: var(--orange);
+  border-color: var(--orange);
+  filter: none;
 }
 [hidden] {
   display: none !important;
+}
+#game,
+#menu-model {
+  opacity: 1;
+  transition: opacity 120ms ease-out;
+}
+body.course-loading:has(#menu:not([hidden])) :is(#game, #menu-model) {
+  opacity: 0;
 }
 #game {
   position: fixed;
@@ -1946,6 +1965,7 @@ body.touch .instrument-bar {
 }
 #menu #tracks {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 5px;
 }
 #menu #tracks .choice b {
@@ -1962,6 +1982,7 @@ body.touch .instrument-bar {
   padding: 15px;
 }
 #menu .mode-row {
+  grid-template-columns: minmax(0, 1fr);
   margin-top: 20px;
 }
 .setup-navigation {
@@ -2019,6 +2040,7 @@ body.touch .instrument-bar {
   display: block;
 }
 #menu .world-caption small,
+#menu[data-stage="class"] .world-caption,
 #menu[data-stage="track"] .world-caption strong {
   display: none;
 }
@@ -2084,6 +2106,23 @@ body.touch .instrument-bar {
   display: block;
   height: 100%;
   background: var(--craft-accent);
+}
+#menu #tracks .choice :is(.track-progress, .track-lock) {
+  display: block;
+}
+#model-subtitle {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  color: #b3c8ce;
+  font: 600 clamp(8px, 1vw, 10px)/1.4 var(--interface);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 5px #10202c;
+}
+#menu:not([data-stage="track"]) #model-subtitle {
+  display: none;
 }
 #model-name {
   position: absolute;
@@ -2373,4 +2412,176 @@ body.touch :is(dialog, .overlay) {
   padding-right: max(20px, env(safe-area-inset-right));
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   padding-left: max(20px, env(safe-area-inset-left));
+}
+
+/* Keep the primary action quiet while a different action is selected. */
+:is(#menu, #pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
+  .start:not(.menu-cursor) {
+  color: var(--paper);
+  background: transparent;
+  box-shadow: none;
+}
+:is(#menu, #pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
+  .start:not(.menu-cursor)::after {
+  visibility: hidden;
+}
+[data-keyboard-hint]::before {
+  content: attr(data-keyboard-hint);
+  order: 1;
+  margin-left: auto;
+  font: 600 8px/1 var(--interface);
+  letter-spacing: 0.3px;
+  opacity: 0.65;
+}
+body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
+  content: attr(data-gamepad-hint);
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+[data-input-mode="touch"] [data-keyboard-hint]::before {
+  display: none;
+}
+#menu .setup-navigation :is(#setup-back, .start) {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  width: 0;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid #71919d77;
+  padding: 8px 10px;
+  font: 700 16px/1.2 var(--display);
+  letter-spacing: 0.2px;
+}
+#menu .setup-navigation .start::after {
+  width: 20px;
+  height: 20px;
+}
+#menu [data-panel="mode"] legend {
+  margin-bottom: 12px;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+}
+.start::after {
+  order: 2;
+}
+:is(#pause-panel, #results) .panel > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 22px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 60px;
+  min-height: 60px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #71919d77;
+  font: 700 16px/1.2 var(--display);
+  letter-spacing: 0.2px;
+  text-align: left;
+}
+:is(#pause-panel, #results) .panel > button::before {
+  grid-column: 2;
+  grid-row: 1;
+}
+:is(#pause-panel, #results) .panel > button::after {
+  content: "";
+  grid-column: 3;
+  grid-row: 1;
+  width: 22px;
+  height: 22px;
+  background: url("/art/pip-lab-mark.svg") center / contain no-repeat;
+  visibility: hidden;
+}
+:is(#pause-panel, #results) .panel > button.menu-cursor::after {
+  visibility: visible;
+}
+@media (max-height: 480px) {
+  #pause-panel .panel {
+    padding: 14px 18px;
+  }
+  #pause-panel .panel .eyebrow {
+    margin: 0;
+  }
+  #pause-panel .panel h2 {
+    font-size: 28px;
+    margin: 8px 0;
+    padding-bottom: 8px;
+  }
+  #pause-panel .panel > button {
+    height: 44px;
+    min-height: 44px;
+    margin-top: 6px;
+  }
+}
+.close[data-keyboard-hint] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+}
+.close[data-keyboard-hint]::before {
+  order: -1;
+}
+#menu footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+#menu footer .menu-links {
+  flex: 1;
+  min-width: 0;
+}
+#menu footer #render-quality {
+  display: flex;
+  align-items: center;
+  order: 1;
+  flex-shrink: 0;
+  gap: 6px;
+}
+#menu footer #render-quality .quality-label {
+  padding: 0;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+}
+#menu footer #render-quality .binary-options {
+  border: 0;
+  background: transparent;
+}
+#menu footer #render-quality .binary-options span {
+  min-height: 24px;
+  padding: 4px 6px;
+  font-size: 8px;
+}
+#menu footer .menu-links :is(button, a).menu-cursor {
+  padding-inline: 4px;
+}
+@media (max-width: 600px) {
+  #menu {
+    --footer-height: calc(43px + env(safe-area-inset-bottom));
+  }
+  #menu footer {
+    gap: 10px;
+  }
+  #menu footer .menu-links {
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    justify-content: space-between;
+    gap: 0 8px;
+  }
+  #menu footer .menu-links :is(button, a) {
+    min-height: 21px;
+    padding-block: 3px;
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  #menu footer #render-quality {
+    gap: 4px;
+  }
+  #menu footer #render-quality .binary-options span {
+    padding-inline: 4px;
+  }
 }

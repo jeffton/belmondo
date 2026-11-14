@@ -1,11 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
-for (let index = 0; index < 3; index++) {
-  test(`legacy world ${index}: real terrain, grid starts, every craft/class and ordinary/TURBO`, () => {
+for (const [legacyIndex, index] of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+].entries()) {
+  test(`legacy world ${legacyIndex}: real terrain, grid starts, every craft/class and ordinary/TURBO`, () => {
     const track = makeTrack(index);
     const terrain = createTerrain(track);
     const failures = [];

@@ -2,7 +2,7 @@ import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, mod } from "../src/track.js";
+import { makeTrack, mod, TRACK_INDEX } from "../src/track.js";
 import { Race, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 import { solveContacts, hullExtent } from "../src/contacts.js";
@@ -177,7 +177,7 @@ test("boost spools force gradually and carries momentum through its smooth tail"
 test("held pitch changes a real jump's height, range and landing without pose teleports", () => {
   const results = [];
   for (const pitch of [-1, 0, 1]) {
-    const track = makeTrack(0),
+    const track = makeTrack(TRACK_INDEX.COAST),
       race = new Race(track, 1, "trial"),
       p = race.player;
     race.countdown = 0;
@@ -699,7 +699,7 @@ test("exhausted wall shields permanently eliminate, never reboot or ride walls",
 });
 
 test("production road projection includes actual ramp height", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const s = (track.config.jump - 0.004) * track.length;
   const f = track.frame(s);
   const road = projectRoad(track, f.p, s, 0);
@@ -707,7 +707,7 @@ test("production road projection includes actual ramp height", () => {
 });
 
 test("projection never tilts the launch lip down toward the absent gap deck", () => {
-  const track = makeTrack(0),
+  const track = makeTrack(TRACK_INDEX.COAST),
     s = track.config.jump * track.length - 0.2;
   const f = track.frame(s);
   const road = projectRoad(track, f.p, s - 0.7, 0);

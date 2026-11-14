@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { railPoint } from "../src/rail-geometry.js";
 import { createTerrain } from "../src/terrain.js";
 
@@ -52,7 +52,7 @@ test("without authored width sections, all integrated layout frame outputs are b
 });
 
 test("authored width envelope smoothly drives main deck, fork edges, rails, bounds and terrain", () => {
-  const track = makeTrack(0),
+  const track = makeTrack(TRACK_INDEX.COAST),
     [forkStart, forkEnd] = track.config.split;
   track.config.widthSections = [
     {

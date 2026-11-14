@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { buildStartGantry } from "../src/start-gantry.js";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { Race, LAPS_BY_CLASS } from "../src/race.js";
 
 const LAPS = LAPS_BY_CLASS[2];
@@ -47,7 +47,7 @@ test("physical start signal stays dark and legible across real countdown boundar
   };
   try {
     const scene = new THREE.Scene();
-    const signal = buildStartGantry(scene, makeTrack(0));
+    const signal = buildStartGantry(scene, makeTrack(TRACK_INDEX.COAST));
     await Promise.resolve();
     await Promise.resolve();
     const display = signal.assembly.getObjectByName("grid-signal-display");

@@ -2,11 +2,11 @@ import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { makeTrack, clamp, mod } from "../src/track.js";
+import { makeTrack, clamp, mod, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
-const track = makeTrack(4);
+const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 

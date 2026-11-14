@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { MenuPreview } from "../src/menu-preview.js";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { createCraft } from "../src/craft.js";
 import { SPEED_CLASSES } from "../src/speed-classes.js";
 import { localRecordKey } from "../src/records.js";
@@ -85,9 +85,10 @@ function fixture() {
   };
 }
 
-test("native inset lazily creates one canvas below labels, tracks CSS size/DPR and releases its context", () => {
+test("clean inset lazily creates one canvas below labels, tracks CSS size/DPR and releases its context", () => {
   const { preview, calls, canvas, view, children, setBounds } = fixture();
-  preview.setTrack(makeTrack(0));
+  preview.quality = "clean";
+  preview.setTrack(makeTrack(TRACK_INDEX.COAST));
   preview.draw(1);
   assert.deepEqual(calls, []);
   assert.deepEqual(preview.resources, {
@@ -127,7 +128,7 @@ test("native inset lazily creates one canvas below labels, tracks CSS size/DPR a
 
 test("hidden menu/tab and offscreen preview do not render; all three stages reuse renderer", () => {
   const { preview, renderer, document, setBounds } = fixture();
-  preview.setTrack(makeTrack(0));
+  preview.setTrack(makeTrack(TRACK_INDEX.COAST));
   preview.setStage("track");
   preview.draw(1);
   assert.equal(renderer.info.render.frame, 1);
@@ -160,15 +161,11 @@ test("all course previews contain actual elevated deck geometry and both split r
     preview.setTrack(track);
     const positions =
       preview.course.children[0].geometry.getAttribute("position");
-    const points = new Set();
     let low = Infinity,
       high = -Infinity;
     for (let j = 0; j < positions.count; j++) {
       low = Math.min(low, positions.getY(j));
       high = Math.max(high, positions.getY(j));
-      points.add(
-        `${positions.getX(j).toFixed(2)},${positions.getY(j).toFixed(2)},${positions.getZ(j).toFixed(2)}`,
-      );
     }
     assert.ok(high - low > 20, track.config.name);
     const count = Math.ceil(track.length / 5);
@@ -182,9 +179,17 @@ test("all course previews contain actual elevated deck geometry and both split r
       const side = bounds.innerSide === -1 ? 1 : -1;
       const p = f.p
         .clone()
-        .addScaledVector(f.right, side < 0 ? bounds.clipMin : bounds.clipMax);
+        .addScaledVector(
+          f.right,
+          (side < 0 ? bounds.clipMin : bounds.clipMax) * 2.3,
+        );
       assert.ok(
-        points.has(`${p.x.toFixed(2)},${p.y.toFixed(2)},${p.z.toFixed(2)}`),
+        Array.from({ length: positions.count }, (_, j) => j).some(
+          (j) =>
+            Math.abs(positions.getX(j) - p.x) < 0.001 &&
+            Math.abs(positions.getY(j) - p.y) < 0.001 &&
+            Math.abs(positions.getZ(j) - p.z) < 0.001,
+        ),
         `${track.config.name}: branch ${branch}`,
       );
     }
@@ -324,7 +329,7 @@ test("resonance has an open fork notch while singularity stays a filled volume t
 
 test("course switches preserve compiled-material ownership and release only replaced geometry", () => {
   const { preview } = fixture();
-  preview.setTrack(makeTrack(0));
+  preview.setTrack(makeTrack(TRACK_INDEX.COAST));
   const materials = preview.course.children.map((mesh) => mesh.material);
   const materialDisposals = new Map(materials.map((material) => [material, 0]));
   for (const material of materials)
@@ -366,4 +371,65 @@ test("class identity and record scopes survive the field-tech naming", () => {
       ][i],
     );
   }
+});
+
+test("LOWRES applies to every model stage and toggles without replacing its renderer", (t) => {
+  t.mock.method(
+    THREE.TextureLoader.prototype,
+    "load",
+    () => new THREE.Texture(),
+  );
+  const { preview, canvas, renderer } = fixture();
+  preview.setTrack(makeTrack(TRACK_INDEX.COAST));
+  preview.setClass(0);
+  preview.setCraft(0);
+  for (const stage of ["track", "class", "craft"]) {
+    preview.setStage(stage);
+    preview.draw(0);
+    assert.equal(canvas.width, Math.floor(600.5 * 0.55));
+    assert.equal(canvas.style.imageRendering, "pixelated");
+    preview.quality = "clean";
+    preview.draw(0);
+    assert.equal(canvas.width, 1201);
+    assert.equal(preview.renderer, renderer);
+    preview.quality = "retro";
+  }
+  preview.dispose();
+});
+
+test("all course vertices stay within portrait and landscape frames throughout rotation", () => {
+  const { preview, setBounds } = fixture();
+  preview.setStage("track");
+  const point = new THREE.Vector3();
+  for (let i = 0; i < TRACKS.length; i++) {
+    preview.setTrack(makeTrack(i));
+    for (const [width, height] of [
+      [600, 400],
+      [312, 170],
+      [380, 140],
+    ]) {
+      setBounds(rect(0, 0, width, height));
+      for (let heading = 0; heading < 16; heading++) {
+        preview.time = (heading * Math.PI) / 8 / 0.16;
+        preview.draw(0);
+        preview.camera.updateMatrixWorld();
+        preview.coursePivot.updateMatrixWorld(true);
+        preview.course.traverse((object) => {
+          const positions = object.geometry?.getAttribute("position");
+          if (!positions) return;
+          for (let j = 0; j < positions.count; j++) {
+            point
+              .fromBufferAttribute(positions, j)
+              .applyMatrix4(object.matrixWorld)
+              .project(preview.camera);
+            assert.ok(
+              Math.abs(point.x) < 1 && Math.abs(point.y) < 1,
+              `${TRACKS[i].name} ${width}x${height}, heading ${heading}`,
+            );
+          }
+        });
+      }
+    }
+  }
+  preview.dispose();
 });

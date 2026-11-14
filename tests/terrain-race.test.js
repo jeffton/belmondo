@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Race, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 
 for (let index = 0; index < 3; index++) {
@@ -51,7 +51,7 @@ for (let index = 0; index < 3; index++) {
 }
 
 test("terrain sweeps cannot interfere with grounded road contact", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const terrain = {
     sweepSurface() {
       assert.fail("grounded hull must not query land collision");

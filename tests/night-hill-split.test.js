@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 import { buildCourseGeography } from "../src/course-geography.js";
 import { projectRoad } from "../src/road-projection.js";
 
 test("Night hill routes cross at two physical levels and return on opposite sides", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     L = track.length;
   assert.equal(track.config.layoutId, "noctilucent-4-finish-end");
   for (const u of [0.3, 0.43]) {
@@ -49,7 +49,7 @@ test("Night hill routes cross at two physical levels and return on opposite side
 });
 
 test("Night mountain mesh has grounded feet and a clear genuine lower void beneath the upper road", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     terrain = createTerrain(track),
     scene = new THREE.Scene();
   const root = buildCourseGeography(
@@ -99,7 +99,7 @@ test("Night mountain mesh has grounded feet and a clear genuine lower void benea
 });
 
 test("actual physics earns both hill forks and following jump in every class, ordinary and boosted", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     terrain = createTerrain(track);
   for (let c = 0; c < 3; c++)
     for (const branch of [-1, 1])

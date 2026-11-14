@@ -67,7 +67,7 @@ for (const [index, config] of TRACKS.entries()) {
             distance > frame.width + 4,
             "full foundation must clear the racing deck and barrier",
           );
-          if (index === 0) {
+          if (track.config.name === "KAISEKI COAST") {
             const side = Math.sign(p.clone().sub(frame.p).dot(frame.right));
             for (const [
               start,

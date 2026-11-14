@@ -30,6 +30,14 @@ export class MenuNavigation {
     this.padA = false;
     this.padB = false;
     this.padStart = false;
+    document.addEventListener("pointerdown", (event) => {
+      const item = this.items().find((element) =>
+        element.contains(event.target),
+      );
+      if (!item) return;
+      this.cursor = item;
+      this.sync();
+    });
   }
 
   items() {
@@ -68,41 +76,6 @@ export class MenuNavigation {
     if (repeated && now < this.repeatAt) return;
     this.repeatAt = now + (repeated ? 130 : 280);
 
-    const root = this.root();
-    if (root?.id === "menu" && direction === "down") {
-      const selector = this.cursor.closest(".speed-choices")
-        ? "#mode input:checked"
-        : this.cursor.closest("#mode")
-          ? "#render-quality input:checked"
-          : this.cursor.closest("#render-quality")
-            ? "#setup-next:not([hidden]), #start:not([hidden])"
-            : this.cursor.closest(".setup-navigation")
-              ? "#help-open"
-              : null;
-      const next = selector && root.querySelector(selector);
-      if (next) {
-        this.cursor = itemForInput(next);
-        this.sync();
-        return;
-      }
-    }
-    if (root?.id === "menu" && direction === "up") {
-      const selector = this.cursor.closest(".menu-footer")
-        ? "#setup-next:not([hidden]), #start:not([hidden])"
-        : this.cursor.closest(".setup-navigation")
-          ? "#render-quality input:checked"
-          : this.cursor.closest("#render-quality")
-            ? "#mode input:checked"
-            : this.cursor.closest("#mode")
-              ? "#speed-class input:checked"
-              : null;
-      const previous = selector && root.querySelector(selector);
-      if (previous) {
-        this.cursor = itemForInput(previous);
-        this.sync();
-        return;
-      }
-    }
     const input = this.cursor.matches("label")
       ? this.cursor.querySelector("input")
       : this.cursor.matches("input")
@@ -128,41 +101,10 @@ export class MenuNavigation {
       );
       return;
     }
-    if (input?.type === "radio") {
-      const group = [
-        ...(input.form?.querySelectorAll(
-          `input[type="radio"][name="${CSS.escape(input.name)}"]`,
-        ) ||
-          this.document.querySelectorAll(
-            `input[type="radio"][name="${CSS.escape(input.name)}"]`,
-          )),
-      ].filter((radio) => !radio.disabled && isVisible(radio));
-      const index = group.indexOf(input);
-      const horizontal = direction === "left" || direction === "right";
-      const vertical = direction === "up" || direction === "down";
-      const horizontalGroup = group.every((radio) => {
-        const rect = radio.getBoundingClientRect();
-        return Math.abs(rect.top - group[0].getBoundingClientRect().top) < 8;
-      });
-      const verticalGroup = group.every((radio) => {
-        const rect = radio.getBoundingClientRect();
-        return Math.abs(rect.left - group[0].getBoundingClientRect().left) < 8;
-      });
-      if ((horizontal && horizontalGroup) || (vertical && verticalGroup)) {
-        const forward = direction === "right" || direction === "down";
-        const next = index + (forward ? 1 : -1);
-        if (next >= 0 && next < group.length) {
-          group[next].click();
-          this.cursor = itemForInput(group[next]);
-          this.sync();
-          return;
-        }
-      }
-    }
-
     const bounds = this.cursor.getBoundingClientRect();
     const cx = bounds.left + bounds.width / 2;
     const cy = bounds.top + bounds.height / 2;
+    const horizontal = direction === "left" || direction === "right";
     const candidates = this.items()
       .filter((element) => element !== this.cursor)
       .map((element) => {
@@ -177,19 +119,35 @@ export class MenuNavigation {
               : direction === "up"
                 ? -dy
                 : dy;
-        const cross =
-          direction === "left" || direction === "right"
-            ? Math.abs(dy)
-            : Math.abs(dx);
-        return { element, main, cross, score: main + cross * 1.5 };
-      });
-    const forward = candidates.filter(({ main }) => main > 1);
-    let next = forward.sort((a, b) => a.score - b.score)[0]?.element;
-    if (!next && candidates.length) {
-      const opposite = candidates.sort((a, b) => a.main - b.main);
-      next = opposite[0].element;
+        const cross = horizontal ? Math.abs(dy) : Math.abs(dx);
+        const overlap = horizontal
+          ? Math.min(bounds.bottom, rect.bottom) -
+            Math.max(bounds.top, rect.top)
+          : Math.min(bounds.right, rect.right) -
+            Math.max(bounds.left, rect.left);
+        return { element, main, cross, overlap, score: main + cross * 1.5 };
+      })
+      .filter(
+        ({ main, cross, overlap }) =>
+          main > 1 && (overlap > 1 || main >= cross),
+      );
+    // Prefer the same visual row/column. At an edge, stay put rather than
+    // wrapping across the screen in the opposite direction.
+    const aligned = candidates.filter(({ overlap }) => overlap > 1);
+    const next = (aligned.length ? aligned : candidates).sort(
+      (a, b) => a.score - b.score,
+    )[0]?.element;
+    if (next) {
+      const nextInput = next.matches("label")
+        ? next.querySelector("input")
+        : next;
+      if (
+        next.matches("#tracks .choice, #crafts .choice") ||
+        nextInput?.type === "radio"
+      )
+        nextInput.click();
+      this.cursor = next;
     }
-    if (next) this.cursor = next;
     this.sync();
   }
 

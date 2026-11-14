@@ -1,19 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 import { projectRoad } from "../src/road-projection.js";
 
 // Authored v4 world routes, including Coast's accepted 12 m launch lip.
+const authoredCourses = [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+];
 const authoredPhysical = [11032.065614, 11325.463411, 11203.418633];
-for (let index = 0; index < 3; index++)
-  test(`course ${index} gains real length, hills and a continuous finish straight`, () => {
+for (const [courseNumber, index] of authoredCourses.entries())
+  test(`course ${courseNumber} gains real length, hills and a continuous finish straight`, () => {
     const track = makeTrack(index);
     assert.equal(
       track.config.layoutId,
       ["coast-4-finish-end", "solar-4-finish-end", "noctilucent-4-finish-end"][
-        index
+        courseNumber
       ],
     );
     let length = 0,
@@ -28,14 +33,14 @@ for (let index = 0; index < 3; index++)
       high = Math.max(high, f.p.y);
     }
     assert(
-      Math.abs(length - authoredPhysical[index]) < 4,
+      Math.abs(length - authoredPhysical[courseNumber]) < 4,
       "measured world distance matches the frozen authored v4 course",
     );
     assert(
       Math.abs(length - track.physicalLength) < 4,
       "reported physical polyline follows the authored world route",
     );
-    assert(high - low > (index === 0 ? 65 : 120));
+    assert(high - low > (index === TRACK_INDEX.COAST ? 65 : 120));
     const [start, end] = track.config.sections.finishStraight;
     const a = track.frame(start * track.length),
       b = track.frame(end * track.length);
@@ -52,7 +57,7 @@ for (let index = 0; index < 3; index++)
   });
 
 test("Night's overpass is a true XZ crossing with open, separated physical levels", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     [crossing] = track.config.sections.crossings;
   const lower = track.frame(crossing.lowerU * track.length),
     upper = track.frame(crossing.upperU * track.length);
@@ -99,7 +104,7 @@ test("Night's overpass is a true XZ crossing with open, separated physical level
 });
 
 test("Night has an authored steep fall with a smooth low landing/runout", () => {
-  const track = makeTrack(2);
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT);
   let steepest = 0;
   for (let u = 0.84; u < 0.9; u += 0.0005) {
     const f = track.frame(u * track.length);
@@ -114,7 +119,7 @@ test("Night has an authored steep fall with a smooth low landing/runout", () => 
 });
 
 test("fast descending hulls land on their selected crossing level, not through the deck", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     [crossing] = track.config.sections.crossings;
   for (let c = 0; c < 3; c++)
     for (const u of [crossing.lowerU, crossing.upperU]) {
@@ -140,7 +145,7 @@ test("fast descending hulls land on their selected crossing level, not through t
 });
 
 test("being below the upper bridge cannot snap a hull to that deck or steal progression", () => {
-  const track = makeTrack(2),
+  const track = makeTrack(TRACK_INDEX.NOCTILUCENT),
     [crossing] = track.config.sections.crossings;
   const lower = track.frame(crossing.lowerU * track.length),
     s = crossing.upperU * track.length;

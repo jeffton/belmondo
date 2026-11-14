@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import { buildCourseGeography } from "../src/course-geography.js";
 
 function mountainScene() {
-  const track = makeTrack(1);
+  const track = makeTrack(TRACK_INDEX.SOLAR);
   const terrain = createTerrain(track);
   const root = buildCourseGeography(
     new THREE.Scene(),

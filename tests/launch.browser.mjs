@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
 import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 const inputMocks = process.env.INPUT_MOCKS === "1";
@@ -190,7 +190,7 @@ async function keyboardLapAfterLaunch(page, launchDevice) {
       () => !window.nullVector.telemetry.controls.launchIntent,
     );
   }
-  const track = makeTrack(0),
+  const track = makeTrack(TRACK_INDEX.COAST),
     held = new Set(launchDevice === "keyboard" ? ["KeyW"] : []);
   const begun = Date.now();
   let t;

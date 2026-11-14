@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { createTerrain } from "../src/terrain.js";
@@ -166,7 +166,7 @@ for (let index = 0; index < TRACKS.length; index++) {
 }
 
 test("placements follow moved and lengthened authored frames, not a fixed map rectangle", () => {
-  const source = makeTrack(0),
+  const source = makeTrack(TRACK_INDEX.COAST),
     offset = new THREE.Vector3(1900, 0, -1700),
     scale = 1.7;
   const track = {

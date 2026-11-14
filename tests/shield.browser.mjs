@@ -44,7 +44,7 @@ try {
       const world = new World(document.querySelector("canvas"));
       world.quality = "retro";
       world.resize();
-      const track = makeTrack(0);
+      const track = makeTrack(TRACK_INDEX.COAST);
       const loaded = new Promise((resolve, reject) => {
         THREE.DefaultLoadingManager.onLoad = resolve;
         THREE.DefaultLoadingManager.onError = (asset) =>

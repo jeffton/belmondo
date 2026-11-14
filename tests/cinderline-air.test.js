@@ -1,11 +1,11 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, clamp, mod } from "../src/track.js";
+import { makeTrack, clamp, mod, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
-const track = makeTrack(5);
+const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 const angle = (value) => Math.atan2(Math.sin(value), Math.cos(value));

@@ -43,7 +43,7 @@ try {
         return play(key);
       };
       window.audio = audio;
-      const track = makeTrack(0);
+      const track = makeTrack(TRACK_INDEX.COAST);
       document.querySelector("#start").onclick = async () => {
         await audio.start();
         window.analyser = audio.context.createAnalyser();

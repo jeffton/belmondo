@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { createTerrain } from "../src/terrain.js";
@@ -318,7 +318,7 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
 }
 
 test("unknown courses do not silently become coastal scenery", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   track.config = { ...track.config, name: "UNKNOWN" };
   assert.throws(() => createTerrain(track), /Unknown course environment/);
 });

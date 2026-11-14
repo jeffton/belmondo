@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import {
   buildMetropolis,
@@ -14,7 +14,7 @@ import {
 } from "../src/vesper-districts.js";
 
 test("Vesper inhabited districts preserve road, advertising views and complete architectural footprints", () => {
-  const track = makeTrack(6);
+  const track = makeTrack(TRACK_INDEX.VESPER);
   const terrain = createTerrain(track);
   const parts = [];
   const architecture = buildVesperDistricts(
@@ -84,7 +84,7 @@ test("Vesper inhabited districts preserve road, advertising views and complete a
 });
 
 test("Vesper commuter movement stays inside checked lanes and all tram piers clear the race", () => {
-  const track = makeTrack(6);
+  const track = makeTrack(TRACK_INDEX.VESPER);
   const terrain = createTerrain(track);
   const scene = new THREE.Scene();
   const city = buildMetropolis(

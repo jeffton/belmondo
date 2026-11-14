@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { getTrackPickups } from "../src/pickups.js";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
 import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
@@ -396,7 +396,7 @@ try {
     const armedCdp = await armedContext.newCDPSession(armed);
     const armedPad = await armed.locator("#steer-pad").boundingBox();
     const coastBox = await armed.locator("#air-pad").boundingBox();
-    const track = makeTrack(1);
+    const track = makeTrack(TRACK_INDEX.SOLAR);
     const authoredPickups = getTrackPickups(track);
     let touching = false,
       thrusting = false,

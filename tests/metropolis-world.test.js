@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import {
   buildMetropolis,
@@ -42,7 +42,7 @@ test("VESPER has an explicit urban biome and distinct unaliased records/menu ide
 });
 
 test("VESPER architecture grounds on actual rendered terrain and clears banked hulls on both forks", () => {
-  const track = makeTrack(6);
+  const track = makeTrack(TRACK_INDEX.VESPER);
   const terrain = createTerrain(track);
   const scene = new THREE.Scene();
   // A real map exercises the generated sign UVs and disposal ownership without
@@ -151,7 +151,7 @@ test("VESPER architecture grounds on actual rendered terrain and clears banked h
 });
 
 test("VESPER deliberate pickup choices fit their real decks and trade branch rewards", () => {
-  const track = makeTrack(6);
+  const track = makeTrack(TRACK_INDEX.VESPER);
   const pads = getTrackPickups(track);
   assert(pads.length >= 8);
   assert(pads.some((p) => p.branch === -1 && p.type === "weapon"));
@@ -165,7 +165,7 @@ test("VESPER deliberate pickup choices fit their real decks and trade branch rew
 });
 
 test("VESPER original 2048 full-sphere panorama has no horizontal seam and sign provenance matches asset", () => {
-  const course = TRACKS[6];
+  const course = TRACKS[TRACK_INDEX.VESPER];
   const sky = createSky(course, course.fog);
   assert.equal(sky.image.width, 2048);
   assert.equal(sky.image.height, 1024);

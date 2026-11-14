@@ -1,6 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { CRAFT, Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
@@ -9,7 +9,7 @@ for (let course = 0; course < 6; course++) {
   const terrain = createTerrain(track);
   after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
   for (const speedClass of [0, 2]) {
-    if (course === 5) {
+    if (course === TRACK_INDEX.CINDERLINE) {
       test(`CINDERLINE: C${speedClass + 1} eight-ship pack earns its clean race`, () => {
         const race = new Race(track, 0, "race", speedClass, terrain);
         race.countdown = 0;

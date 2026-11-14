@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { World } from "../src/world.js";
 import { createTerrain } from "../src/terrain.js";
 
 test("returning an all-DNF field to the menu restores demo hulls without resurrecting racers", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track);
   race.countdown = 0;
   for (const racer of race.racers) race.damage(racer, 200);

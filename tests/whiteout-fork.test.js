@@ -3,13 +3,13 @@ import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { makeTrack, mod, clamp } from "../src/track.js";
+import { makeTrack, mod, clamp, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 import { buildNewCourseDistricts } from "../src/new-course-environments.js";
 import { getTrackPickups } from "../src/pickups.js";
 
-const track = makeTrack(3);
+const track = makeTrack(TRACK_INDEX.WHITEOUT);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 const hash = (value) =>

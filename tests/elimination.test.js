@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Race, CRITICAL_SHIELD } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 const input = { throttle: true, steer: 0, air: 0 };
 function setup(speedClass = 0, mode = "race") {
-  const race = new Race(makeTrack(0), 0, mode, speedClass);
+  const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, mode, speedClass);
   race.countdown = 0;
   for (const r of race.racers) r.aiFire = Infinity;
   return race;
