@@ -8,11 +8,11 @@ const TAU = Math.PI * 2;
 const stories = {
   ...EXPANSION_SKIES,
   "KAISEKI COAST": {
-    dusk: 0xa28c98,
-    cloud: 0xb5a0aa,
-    ridge: 0x6e8098,
-    foreground: 0x526d86,
-    skyline: 0x657b8e,
+    dusk: 0xc28fae,
+    cloud: 0xd6b4c9,
+    ridge: 0x557fa5,
+    foreground: 0x366c87,
+    skyline: 0x54869b,
     far: [
       [0, 0.035],
       [0.06, 0.055],
@@ -57,11 +57,11 @@ const stories = {
     ],
   },
   "SOLAR ARRAY": {
-    dusk: 0xa9797b,
-    cloud: 0xa77f89,
-    ridge: 0x967582,
-    foreground: 0x806370,
-    skyline: 0x776473,
+    dusk: 0xc9788c,
+    cloud: 0xce91b1,
+    ridge: 0xaa678c,
+    foreground: 0x894d77,
+    skyline: 0x735079,
     far: [
       [0, 0.09],
       [0.06, 0.15],
@@ -110,11 +110,11 @@ const stories = {
     ],
   },
   NOCTILUCENT: {
-    dusk: 0x34445f,
-    cloud: 0x4e5b76,
-    ridge: 0x25364f,
-    foreground: 0x1b2b43,
-    skyline: 0x24394f,
+    dusk: 0x3b427b,
+    cloud: 0x5c6195,
+    ridge: 0x293b68,
+    foreground: 0x182d53,
+    skyline: 0x244d70,
     far: [
       [0, 0.045],
       [0.09, 0.09],

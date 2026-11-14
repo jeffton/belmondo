@@ -25,9 +25,9 @@ export function buildEnvironment(scene, track, textures, preparedTerrain) {
   scene.add(group);
   const material = (color, map) =>
     new THREE.MeshLambertMaterial({ color, map, flatShading: true });
-  const concrete = material(harbor ? 0x707f89 : 0xaaa997, textures.concrete);
-  const asphalt = material(desert ? 0x756858 : 0x56656a, textures.road);
-  const metal = material(harbor ? 0x44586a : 0x73868a, textures.facade);
+  const concrete = material(harbor ? 0x627ba0 : 0xb6c7be, textures.concrete);
+  const asphalt = material(desert ? 0x9b6153 : 0x45697a, textures.road);
+  const metal = material(harbor ? 0x365d88 : 0x4e8b96, textures.facade);
   const paint = material(track.config.color, textures.paint);
   const vegetated = !desert && !harbor;
   const pixels = new Uint8Array(64 * 64 * 4);
@@ -95,7 +95,7 @@ export function buildEnvironment(scene, track, textures, preparedTerrain) {
     return top + 0.2;
   }
   if (desert) {
-    const panels = material(0x263e52, textures.facade);
+    const panels = material(0x244b80, textures.facade);
     // Two differently aligned fields occupy graded shelves beside the basin.
     for (const [u, side, columns, rows] of [
       [0.17, -1, 7, 5],

@@ -27,14 +27,14 @@ export function buildCity(scene, track, textures, environment) {
   const surface = (color, map = null) =>
     new THREE.MeshLambertMaterial({ color, map, flatShading: true });
   const materials = {
-    concrete: surface(desert ? 0xaf8062 : 0xa5aaa5, textures.concrete),
+    concrete: surface(desert ? 0xc88361 : 0x9fbfc4, textures.concrete),
     dark: surface(0x263b49, textures.paint),
-    metal: surface(desert ? 0xb65d40 : 0x527c8b, textures.paint),
-    glass: surface(harbor ? 0x264b6a : 0x36798c, textures.facade),
-    cream: surface(0xe1d8bd, textures.paint),
-    rock: surface(desert ? 0xb47f65 : 0x697665, textures.rock),
-    green: surface(0x4c7459),
-    cargo: surface(harbor ? 0xb24b64 : 0x366b79, textures.paint),
+    metal: surface(desert ? 0xcf623f : 0x358b9b, textures.paint),
+    glass: surface(harbor ? 0x315b9a : 0x228eaa, textures.facade),
+    cream: surface(0xf1dfbe, textures.paint),
+    rock: surface(desert ? 0xcb805c : 0x4c8978, textures.rock),
+    green: surface(0x32845a),
+    cargo: surface(harbor ? 0xd34b88 : 0x218b97, textures.paint),
     light: new THREE.MeshBasicMaterial({ color: desert ? 0xffc67a : 0x68d9d6 }),
   };
   const geometries = {

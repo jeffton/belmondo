@@ -3,28 +3,28 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { getTrackAdvertisingLayout } from "./advertising.js";
 
 export const VESPER_DISTRICTS = [
-  { name: "skyport", start: 0.04, end: 0.18, wall: 0x35424c, light: 0x82c4c5 },
-  { name: "terraces", start: 0.18, end: 0.44, wall: 0x494455, light: 0xd3a07b },
+  { name: "skyport", start: 0.04, end: 0.18, wall: 0x295c70, light: 0x60dfdf },
+  { name: "terraces", start: 0.18, end: 0.44, wall: 0x574377, light: 0xefb27e },
   {
     name: "night-market",
     start: 0.44,
     end: 0.63,
-    wall: 0x58444b,
-    light: 0xe0a16c,
+    wall: 0x783f64,
+    light: 0xffad68,
   },
   {
     name: "civic-canyon",
     start: 0.63,
     end: 0.8,
-    wall: 0x2f4155,
-    light: 0x65b7c8,
+    wall: 0x294d79,
+    light: 0x57d4ed,
   },
   {
     name: "freight-ward",
     start: 0.8,
     end: 0.96,
-    wall: 0x464851,
-    light: 0xba8863,
+    wall: 0x4c4772,
+    light: 0xdf9873,
   },
 ];
 

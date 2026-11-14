@@ -2,7 +2,7 @@
 export const NEW_COURSE_RECIPES = {
   "VESPER CIRCUIT": {
     biome: "metropolis",
-    ground: [0.61, 0.2, 0.16],
+    ground: [0.64, 0.34, 0.18],
     rock: 0x243345,
     wall: 0x334559,
     pale: 0x8ea4b3,
@@ -13,11 +13,11 @@ export const NEW_COURSE_RECIPES = {
   },
   WHITEOUT: {
     biome: "polar",
-    ground: [0.54, 0.25, 0.68],
-    rock: 0x769da9,
-    wall: 0x284d61,
-    pale: 0xd4e6e7,
-    accent: 0xdf7b34,
+    ground: [0.53, 0.4, 0.72],
+    rock: 0x63abc1,
+    wall: 0x235d83,
+    pale: 0xe0f4f4,
+    accent: 0xf47e35,
     vegetation: 0x648a99,
     districts: [
       { name: "ICE CORE OBSERVATORY", u: 0.315, side: -1, kind: "observatory" },
@@ -36,12 +36,12 @@ export const NEW_COURSE_RECIPES = {
   },
   MONSOON: {
     biome: "hydraulic",
-    ground: [0.26, 0.33, 0.31],
-    rock: 0x6a8170,
-    wall: 0x687f75,
-    pale: 0xc5d8ce,
-    accent: 0xe2be54,
-    vegetation: 0x397751,
+    ground: [0.34, 0.48, 0.34],
+    rock: 0x4d8c73,
+    wall: 0x397e7b,
+    pale: 0xcce5d5,
+    accent: 0xf1c845,
+    vegetation: 0x258650,
     districts: [
       { name: "UPPER RESERVOIR", u: 0.21, side: 1, kind: "reservoir" },
       { name: "PUMP ISLAND", u: 0.44, side: 1, kind: "pump-island" },
@@ -56,11 +56,11 @@ export const NEW_COURSE_RECIPES = {
   },
   CINDERLINE: {
     biome: "volcanic",
-    ground: [0.59, 0.07, 0.19],
-    rock: 0x363e43,
-    wall: 0x48545d,
+    ground: [0.68, 0.24, 0.22],
+    rock: 0x41405f,
+    wall: 0x395d70,
     pale: 0xd3e3e9,
-    accent: 0xd4ce49,
+    accent: 0xe4d43e,
     vegetation: 0x8b8b56,
     districts: [
       { name: "CALDERA EXCHANGE", u: 0.23, side: -1, kind: "geothermal" },

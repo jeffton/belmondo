@@ -153,12 +153,12 @@ export function buildCourseGeography(scene, track, textures, environment) {
         const next = (j + 1) % a.length;
         const color =
           j === outerEnd + 2
-            ? 0x66504a
+            ? 0x75475d
             : j >= outerEnd + 1
-              ? 0x8b6851
+              ? 0xa65b49
               : (i + j) % 4
-                ? 0xae805f
-                : 0x8c6654;
+                ? 0xcb895b
+                : 0xa86b57;
         triangle(a[j], b[next], b[j], color);
         triangle(a[j], a[next], b[next], color);
       }
@@ -174,7 +174,7 @@ export function buildCourseGeography(scene, track, textures, environment) {
           points[a],
           points[b],
           points[c],
-          [0xa37b61, 0x8f6e59, 0xb38d6d][index % 3],
+          [0xc48359, 0xab6457, 0xd89c68][index % 3],
         );
     }
     const geometry = new THREE.BufferGeometry();

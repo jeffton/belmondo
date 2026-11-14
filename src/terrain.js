@@ -449,10 +449,10 @@ export function createTerrain(track, prepared) {
                 lightness + variation + (ice ? Math.max(0, h) * 0.0005 : 0),
               );
             } else if (desert)
-              tint.setHSL(0.072, 0.31, 0.43 + h * 0.0006 + variation);
-            else if (harbor) tint.setHSL(0.58, 0.12, 0.29 + variation);
-            else if (h < 0) tint.setHSL(0.12, 0.15, 0.5 + variation);
-            else tint.setHSL(0.25, 0.25, 0.31 + h * 0.0005 + variation);
+              tint.setHSL(0.052, 0.54, 0.47 + h * 0.0006 + variation);
+            else if (harbor) tint.setHSL(0.61, 0.32, 0.3 + variation);
+            else if (h < 0) tint.setHSL(0.1, 0.29, 0.57 + variation);
+            else tint.setHSL(0.36, 0.46, 0.34 + h * 0.0005 + variation);
             colors.push(tint.r, tint.g, tint.b);
           }
         geometry.setAttribute(

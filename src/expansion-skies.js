@@ -2,11 +2,11 @@
 // landforms occupy different bearings rather than repeating around the sphere.
 export const EXPANSION_SKIES = {
   "VESPER CIRCUIT": {
-    dusk: 0x27374f,
-    cloud: 0x47536b,
-    ridge: 0x283b52,
-    foreground: 0x1b2a42,
-    skyline: 0x344a63,
+    dusk: 0x3b326b,
+    cloud: 0x5d5085,
+    ridge: 0x303f70,
+    foreground: 0x202a53,
+    skyline: 0x39567b,
     far: [
       [0, 0.012],
       [0.25, 0.018],
@@ -36,13 +36,13 @@ export const EXPANSION_SKIES = {
     ],
   },
   WHITEOUT: {
-    dusk: 0xc3d0d6,
-    cloud: 0xb2c5d1,
-    ridge: 0x7c9aa9,
-    foreground: 0x668c9e,
-    skyline: 0x47647c,
+    dusk: 0xafd6e6,
+    cloud: 0xc5e5ee,
+    ridge: 0x599dbd,
+    foreground: 0x397f9e,
+    skyline: 0x346786,
     ridgeStyle: "angular",
-    snow: 0xc0d3db,
+    snow: 0xd1edf3,
     far: [
       [0, 0.09],
       [0.055, 0.15],
@@ -89,11 +89,11 @@ export const EXPANSION_SKIES = {
     ],
   },
   MONSOON: {
-    dusk: 0x849f95,
-    cloud: 0xa8b9af,
-    ridge: 0x496967,
-    foreground: 0x345654,
-    skyline: 0x48675e,
+    dusk: 0x80bca9,
+    cloud: 0xb6d5bf,
+    ridge: 0x357e78,
+    foreground: 0x225e60,
+    skyline: 0x317968,
     far: [
       [0, 0.08],
       [0.06, 0.115],
@@ -140,11 +140,11 @@ export const EXPANSION_SKIES = {
     ],
   },
   CINDERLINE: {
-    dusk: 0xa28b88,
-    cloud: 0x877b85,
-    ridge: 0x615d6b,
-    foreground: 0x414958,
-    skyline: 0x757776,
+    dusk: 0xbb849d,
+    cloud: 0xa07998,
+    ridge: 0x72527e,
+    foreground: 0x443b65,
+    skyline: 0x65728b,
     ridgeStyle: "angular",
     far: [
       [0, 0.045],
