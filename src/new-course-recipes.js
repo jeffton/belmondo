@@ -36,12 +36,12 @@ export const NEW_COURSE_RECIPES = {
   },
   MONSOON: {
     biome: "hydraulic",
-    ground: [0.34, 0.48, 0.34],
-    rock: 0x4d8c73,
-    wall: 0x397e7b,
-    pale: 0xcce5d5,
+    ground: [0.325, 0.54, 0.36],
+    rock: 0x438b6b,
+    wall: 0x318573,
+    pale: 0xcce8d5,
     accent: 0xf1c845,
-    vegetation: 0x258650,
+    vegetation: 0x218c4d,
     districts: [
       { name: "UPPER RESERVOIR", u: 0.21, side: 1, kind: "reservoir" },
       { name: "PUMP ISLAND", u: 0.44, side: 1, kind: "pump-island" },

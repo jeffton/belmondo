@@ -30,7 +30,7 @@ export const VEGETATION_PROFILES = {
     cluster: [7, 13],
     setback: [72, 165],
     waterline: LOCK_WATER_LEVEL + 1,
-    tint: 0x85bd99,
+    tint: 0x78c28f,
   },
   "SOLAR ARRAY": {
     ranges: [
