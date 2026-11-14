@@ -49,6 +49,21 @@ try {
   await page.keyboard.press("Enter");
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");
   await expect(page.locator("#crafts .active")).toHaveClass(/menu-cursor/);
+  const actionTextFits = await page.locator("#start").evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    return [...button.childNodes]
+      .filter(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim(),
+      )
+      .every((node) => {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        return [...range.getClientRects()].every(
+          (text) => text.top >= rect.top && text.bottom <= rect.bottom,
+        );
+      });
+  });
+  expect(actionTextFits).toBe(true);
   await page.screenshot({ path: `${output}/${viewport.join("x")}-craft.png` });
   await expect(page.locator("#start")).toBeEnabled();
   await page.keyboard.press("Enter");
