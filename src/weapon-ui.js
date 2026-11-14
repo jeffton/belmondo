@@ -1,8 +1,10 @@
+import { toMetres } from "./units.js";
+
 // Original instrument glyphs share silhouettes across inventory and flight briefing.
 export const WEAPON_UI = {
   MISSILE: {
     color: "#ff535b",
-    description: "Homing missile / 220 m lock",
+    description: `Homing missile / ${Math.round(toMetres(220))} m lock`,
     glyph:
       '<path d="m24 5 6 13v13l8 8H10l8-8V18Z"/><path d="M21 40h6l-3 5Z"/><path d="M22 19h4v10h-4Z" fill="#10202c"/>',
   },

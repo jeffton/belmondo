@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createPierreAdvertising } from "./pierre-advertising.js";
 import { ROADSIDE_ART } from "./advertising-art.js";
+import { toMetres } from "./units.js";
 import { createAdvertising } from "./advertising-panels.js";
 
 export { createAdvertising } from "./advertising-panels.js";
@@ -32,7 +33,7 @@ export function buildSplitMarkers(scene, track) {
     ctx.font = "bold 66px monospace";
     ctx.fillText("FORK", 256, 83);
     ctx.font = "bold 50px monospace";
-    ctx.fillText(`${distance} m`, 256, 291);
+    ctx.fillText(`${Math.round(toMetres(distance))} m`, 256, 291);
     ctx.strokeStyle = "#eaf5dc";
     ctx.lineWidth = 16;
     for (const direction of [-1, 1]) {

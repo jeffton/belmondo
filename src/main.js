@@ -25,6 +25,7 @@ import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
 import { MenuNavigation } from "./menu-navigation.js";
 import { frameDelta } from "./frame-clock.js";
+import { toKilometresPerHour } from "./units.js";
 import { halfstickPosition } from "./touch-halfstick.js";
 import { CoursePreparation } from "./course-preparation.js";
 
@@ -982,7 +983,9 @@ function updateHUD(now) {
   $("lap").innerHTML =
     `${Math.min(race.lapCount, p.lap)}<small>/${race.lapCount}</small>`;
   $("timer").textContent = formatTime(race.time);
-  $("speed").textContent = String(Math.round(p.speed * 3.6)).padStart(3, "0");
+  $("speed").textContent = String(
+    Math.round(toKilometresPerHour(p.speed)),
+  ).padStart(3, "0");
   $("speed-bar").style.width =
     `${Math.min(100, (p.speed / (175 * race.classSpec.pace)) * 100)}%`;
   const launching = race.countdown > 0;
