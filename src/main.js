@@ -11,6 +11,11 @@ import { soundtrack } from "./soundtrack.js";
 import { createWeaponHUD } from "./weapon-ui.js";
 import { localRecordKey } from "./records.js";
 import {
+  createCircuitTestAccess,
+  mountCircuitTestAccess,
+} from "./circuit-test-access.js";
+import "./circuit-test-access.css";
+import {
   loadProgression,
   recordProgressionResult,
   trackIsUnlocked,
@@ -213,6 +218,14 @@ window.addEventListener(
 );
 const records = JSON.parse(localStorage.getItem("nv-records") || "{}");
 const progression = loadProgression(localStorage);
+const circuitTestAccess = createCircuitTestAccess(localStorage, () => {
+  updateTestAccessBadge();
+  refreshTrackProgression();
+});
+const updateTestAccessBadge = mountCircuitTestAccess(
+  circuitTestAccess,
+  () => state === "menu",
+);
 function formatTime(t) {
   if (!Number.isFinite(t)) return "—";
   const m = Math.floor(t / 60);
@@ -244,12 +257,15 @@ let trackLoading = false;
 let loadedTrack = -1;
 let trackLoadTiming = null;
 function isTrackUnlocked(index) {
-  return trackIsUnlocked(
-    progression,
-    SPEED_CLASSES[selectedSpeedClass].id,
-    TRACKS[index].layoutId,
-    index,
-    TRACKS,
+  return (
+    circuitTestAccess.enabled ||
+    trackIsUnlocked(
+      progression,
+      SPEED_CLASSES[selectedSpeedClass].id,
+      TRACKS[index].layoutId,
+      index,
+      TRACKS,
+    )
   );
 }
 async function selectTrack(i) {
@@ -452,6 +468,7 @@ async function start(event) {
     selectedSpeedClass,
     world.environment.terrain,
   );
+  race.testAccess = circuitTestAccess.enabled;
   world.setupRacers(race, CRAFT);
   world.cameraReady = false;
   last = null;
@@ -899,12 +916,14 @@ function showResults() {
   $("results").hidden = false;
   const key = recordKey(race.mode, race.speedClass);
   const isRecord =
-    race.player.finished && (!records[key] || race.resultTime < records[key]);
+    !race.testAccess &&
+    race.player.finished &&
+    (!records[key] || race.resultTime < records[key]);
   if (isRecord) {
     records[key] = race.resultTime;
     localStorage.setItem("nv-records", JSON.stringify(records));
   }
-  if (recordProgressionResult(progression, race, track))
+  if (!race.testAccess && recordProgressionResult(progression, race, track))
     localStorage.setItem("nv-progression", JSON.stringify(progression));
   refreshTrackProgression();
   $("result-title").textContent = race.player.eliminated

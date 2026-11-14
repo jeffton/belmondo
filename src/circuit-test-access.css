@@ -1,0 +1,19 @@
+#circuit-test-access {
+  position: fixed;
+  z-index: 30;
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  min-height: 28px;
+  padding: 5px 8px;
+  border: 1px solid #df9e59;
+  border-radius: 2px;
+  background: #16232ded;
+  color: #f4bd7b;
+  font: 600 9px/1.2 monospace;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+#circuit-test-access[hidden] {
+  display: none;
+}
