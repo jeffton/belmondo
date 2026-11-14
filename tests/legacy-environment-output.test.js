@@ -7,13 +7,13 @@ import { buildEnvironment } from "../src/environment.js";
 import { buildCity } from "../src/city.js";
 import { buildFinishDistrict } from "../src/finish-district.js";
 
-// Legacy-v4 branch worlds, composed prop groups, finish-end districts and Solar's ridged mountain.
+// Colour-authored branch worlds, composed props, finish districts and Solar's ridged mountain.
 // Exact output includes authored wet/mineral ground-map pixels; independent
 // clearance/terrain contracts and visual acceptance cover the driving corridors.
 const BASELINE = [
-  "55b8a32ed440ac7312bcd91eee705a1542eb7100514dbfd272d3e9e13e81f13d",
-  "66570cc219144ef9c333c92a8e0ba9f1dbef9f300f0eb6ca1ee4e591f1a2ad49",
-  "08db65ece27874d1620796e4b215696e5d9e6fa0df2fed43c1b23ae677dd1cb9",
+  "d40519cbbe60c97c83ad7953f72b44460964e8b676ae56562f24b38dfc80e388",
+  "a65da3d0c45f2b3840a89d6b26cb05b19ac7d09213fab1651aa3d51cc0b9f763",
+  "5200207571006ddf65f357a745b18bc62a75565b2cfdf323a32c898fb63b7594",
 ];
 export function environmentDigest(index) {
   const scene = new THREE.Scene();
