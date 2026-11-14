@@ -52,12 +52,12 @@ export const COURSE_LIGHTING = {
   },
   MONSOON: {
     direction: [0.5, 0.32, 0.6],
-    skyGlow: [[200, 225, 190], 0.07],
+    skyGlow: [[183, 211, 230], 0.07],
     hemisphere: [0xa9d9c1, 0x244039],
     key: [0xe4f3d2, 2],
     fill: [0x65b28f, 0.42],
-    sun: ["#f4ffe0", "#d5edb7", "#91b99c"],
-    halo: [0xb9dfc1, 0.16],
+    sun: ["#fff8e5", "#f1dfb7", "#d6b98e"],
+    halo: [0xd8e5ed, 0.12],
     flare: true,
   },
   CINDERLINE: {

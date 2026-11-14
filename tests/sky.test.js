@@ -114,6 +114,19 @@ test("all course skies use the same filtered panorama budget", () => {
   }
 });
 
+test("Monsoon has a blue daytime zenith over its green hydraulic horizon", () => {
+  const config = TRACKS.find((course) => course.name === "MONSOON");
+  const image = paintSky(config, config.fog, 512, 256);
+  const zenith = pixel(image, 215, image.height - 1);
+  assert(zenith[2] > zenith[1] && zenith[1] > zenith[0]);
+  assert(zenith[2] - zenith[0] > 70, "the open sky reads as blue, not teal");
+  assert.equal(
+    config.fog,
+    0x91b8cc,
+    "blue atmospheric horizon remains readable",
+  );
+});
+
 test("Cinderline shallow distant ridge does not jump a full contrast row", () => {
   const config = TRACKS.find((course) => course.name === "CINDERLINE");
   const image = paintSky(config, 0x998888, 2048, 1024);

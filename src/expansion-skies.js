@@ -89,8 +89,8 @@ export const EXPANSION_SKIES = {
     ],
   },
   MONSOON: {
-    dusk: 0x79c19b,
-    cloud: 0xb5dabb,
+    dusk: 0x9fc9e1,
+    cloud: 0xd4e1e8,
     ridge: 0x32846d,
     foreground: 0x205d4b,
     skyline: 0x2e8060,
