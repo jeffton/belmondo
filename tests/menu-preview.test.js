@@ -20,11 +20,17 @@ function fixture() {
   const calls = [];
   const view = { innerWidth: 1440, innerHeight: 900, devicePixelRatio: 2 };
   let bounds = rect(700, 180, 600.5, 500.5);
+  let labelBounds = null;
   const document = { hidden: false, defaultView: view };
   const children = [{ label: "kicker" }, { label: "name" }];
   const element = {
     ownerDocument: document,
     getBoundingClientRect: () => bounds,
+    querySelector: () =>
+      labelBounds && {
+        hidden: false,
+        getBoundingClientRect: () => labelBounds,
+      },
     prepend(canvas) {
       children.unshift(canvas);
     },
@@ -81,6 +87,9 @@ function fixture() {
     children,
     setBounds(value) {
       bounds = value;
+    },
+    setLabelBounds(value) {
+      labelBounds = value;
     },
   };
 }
@@ -393,6 +402,60 @@ test("LOWRES applies to every model stage and toggles without replacing its rend
     assert.equal(canvas.width, 1201);
     assert.equal(preview.renderer, renderer);
     preview.quality = "retro";
+  }
+  preview.dispose();
+});
+
+test("craft and class framing fills the available labeled box without zoom pulsing", (t) => {
+  t.mock.method(
+    THREE.TextureLoader.prototype,
+    "load",
+    () => new THREE.Texture(),
+  );
+  const { preview, setBounds, setLabelBounds } = fixture();
+  const point = new THREE.Vector3();
+  for (const stage of ["craft", "class"]) {
+    for (let index = 0; index < 3; index++) {
+      if (stage === "craft") preview.setCraft(index);
+      else preview.setClass(index);
+      preview.setStage(stage);
+      const model = stage === "craft" ? preview.craft : preview.classModel;
+      for (const [width, height] of [
+        [359, 424],
+        [414, 247],
+        [294, 268],
+      ]) {
+        setBounds(rect(0, 0, width, height));
+        setLabelBounds(rect(0, height - 25, width, 20));
+        let span;
+        for (let heading = 0; heading < 16; heading++) {
+          preview.time =
+            (heading * Math.PI) / 8 / (stage === "craft" ? 0.32 : 0.25);
+          preview.draw(0);
+          const currentSpan = preview.camera.right - preview.camera.left;
+          if (span !== undefined)
+            assert.equal(currentSpan, span, "no heading-dependent zoom");
+          span = currentSpan;
+          preview.camera.updateMatrixWorld(true);
+          model.updateMatrixWorld(true);
+          model.traverseVisible((object) => {
+            const positions = object.geometry?.getAttribute("position");
+            if (!positions) return;
+            for (let i = 0; i < positions.count; i++) {
+              point
+                .fromBufferAttribute(positions, i)
+                .applyMatrix4(object.matrixWorld)
+                .project(preview.camera);
+              assert.ok(Math.abs(point.x) < 1 && point.y < 1);
+              assert.ok(
+                ((1 - point.y) * height) / 2 < height - 29,
+                "model stays above label",
+              );
+            }
+          });
+        }
+      }
+    }
   }
   preview.dispose();
 });

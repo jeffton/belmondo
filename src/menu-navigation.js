@@ -49,7 +49,12 @@ export class MenuNavigation {
           ...root.querySelectorAll(selector),
         ]).map(itemForInput),
       ),
-    ].filter((element) => isVisible(element) && !element.matches(":disabled"));
+    ].filter(
+      (element) =>
+        isVisible(element) &&
+        !element.matches(":disabled") &&
+        !(root.id === "menu" && element.closest(".setup-navigation")),
+    );
   }
 
   sync() {

@@ -179,6 +179,8 @@ try {
                   failures.push(item.textContent + ': hidden/disabled cursor');
                   continue;
                 }
+                if (root.id === 'menu' && next.closest('.setup-navigation'))
+                  failures.push('Back/Select entered directional navigation');
                 if (next === item) continue;
                 const to = next.getBoundingClientRect();
                 const movement = dx * (to.left + to.width / 2 - from.left - from.width / 2)
@@ -609,22 +611,51 @@ try {
     await expect(trackButtons.nth(3)).toBeDisabled();
     await page.evaluate(() => {
       window.holdCourseQA = true;
+      window.menuCursorQA('#tracks button[data-index="0"]');
     });
-    await page.locator('#tracks button[data-index="1"]').click();
+    await page.keyboard.press("ArrowRight");
     await expect(page.locator("body")).toHaveClass(/course-loading/);
-    const oldPreview = await page.evaluate(() => window.menuQA().previewTrack);
-    await page.locator('#tracks button[data-index="2"]').click();
+    await expect(page.locator("#model-name")).toHaveText("MONSOON");
+    const monsoonPreview = await page.evaluate(
+      () => window.menuQA().previewTrack,
+    );
+    await expect(page.locator("#menu-model")).toHaveCSS("opacity", "1");
+    await expect(page.locator("#game")).toHaveCSS("opacity", "0");
+    await page.evaluate((horizontal) => {
+      window.menuGamepadQA();
+      if (horizontal) window.menuGamepadQA(1, 0);
+      else {
+        window.menuGamepadQA(-1, 0);
+        window.menuGamepadQA();
+        window.menuGamepadQA(0, 1);
+      }
+    }, tracksInOneRow);
+    await expect(page.locator("#model-name")).toHaveText("KAISEKI COAST");
+    const coastPreview = await page.evaluate(
+      () => window.menuQA().previewTrack,
+    );
+    expect(coastPreview).not.toBe(monsoonPreview);
     await page.evaluate(() => window.courseResolversQA[1]());
     expect(await page.evaluate(() => window.menuQA().previewTrack)).toBe(
-      oldPreview,
+      coastPreview,
     );
     await expect(page.locator("body")).toHaveClass(/course-loading/);
-    await page.evaluate(() => window.courseResolversQA[2]());
-    await page.waitForFunction(
-      () => window.menuQA().loadedTrack === 2 && !window.menuQA().trackLoading,
+    await page
+      .locator('#tracks button[data-index="0"]')
+      .dispatchEvent("pointerdown", { pointerType: "touch" });
+    await page.locator('#tracks button[data-index="0"]').click();
+    await expect(page.locator("#model-name")).toHaveText("WHITEOUT");
+    const whiteoutPreview = await page.evaluate(
+      () => window.menuQA().previewTrack,
     );
-    expect(await page.evaluate(() => window.menuQA().previewTrack)).not.toBe(
-      oldPreview,
+    await page.evaluate(() => window.courseResolversQA[2]());
+    expect(await page.evaluate(() => window.menuQA().previewTrack)).toBe(
+      whiteoutPreview,
+    );
+    await expect(page.locator("body")).toHaveClass(/course-loading/);
+    await page.evaluate(() => window.courseResolversQA[0]());
+    await page.waitForFunction(
+      () => window.menuQA().loadedTrack === 0 && !window.menuQA().trackLoading,
     );
     await expect(page.locator("body")).not.toHaveClass(/course-loading/);
     await page.evaluate(() => {

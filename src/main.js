@@ -272,9 +272,10 @@ async function selectTrack(i) {
     b.setAttribute("aria-pressed", String(active));
   }
   try {
+    const nextTrack = makeTrack(i);
+    menuPreview.setTrack(nextTrack);
     const prepared = await coursePreparation.load(i);
     if (!isCurrent()) return;
-    const nextTrack = makeTrack(i);
     const buildStart = performance.now();
     let nextRace;
     const candidate = await world.prepare(
@@ -294,7 +295,6 @@ async function selectTrack(i) {
     );
     if (!candidate || !isCurrent()) return;
     world.adopt(candidate);
-    menuPreview.setTrack(nextTrack);
     track = nextTrack;
     race = nextRace;
     demoDistance = track.length * 0.02;

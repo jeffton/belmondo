@@ -298,6 +298,32 @@ function classSymbol(index) {
   return pivot;
 }
 
+// Exact envelope of the visible vertices swept through a full Y rotation.
+// Flat craft need much less vertical space than their bounding sphere suggests.
+// Cache this once per model: stable framing, with no per-frame vertex traversal
+// or zoom pulsing as the sculpture turns.
+function rotationEnvelope(model, elevation) {
+  model.updateMatrixWorld(true);
+  const point = new THREE.Vector3();
+  let halfWidth = 0;
+  let bottom = Infinity;
+  let top = -Infinity;
+  model.traverseVisible((object) => {
+    const positions = object.geometry?.getAttribute("position");
+    if (!positions) return;
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(object.matrixWorld);
+      const radius = Math.hypot(point.x, point.z);
+      halfWidth = Math.max(halfWidth, radius);
+      const center = point.y * Math.cos(elevation);
+      const excursion = radius * Math.sin(elevation);
+      bottom = Math.min(bottom, center - excursion);
+      top = Math.max(top, center + excursion);
+    }
+  });
+  return { halfWidth, bottom, top };
+}
+
 /** Transparent model inset sharing World's LOWRES/clean quality selection. */
 export class MenuPreview {
   constructor(element) {
@@ -475,17 +501,39 @@ export class MenuPreview {
     this.time += dt;
     model.rotation.y =
       this.time * { class: 0.25, track: 0.16, craft: 0.32 }[this.stage];
-    const aspect = canvas.width / canvas.height;
-    const span = this.stage === "track" ? 1.06 : 1.16;
+    const cameraHeight = this.stage === "track" ? 2.15 : 1.25;
     this.camera.position
-      .set(0, this.stage === "track" ? 2.15 : 1.25, 1.8)
+      .set(0, cameraHeight, 1.8)
       .normalize()
       .multiplyScalar(5);
     this.camera.lookAt(0, 0, 0);
-    this.camera.left = -span * Math.max(1, aspect);
+    if (!model.userData.previewEnvelope) {
+      // Fit in the unrotated pivot's coordinate system, not its current heading.
+      const heading = model.rotation.y;
+      model.rotation.y = 0;
+      model.userData.previewEnvelope = rotationEnvelope(
+        model,
+        Math.atan2(cameraHeight, 1.8),
+      );
+      model.rotation.y = heading;
+    }
+    const bounds = model.userData.previewEnvelope;
+    const label = this.element.querySelector("#model-name");
+    const labelInset =
+      label && !label.hidden
+        ? Math.max(0, canvas.bottom - label.getBoundingClientRect().top + 4)
+        : 0;
+    const modelHeight = canvas.height - labelInset;
+    const unitsPerPixel =
+      Math.max(
+        (2 * bounds.halfWidth) / canvas.width,
+        (bounds.top - bounds.bottom) / modelHeight,
+      ) / 0.94;
+    const centerY = (bounds.top + bounds.bottom) / 2;
+    this.camera.left = (-unitsPerPixel * canvas.width) / 2;
     this.camera.right = -this.camera.left;
-    this.camera.top = span * Math.max(1, 1 / aspect);
-    this.camera.bottom = -this.camera.top;
+    this.camera.top = centerY + (unitsPerPixel * modelHeight) / 2;
+    this.camera.bottom = this.camera.top - unitsPerPixel * canvas.height;
     this.camera.updateProjectionMatrix();
 
     renderer.render(

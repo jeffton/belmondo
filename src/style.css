@@ -93,12 +93,11 @@ button:hover {
 [hidden] {
   display: none !important;
 }
-#game,
-#menu-model {
+#game {
   opacity: 1;
   transition: opacity 120ms ease-out;
 }
-body.course-loading:has(#menu:not([hidden])) :is(#game, #menu-model) {
+body.course-loading:has(#menu:not([hidden])) #game {
   opacity: 0;
 }
 #game {
@@ -1419,9 +1418,6 @@ body.touch[data-input-mode="touch"] #touch-controls {
     padding: 15px 20px;
     font-size: 7px;
   }
-  footer span:first-child {
-    display: none;
-  }
   #menu {
     background: linear-gradient(90deg, #10202cf2, #10202cd9 70%, #10202c88);
   }
@@ -2215,14 +2211,23 @@ body.touch .instrument-bar {
     margin: 3px 0;
   }
   #menu-model {
-    left: 10%;
-    right: 10%;
-    top: calc(env(safe-area-inset-top) + 110px);
+    left: 4%;
+    right: 4%;
+    top: calc(env(safe-area-inset-top) + 90px);
     bottom: auto;
     height: max(
       110px,
       calc(
-        var(--app-height) - 580px - env(safe-area-inset-top) -
+        var(--app-height) - 540px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu:is([data-stage="class"], [data-stage="craft"]) #menu-model {
+    height: max(
+      110px,
+      calc(
+        var(--app-height) - 420px - env(safe-area-inset-top) -
           env(safe-area-inset-bottom)
       )
     );
@@ -2317,8 +2322,12 @@ body.touch .instrument-bar {
     font-size: 25px;
   }
   #menu-model {
-    top: 21%;
-    bottom: max(26%, calc(var(--footer-height) + 84px));
+    top: calc(env(safe-area-inset-top) + 50px);
+    right: max(2%, env(safe-area-inset-right));
+    bottom: calc(var(--footer-height) + 64px);
+  }
+  #menu:is([data-stage="class"], [data-stage="track"]) #menu-model {
+    bottom: calc(var(--footer-height) + 30px);
   }
 }
 @media (max-height: 360px) and (orientation: landscape) {
@@ -2350,11 +2359,20 @@ body.touch .instrument-bar {
     top: max(12px, env(safe-area-inset-top));
   }
   #menu-model {
-    top: calc(env(safe-area-inset-top) + 58px);
+    top: calc(env(safe-area-inset-top) + 32px);
     height: max(
       92px,
       calc(
-        var(--app-height) - 440px - env(safe-area-inset-top) -
+        var(--app-height) - 422px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu:is([data-stage="class"], [data-stage="craft"]) #menu-model {
+    height: max(
+      92px,
+      calc(
+        var(--app-height) - 300px - env(safe-area-inset-top) -
           env(safe-area-inset-bottom)
       )
     );
@@ -2445,18 +2463,29 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   width: 0;
-  min-width: 0;
+  min-width: 44px;
   height: 44px;
-  border: 1px solid #71919d77;
-  padding: 8px 10px;
-  font: 700 16px/1.2 var(--display);
-  letter-spacing: 0.2px;
+  margin-top: 0;
+  border: 0;
+  padding: 8px;
+  background: none;
+  color: #b4c7ce;
+  font: 600 10px/1.2 var(--interface);
+  letter-spacing: 1px;
+}
+#menu .setup-navigation [data-keyboard-hint]::before {
+  order: -1;
+  margin: 0;
 }
 #menu .setup-navigation .start::after {
-  width: 20px;
-  height: 20px;
+  display: none;
+}
+#menu .setup-navigation button:hover {
+  color: var(--paper);
+  filter: none;
 }
 #menu [data-panel="mode"] legend {
   margin-bottom: 12px;

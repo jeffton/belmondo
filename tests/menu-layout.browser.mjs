@@ -42,6 +42,30 @@ try {
     Math.max(...sizes.map((size) => size.width)) -
       Math.min(...sizes.map((size) => size.width)),
   ).toBeLessThan(1);
+  await expect(page.locator("#render-quality .quality-label")).toBeVisible();
+  const signatures = await page
+    .locator(".setup-navigation button:visible")
+    .evaluateAll((buttons) =>
+      buttons.map((button) => ({
+        height: button.getBoundingClientRect().height,
+        background: getComputedStyle(button).backgroundColor,
+        border: getComputedStyle(button).borderTopWidth,
+      })),
+    );
+  expect(
+    signatures.every(
+      (control) =>
+        control.height >= 44 &&
+        control.background === "rgba(0, 0, 0, 0)" &&
+        control.border === "0px",
+    ),
+  ).toBe(true);
+  if (viewport[0] < 900) await page.locator("#setup-back").tap();
+  else await page.locator("#setup-back").click();
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+  if (viewport[0] < 900) await page.locator("#setup-next").tap();
+  else await page.locator("#setup-next").click();
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
   await expect(page.locator("#model-subtitle")).toBeVisible();
   await expect(page.locator("#model-subtitle")).toHaveText("Polar observatory");
   await expect(page.locator("#tracks .track-lock").last()).toBeVisible();
