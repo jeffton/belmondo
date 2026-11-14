@@ -313,16 +313,35 @@ try {
     ).toBeChecked();
     await page.evaluate(() => window.menuCursorQA("#quality"));
     await expect(page.locator("#render-quality.menu-cursor")).toHaveCount(1);
+    await expect(page.locator("#render-quality")).toHaveCSS(
+      "background-color",
+      "rgb(255, 101, 77)",
+    );
     await page.keyboard.press("ArrowLeft");
-    await expect(page.locator("#quality")).not.toBeChecked();
-    await page.keyboard.press("ArrowLeft");
+    await expect(page.locator("#quality")).toBeChecked();
     await expect(
       page.locator('a[aria-label="BELMONDO on GitHub"]'),
     ).toHaveClass(/menu-cursor/);
     await page.keyboard.press("ArrowRight");
     await expect(page.locator("#render-quality")).toHaveClass(/menu-cursor/);
-    await page.keyboard.press("ArrowRight");
     await expect(page.locator("#quality")).toBeChecked();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#quality")).not.toBeChecked();
+    await expect(page.locator("#quality-state")).toHaveText("OFF");
+    await page.evaluate(() => {
+      window.menuGamepadQA();
+      window.menuGamepadQA(0, 0, [0]);
+    });
+    await expect(page.locator("#quality")).toBeChecked();
+    await expect(page.locator("#quality-state")).toHaveText("ON");
+    await page.evaluate(() => {
+      window.menuGamepadQA();
+      window.menuGamepadQA(-1, 0);
+    });
+    await expect(page.locator("#quality")).toBeChecked();
+    await expect(page.locator("#render-quality")).not.toHaveClass(
+      /menu-cursor/,
+    );
     await page.evaluate(() => window.menuCursorQA("#help-open"));
     await expect(page.locator("#help-open.menu-cursor")).toHaveCount(1);
     await page.keyboard.press("Enter");
@@ -370,9 +389,44 @@ try {
       expect(
         (await page.evaluate(() => window.menuDirectionAuditQA())).failures,
       ).toEqual([]);
-      await page.evaluate(() => window.menuGamepadQA(0, 0, [1]));
-      await expect(page.locator("#pause-panel")).toBeVisible();
-      await page.evaluate(() => window.menuGamepadQA());
+      await page.evaluate(() => window.menuCursorQA("#resume"));
+      await expect(page.locator("#resume")).toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
+      await expect(
+        page.locator("#pause-panel [data-keyboard-hint]"),
+      ).toHaveCount(1);
+      await page.keyboard.press("ArrowDown");
+      await expect(page.locator("#restart")).toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
+      await expect(page.locator("#resume")).not.toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
+      await page.keyboard.press("ArrowUp");
+      await expect(page.locator("#resume")).toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
+      await page.evaluate(() => {
+        window.menuGamepadQA();
+        window.menuGamepadQA(0, 1);
+      });
+      await expect(page.locator("#restart")).toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
+      await page.evaluate(() => {
+        window.menuGamepadQA();
+        window.menuGamepadQA(0, -1);
+      });
+      await expect(page.locator("#resume")).toHaveAttribute(
+        "data-keyboard-hint",
+        "ENTER",
+      );
       await page.evaluate(() => window.menuGamepadQA(0, 0, [1]));
       await expect(page.locator("#pause-panel")).not.toBeVisible();
       await page.evaluate(() => window.menuInputQA(0, 0, [9]));

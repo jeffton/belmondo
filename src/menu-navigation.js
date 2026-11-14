@@ -58,6 +58,7 @@ export class MenuNavigation {
   }
 
   sync() {
+    const root = this.root();
     const items = this.items();
     if (!items.includes(this.cursor)) {
       this.cursor =
@@ -70,6 +71,12 @@ export class MenuNavigation {
         items[0] ||
         null;
     }
+    if (root?.id === "pause-panel")
+      for (const button of root.querySelectorAll("[data-gamepad-hint]")) {
+        if (button === this.cursor)
+          button.setAttribute("data-keyboard-hint", "ENTER");
+        else button.removeAttribute("data-keyboard-hint");
+      }
     for (const element of this.document.querySelectorAll(".menu-cursor"))
       element.classList.remove("menu-cursor");
     this.cursor?.classList.add("menu-cursor");
@@ -86,15 +93,6 @@ export class MenuNavigation {
       : this.cursor.matches("input")
         ? this.cursor
         : null;
-    if (
-      input?.type === "checkbox" &&
-      (direction === "left" || direction === "right")
-    ) {
-      if (input.checked !== (direction === "right")) {
-        input.click();
-        return;
-      }
-    }
     if (
       input?.type === "range" &&
       (direction === "left" || direction === "right")

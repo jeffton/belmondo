@@ -2668,6 +2668,15 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   opacity: 0;
   cursor: pointer;
 }
+#menu footer #render-quality.menu-cursor {
+  color: var(--ink);
+  background: var(--orange);
+  border-color: var(--orange);
+  filter: none;
+}
+#menu footer #render-quality.menu-cursor #quality-state {
+  color: var(--ink);
+}
 #menu footer #render-quality .quality-label {
   display: flex;
   align-items: center;
