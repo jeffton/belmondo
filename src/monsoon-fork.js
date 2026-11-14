@@ -10,8 +10,8 @@ export function buildMonsoonFork(parent, track, textures, environment) {
   const batches = new Map();
   const transform = new THREE.Object3D();
   const palette = {
-    concrete: 0x9bb8ab,
-    machinery: 0x294d48,
+    concrete: 0xbcb9ad,
+    machinery: 0x42494d,
     warning: 0xe3ad43,
   };
   const basis = (u, branch) => {

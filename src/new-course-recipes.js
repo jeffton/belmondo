@@ -37,9 +37,9 @@ export const NEW_COURSE_RECIPES = {
   MONSOON: {
     biome: "hydraulic",
     ground: [0.325, 0.54, 0.36],
-    rock: 0x438b6b,
-    wall: 0x318573,
-    pale: 0xcce8d5,
+    rock: 0x777872,
+    wall: 0x8c8c83,
+    pale: 0xd9d5c9,
     accent: 0xf1c845,
     vegetation: 0x218c4d,
     districts: [

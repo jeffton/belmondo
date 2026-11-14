@@ -8,7 +8,7 @@ export function buildDamRaceway(parent, track, textures, environment) {
   const box = new THREE.BoxGeometry(1, 1, 1);
   const batches = new Map();
   const transform = new THREE.Object3D();
-  const palette = { concrete: 0xb7cebf, dark: 0x29483f, warning: 0xf3bb39 };
+  const palette = { concrete: 0xccc7b9, dark: 0x42494d, warning: 0xf3bb39 };
   function block(
     kind,
     frame,

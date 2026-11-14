@@ -96,7 +96,7 @@ export function buildHydraulicLock(parent, track, textures, environment) {
           b[j],
           b[j + 1],
           a[j + 1],
-          j === 3 ? 0x34766f : j === 1 || j === 5 ? 0xc5d8ce : 0x687f75,
+          j === 3 ? 0x34766f : j === 1 || j === 5 ? 0xd0ccbf : 0x88877e,
         );
     }
     // Solid transverse retaining dams close both ends; no open water curtains.
@@ -105,8 +105,8 @@ export function buildHydraulicLock(parent, track, textures, environment) {
       const low = Math.min(p[0].y, p[7].y);
       const a = p[0].clone().setY(low),
         b = p[7].clone().setY(low);
-      quad(a, b, p[6], p[1], 0x687f75);
-      quad(p[1], p[6], p[5], p[2], 0xc5d8ce);
+      quad(a, b, p[6], p[1], 0x88877e);
+      quad(p[1], p[6], p[5], p[2], 0xd0ccbf);
     }
   }
   const geometry = new THREE.BufferGeometry();

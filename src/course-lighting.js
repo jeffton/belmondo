@@ -53,9 +53,9 @@ export const COURSE_LIGHTING = {
   MONSOON: {
     direction: [0.5, 0.32, 0.6],
     skyGlow: [[183, 211, 230], 0.07],
-    hemisphere: [0xa9d9c1, 0x244039],
-    key: [0xe4f3d2, 2],
-    fill: [0x65b28f, 0.42],
+    hemisphere: [0xc2d7e7, 0x393a38],
+    key: [0xfff3df, 2],
+    fill: [0xa4b8cb, 0.42],
     sun: ["#fff8e5", "#f1dfb7", "#d6b98e"],
     halo: [0xd8e5ed, 0.12],
     flare: true,
