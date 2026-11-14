@@ -10,6 +10,7 @@ import {
 } from "./start-sequence.js";
 import { railBounds, respondToRail, RAIL_PROFILE } from "./rail-profile.js";
 import { SPEED_CLASSES } from "./speed-classes.js";
+import { racingLine, followingBrake } from "./ai-racing-line.js";
 
 export { SPEED_CLASSES } from "./speed-classes.js";
 
@@ -103,6 +104,7 @@ export class Race {
       collectedPickups: new Set(),
       lap: 1,
       aiFire: 4 + i,
+      aiLane: i % 2 ? -3 : 3,
     }));
     this.player = this.racers[0];
     this.player.x = 0;
@@ -421,11 +423,25 @@ export class Race {
           r.contactS + Math.max(18, (r.speed * 0.5) / pace),
           intendedBranch,
         );
-        const desiredYaw = Math.atan2(
-          look.p.x - r.position.x,
-          look.p.z - r.position.z,
-        );
-        const error = angle(desiredYaw - r.yaw);
+        const road = track.frame(r.contactS, r.branch);
+        const lane = r.position.clone().sub(road.p).dot(road.right);
+        const traffic = active
+          .filter(
+            (other) =>
+              other !== r &&
+              (other.branch === r.branch ||
+                (track.bounds(r.contactS, r.branch).connected &&
+                  track.bounds(other.contactS, other.branch).connected)) &&
+              Math.abs(other.position.y - r.position.y) < 10,
+          )
+          .map((other) => {
+            const delta = other.position.clone().sub(r.position);
+            return {
+              front: delta.dot(road.tangent),
+              lane: lane + delta.dot(road.right),
+              closing: r.velocity.clone().sub(other.velocity).dot(road.tangent),
+            };
+          });
         const curve = Math.max(
           ...[0.25, 0.6, 1].map((t) =>
             Math.abs(
@@ -436,6 +452,36 @@ export class Race {
             ),
           ),
         );
+        // Keep the proven centre approach through splitter tips and merges.
+        const transition =
+          Math.abs(u - forkStart) < 0.04 || Math.abs(u - forkEnd) < 0.04;
+        // Aerial and steep-grade approaches need the established centre line:
+        // a passing offset must not become an unintended jump trajectory.
+        const steep = [0, 0.5, 1].some(
+          (t) =>
+            Math.abs(
+              track.frame(r.contactS + (r.speed * t) / pace, intendedBranch)
+                .tangent.y,
+            ) > 0.08,
+        );
+        look.p.addScaledVector(
+          look.right,
+          racingLine(
+            r,
+            traffic,
+            transition || steep || !r.grounded
+              ? 6
+              : Math.min(road.width, look.width),
+            curve,
+            classDt,
+            lane,
+          ),
+        );
+        const desiredYaw = Math.atan2(
+          look.p.x - r.position.x,
+          look.p.z - r.position.z,
+        );
+        const error = angle(desiredYaw - r.yaw);
         // Read crests as well as plan curvature: the same body must brake
         // before negative vertical curvature exceeds its gravity/contact load.
         const crest =
@@ -468,14 +514,18 @@ export class Race {
           -1,
           1,
         );
+        const spacingBrake = followingBrake(traffic, lane, pace);
         const slowing = Math.max(
+          spacingBrake,
           clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
           Math.abs(error) > 0.7 ? 1 : 0,
         );
         const pairedAir = slowing * (1 - Math.abs(air));
         controls = {
           throttle:
-            r.speed < cornerSpeed && Math.abs(error) < 0.7 ? AI_THROTTLE : 0,
+            !spacingBrake && r.speed < cornerSpeed && Math.abs(error) < 0.7
+              ? AI_THROTTLE
+              : 0,
           steer,
           airLeft: pairedAir + Math.max(0, air),
           airRight: pairedAir + Math.max(0, -air),
