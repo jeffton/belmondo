@@ -66,10 +66,10 @@ for (const version of ["production-v3", "redesigned-v4"])
       );
     });
 
-// Accepted 78d038b physical outputs for the six circuits outside Whiteout's
-// snowbridge change. Semantic indexes preserve protection after menu reorder.
+// Accepted d377354 physical outputs for the six circuits outside Coast's
+// independently authored fork. Semantic indexes survive menu reordering.
 const unchangedHashes = {
-  COAST: "f9b102e75b9af205ebafc5eb9636408c8eefee47cfbe2ac18f7490fe3ab893cd",
+  WHITEOUT: "0fecdb74176981809c712dc0b8d592f97a58be9e70538bd2bebee553ad36211b",
   CINDERLINE:
     "d5868c73150f3ce387ca909d72fc85de11bc696c1ec7f7de7f282532143b3f45",
   MONSOON: "e2917282207d4ea64f790deedebe02ae92a0403a8ebd4dbfd07f77e2e136ddd5",

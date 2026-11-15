@@ -27,7 +27,7 @@ Baseline source snapshot: `/var/tmp/belmondo-split-baseline-99a4feb/src`.
 
 Baseline JSON: `/var/tmp/belmondo-split-baseline-99a4feb/results/track-0.json` through `track-6.json` (126 traversals). All complete with the requested branch, zero rail contacts, recoveries and stalls. Reports include source hashes.
 
-Final Coast/Cinderline: `/var/tmp/belmondo-fork-verified-final/track-{2,4}.json`.
+Coast independent-route baseline (`d377354`): `/var/tmp/coast-divergent-baseline/track-2.json`. Current independently verified Coast metrics and traffic: `/var/tmp/coast-divergent-qa/v5/track-2.json` and `track-2-pack.json`; ordinary player reports `v5-player.json` and `v5-player-fullgrid.json` are alongside that directory. Cinderline: `/var/tmp/belmondo-fork-verified-final/track-4.json`.
 
 Natural packs: `/var/tmp/belmondo-fork-pack/track-{2,4}-pack.json`. All 42 NPC traversals merge on their natural branch, with zero rails/recoveries. Coast has ship-pair contact displacement; Cinderline has none. Coast baseline pack comparison is saved alongside baseline JSON.
 

@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import { buildCoastHeadlandBore } from "./coast-headland-bore.js";
 
 /** Near-field places authored against individual legacy forks, not the root spline. */
 export function buildForkEnvironments(parent, track, textures, terrain) {
   const coast = track.config.name === "KAISEKI COAST";
-  if (!coast && track.config.name !== "SOLAR ARRAY") return;
+  if (coast) return buildCoastHeadlandBore(parent, track, textures, terrain);
+  if (track.config.name !== "SOLAR ARRAY") return;
   const root = new THREE.Group();
   root.name = coast ? "coastal-fork-geography" : "solar-fork-infrastructure";
   parent.add(root);

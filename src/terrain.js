@@ -172,8 +172,22 @@ export function createTerrain(track, prepared) {
       const viaduct =
         smooth(0.325, 0.345, f.u) *
         (1 - smooth(0.395, 0.415, f.u)) *
-        (1 - smooth(f.width + 45, f.width + 95, distance));
+        (1 - smooth(f.width + 80, f.width + 180, distance));
       y = THREE.MathUtils.lerp(y, Math.min(y, -25), Math.max(inlet, viaduct));
+    }
+    if (!recipe && !desert && !harbor && f.branch === -1) {
+      // The bore is excavated through a continuous headland, not a canopy
+      // beside a second road. Its separate mesh provides the actual roof;
+      // whole-cell excavation below keeps both real decks unobstructed.
+      const headland =
+        smooth(0.322, 0.337, f.u) * (1 - smooth(0.38, 0.395, f.u));
+      const shoulder = smooth(f.width + 10, f.width + 48, distance);
+      const outer = 1 - smooth(f.width + 105, f.width + 180, distance);
+      y = THREE.MathUtils.lerp(
+        y,
+        Math.max(y, f.p.y + 50),
+        headland * shoulder * outer,
+      );
     }
     const cut = Math.max(waterway(x, z), ravine(x, z));
     y = THREE.MathUtils.lerp(y, desert ? 15 : -25, cut);

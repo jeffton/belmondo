@@ -128,7 +128,12 @@ export const TRACKS = [
     fog: 0x739fb2,
     sea: 0x086b83,
     width: 18,
-    branchWidths: [16, 18],
+    branchWidths: [18, 18],
+    // A broad common apron gives the two very different approaches room to
+    // settle before the ravine turn; no change to steering or collision forces.
+    widthSections: [
+      { start: 0.43, fullStart: 0.442, fullEnd: 0.452, end: 0.47, width: 22 },
+    ],
     layoutId: "coast-4-finish-end",
     points: layoutPoints("coast"),
     banks: [
@@ -144,15 +149,32 @@ export const TRACKS = [
       cliffClimb: [0.065, 0.17],
       ravineTurns: [0.43, 0.5],
       headlandClimb: [0.53, 0.69],
+      headlandBore: [0.332, 0.385],
+      inletFlyover: [0.325, 0.415],
     },
     split: [0.285, 0.445],
-    // Cliff-gallery reverse bend versus a long, open offshore sweep.
-    // Layout identity stays stable; earlier lap times used the previous fork.
+    // Independent interior alignments retain the existing level fork necks.
+    // The bore cuts beneath the headland; the flyover sweeps across the inlet.
     fork: {
       offsets: [-58, 65],
       rise: [0, 0],
-      riseProfile: [0.18, 0.4, 0.6, 0.82],
-      bends: [{ branch: -1, start: 0.22, end: 0.78, offset: 55 }],
+      labels: ["BORE", "SKYWAY"],
+      authored: {
+        start: 0.315,
+        end: 0.415,
+        knots: [
+          [
+            [-1730, 145, 680],
+            [-1980, 150, 850],
+            [-2100, 230, 1170],
+          ],
+          [
+            [-1710, 245, 950],
+            [-1870, 330, 1320],
+            [-2110, 310, 1380],
+          ],
+        ],
+      },
     },
     jump: 0.82,
     tunnel: [0.11, 0.19],
@@ -391,6 +413,58 @@ export function makeTrack(index) {
       f.right.set(f.tangent.z, 0, -f.tangent.x).normalize();
       f.up.crossVectors(f.tangent, f.right).normalize();
     }
+  const authored = config.fork?.authored;
+  let authoredCurves;
+  if (authored) {
+    const neckPoint = (u, route) => {
+      const n = u * count;
+      const a = base[Math.floor(n)],
+        b = base[Math.floor(n) + 1];
+      const p = a.p.clone().lerp(b.p, n % 1);
+      const right = a.right
+        .clone()
+        .lerp(b.right, n % 1)
+        .normalize();
+      const phase = (u - config.split[0]) / (config.split[1] - config.split[0]);
+      return p.addScaledVector(
+        right,
+        config.fork.offsets[route] * Math.sin(phase * Math.PI) ** 2,
+      );
+    };
+    authoredCurves = authored.knots.map((knots, route) => {
+      const points = [
+        neckPoint(authored.start, route),
+        ...knots.map((p) => new THREE.Vector3(...p)),
+        neckPoint(authored.end, route),
+      ];
+      const tangents = points.map((p, i) => {
+        if (i === 0 || i === points.length - 1) {
+          const u = i === 0 ? authored.start : authored.end;
+          const direction = neckPoint(u + 1 / count, route)
+            .sub(neckPoint(u - 1 / count, route))
+            .normalize();
+          return direction.multiplyScalar(
+            p.distanceTo(points[i === 0 ? 1 : i - 1]),
+          );
+        }
+        return points[i + 1]
+          .clone()
+          .sub(points[i - 1])
+          .multiplyScalar(0.5);
+      });
+      const path = new THREE.CurvePath();
+      for (let i = 0; i < points.length - 1; i++)
+        path.add(
+          new THREE.CubicBezierCurve3(
+            points[i],
+            points[i].clone().addScaledVector(tangents[i], 1 / 3),
+            points[i + 1].clone().addScaledVector(tangents[i + 1], -1 / 3),
+            points[i + 1],
+          ),
+        );
+      return path;
+    });
+  }
   const routes = {};
   for (const branch of [-1, 0, 1]) {
     const points = base.map((f, i) => {
@@ -400,6 +474,15 @@ export function makeTrack(index) {
         1,
       );
       const blend = Math.sin(phase * Math.PI) ** 2;
+      if (
+        authored &&
+        branch &&
+        i / count >= authored.start &&
+        i / count <= authored.end
+      )
+        return authoredCurves[branch === -1 ? 0 : 1].getPoint(
+          (i / count - authored.start) / (authored.end - authored.start),
+        );
       const p = f.p
         .clone()
         .addScaledVector(f.right, branch * (branch === 1 ? 44 : 23) * blend);

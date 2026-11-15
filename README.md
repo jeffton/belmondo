@@ -24,7 +24,7 @@ Difficulty progression:
 
 - **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and a snowbridge crossing above a blue-ice gallery.
 - **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
-- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a cliff-gallery reverse bend versus an offshore viaduct, and a long ravine jump with an aligned landing straight.
+- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a deep curved headland bore versus a high inlet flyover, and a long ravine jump with an aligned landing straight.
 - **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
 - **Cinderline — 8.2 km:** three continuous-deck compression waves, a basalt-gorge S-route versus a broad banked caldera rim, and grounded geothermal works.
 - **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.

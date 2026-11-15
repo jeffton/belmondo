@@ -6,7 +6,7 @@ import { createAdvertising } from "./advertising-panels.js";
 
 export { createAdvertising } from "./advertising-panels.js";
 
-export function buildSplitMarkers(scene, track) {
+export function buildSplitMarkers(scene, track, terrain) {
   const [start, end] = track.config.split;
   let fork = start * track.length;
   for (let s = fork + 1; s < end * track.length; s += 2) {
@@ -49,6 +49,14 @@ export function buildSplitMarkers(scene, track) {
       ctx.lineTo(256 + direction * 105, 173);
       ctx.stroke();
     }
+    if (track.config.fork?.labels) {
+      ctx.fillStyle = "#eaf5dc";
+      ctx.font = "bold 34px monospace";
+      // The face looks backwards along the course: branch +1 is left
+      // in the approaching pilot's view, branch -1 is right.
+      ctx.fillText(track.config.fork.labels[1], 128, 246);
+      ctx.fillText(track.config.fork.labels[0], 384, 246);
+    }
     const map = new THREE.CanvasTexture(canvas);
     map.colorSpace = THREE.SRGBColorSpace;
     map.magFilter = THREE.NearestFilter;
@@ -72,6 +80,72 @@ export function buildSplitMarkers(scene, track) {
       marker.add(stem, housing, panel);
       scene.add(marker);
     }
+  }
+  if (track.config.fork?.labels) {
+    // A destination board above the nose stays in the forward portrait view
+    // after roadside countdown signs have passed. Supports clear both decks.
+    const s = fork + 65;
+    const center = track.frame(s);
+    const roads = [-1, 1].map((branch) => track.frame(s, branch));
+    const axis = new THREE.Vector3(
+      center.tangent.z,
+      0,
+      -center.tangent.x,
+    ).normalize();
+    const edges = roads.flatMap((f) =>
+      [-1, 1].map((side) =>
+        f.p
+          .clone()
+          .addScaledVector(f.right, side * (f.width + 10))
+          .sub(center.p)
+          .dot(axis),
+      ),
+    );
+    const left = Math.min(...edges),
+      right = Math.max(...edges);
+    const datum = Math.max(...roads.map((f) => f.p.y));
+    const group = new THREE.Group();
+    group.name = "fork-destination-board";
+    group.userData.station = s;
+    group.position.copy(center.p).setY(datum);
+    group.rotation.y = Math.atan2(-center.tangent.x, -center.tangent.z);
+    for (const x of [left, right]) {
+      const post = new THREE.Mesh(box, dark);
+      post.name = "fork-destination-support";
+      const foot = center.p.clone().addScaledVector(axis, x);
+      const bottom = terrain.heightAt(foot.x, foot.z) - datum - 1;
+      post.position.set(-x, (bottom + 39.6) / 2, 0);
+      post.scale.set(1, 39.6 - bottom, 1);
+      group.add(post);
+    }
+    const beam = new THREE.Mesh(box, dark);
+    beam.position.set(-(left + right) / 2, 39, 0);
+    beam.scale.set(right - left + 2, 1.2, 1.2);
+    group.add(beam);
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 192;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#142936";
+    ctx.fillRect(0, 0, 1024, 192);
+    ctx.strokeStyle = "#eaf5dc";
+    ctx.lineWidth = 8;
+    ctx.strokeRect(4, 4, 1016, 184);
+    ctx.fillStyle = "#eaf5dc";
+    ctx.textAlign = "center";
+    ctx.font = "bold 88px monospace";
+    ctx.fillText(`↙  ${track.config.fork.labels[1]}`, 260, 126);
+    ctx.fillText(`${track.config.fork.labels[0]}  ↘`, 760, 126);
+    const map = new THREE.CanvasTexture(canvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.magFilter = THREE.NearestFilter;
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(38, 7.125),
+      new THREE.MeshBasicMaterial({ map }),
+    );
+    panel.position.set(-(left + right) / 2, 35, 0.7);
+    group.add(panel);
+    scene.add(group);
   }
 }
 

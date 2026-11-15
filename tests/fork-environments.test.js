@@ -103,7 +103,17 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
         }
       }
     });
-    assert(grounded > 20, "near-field structures have real terrain contacts");
+    if (index === TRACK_INDEX.COAST) {
+      const contacts = root.userData.groundingContacts;
+      assert(
+        contacts.length > 0,
+        "the continuous bored headland has real grounded feet",
+      );
+      for (const p of contacts)
+        assert(Math.abs(p.y - environment.heightAt(p.x, p.z) + 2) < 0.001);
+    } else {
+      assert(grounded > 20, "near-field structures have real terrain contacts");
+    }
     if (index === TRACK_INDEX.COAST) {
       const f = track.frame(0.37 * track.length, 1);
       const p = f.p.clone().addScaledVector(f.right, f.width + 160);

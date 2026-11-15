@@ -656,7 +656,7 @@ export class World {
       environment,
     );
     yield;
-    buildSplitMarkers(this.scene, track);
+    buildSplitMarkers(this.scene, track, environment.terrain);
     buildTrackAdvertising(this.scene, track, environment);
     yield;
     buildVegetation(this.scene, track, environment);
