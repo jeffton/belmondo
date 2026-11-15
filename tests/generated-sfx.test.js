@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { AudioEngine } from "../src/audio.js";
 import { SFX_CUES } from "../src/generated-sfx.js";
+import { MENU_SOUNDS } from "../src/menu-sound.js";
 import { Race, LAPS_BY_CLASS } from "../src/race.js";
 import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
@@ -99,7 +100,8 @@ test("generated pack decodes once and preserves event and lifecycle boundaries",
   const loads = globalThis.fetch.mock.callCount();
   assert.equal(
     loads,
-    Object.values(SFX_CUES).reduce((n, cue) => n + cue.files.length, 1),
+    Object.values(SFX_CUES).reduce((n, cue) => n + cue.files.length, 1) +
+      Object.keys(MENU_SOUNDS).length,
   );
   await audio.start();
   assert.equal(globalThis.fetch.mock.callCount(), loads);
