@@ -23,6 +23,7 @@ import {
 } from "./progression.js";
 import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
+import { PodiumTrophy } from "./podium-trophy.js";
 import { MenuNavigation } from "./menu-navigation.js";
 import { MenuFeedback } from "./menu-feedback.js";
 import { frameDelta } from "./frame-clock.js";
@@ -68,6 +69,7 @@ try {
   throw error;
 }
 const menuPreview = new MenuPreview($("menu-model"));
+const podiumTrophy = new PodiumTrophy();
 let menuStage = "mode";
 const menuStages = ["mode", "class", "track", "craft"];
 let menuNavigator;
@@ -492,6 +494,8 @@ async function start(event) {
   world.cameraReady = false;
   last = null;
   state = "race";
+  podiumTrophy.clear();
+  $("results").classList.remove("has-podium");
   music.setMenu(false);
   paused = false;
   updateAppFocus();
@@ -534,6 +538,7 @@ function quit() {
   $("hud").hidden = true;
   $("pause-panel").close();
   $("results").hidden = true;
+  podiumTrophy.mount($("menu").querySelector(".menu-layout"));
   sound.setPaused(true);
   sound.stopCrowd();
   music.setMenu(true);
@@ -976,6 +981,9 @@ function showResults() {
   sound.stopEngine();
   sound.stopCrowd();
   $("results").hidden = false;
+  podiumTrophy.setResult(race);
+  $("results").classList.toggle("has-podium", Boolean(podiumTrophy.place));
+  podiumTrophy.mount($("results").querySelector(".eyebrow"));
   const key = recordKey(race.mode, race.speedClass);
   const isRecord =
     !race.testAccess &&
@@ -1181,6 +1189,7 @@ function animate(now) {
     }
     world.draw(race, paused ? 0 : dt, false, controls.steeringKind);
   }
+  if (state === "menu" || state === "results") podiumTrophy.draw(dt);
   // Downshift expensive clean rendering only after sustained slow frame timing.
   if (state === "race" && !paused) {
     renderFrames++;

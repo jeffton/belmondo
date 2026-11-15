@@ -16,6 +16,8 @@ INDUCTION (1.2×) runs 3 laps, RESONANCE (1.4×) 4, and SINGULARITY (1.6×) 5. T
 
 Cyan BOOST pads accelerate; amber/magenta WEAPON pads supply one weapon. Equipped items have individual silhouettes, names and colors: red MISSILE (homing), magenta PULSE, amber MINE, cyan SHIELD and electric-blue TURBO. Equipped items appear below the timer at the top of the HUD; the indicator disappears when unarmed. Fire with Space, the inventory button or the separate mobile FIRE control. Roadside FORK signs count down to the splitter. Choose a lane before the routes separate; joined fork and merge decks remain open across the seam. Routes differ in elevation, width, length and corner profile. Keep speed over gaps. Time attack removes opponents and weapons. Records are stored locally per circuit layout, craft, mode and physical speed class; records from different layouts remain separate. The 1.2/1.4/1.6 scale replaces 1.0/1.2/1.4: C1 and C2 inherit the previous faster tiers, and C3 is 14.3% faster than the previous maximum. This breaks record comparability: previous records remain stored on-device, but the changed classes use a separate pace-qualified record key and start with an empty local record.
 
+The last completed Combat podium appears as a rotating gold, silver or bronze cup in the race report and upper-right paddock menu, matching the circuit-button trophies. Starting another race clears it. Time Attack, elimination and finishes outside the top three award no cup; this session-only display does not change records or progression. Reduced-motion preferences keep the cup still.
+
 ## Circuits
 
 Difficulty progression:
