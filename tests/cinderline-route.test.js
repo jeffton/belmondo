@@ -41,8 +41,11 @@ test("CINDERLINE: visible setup, real gap, downhill landing and asymmetric fork"
       .normalize()
       .dot(landing.tangent.clone().setY(0).normalize()) > 0.9999,
   );
-  assert(branchWidths[0] + 8 < branchWidths[1]);
-  assert(track.physicalLengths[-1] + 100 < track.physicalLengths[1]);
+  assert(branchWidths[0] < branchWidths[1], "gorge is narrower than the rim");
+  assert(
+    track.physicalLengths[-1] < track.physicalLengths[1],
+    "shorter technical gorge competes with the longer flowing rim",
+  );
   const midpoint = ((split[0] + split[1]) / 2) * track.length;
   assert(track.frame(midpoint, 1).p.y > track.frame(midpoint, -1).p.y + 30);
   for (let u = 0; u < 1; u += 0.0002)

@@ -169,10 +169,29 @@ export function createTerrain(track, prepared) {
       const along = smooth(0.315, 0.34, f.u) * (1 - smooth(0.405, 0.435, f.u));
       const outside = (x - f.p.x) * f.right.x + (z - f.p.z) * f.right.z;
       const inlet = along * smooth(f.width + 65, f.width + 125, outside);
-      y = THREE.MathUtils.lerp(y, Math.min(y, -25), inlet);
+      const viaduct =
+        smooth(0.325, 0.345, f.u) *
+        (1 - smooth(0.395, 0.415, f.u)) *
+        (1 - smooth(f.width + 45, f.width + 95, distance));
+      y = THREE.MathUtils.lerp(y, Math.min(y, -25), Math.max(inlet, viaduct));
     }
     const cut = Math.max(waterway(x, z), ravine(x, z));
     y = THREE.MathUtils.lerp(y, desert ? 15 : -25, cut);
+    if (recipe?.biome === "volcanic" && f.branch === -1) {
+      const [start, end] = track.config.split;
+      const phase = (f.u - start) / (end - start);
+      // A continuous excavated basalt gorge follows the lower reverse bends.
+      // Keep both noses open; the upper rim remains exposed. Whole-cell deck
+      // excavation below also clears the banked inside edge of this landform.
+      const gorge = smooth(0.18, 0.32, phase) * (1 - smooth(0.68, 0.82, phase));
+      const shoulder = smooth(f.width + 18, f.width + 48, distance);
+      const rim = 1 - smooth(f.width + 70, f.width + 125, distance);
+      y = THREE.MathUtils.lerp(
+        y,
+        Math.max(y, f.p.y + 34),
+        gorge * shoulder * rim,
+      );
+    }
     if (recipe?.biome === "hydraulic") {
       const [start, end] = track.config.sections.dryLock;
       // Excavated reservoir shelves stay below the retained local water, while

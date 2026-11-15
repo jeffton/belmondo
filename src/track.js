@@ -146,6 +146,14 @@ export const TRACKS = [
       headlandClimb: [0.53, 0.69],
     },
     split: [0.285, 0.445],
+    // Cliff-gallery reverse bend versus a long, open offshore sweep.
+    // Layout identity stays stable; earlier lap times used the previous fork.
+    fork: {
+      offsets: [-58, 65],
+      rise: [0, 0],
+      riseProfile: [0.18, 0.4, 0.6, 0.82],
+      bends: [{ branch: -1, start: 0.22, end: 0.78, offset: 55 }],
+    },
     jump: 0.82,
     tunnel: [0.11, 0.19],
   },
@@ -408,6 +416,20 @@ export function makeTrack(index) {
               THREE.MathUtils.smoothstep(phase, riseProfile[2], riseProfile[3]))
           : blend;
         p.y += config.fork.rise[route] * riseBlend;
+        // Route-local reverse bends displace the physical deck. Their compact
+        // envelope has zero first/second derivatives at both ends, preserving
+        // the common approach and merge rather than adding steering forces.
+        for (const bend of config.fork.bends ?? []) {
+          if (bend.branch !== branch) continue;
+          const t = (phase - bend.start) / (bend.end - bend.start);
+          if (t > 0 && t < 1)
+            p.addScaledVector(
+              f.right,
+              bend.offset *
+                Math.sin(Math.PI * t) ** 2 *
+                Math.sin(2 * Math.PI * t),
+            );
+        }
         return p;
       }
       if (config.night && branch) {

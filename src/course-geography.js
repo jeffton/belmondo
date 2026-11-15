@@ -8,7 +8,9 @@ export function getWaterfrontDistricts(track) {
     [departure, 0.102, 0, 1, 0],
     [departure, 0.088, 0, -1, 1],
     [0.306, 0.365, -1, -1, 2],
-    [0.355, 0.411, 1, 1, 3],
+    // Leave an open sea-facing window across the viaduct; occupied frontage
+    // resumes on the shoreward exit rather than hiding the whole inlet.
+    [0.389, 0.411, 1, 1, 3],
     [0.555, 0.604, 0, -1, 3],
     [0.704, 0.745, 0, 1, 2],
     [0.925, start - 0.015, 0, -1, 1],

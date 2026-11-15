@@ -198,17 +198,19 @@ export const NEW_COURSES = [
     widthSections: [
       { start: 0.135, fullStart: 0.17, fullEnd: 0.245, end: 0.285, width: 12 },
     ],
-    branchWidths: [14, 23],
+    branchWidths: [15, 23],
     points: cinderlinePoints,
     split: [0.75, 0.91],
     fork: {
-      offsets: [-65, 215],
+      offsets: [-82, 160],
       rise: [-18, 16],
       riseProfile: [0.18, 0.4, 0.6, 0.82],
+      bends: [{ branch: -1, start: 0.2, end: 0.8, offset: 48 }],
     },
     banks: [
       [0.08, 0.27, 0.035],
       [0.37, 0.5, 0.035],
+      [0.79, 0.875, 0.02],
     ],
     jump: 0.538,
     gapLength: 0.014,

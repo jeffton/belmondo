@@ -24,13 +24,15 @@ Difficulty progression:
 
 - **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and an ascending valley fork.
 - **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
-- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a climbing reversal and a long ravine jump with an aligned landing straight.
+- **Kaiseki Coast — 5.9 km:** linked waterfront esses, a cliff-gallery reverse bend versus an offshore viaduct, and a long ravine jump with an aligned landing straight.
 - **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
-- **Cinderline — 8.2 km:** three continuous-deck compression waves, a banked caldera and grounded geothermal works.
+- **Cinderline — 8.2 km:** three continuous-deck compression waves, a basalt-gorge S-route versus a broad banked caldera rim, and grounded geothermal works.
 - **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
 - **Vesper Circuit:** tight elevated metropolitan turns, tunnels and sustained airbrake demands.
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
+
+Coast and Cinderline's fork choices carry equal weapon rewards and compete through different driving lines rather than boost compensation. Existing records and progression remain stored; historical times use different fork geometry. See [split-route design and verification](docs/split-route-design.md).
 
 ## Sound
 

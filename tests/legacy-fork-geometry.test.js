@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { railPoint, railBackDepth, railHeight } from "../src/rail-geometry.js";
 import { RAIL_PROFILE } from "../src/rail-profile.js";
 
@@ -66,14 +66,19 @@ for (const version of ["production-v3", "redesigned-v4"])
       );
     });
 
-// Accepted integrated Whiteout-2/Monsoon-4/Cinderline-2 outputs, including both caps.
-const biomeHashes = [
-  "0c8c499a8fcd1214b20452f028f1cfc3963ad1bbdaac8f54f0e8fca1194c8c01",
-  "e2917282207d4ea64f790deedebe02ae92a0403a8ebd4dbfd07f77e2e136ddd5",
-  "536b366fea8a95f693fb986eb12907bd69d39e4b92211f1786755204279e8052",
-];
-for (let index = 3; index < 6; index++)
-  test(`biome ${index}: universal fork geometry preserves accepted physical outputs`, () => {
+// Accepted 99a4feb physical outputs for circuits outside the two authored
+// fork changes. Semantic indexes keep the protection valid after menu reorder.
+const unchangedHashes = {
+  WHITEOUT: "0c8c499a8fcd1214b20452f028f1cfc3963ad1bbdaac8f54f0e8fca1194c8c01",
+  MONSOON: "e2917282207d4ea64f790deedebe02ae92a0403a8ebd4dbfd07f77e2e136ddd5",
+  SOLAR: "6a63d963d2e4683cd0a583969c927f0d8b997c8e0344c413d6776951c5af53d6",
+  NOCTILUCENT:
+    "19e4838a99fc862af4f9daaca87449301d7fa9f08eef533a70e60d87f8dac624",
+  VESPER: "7da2ee746c43844b2b0b10c9525be13abc1d764b807f3c2d43ba36f418cd1cef",
+};
+for (const [name, hash] of Object.entries(unchangedHashes))
+  test(`${name}: fork changes preserve the accepted physical road and rails`, () => {
+    const index = TRACK_INDEX[name];
     const track = makeTrack(index);
     const rows = [];
     for (let i = 0; i < 300; i++)
@@ -92,6 +97,6 @@ for (let index = 3; index < 6; index++)
       }
     assert.equal(
       createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
-      biomeHashes[index - 3],
+      hash,
     );
   });

@@ -1,117 +1,76 @@
-import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { MathUtils } from "three";
-import { makeTrack, clamp, mod, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { getTrackPickups } from "../src/pickups.js";
 import { createTerrain } from "../src/terrain.js";
 
 const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);
-const lowerWeapon = getTrackPickups(track).find((pad) =>
-  pad.purpose.includes("Inner geothermal return-fork armament"),
-);
-const upperBoost = getTrackPickups(track).find((pad) =>
-  pad.purpose.includes("Wide upper rim acceleration"),
-);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 
-function controls(race, targetBranch, aimPickup) {
-  const r = race.player;
-  const pace = race.classSpec.pace;
-  const u = mod(r.contactS, track.length) / track.length;
+test("Cinderline return offers an actual gorge reversal and a sweeping banked rim", () => {
   const [start, end] = track.config.split;
-  const branch =
-    u > start - 0.04 &&
-    u < start + (end - start) * 0.3 &&
-    (!r.branch || track.bounds(r.contactS, r.branch).connected)
-      ? targetBranch
-      : r.branch;
-  const lookDistance = Math.max(18, (r.speed * 0.8) / pace);
-  const look = track.frame(r.contactS + lookDistance, branch);
-  if (aimPickup) {
-    const ahead = (r.contactS + lookDistance) / track.length;
-    const station = targetBranch === -1 ? 0.79 : 0.83;
-    const aim =
-      MathUtils.smoothstep(ahead, station - 0.035, station - 0.01) *
-      (1 - MathUtils.smoothstep(ahead, station + 0.01, station + 0.035));
-    // Aim the lookahead to account for the body's turning inertia; the actual
-    // hull must still cross the ordinary shared pickup polygon.
-    look.p.addScaledVector(look.right, (targetBranch === -1 ? -7 : 10) * aim);
+  const turn = { [-1]: 0, [1]: 0 };
+  let rimBank = 0;
+  for (let i = 1; i <= 500; i++) {
+    const s = (start + ((end - start) * i) / 500) * track.length;
+    for (const branch of [-1, 1]) {
+      const previous = track.frame(
+        s - ((end - start) * track.length) / 500,
+        branch,
+      );
+      const f = track.frame(s, branch);
+      turn[branch] += previous.tangent.angleTo(f.tangent);
+      if (branch === 1) rimBank = Math.max(rimBank, Math.abs(f.bank));
+    }
   }
-  const heading = Math.atan2(look.p.x - r.position.x, look.p.z - r.position.z);
-  const error = Math.atan2(
-    Math.sin(heading - r.yaw),
-    Math.cos(heading - r.yaw),
-  );
-  const curve = Math.max(
-    ...[0.25, 0.6, 1].map((t) =>
-      Math.abs(track.curvature(r.contactS + (r.speed * t) / pace, branch)),
-    ),
-  );
-  const demand = error * 6 - (r.yawRate * 0.25) / pace;
-  const steer = clamp(demand, -1, 1);
-  const cornerSpeed = Math.sqrt((220 * pace * pace) / Math.max(curve, 0.0001));
-  return pilotInputs({
-    throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
-    steer,
-    air: clamp((demand - steer) * 1.8, -1, 1),
-    slowing: Math.max(
-      clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
-      Math.abs(error) > 0.7 ? 1 : 0,
-    ),
-  });
-}
-
-function run(speedClass, branch, aimPickup) {
-  const race = new Race(track, 0, "trial", speedClass, terrain);
-  race.countdown = 0;
-  let enter = null;
-  let exit = null;
-  let walls = 0;
-  let recoveries = 0;
-  for (let step = 0; step < 14400 && race.player.lap < 2; step++) {
-    race.update(1 / 120, controls(race, branch, aimPickup));
-    const r = race.player;
-    const u = r.contactS / track.length;
-    if (enter === null && u >= 0.75) enter = race.time;
-    if (exit === null && u >= 0.91) exit = race.time;
-    walls += Number(r.wallTouched);
-    recoveries += Number(r.recoveredThisStep);
+  assert(turn[-1] > turn[1] * 1.3, "gorge requires more changes of heading");
+  assert(rimBank > 0.08, "upper rim carries sustained physical banking");
+  for (const u of track.config.split) {
+    const a = track.frame(u * track.length, -1);
+    const b = track.frame(u * track.length, 1);
+    assert(a.p.distanceTo(b.p) < 0.002);
+    assert(a.tangent.dot(b.tangent) > 0.9999);
+    assert(track.bounds(u * track.length, -1).connected);
   }
-  assert.equal(race.player.lap, 2);
-  assert.equal(race.player.shield, 100);
-  assert.equal(walls, 0);
-  assert.equal(recoveries, 0);
-  return {
-    sector: exit - enter,
-    time: race.time,
-    pickups: [...race.player.collectedPickups],
-  };
-}
+  assert.equal(track.config.layoutId, "cinderline-2-finish-end");
+});
 
-for (const speedClass of [0, 2]) {
-  test(`CINDERLINE: C${speedClass + 1} upper-rim boost earns back distance against lower-cut armament`, (t) => {
-    const lower = run(speedClass, -1, true);
-    const upper = run(speedClass, 1, true);
-    const missedUpper = run(speedClass, 1, false);
-    assert(
-      lower.pickups.includes(`1:${lowerWeapon.id}`),
-      "lower weapon silhouette was crossed",
+test("Cinderline gorge is continuous real land outside both unobstructed racing decks", () => {
+  let raisedShoulders = 0;
+  for (let u = 0.79; u <= 0.875; u += 0.0005) {
+    for (const branch of [-1, 1]) {
+      const f = track.frame(u * track.length, branch);
+      for (const lateral of [-f.width, 0, f.width]) {
+        const p = f.p.clone().addScaledVector(f.right, lateral);
+        assert(
+          terrain.heightAt(p.x, p.z) < p.y - 1,
+          "terrain clears the banked deck",
+        );
+      }
+      if (branch === -1) {
+        for (const side of [-1, 1]) {
+          const p = f.p.clone().addScaledVector(f.right, side * (f.width + 62));
+          if (terrain.heightAt(p.x, p.z) > f.p.y + 12) raisedShoulders++;
+        }
+      }
+    }
+  }
+  assert(
+    raisedShoulders > 100,
+    "the technical route runs through a substantial cutting",
+  );
+});
+
+test("Both redesigned circuits offer equal fork rewards instead of boost compensation", () => {
+  for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.CINDERLINE]) {
+    const course = makeTrack(index);
+    const rewards = [-1, 1].map((branch) =>
+      getTrackPickups(course)
+        .filter((pad) => pad.branch === branch)
+        .map((pad) => pad.type),
     );
-    assert(!lower.pickups.includes(`1:${upperBoost.id}`));
-    assert(
-      upper.pickups.includes(`1:${upperBoost.id}`),
-      "upper boost was physically collected",
-    );
-    assert(!upper.pickups.includes(`1:${lowerWeapon.id}`));
-    assert(!missedUpper.pickups.includes(`1:${upperBoost.id}`));
-    assert(upper.sector < missedUpper.sector);
-    assert(
-      Math.abs(upper.sector - lower.sector) <
-        Math.abs(missedUpper.sector - lower.sector),
-    );
-    t.diagnostic(JSON.stringify({ lower, upper, missedUpper }));
-  });
-}
+    assert.deepEqual(rewards[0], rewards[1]);
+    assert(rewards[0].length > 0, "both routes retain a pickup opportunity");
+  }
+});

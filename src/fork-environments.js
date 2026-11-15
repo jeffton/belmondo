@@ -91,8 +91,8 @@ export function buildForkEnvironments(parent, track, textures, terrain) {
   }
   // The inward lane hugs a buttressed cutting. Cantilevered weather covers
   // make a sheltered rhythm without putting columns between the two lanes.
-  const start = coast ? 0.345 : 0.35;
-  const end = coast ? 0.395 : 0.405;
+  const start = coast ? 0.33 : 0.35;
+  const end = 0.405;
   const bays = Math.ceil(((end - start) * track.length) / 32);
   for (let i = 0; i < bays; i++) {
     const u = start + ((i + 0.5) / bays) * (end - start);
@@ -113,6 +113,17 @@ export function buildForkEnvironments(parent, track, textures, terrain) {
     if (!coast) {
       // Process ducts occupy the plant side of the arcade, never the road void.
       box("metal", point(f, outer - 8, 29), 7, 5, 30, yaw);
+    }
+  }
+  if (coast) {
+    // Low, grounded breakwater teeth frame the open sea-side carriageway.
+    // They follow its own broad arc, not the sheltered gallery alignment.
+    for (let i = 0; i < 7; i++) {
+      const f = track.frame((0.355 + (i / 6) * 0.035) * track.length, 1);
+      const x = f.width + 33;
+      const p = point(f, x);
+      const top = Math.max(terrain.heightAt(p.x, p.z) + 5, -12);
+      grounded("rock", f, x, 14, 22, top);
     }
   }
   if (!coast) {

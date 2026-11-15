@@ -115,7 +115,8 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
   });
 }
 
-// Accepted integrated Night-v4, Whiteout-2, Monsoon-4 and Cinderline-2 terrain.
+// Accepted terrain for untouched circuits. Cinderline's authored gorge is
+// covered by its deck-clearance and continuous-shoulder regression tests.
 for (const [index, expected] of [
   [
     TRACK_INDEX.NOCTILUCENT,
@@ -128,10 +129,6 @@ for (const [index, expected] of [
   [
     TRACK_INDEX.MONSOON,
     "118aa36d2e32c0031c1004b3285b19c3aff330b8c4e7d22d5cc017dcab775c8c",
-  ],
-  [
-    TRACK_INDEX.CINDERLINE,
-    "fd4066762d9886e2661518c9def35a4251a9819362ec2a00ab2a5e139c1890ce",
   ],
 ]) {
   test(`course ${index}: terrain output remains byte-identical`, () => {

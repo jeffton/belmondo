@@ -17,7 +17,7 @@ const risingForkProbes = {
 };
 
 for (const [index, config] of TRACKS.entries()) {
-  if (config.fork) {
+  if (config.fork?.rise.some((rise) => rise !== 0)) {
     test(`${config.name}: rising fork faces clear before any cap extrusion`, () => {
       const track = makeTrack(index);
       const u = risingForkProbes[config.name];
