@@ -983,7 +983,7 @@ function showResults() {
   $("results").hidden = false;
   podiumTrophy.setResult(race);
   $("results").classList.toggle("has-podium", Boolean(podiumTrophy.place));
-  podiumTrophy.mount($("results").querySelector(".eyebrow"));
+  podiumTrophy.mount($("result-heading"));
   const key = recordKey(race.mode, race.speedClass);
   const isRecord =
     !race.testAccess &&

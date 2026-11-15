@@ -161,8 +161,19 @@ try {
   }
   const podium = mode === "race" && !eliminated && place <= 3;
   const trophy = page.locator(".podium-trophy");
+  await expect(page.locator("#results .eyebrow")).toHaveCount(0);
   if (podium) {
     await expect(trophy).toBeVisible();
+    const alignment = await page.evaluate(() => {
+      const title = document
+        .querySelector("#result-title")
+        .getBoundingClientRect();
+      const cup = document
+        .querySelector("#results .podium-trophy")
+        .getBoundingClientRect();
+      return Math.abs(title.top + title.height / 2 - cup.top - cup.height / 2);
+    });
+    expect(alignment).toBeLessThanOrEqual(1);
     await expect(trophy).toHaveAttribute("data-place", String(place));
     await expect(trophy.locator("canvas")).toBeVisible();
     const rendered = await page.evaluate(() => window.podiumSnapshot());
