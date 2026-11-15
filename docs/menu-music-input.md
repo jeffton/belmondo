@@ -11,7 +11,7 @@ No synthetic clicks, autoplay-policy bypass, muted bootstrap, popup or extra mus
 
 ## Verification
 
-`GAME_URL=http://127.0.0.1:5194 node tests/menu-music-input.browser.mjs` runs Chromium with strict document-user-activation policy and no media-engagement bypass. Its CDP probes explicitly set `userGesture:false`. It checks first arrow/Enter from body focus, rejected synthetic input/gamepad mocks, single-element playback, focus lifecycle routing, zero music gain, explicit pause and pointer startup. Focus lifecycle is simulated; media playback and browser activation are real.
+`GAME_URL=http://127.0.0.1:5194 node tests/menu-music-input.browser.mjs` runs Chromium with strict document-user-activation policy and no media-engagement bypass. Its CDP probes explicitly set `userGesture:false`. It checks first arrow/Enter/Tab from body focus, nonzero soundtrack PCM, rejected synthetic input/gamepad mocks, single-element playback, focus lifecycle routing, zero music gain, explicit pause and touch startup. Focus lifecycle is simulated; media playback and browser activation are real.
 
 An isolated Linux uinput Xbox controller was additionally tested against native Chromium 158 `getGamepads()` with strict autoplay. No pointer, keyboard or CDP user gesture preceded its A press. Before the button, sticky activation was false; afterward it was true and the actual soundtrack played unmuted and advanced. The temporary device was destroyed afterward. This verifies the browser-native controller path, not physical controller hardware. Safari hardware was not tested.
 
