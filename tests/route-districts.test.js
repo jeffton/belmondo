@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import {
   buildRouteDistricts,
@@ -97,7 +97,11 @@ function projectedDistanceSquared(x, z, triangle) {
 
 // This builder owns the three legacy district recipes. New biome architecture
 // is exercised through the real buildCity dispatch in new-course-environments.
-for (const [index] of ROUTE_DISTRICTS.entries()) {
+for (const [recipeIndex, index] of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+].entries()) {
   const config = TRACKS[index];
   test(`${config.name}: emitted districts occupy real places and clear every route's full XZ corridor`, () => {
     const { track, terrain, concrete, build } = fixture(index);
@@ -105,7 +109,7 @@ for (const [index] of ROUTE_DISTRICTS.entries()) {
     try {
       const faces = triangles(root);
       assert(faces.length > 0);
-      for (const district of ROUTE_DISTRICTS[index]) {
+      for (const district of ROUTE_DISTRICTS[recipeIndex]) {
         const footprints = root.userData.footprints.filter(
           (f) => f.district === district.name,
         );

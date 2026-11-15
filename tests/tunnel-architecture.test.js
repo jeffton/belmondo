@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { tunnelSegment } from "../src/tunnel-architecture.js";
 
 for (const [index, branch] of [
-  [1, 0],
-  [2, -1],
-  [4, -1],
+  [TRACK_INDEX.MONSOON, 0],
+  [TRACK_INDEX.SOLAR, -1],
+  [TRACK_INDEX.NOCTILUCENT, -1],
 ]) {
   test(`tunnel architecture stays outside the racing clearance on course ${index}`, () => {
     const track = makeTrack(index);

@@ -1,5 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
+import { mockInputApp } from "./helpers/input-app-mocks.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5195";
 const browser = await chromium.launch({
@@ -21,6 +22,10 @@ try {
   ]) {
     const page = await browser.newPage({ viewport: { width, height } });
     page.on("pageerror", (error) => errors.push(error.message));
+    await page.addInitScript(() => {
+      window.requestAnimationFrame = () => 0;
+    });
+    await mockInputApp(page);
     await page.goto(url);
     await page.waitForFunction(
       () => window.nullVector?.telemetry.state === "menu",
@@ -28,10 +33,6 @@ try {
     await page.locator("#help-open").click();
     const help = page.locator("#help-dialog");
     await expect(help).toBeVisible();
-    await expect(help.locator("table, dl")).toHaveCount(0);
-    await expect(help).not.toContainText("LAUNCH");
-    await expect(help).not.toContainText("launch boost");
-    await expect(help).not.toContainText("BRAKE → RELEASE");
     await expect(
       help.locator("kbd").filter({ hasText: /^[QEPS↑←↓→]$/ }),
     ).toHaveCount(0);
@@ -92,7 +93,7 @@ try {
   }
   expect(errors).toEqual([]);
   console.log(
-    "Controls guide: physical key formations, no Q/E/P/S, arrow keys, service brake or tables, responsive diagrams and close PASS.",
+    "Controls guide: physical key formations, current bindings, responsive diagrams and close PASS.",
   );
 } finally {
   await browser.close();

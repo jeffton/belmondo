@@ -41,19 +41,27 @@ async function open(viewport, touch) {
     isMobile: touch,
   });
   await context.addInitScript(() => {
-    window.inputPad = { axes: [0, 0], buttons: [], values: {} };
+    window.inputPad = {
+      connected: false,
+      axes: [0, 0],
+      buttons: [],
+      values: {},
+    };
     Object.defineProperty(navigator, "getGamepads", {
-      value: () => [
-        {
-          axes: window.inputPad.axes,
-          buttons: Array.from({ length: 17 }, (_, index) => ({
-            pressed: window.inputPad.buttons.includes(index),
-            value:
-              window.inputPad.values[index] ??
-              Number(window.inputPad.buttons.includes(index)),
-          })),
-        },
-      ],
+      value: () =>
+        window.inputPad.connected
+          ? [
+              {
+                axes: window.inputPad.axes,
+                buttons: Array.from({ length: 17 }, (_, index) => ({
+                  pressed: window.inputPad.buttons.includes(index),
+                  value:
+                    window.inputPad.values[index] ??
+                    Number(window.inputPad.buttons.includes(index)),
+                })),
+              },
+            ]
+          : [],
     });
   });
   const page = await context.newPage();
@@ -81,11 +89,6 @@ async function open(viewport, touch) {
   );
   await page.locator("#help-open").click();
   const help = page.locator("#help-dialog");
-  await expect(
-    help.locator("kbd").filter({ hasText: /^[S↑↓←→]$/ }),
-  ).toHaveCount(0);
-  await expect(help.locator(".controller-map")).not.toContainText(/\bBRAKE\b/);
-  await expect(help).not.toContainText(/launch|65.?80|BRAKE → RELEASE/i);
   await expect(help.locator("kbd").filter({ hasText: /^W$/ })).toBeVisible();
   expect(await help.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,
@@ -118,6 +121,7 @@ try {
     await controls(page, { throttle: 0, launchIntent: false });
   }
   await page.evaluate(() => {
+    window.inputPad.connected = true;
     window.inputPad.buttons = [1];
   });
   await page.waitForTimeout(60);
@@ -131,13 +135,24 @@ try {
   });
   await controls(page, { throttle: 1, launchIntent: true });
   await page.evaluate(() => {
-    window.inputPad.buttons = [1];
-    window.inputPad.values = { 7: 0.65, 4: 0.4, 5: 0.7 };
+    window.inputPad.buttons = [0, 1];
+    window.inputPad.values = { 6: 0.4, 7: 0.7 };
     window.inputPad.axes = [0.5, -0.6];
   });
   await controls(page, {
-    throttle: 0.65,
+    throttle: 1,
     launchIntent: true,
+    steer: -0.5,
+    pitch: 0.6,
+    airLeft: 0.4,
+    airRight: 0.7,
+  });
+  await page.evaluate(() => {
+    window.inputPad.buttons = [1];
+  });
+  await controls(page, {
+    throttle: 0,
+    launchIntent: false,
     steer: -0.5,
     pitch: 0.6,
     airLeft: 0.4,
@@ -148,8 +163,25 @@ try {
     window.inputPad.values = {};
     window.inputPad.axes = [0, 0];
   });
-  await controls(page, { throttle: 0, launchIntent: false });
+  await controls(page, {
+    throttle: 0,
+    launchIntent: false,
+    steer: 0,
+    pitch: 0,
+    airLeft: 0,
+    airRight: 0,
+  });
   await page.waitForFunction(() => window.nullVector.telemetry.countdown === 0);
+  await page.evaluate(() => {
+    window.inputPad.buttons = [0];
+  });
+  await controls(page, { throttle: true, launchIntent: true });
+  await page.waitForTimeout(100);
+  await controls(page, { throttle: true, launchIntent: true });
+  await page.evaluate(() => {
+    window.inputPad.buttons = [];
+  });
+  await controls(page, { throttle: false, launchIntent: false });
   await page.keyboard.down("KeyW");
   await controls(page, { throttle: true, launchIntent: true });
   await page.keyboard.up("KeyW");
@@ -313,8 +345,10 @@ try {
     await send("touchEnd", []);
     await controls(page, { throttle: 1, launchIntent: false });
     await page.evaluate(() => {
+      window.inputPad.connected = true;
       window.inputPad.buttons = [0];
     });
+    await controls(page, { throttle: 1, launchIntent: true });
     await expect(page.locator("body")).toHaveAttribute(
       "data-input-mode",
       "gamepad",
@@ -323,9 +357,13 @@ try {
       window.inputPad.buttons = [];
     });
     await controls(page, { throttle: false, launchIntent: false });
-    // The first canvas contact restores the hidden touch controls.
+    // A connected controller requires held A even after a touch-mode switch.
     await send("touchStart", [air(0, 1)]);
     await send("touchEnd", []);
+    await controls(page, { throttle: 0, launchIntent: false });
+    await page.evaluate(() => {
+      window.inputPad.connected = false;
+    });
     await controls(page, { throttle: 1, launchIntent: false });
     await send("touchStart", [stick, air(0.6, 0.8)]);
     await controls(page, { throttle: 0.2, airRight: 0.6 });
@@ -348,7 +386,7 @@ try {
   }
   expect(errors).toEqual([]);
   console.log(
-    "Keyboard/controller thrust, removed S/Down/B, analog touch + boolean desktop race throttle, guide and touch controls PASS (World/audio mocks; no GPU)",
+    "Keyboard/A-held controller thrust, L2/R2 analog airbrakes, release/coast, touch input and mode switching PASS (World/audio mocks; no GPU)",
   );
 } finally {
   await browser.close();

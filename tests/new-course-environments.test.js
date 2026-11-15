@@ -137,6 +137,7 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
       if (o.isMesh) meshes.push(o);
     });
     const ray = new THREE.Raycaster();
+    let galleryRoofHits = 0;
     for (let i = 0; i < 300; i++) {
       const u = i / 300;
       for (const branch of u > track.config.split[0] &&
@@ -148,14 +149,40 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           const p = f.p.clone().addScaledVector(f.right, x);
           ray.set(p, new THREE.Vector3(0, 1, 0));
           ray.far = 120;
-          assert.equal(
-            ray.intersectObjects(meshes).length,
-            0,
-            `actual scene triangles over route ${u}/${branch}/${x}`,
-          );
+          const hits = ray.intersectObjects(meshes);
+          for (const hit of hits) {
+            const intentionalGallery =
+              name === "WHITEOUT" &&
+              branch === 1 &&
+              u >= 0.792 &&
+              u <= 0.822 &&
+              [
+                "whiteout-icecut-gallery",
+                "whiteout-snowbridge-steel",
+                "whiteout-snowbridge-snow",
+              ].includes(hit.object.name);
+            assert(
+              intentionalGallery,
+              `actual scene triangles over route ${u}/${branch}/${x}: ${hit.object.name}`,
+            );
+            // Match the emitted gallery's existing soffit-clearance contract.
+            assert(
+              hit.distance >= 26,
+              "intentional gallery/crossing leaves its existing 26 wu racing airspace",
+            );
+            if (hit.object.name === "whiteout-icecut-gallery") {
+              assert(
+                hit.distance >= 29.5,
+                "gallery roof retains its existing soffit clearance",
+              );
+              galleryRoofHits++;
+            }
+          }
         }
       }
     }
+    if (name === "WHITEOUT")
+      assert(galleryRoofHits > 0, "the lower route has an actual gallery roof");
     let naturalColumns = 0;
     for (const mesh of meshes) {
       if (

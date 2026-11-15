@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { Race, SPEED_CLASSES } from "../src/race.js";
 import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { steeringBank, updateShipBank } from "../src/ship-bank.js";
+import { gamepadFlightControls } from "../src/gamepad-controls.js";
 
 function trajectory(steer, digital, fps = 120, speedClass = 0) {
   const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial", speedClass);
@@ -88,8 +89,13 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     source.indexOf("function input() {"),
     source.indexOf("const mapCtx ="),
   );
+  const connectedGamepadFunction = source.slice(
+    source.indexOf("function connectedGamepad() {"),
+    source.indexOf("function pollMenuGamepad() {"),
+  );
   let pad = null;
   const context = vm.createContext({
+    gamepadFlightControls,
     keys: new Set(),
     held: new Set(),
     touchSteer: 0,
@@ -113,7 +119,7 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
   });
   vm.runInContext(
-    `let steeringKind = "digital"; ${inputFunction}; globalThis.read = input;`,
+    `let steeringKind = "digital"; ${connectedGamepadFunction}\n${inputFunction}; globalThis.read = input;`,
     context,
   );
   for (let i = 0; i < 4; i++) {

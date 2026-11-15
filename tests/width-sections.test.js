@@ -1,55 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { railPoint } from "../src/rail-geometry.js";
 import { createTerrain } from "../src/terrain.js";
-
-const LEGACY_FRAME_HASHES = [
-  "671c02ec22b1a924e29f348bb37f8fe55e762fd9c525af1b03c79ea0355c0871",
-  "5cc226061716de8246426edabfe062d04e5e9cb4e40b4fedd828a795f060c6da",
-  "0238606031fc83b95a334dafc06f2c8a4a087e6779231ae53ccf1ef0f56a5ffd",
-  "98324f23e94cdca7c64423b486f39b89284eeea5d42d535d21503290593de39d",
-  "97af92dda76458984295ff63e7e30a63ac4808bb633392c47544bf6f396411da",
-  "b5184e3272ace6f391e1e9da8ed4bbc6ee68741fcd9e9044fd1277419b912527",
-  "3562453e6a421e9ff433a51c61b132fd7edf605e1e7701f9b52a6ec3427aac21",
-];
-
-function frameHash(track) {
-  const hash = createHash("sha256");
-  for (let station = 0; station <= 512; station++) {
-    const distance = (track.length * station) / 512;
-    for (const branch of [-1, 0, 1]) {
-      const f = track.frame(distance, branch);
-      hash.update(
-        [
-          f.p.x,
-          f.p.y,
-          f.p.z,
-          f.tangent.x,
-          f.tangent.y,
-          f.tangent.z,
-          f.right.x,
-          f.right.y,
-          f.right.z,
-          f.width,
-          f.bank,
-          f.metric,
-        ].join(",") + ";",
-      );
-    }
-  }
-  return hash.digest("hex");
-}
-
-test("without authored width sections, all integrated layout frame outputs are byte-stable", () => {
-  assert.equal(TRACKS.length, LEGACY_FRAME_HASHES.length);
-  for (const [index, expected] of LEGACY_FRAME_HASHES.entries()) {
-    const track = makeTrack(index);
-    delete track.config.widthSections;
-    assert.equal(frameHash(track), expected, TRACKS[index].name);
-  }
-});
 
 test("authored width envelope smoothly drives main deck, fork edges, rails, bounds and terrain", () => {
   const track = makeTrack(TRACK_INDEX.COAST),

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { celestialDirection } from "../src/track-lighting.js";
 import { buildSectionalValues } from "../src/sectional-values.js";
 
@@ -15,7 +15,7 @@ function fixture(index) {
 }
 
 test("Solar tunnel has a dark ceiling, readable deck and open portals", () => {
-  const { track, shade } = fixture(1);
+  const { track, shade } = fixture(TRACK_INDEX.SOLAR);
   const point = (u, height = 0) => {
     const f = track.frame(u * track.length);
     return f.p.clone().addScaledVector(f.up, height);
@@ -29,7 +29,7 @@ test("Solar tunnel has a dark ceiling, readable deck and open portals", () => {
 });
 
 test("sectional values stay inside the physical tunnel corridor", () => {
-  const { track, shade } = fixture(1);
+  const { track, shade } = fixture(TRACK_INDEX.SOLAR);
   const f = track.frame(0.24 * track.length);
   for (const offset of [100, 120]) {
     assert.equal(
@@ -47,7 +47,7 @@ test("sectional values stay inside the physical tunnel corridor", () => {
 });
 
 test("compressed branch parameters do not jump at nearest-segment boundaries", () => {
-  const { track, shade } = fixture(4);
+  const { track, shade } = fixture(TRACK_INDEX.MONSOON);
   const ceiling = (s) => {
     const f = track.frame(s, -1);
     return shade(f.p.clone().addScaledVector(f.up, 16));
@@ -60,7 +60,7 @@ test("compressed branch parameters do not jump at nearest-segment boundaries", (
 });
 
 test("Night's overpass stays open while its lower tunnel is shaded", () => {
-  const { track, shade } = fixture(2);
+  const { track, shade } = fixture(TRACK_INDEX.NOCTILUCENT);
   const s = 0.365 * track.length;
   const lower = track.frame(s, -1).p;
   const upper = track.frame(s, 1).p;
@@ -69,7 +69,7 @@ test("Night's overpass stays open while its lower tunnel is shaded", () => {
 });
 
 test("Vesper gallery values do not leak into the separated roof route", () => {
-  const { track, shade } = fixture(6);
+  const { track, shade } = fixture(TRACK_INDEX.VESPER);
   const s = 0.32 * track.length;
   const lower = track.frame(s, -1).p;
   const upper = track.frame(s, 1).p;

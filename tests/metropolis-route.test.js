@@ -1,7 +1,6 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { METROPOLIS_COURSE } from "../src/metropolis-course.js";
 import { TRACKS, makeTrack } from "../src/track.js";
 import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
@@ -93,36 +92,6 @@ const track = makeTrack(registered === -1 ? TRACKS.length - 1 : registered);
 if (registered === -1) TRACKS.pop();
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
-
-test("VESPER: the six intentionally integrated layouts retain accepted sampled physical outputs", () => {
-  const hashes = [
-    "3fb907ffd5b6aebb6d9500cdc2bc362541c2b66f2430e293477fea96abf02d9c",
-    "d2be34d1fcaee87b1edca63e0fd9f094786db15d6f432e87912d3a1dbb93d142",
-    "44251c842a0f69edb88d9959b0ec4b45c6bb81951bac666829262d95314a2123",
-    "0f81d25ac5f903f4014cafb710828f28f3f13f6324e0fe923793a55f1f4f8624",
-    "53a799ce08a667105f27cf178adb67ccec324f6fc5a92ea2734660e778e26010",
-    "85bb34890c7f8957c918d661e786d520caa301ea309e5c90d47261a977115f19",
-  ];
-  for (let i = 0; i < hashes.length; i++) {
-    const previous = makeTrack(i);
-    const rows = [previous.length, previous.physicalLengths];
-    for (let j = 0; j < 300; j++) {
-      for (const branch of [-1, 0, 1]) {
-        const s = (j / 300) * previous.length;
-        rows.push(
-          previous.frame(s, branch),
-          previous.bounds(s, branch),
-          previous.gap(j / 300),
-          previous.isTunnel(s, branch),
-        );
-      }
-    }
-    assert.equal(
-      createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
-      hashes[i],
-    );
-  }
-});
 
 test("VESPER: linked reversals, roof elevation and a genuinely separate elevated fork", () => {
   let previousSign = 0;

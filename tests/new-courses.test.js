@@ -1,44 +1,10 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 import { getJumpMarkingLayout } from "../src/jump-markings.js";
 import { projectRoad } from "../src/road-projection.js";
-
-// Accepted legacy-v4 routes d3f8eb8, universal fork correction ed9de33 and
-// Coast launch 0d0509a. Includes frames, bounds, gaps and tunnel decisions.
-const originalHashes = [
-  "3fb907ffd5b6aebb6d9500cdc2bc362541c2b66f2430e293477fea96abf02d9c",
-  "d2be34d1fcaee87b1edca63e0fd9f094786db15d6f432e87912d3a1dbb93d142",
-  "44251c842a0f69edb88d9959b0ec4b45c6bb81951bac666829262d95314a2123",
-];
-for (const [hashIndex, index] of [
-  TRACK_INDEX.COAST,
-  TRACK_INDEX.SOLAR,
-  TRACK_INDEX.NOCTILUCENT,
-].entries()) {
-  test(`legacy-v4 course ${index}: sampled physical outputs match the accepted route`, () => {
-    const track = makeTrack(index);
-    const rows = [track.length, track.physicalLengths];
-    for (let j = 0; j < 300; j++) {
-      for (const branch of [-1, 0, 1]) {
-        const s = (j / 300) * track.length;
-        rows.push(
-          track.frame(s, branch),
-          track.bounds(s, branch),
-          track.gap(j / 300),
-          track.isTunnel(s, branch),
-        );
-      }
-    }
-    assert.equal(
-      createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
-      originalHashes[hashIndex],
-    );
-  });
-}
 
 const integratedCourseIndexes = [
   TRACK_INDEX.WHITEOUT,

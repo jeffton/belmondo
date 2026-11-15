@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
@@ -13,13 +13,18 @@ const production = JSON.parse(
 for (const version of ["production-v3", "redesigned-v4"])
   for (let index = 0; index < (version === "production-v3" ? 2 : 3); index++)
     test(`${version} course ${index}: genuine odd/even NPCs choose both forks from grid in all classes`, () => {
-      const current = TRACKS[index];
+      const trackIndex = [
+        TRACK_INDEX.COAST,
+        TRACK_INDEX.SOLAR,
+        TRACK_INDEX.NOCTILUCENT,
+      ][index];
+      const current = TRACKS[trackIndex];
       let track;
       try {
-        if (version === "production-v3") TRACKS[index] = production[index];
-        track = makeTrack(index);
+        if (version === "production-v3") TRACKS[trackIndex] = production[index];
+        track = makeTrack(trackIndex);
       } finally {
-        TRACKS[index] = current;
+        TRACKS[trackIndex] = current;
       }
       const terrain = createTerrain(track);
       try {

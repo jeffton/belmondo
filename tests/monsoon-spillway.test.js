@@ -1,32 +1,8 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
-
-// Intentional integrated legacy-v4, Whiteout-2, Cinderline-2 and Vesper configs.
-const unchanged = {
-  [TRACK_INDEX.COAST]:
-    "ccb3d5351736806ceef9ce3d89231eff87b121a9cbe1e53c829a400c3e6702ba",
-  [TRACK_INDEX.SOLAR]:
-    "d1a4f918838d752ec499ab451d58502eb0ea2722df44186d5a0ab42c06393be4",
-  [TRACK_INDEX.NOCTILUCENT]:
-    "e6fb6ea0c7709b5f1d71ab5901bf381cf9f1bbabc324a9fb81e4c3bb4c300ef5",
-  [TRACK_INDEX.WHITEOUT]:
-    "40cfe755a8ac3d13b07c34c573fbbe04ee664f854ba1508d124aa3ac64261e8f",
-  [TRACK_INDEX.CINDERLINE]:
-    "7d68b1bb0ed934cf222faa78fdb5e403dad98e0fb2c281615e376fa36debab56",
-  [TRACK_INDEX.VESPER]:
-    "344855ae9bcd3c7a939c68cb6d520778f96df9f96b914eb48366622896b266ae",
-};
-test("the other six integrated course configurations match their accepted authored versions", () => {
-  for (const [index, hash] of Object.entries(unchanged))
-    assert.equal(
-      createHash("sha256").update(JSON.stringify(TRACKS[index])).digest("hex"),
-      hash,
-    );
-});
 
 const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);

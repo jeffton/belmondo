@@ -53,9 +53,6 @@ try {
     await page.locator("#music-open").click();
     await expect(page.locator("#music-dialog")).toBeVisible();
     await expect(page.locator("#mute")).toHaveCount(0);
-    await expect(
-      page.locator("#music-dialog p:not(.eyebrow):not(#music-status)"),
-    ).toHaveCount(0);
     assert(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -80,6 +77,9 @@ try {
       const { music } = window.soundQA;
       window.musicTapQA = music.context.createAnalyser();
       music.sceneGain.connect(window.musicTapQA);
+      const silent = music.context.createGain();
+      silent.gain.value = 0;
+      window.musicTapQA.connect(silent).connect(music.context.destination);
     });
     await expect
       .poll(() =>
@@ -117,6 +117,9 @@ try {
       const { music } = window.soundQA;
       window.musicTapQA = music.context.createAnalyser();
       music.sceneGain.connect(window.musicTapQA);
+      const silent = music.context.createGain();
+      silent.gain.value = 0;
+      window.musicTapQA.connect(silent).connect(music.context.destination);
     });
     await expect
       .poll(() =>

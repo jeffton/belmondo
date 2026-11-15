@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 import { buildCourseGeography } from "../src/course-geography.js";
 
@@ -19,7 +19,7 @@ function geography(index) {
 }
 
 test("Solar's mountain has a genuinely open tunnel void, rock roof and land-contacting flanks", () => {
-  const { track, terrain, root } = geography(1);
+  const { track, terrain, root } = geography(TRACK_INDEX.SOLAR);
   const mountain = root.getObjectByName("bored-mountain-mass");
   assert(mountain);
   for (const foot of mountain.userData.groundingContacts) {
@@ -58,7 +58,7 @@ test("Solar's mountain has a genuinely open tunnel void, rock roof and land-cont
 });
 
 test("Night's overpass leaves the lower route open and rejects columns through its real footprint", () => {
-  const { track, terrain, root } = geography(2);
+  const { track, terrain, root } = geography(TRACK_INDEX.NOCTILUCENT);
   const truss = root.getObjectByName("upper-crossing-truss");
   assert(truss);
   const crossing = track.config.sections.crossings[0];
@@ -104,7 +104,11 @@ test("Night's overpass leaves the lower route open and rejects columns through i
 });
 
 test("expanded courses keep the entire racing footprint within distance-resolved land", () => {
-  for (let index = 0; index < 3; index++) {
+  for (const index of [
+    TRACK_INDEX.COAST,
+    TRACK_INDEX.SOLAR,
+    TRACK_INDEX.NOCTILUCENT,
+  ]) {
     const track = makeTrack(index),
       terrain = createTerrain(track);
     for (const f of terrain.samples) {

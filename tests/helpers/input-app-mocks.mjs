@@ -59,7 +59,7 @@ export async function mockInputApp(page) {
       contentType: "text/javascript",
       body: `export class AudioEngine {
         async start() {} setMuted() {} setPaused() {} setVolume() {}
-        stopSamples() {} stopCrowd() {} stopEngine() {} effect() {}
+        stopSamples() {} stopCrowd() {} stopEngine() {} effect() {} menuCue() {}
         raceEvent() {} update() {} updateCrowd() {}
       }`,
     }),
