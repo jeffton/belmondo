@@ -154,6 +154,33 @@ try {
   const count = await page.evaluate(() => window.motorCalls.length);
   await page.waitForTimeout(250);
   expect(await page.evaluate(() => window.motorCalls.length)).toBe(count);
+  const hints = () =>
+    page
+      .locator("#pause-panel [data-gamepad-hint]")
+      .evaluateAll((items) =>
+        items.map((item) => ({
+          id: item.id,
+          selected: item.classList.contains("menu-cursor"),
+          content: getComputedStyle(item, "::before").content,
+          display: getComputedStyle(item, "::before").display,
+        })),
+      );
+  const assertHint = async (content) => {
+    const visible = (await hints()).filter((item) => item.display !== "none");
+    expect(visible).toHaveLength(1);
+    expect(visible[0].selected).toBe(true);
+    expect(visible[0].content).toBe(JSON.stringify(content));
+  };
+  await assertHint("Ⓐ");
+  await page.keyboard.press("ArrowDown");
+  await assertHint("ENTER");
+  await page.keyboard.press("ArrowUp");
+  await page
+    .locator("#resume")
+    .dispatchEvent("pointerdown", { pointerType: "touch" });
+  expect(
+    (await hints()).filter((item) => item.display !== "none"),
+  ).toHaveLength(0);
   // B remains inert in the pause panel, including when held.
   await button(1, 1);
   await page.waitForTimeout(200);
@@ -163,7 +190,21 @@ try {
   await button(1, 0);
   // A on Resume must immediately become held throttle without another press.
   await expect(page.locator("#resume")).toHaveClass(/menu-cursor/);
-  await button(0, 1);
+  // Navigate to Restart, then up + A in one poll: actual activation wins.
+  await button(13, 1);
+  await button(13, 0);
+  await assertHint("Ⓐ");
+  await expect(page.locator("#restart")).toHaveClass(/menu-cursor/);
+  await page.evaluate(() => {
+    for (const index of [0, 12])
+      Object.assign(window.virtualPad.buttons[index], {
+        value: 1,
+        pressed: true,
+        touched: true,
+      });
+  });
+  await page.waitForFunction(() => !window.nullVector.telemetry.paused);
+  await button(12, 0);
   await expect
     .poll(async () => page.evaluate(() => window.nullVector.telemetry.paused))
     .toBe(false);
