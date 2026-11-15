@@ -79,6 +79,12 @@ try {
     assert.equal(await evaluate("document.activeElement.tagName"), "BODY");
     await page.keyboard.press(key);
     await wait(playing);
+    await evaluate(`window.musicTap = musicContext.createAnalyser();
+      const silent = musicContext.createGain(); silent.gain.value = 0;
+      musicOutput.connect(musicTap); musicTap.connect(silent); silent.connect(musicContext.destination)`);
+    await wait(
+      `(() => {const pcm = new Float32Array(musicTap.fftSize); musicTap.getFloatTimeDomainData(pcm); return pcm.some(value => Math.abs(value) > 0.001)})()`,
+    );
     assert.equal(
       await evaluate("navigator.userActivation.hasBeenActive"),
       true,
