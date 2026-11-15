@@ -1,9 +1,10 @@
 # Fork diagnostics
 
-`helpers/fork-diagnostics.js` exports `measureFork(sourceRoot, trackIndex)`. Importing it does not run simulations. `creative-split-racing.test.js` checks the two redesigned tracks against the explicit 4% route-time design target, using all three crafts and classes.
+`helpers/fork-diagnostics.js` exports `measureFork(sourceRoot, trackIndex)`. Importing it does not run simulations. `creative-split-racing.test.js` checks Whiteout, Coast and Cinderline against the explicit 4% route-time design target, using all three crafts and classes.
 
 ```sh
 node --test tests/creative-split-racing.test.js
+node tests/fork-diagnostics.mjs --source . --track 0 --output /var/tmp/forks
 node tests/fork-diagnostics.mjs --source . --track 2 --output /var/tmp/forks
 node tests/fork-diagnostics.mjs --source . --track 4 --output /var/tmp/forks --compare /var/tmp/belmondo-split-baseline-99a4feb/results/track-4.json
 node tests/fork-pack-diagnostics.mjs --source . --track 2 --output /var/tmp/fork-pack

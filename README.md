@@ -22,7 +22,7 @@ The last completed Combat podium appears as a rotating gold, silver or bronze cu
 
 Difficulty progression:
 
-- **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and an ascending valley fork.
+- **Whiteout — 7.5 km:** descending glacial-basin spiral, orange observatories and a snowbridge crossing above a blue-ice gallery.
 - **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
 - **Kaiseki Coast — 5.9 km:** linked waterfront esses, a cliff-gallery reverse bend versus an offshore viaduct, and a long ravine jump with an aligned landing straight.
 - **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
@@ -32,7 +32,7 @@ Difficulty progression:
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
-Coast and Cinderline's fork choices carry equal weapon rewards and compete through different driving lines rather than boost compensation. Existing records and progression remain stored; historical times use different fork geometry. See [split-route design and verification](docs/split-route-design.md).
+Whiteout, Coast and Cinderline's fork choices carry equal weapon rewards and compete through different driving lines rather than boost compensation. Existing records and progression remain stored; historical times use different fork geometry. See [split-route design and verification](docs/split-route-design.md).
 
 ## Sound
 

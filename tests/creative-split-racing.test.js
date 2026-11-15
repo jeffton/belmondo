@@ -5,6 +5,7 @@ import { measureFork } from "./helpers/fork-diagnostics.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 for (const [name, index] of [
+  ["Whiteout", 0],
   ["Coast", 2],
   ["Cinderline", 4],
 ]) {

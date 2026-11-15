@@ -115,16 +115,12 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
   });
 }
 
-// Accepted terrain for untouched circuits. Cinderline's authored gorge is
-// covered by its deck-clearance and continuous-shoulder regression tests.
+// Accepted terrain for untouched circuits. Whiteout's crossover and
+// Cinderline's gorge have complete deck-clearance/environment regressions.
 for (const [index, expected] of [
   [
     TRACK_INDEX.NOCTILUCENT,
     "cc6affd35fc979a58fd73590b928f6dd563f720076e0ee96e7d96e0a622de954",
-  ],
-  [
-    TRACK_INDEX.WHITEOUT,
-    "8608f13cb20fc8387dd43f811d3f0f1cb1ee1fff273bdfa52f29549ec5212a37",
   ],
   [
     TRACK_INDEX.MONSOON,

@@ -407,7 +407,9 @@ export function makeTrack(index) {
         const route = branch === -1 ? 0 : 1;
         p.copy(f.p).addScaledVector(
           f.right,
-          config.fork.offsets[route] * blend,
+          config.fork.offsets[route] *
+            blend *
+            (config.fork.crossing ? Math.cos(phase * Math.PI) : 1),
         );
         const riseProfile = config.fork.riseProfile;
         const riseBlend = riseProfile
@@ -715,7 +717,8 @@ export function roadBounds(track, s, branch = 0) {
   const phase =
     (f.u - track.config.split[0]) /
     (track.config.split[1] - track.config.split[0]);
-  const seamRegion = !track.config.night || phase < 0.18 || phase > 0.82;
+  const independentCrossing = track.config.night || track.config.fork?.crossing;
+  const seamRegion = !independentCrossing || phase < 0.18 || phase > 0.82;
   result.connected =
     seamRegion &&
     leftInner.clone().sub(rightInner).dot(axis) >= 0 &&

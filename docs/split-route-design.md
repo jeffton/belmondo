@@ -2,11 +2,13 @@
 
 ## Driving choices
 
+**Whiteout:** the open snowbridge crosses above a separate blue-ice gallery. Routes exchange sides through the fork, with 55 world units between their crossing decks. The ridge route has an exposed crest and independent bridge trusses; the ice route follows the lower, sheltered alignment beneath a physical ice roof. Both carry one weapon pad. See [Whiteout verification](whiteout-split.md).
+
 **Kaiseki Coast:** the inner cliff gallery follows a linked reverse bend beneath open-sided weather covers. The outer route sweeps across a sea inlet on a supported viaduct, with low breakwaters outside the racing corridor. Shorter technical shelter competes with a longer open line. Both routes carry one weapon pad.
 
 **Cinderline:** the lower route threads a narrow, continuous basalt gorge through opposing bends. The wider upper route follows a banked caldera-rim arc with an open horizon. Both routes carry one weapon pad; neither needs a compensating boost to compete.
 
-The other five circuits retain their alignments: Whiteout's ridge/ice cutting, Monsoon's pressure conduit/reservoir ascent, Solar Array's industrial arcade/collector field, Noctilucent's grade-separated crossover and Vesper's market/rooftop split.
+The other four circuits retain their alignments: Monsoon's pressure conduit/reservoir ascent, Solar Array's industrial arcade/collector field, Noctilucent's grade-separated crossover and Vesper's market/rooftop split.
 
 ## Geometry and race rules
 
@@ -14,7 +16,7 @@ Both carriageways are physical road surfaces with their own tangents, distance m
 
 Routes use a shared base-spline station and the same 32 ordered physical timing gates. This is not a general graph of independent road segments: there is one split interval per circuit. Ranking within a split measures station progress, not estimated remaining driving time. Both branches must physically earn their gates and merge.
 
-AI branch preference remains racer-ID parity. Body integration, AI controls, ship contacts, jump physics, recovery and progression are unchanged. Existing layout IDs and on-device records remain intact. Historical Coast/Cinderline times were set on different fork geometry and are not directly comparable with fresh laps.
+AI branch preference remains racer-ID parity. Body integration, AI controls, ship contacts, jump physics, recovery and progression are unchanged. Existing layout IDs and on-device records remain intact. Historical Whiteout/Coast/Cinderline times were set on different fork geometry and are not directly comparable with fresh laps.
 
 ## Verification
 
@@ -31,7 +33,7 @@ The fastest route depends on craft. Across all three classes the clean sector di
 
 Normal seven-NPC packs also earn both merges in all classes: 42/42 NPC traversals, no rail contacts or recoveries. Coast has ordinary ship-to-ship contact displacement; it is not a collision-free run. Displacement-step counts are not distinct collision counts. Cinderline's measured pack has no pair displacement.
 
-`tests/creative-split-racing.test.js` checks clean traversal, fairness and gates. `tests/fork-diagnostics.mjs` writes reproducible road-only metrics; `tests/fork-pack-diagnostics.mjs` measures normal grid traffic. Geometry/environment tests cover joined noses, full banked-deck terrain clearance, open overhead racing envelopes, real inlet excavation and equal pickup types. Accepted physical hashes protect the five untouched circuits.
+`tests/creative-split-racing.test.js` checks clean traversal, fairness and gates. `tests/fork-diagnostics.mjs` writes reproducible road-only metrics; `tests/fork-pack-diagnostics.mjs` measures normal grid traffic. Geometry/environment tests cover joined noses, full banked-deck terrain clearance, open overhead racing envelopes, real inlet excavation and equal pickup types. Accepted physical hashes protect all six circuits outside the Whiteout change.
 
 `tests/creative-splits.browser.mjs` renders actual physics-driven approach, decision, branch and merge sequences on desktop and portrait mobile. Sixteen before/after driving captures reach the merge with no recoveries or JavaScript errors; all 96 captured timing-gate assertions pass. Its labelled stationary pre-fork fixture is not a full human lap or touchscreen-input test. Before/after screenshots and video use the same chase camera.
 

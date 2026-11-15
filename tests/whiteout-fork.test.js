@@ -55,9 +55,12 @@ test("WHITEOUT: a real exposed ridge and sheltered ice cut share continuous leve
     const a = track.frame(s, -1);
     const b = track.frame(s, 1);
     const axis = track.frame(s).right;
-    const gap = b.p.clone().sub(a.p).dot(axis) - a.width - b.width;
+    const gap = Math.abs(b.p.clone().sub(a.p).dot(axis)) - a.width - b.width;
     if (Math.abs(a.p.y - b.p.y) > 0.05) {
-      assert(gap > 10, "rise begins only after decks separate laterally");
+      assert(
+        gap > 10 || Math.abs(a.p.y - b.p.y) > 30,
+        "overlapping road footprints require a full grade-separated crossing",
+      );
     }
     for (const f of [a, b]) {
       for (const lateral of [-f.width, 0, f.width]) {
@@ -113,8 +116,9 @@ test("WHITEOUT: branch-specific grounded landmarks and rewards match the two exp
       assert(contact.y >= footprint.bottom && contact.y < footprint.deck);
   }
   const rewards = getTrackPickups(track).filter((p) => p.branch);
-  assert(rewards.some((p) => p.branch === -1 && p.type === "boost"));
+  assert(rewards.some((p) => p.branch === -1 && p.type === "weapon"));
   assert(rewards.some((p) => p.branch === 1 && p.type === "weapon"));
+  assert(rewards.every((p) => p.type === "weapon"));
   const geometries = new Set(),
     materials = new Set();
   root.traverse((o) => {
@@ -214,7 +218,10 @@ for (const speedClass of [0, 2]) {
       JSON.stringify({ ridge, cut, forkRatio: ridge.fork / cut.fork }),
     );
     // Visible physical tradeoff, not fake equal lengths or hidden speed forces.
-    assert(track.physicalLengths[-1] > track.physicalLengths[1]);
-    assert(ridge.fork > cut.fork);
+    assert(track.physicalLengths[-1] < track.physicalLengths[1]);
+    assert(
+      Math.abs(ridge.fork - cut.fork) / Math.min(ridge.fork, cut.fork) < 0.04,
+      "real-control pilot can use both routes competitively without boost compensation",
+    );
   });
 }

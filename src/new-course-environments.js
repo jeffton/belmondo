@@ -5,6 +5,7 @@ import { terrainFootprint } from "./terrain-footprint.js";
 import { groundedGeometryOffset } from "./terrain.js";
 import { biomeGroundTexture } from "./biome-ground-texture.js";
 import { buildCinderVolcanoes } from "./cinder-volcanoes.js";
+import { buildWhiteoutFork } from "./whiteout-fork.js";
 
 /** One visible heightfield is also the collision/foundation surface. */
 export function buildNewTerrainSurface(scene, track, textures, terrain) {
@@ -43,6 +44,8 @@ export function buildNewCourseDistricts(scene, track, textures, environment) {
     buildHydraulicLock(root, track, textures, environment);
   if (recipe.biome === "volcanic")
     buildCinderVolcanoes(root, track, environment);
+  if (track.config.name === "WHITEOUT")
+    buildWhiteoutFork(root, track, environment);
   const materials = Object.fromEntries(
     [
       ["wall", recipe.wall],

@@ -117,9 +117,10 @@ export const NEW_COURSES = [
     points: whiteoutPoints,
     split: [0.74, 0.87],
     fork: {
-      offsets: [-65, 75],
-      rise: [35, -20],
+      offsets: [-100, 100],
+      rise: [32, -23],
       riseProfile: [0.25, 0.45, 0.55, 0.75],
+      crossing: true,
     },
     banks: [[0.25, 0.63, 0.035]],
     jump: null,
