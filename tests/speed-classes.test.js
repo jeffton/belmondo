@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { createTerrain } from "../src/terrain.js";
 
 const neutral = { throttle: true, steer: 0, air: 0 };
@@ -205,7 +205,11 @@ test("protection, weapon lifetime and off-road rescue follow class time", () => 
   }
 });
 
-for (let trackIndex = 0; trackIndex < 3; trackIndex++) {
+for (const trackIndex of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+]) {
   test(`all physical AI craft earn laps with real terrain on production track ${trackIndex} in every class`, () => {
     const track = makeTrack(trackIndex),
       terrain = createTerrain(track);
@@ -274,7 +278,11 @@ for (let trackIndex = 0; trackIndex < 3; trackIndex++) {
   });
 }
 
-for (let trackIndex = 0; trackIndex < 3; trackIndex++) {
+for (const trackIndex of [
+  TRACK_INDEX.COAST,
+  TRACK_INDEX.SOLAR,
+  TRACK_INDEX.NOCTILUCENT,
+]) {
   test(`class-scaled boost/pitch jumps land on production track ${trackIndex} without rescue`, () => {
     const track = makeTrack(trackIndex),
       terrain = createTerrain(track);

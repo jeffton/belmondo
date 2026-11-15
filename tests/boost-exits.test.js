@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { getTrackPickups } from "../src/pickups.js";
 
 for (const [index, u] of [
-  [1, 0.968],
-  [2, 0.79],
-  [4, 0.205],
-  [5, 0.465],
+  [TRACK_INDEX.SOLAR, 0.968],
+  [TRACK_INDEX.NOCTILUCENT, 0.79],
+  [TRACK_INDEX.MONSOON, 0.205],
+  [TRACK_INDEX.CINDERLINE, 0.465],
 ]) {
   const track = makeTrack(index);
   test(`${track.config.name}: exit boost is physically collectible by every craft and class`, () => {

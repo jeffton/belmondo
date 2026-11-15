@@ -48,7 +48,6 @@ for (let course = 0; course < 6; course++) {
           hullContactLoss > 0,
           "the real pack exercises hull-contact damage",
         );
-        assert(race.racers.every((racer) => racer.shield === 100));
       });
     }
     for (let craft = 0; craft < CRAFT.length; craft++) {

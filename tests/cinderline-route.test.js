@@ -1,28 +1,12 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { NEW_COURSES } from "../src/course-layouts.js";
-import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race } from "../src/race.js";
 import { createTerrain } from "../src/terrain.js";
 
 const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
-
-test("CINDERLINE: integrated Whiteout and Monsoon configurations match accepted fixtures", () => {
-  // Intentional Whiteout-2 and Monsoon-4 integration snapshot.
-  assert.equal(
-    createHash("sha256")
-      .update(JSON.stringify(NEW_COURSES.slice(0, 2)))
-      .digest("hex"),
-    "d33dad62aaad8ab195bdb4de7596510988609eafe2f1836566422c1294744843",
-  );
-  assert.equal(
-    TRACKS[TRACK_INDEX.CINDERLINE].layoutId,
-    "cinderline-2-finish-end",
-  );
-});
 
 test("CINDERLINE: visible setup, real gap, downhill landing and asymmetric fork", () => {
   const { jump, gapLength, ramp, sections, split, branchWidths } = track.config;

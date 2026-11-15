@@ -105,10 +105,16 @@ for (const [index, config] of TRACKS.entries()) {
 }
 
 test("course paint identities are distinct mineral palettes, not one recoloured neon strip", () => {
-  const dark = TRACKS.map((course) =>
-    averagePanel(railFacePixels(course.name), 80, 112),
+  const dark = Object.fromEntries(
+    TRACKS.map((course) => [
+      course.name,
+      averagePanel(railFacePixels(course.name), 80, 112),
+    ]),
   );
-  assert(dark[0][2] > dark[0][0], "coast uses deep petrol-blue paint");
-  assert(dark[1][0] > dark[1][2], "sandstone course uses oxide paint");
-  assert(dark[2][2] > dark[2][1], "night course uses lilac-ink paint");
+  const coast = dark["KAISEKI COAST"];
+  const solar = dark["SOLAR ARRAY"];
+  const night = dark.NOCTILUCENT;
+  assert(coast[2] > coast[0], "coast uses deep petrol-blue paint");
+  assert(solar[0] > solar[2], "sandstone course uses oxide paint");
+  assert(night[2] > night[1], "night course uses lilac-ink paint");
 });

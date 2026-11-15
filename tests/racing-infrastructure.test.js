@@ -151,7 +151,15 @@ for (const [index, config] of TRACKS.entries()) {
         }
       }
     }
-    const expected = [2, 3, 1, 1, 1, 1, 3][index];
+    const expected = {
+      "KAISEKI COAST": 2,
+      "SOLAR ARRAY": 3,
+      NOCTILUCENT: 1,
+      WHITEOUT: 1,
+      MONSOON: 1,
+      CINDERLINE: 1,
+      "VESPER CIRCUIT": 3,
+    }[config.name];
     assert.equal(
       result.assemblies.length,
       expected,

@@ -118,6 +118,7 @@ test("first race RAF after start completes and schedules its successor", async (
   assert.ok(start >= 0 && end > start);
   const animateSource = source.slice(start, end);
   const calls = [];
+  const rumbleEvents = [];
   const scheduled = [];
   const race = {
     player: {
@@ -153,6 +154,7 @@ test("first race RAF after start completes and schedules its successor", async (
     countdownBoardStage: () => "armed",
     previousCount: "armed",
     sound: { setTunnel() {}, update() {}, updateCrowd() {}, raceEvent() {} },
+    rumble: { events: (...args) => rumbleEvents.push(args) },
     music: { setTunnel() {} },
     track: { isTunnel: () => false },
     world,
@@ -180,6 +182,10 @@ test("first race RAF after start completes and schedules its successor", async (
   secondFrame(1015);
   assert.equal(calls.length, 2);
   assert.equal(calls[1][1], 0.016);
+  assert.deepEqual(rumbleEvents, [
+    [race.events, 999],
+    [race.events, 1015],
+  ]);
   assert.equal(scheduled.length, 1);
 });
 

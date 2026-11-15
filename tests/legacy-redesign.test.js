@@ -4,10 +4,20 @@ import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, CRAFT } from "../src/race.js";
 
 const legacy = [
-  { index: 0, id: "coast-4-finish-end", technical: [0.43, 0.51], turbo: 0.42 },
-  { index: 1, id: "solar-4-finish-end", technical: [0.77, 0.92], turbo: 0.77 },
   {
-    index: 2,
+    index: TRACK_INDEX.COAST,
+    id: "coast-4-finish-end",
+    technical: [0.43, 0.51],
+    turbo: 0.42,
+  },
+  {
+    index: TRACK_INDEX.SOLAR,
+    id: "solar-4-finish-end",
+    technical: [0.77, 0.92],
+    turbo: 0.77,
+  },
+  {
+    index: TRACK_INDEX.NOCTILUCENT,
     id: "noctilucent-4-finish-end",
     technical: [0.08, 0.19],
     turbo: 0.08,

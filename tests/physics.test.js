@@ -345,15 +345,35 @@ test("projection excludes phantom central split road and keeps the chosen branch
   assert(Math.abs(locked.x) > 50);
 });
 
+function connectedSeamStations(track) {
+  const [start, end] = track.config.split;
+  return [false, true].map((merge) => {
+    const stations = Array.from({ length: 99 }, (_, i) => {
+      const phase = (i + 1) / 100;
+      return { phase, s: (start + (end - start) * phase) * track.length };
+    }).filter(
+      ({ phase, s }) =>
+        (merge ? phase > 0.5 : phase < 0.5) &&
+        [-1, 1].every((branch) => track.bounds(s, branch).connected),
+    );
+    assert(stations.length > 0, "fork has a connected approach and merge");
+    // Exercise an interior seam rather than the common endpoint or splitter tip.
+    const targetPhase = merge ? 0.875 : 0.125;
+    return stations.reduce((best, station) =>
+      Math.abs(station.phase - targetPhase) < Math.abs(best.phase - targetPhase)
+        ? station
+        : best,
+    ).s;
+  });
+}
+
 test("joined production forks and merges have no hidden branch-edge wall", () => {
-  for (let index = 0; index < 3; index++) {
+  for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index);
-    const [start, end] = track.config.split;
-    for (const phase of track.config.night ? [0.125, 0.875] : [0.2, 0.8]) {
+    for (const s of connectedSeamStations(track)) {
       for (const branch of [-1, 1]) {
         const race = setup(track),
           p = race.player;
-        const s = (start + (end - start) * phase) * track.length;
         const f = track.frame(s, branch);
         const inward = track.bounds(s, branch).innerSide;
         p.yaw = Math.atan2(f.right.x * inward, f.right.z * inward);
@@ -369,7 +389,7 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
           race.update(1 / 120, { ...neutral, throttle: false });
           assert(
             !p.wallTouched,
-            `open seam is not a wall: ${index}/${phase}/${branch}`,
+            `open seam is not a wall: ${index}/${s}/${branch}`,
           );
           assert(
             p.grounded,
@@ -387,7 +407,7 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
 });
 
 test("a forward drive into the separating splitter tip hits a real barrier", () => {
-  for (let index = 0; index < 3; index++) {
+  for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
     let separation = start * track.length;
@@ -419,18 +439,17 @@ test("a forward drive into the separating splitter tip hits a real barrier", () 
       assert(p.shield < 100);
       assert(
         p.grounded,
-        "tip contact deflects onto a deck rather than passing through the divider",
+        `${track.config.name}/${branch}: tip contact deflects onto a deck rather than passing through the divider`,
       );
     }
   }
 });
 
 test("route selection follows the connected fork, but separated routes retain their walls", () => {
-  for (let index = 0; index < 3; index++) {
+  for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
-    for (const phase of track.config.night ? [0.125, 0.875] : [0.2, 0.8]) {
-      const s = (start + (end - start) * phase) * track.length;
+    for (const s of connectedSeamStations(track)) {
       for (const branch of [-1, 1]) {
         const f = track.frame(s, -branch);
         const position = f.p.clone();
@@ -658,9 +677,12 @@ test("AI uses the same body integrator rather than assigning track position or y
   assert(ai.s > 200, "AI earns forward progress using its driver");
 });
 
-test("body AI earns an ordered lap on every production course, including every craft's jump", () => {
-  for (let index = 0; index < 3; index++) {
+test("unarmed body AI earns an ordered lap on every production course, including every craft's jump", () => {
+  for (const index of Object.values(TRACK_INDEX)) {
     const race = setup(makeTrack(index), "race");
+    // Locomotion must earn ordered gates; armed-pack survival is tested separately.
+    // A permanent combat elimination must not fail this driving-only test.
+    for (const racer of race.racers) racer.aiFire = Infinity;
     drive(race, 100, { ...neutral, throttle: false });
     for (const r of race.racers.slice(1)) {
       assert(

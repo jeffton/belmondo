@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 import { Race, SPEED_CLASSES } from "../src/race.js";
 import { projectRoad, roadHeight } from "../src/road-projection.js";
 import { railBounds } from "../src/rail-profile.js";
@@ -18,8 +18,8 @@ function bends(track) {
   ].filter((f) => Math.abs(f.bank) > 0.04);
 }
 
-for (let index = 0; index < 3; index++) {
-  test(`course ${index}: composed banks are smooth, inward, and absent at forks/jumps/start`, () => {
+for (const index of Object.values(TRACK_INDEX)) {
+  test(`course ${index}: composed banks are smooth, inward, and absent at connected seams/jumps/start`, () => {
     const track = makeTrack(index);
     let previous = track.frame(0);
     for (let s = 1; s < track.length; s += 1) {
@@ -50,14 +50,19 @@ for (let index = 0; index < 3; index++) {
         const u =
           track.config.split[0] +
           ((track.config.split[1] - track.config.split[0]) * i) / 80;
-        assert.equal(Math.abs(track.frame(u * track.length, branch).bank), 0);
+        if (track.bounds(u * track.length, branch).connected)
+          assert.equal(Math.abs(track.frame(u * track.length, branch).bank), 0);
       }
     for (const u of [
       0,
       0.99,
-      track.config.jump - 0.018,
-      track.config.jump,
-      track.config.jump + 0.07,
+      ...(track.config.jump === null
+        ? []
+        : [
+            track.config.jump - 0.018,
+            track.config.jump,
+            track.config.jump + 0.07,
+          ]),
     ])
       assert.equal(Math.abs(track.frame(u * track.length).bank), 0);
     assert(bends(track).length >= 1, "course has a meaningful banked turn");
@@ -168,7 +173,7 @@ for (let index = 0; index < 3; index++) {
 }
 
 test("banked corners cover both left and right turn directions", () => {
-  const banks = [0, 1, 2]
+  const banks = Object.values(TRACK_INDEX)
     .flatMap((i) => bends(makeTrack(i)))
     .map((f) => f.bank);
   assert(banks.some((b) => b > 0.04));

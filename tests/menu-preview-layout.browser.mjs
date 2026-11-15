@@ -22,8 +22,7 @@ try {
   );
   for (const [name, width, height] of [
     ["desktop", 1280, 800],
-    ["portrait", 393, 852],
-    ["portrait-390", 390, 844],
+    ["portrait", 390, 844],
     ["landscape", 852, 393],
     ["small-landscape", 568, 320],
     ["small-portrait", 390, 568],

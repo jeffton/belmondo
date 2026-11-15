@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.js";
 
 // V4's bends are authored in the control polygon, not the removed additive
 // rhythm displacement. Measure the real connected counterturn sectors.
 for (const [index, range] of [
-  [0, [0.53, 0.69]],
-  [1, [0.77, 0.94]],
+  [TRACK_INDEX.COAST, [0.53, 0.69]],
+  [TRACK_INDEX.SOLAR, [0.77, 0.94]],
 ]) {
   test(`legacy-v4 course ${index}: linked counterturns demand real direction changes`, () => {
     const track = makeTrack(index);

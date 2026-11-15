@@ -14,6 +14,9 @@ class Node {
   constructor() {
     this.gain = {
       value: 0,
+      setValueAtTime(value) {
+        this.value = value;
+      },
       setTargetAtTime(value) {
         this.value = value;
       },
@@ -71,6 +74,7 @@ class Context {
 class Engine extends AudioEngine {
   build() {
     this.master = this.context.createGain();
+    this.menuBus = this.context.createGain();
   }
 }
 

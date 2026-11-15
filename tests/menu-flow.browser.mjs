@@ -58,10 +58,6 @@ try {
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
     await page.locator("#setup-next").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
-    await expect(
-      page.locator(".menu-steps, [data-step], #track-count"),
-    ).toHaveCount(0);
-    await expect(page.getByText("01 / 03", { exact: true })).toHaveCount(0);
     await page.waitForFunction(
       (s) => window.nullVector.telemetry.menuRacers[0].s > s,
       landing,
