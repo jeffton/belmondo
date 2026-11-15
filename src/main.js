@@ -149,7 +149,7 @@ let state = "menu",
 let musicInterrupted = false;
 function startMenuMusic(event) {
   if (
-    !event.isTrusted ||
+    (event ? !event.isTrusted : !navigator.userActivation.isActive) ||
     state !== "menu" ||
     !musicEnabled ||
     !music.audio.paused ||
@@ -158,17 +158,31 @@ function startMenuMusic(event) {
   )
     return;
   if (
-    event.type === "keydown" &&
-    !["Enter", " ", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-      event.key,
-    )
+    event?.type === "keydown" &&
+    ![
+      "Enter",
+      " ",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Backspace",
+      "Escape",
+      "Tab",
+    ].includes(event.key)
   )
     return;
-  if (!event.target.closest("button, input, label")) return;
+  if (event?.type === "click" && !event.target.closest("button, input, label"))
+    return;
   music.play();
 }
 $("menu").addEventListener("click", startMenuMusic, { capture: true });
-$("menu").addEventListener("keydown", startMenuMusic, { capture: true });
+// MenuNavigation owns a virtual cursor; keyboard focus usually remains on body.
+// Capture before navigation can change the menu stage or start a race.
+window.addEventListener("keydown", startMenuMusic, { capture: true });
+// Safari grants its audio gesture while exposing a controller to the page.
+// Resume/play must run inside this native event, not a later animation frame.
+window.addEventListener("gamepadconnected", startMenuMusic);
 function updateAppFocus() {
   const inactive = document.hidden || !document.hasFocus();
   document.body.classList.toggle(
@@ -691,6 +705,17 @@ function readMenuGamepad(pad, now = performance.now()) {
     padAxesConsumed = true;
   if (!pad || (Math.abs(x) < 0.12 && Math.abs(y) < 0.12))
     padAxesConsumed = false;
+  // Chromium grants activation while getGamepads() samples a real button
+  // above 0.9. Stick-only input and JS mocks grant no activation themselves.
+  // Connection alone must not start playback, nor should held input queue it.
+  if (
+    menuActive &&
+    pad &&
+    (Math.abs(x) > 0.45 ||
+      Math.abs(y) > 0.45 ||
+      [0, 1, 9, 12, 13, 14, 15].some((index) => pad.buttons?.[index]?.pressed))
+  )
+    startMenuMusic();
   const wasPaused = paused;
   menuNavigator.gamepad(menuActive ? pad : null, now);
   if (menuNavigator.lastAction === "activate") {
