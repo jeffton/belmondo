@@ -256,6 +256,39 @@ h1.wordmark {
 #tracks .choice .trophy-3 {
   color: #cd8157;
 }
+#tracks .choice .track-trophy {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  width: clamp(16px, 2vw, 24px);
+  height: auto;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#tracks .choice .track-trophy[hidden] {
+  display: none;
+}
+#tracks .track-trophy[data-place="1"] {
+  color: #e6a72e;
+}
+#tracks .track-trophy[data-place="2"] {
+  color: #b9cbd6;
+}
+#tracks .track-trophy[data-place="3"] {
+  color: #cd8157;
+}
+#tracks .choice.active .trophy-1,
+#tracks .active .track-trophy[data-place="1"] {
+  color: #805306;
+}
+#tracks .choice.active .trophy-2,
+#tracks .active .track-trophy[data-place="2"] {
+  color: #435968;
+}
+#tracks .choice.active .trophy-3,
+#tracks .active .track-trophy[data-place="3"] {
+  color: #804728;
+}
 #tracks .choice.locked {
   opacity: 0.5;
   cursor: not-allowed;
@@ -2735,4 +2768,7 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 body[data-input-mode="touch"] #menu .setup-navigation button:active {
   background: #2b4a56;
   border-color: var(--mint);
+}
+#menu #tracks .choice.has-trophy {
+  padding-right: calc(clamp(16px, 2vw, 24px) + 18px);
 }

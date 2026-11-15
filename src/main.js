@@ -349,7 +349,7 @@ for (const [i, t] of TRACKS.entries()) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.index = i;
-  button.innerHTML = `<b>${t.name}</b><small class="track-progress" hidden></small><small class="track-lock" hidden>🔒 LOCKED</small>`;
+  button.innerHTML = `<b>${t.name}</b><small class="track-progress" hidden></small><small class="track-lock" hidden>🔒 LOCKED</small><svg class="track-trophy" viewBox="0 0 32 40" aria-hidden="true" focusable="false" hidden><path fill="currentColor" d="M7 2h18v5h7v9l-8 7h-3l-3 4v6h7v5H7v-5h7v-6l-3-4H8l-8-7V7h7Zm0 9H4v3l4 4Zm18 0-1 7 4-4v-3Z"/><path fill="var(--ink)" opacity=".25" d="M16 5h6l-3 15-3 4Zm0 29h7v2h-7Z"/></svg>`;
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
 }
@@ -371,6 +371,15 @@ function refreshTrackProgression() {
     button.querySelector(".track-progress").hidden = !progress;
     button.querySelector(".track-progress").className =
       `track-progress${progress && progress.bestPosition <= 3 ? ` trophy-${progress.bestPosition}` : ""}`;
+    // Time Attack shares circuit access, not Combat finishing positions.
+    const trophyPosition =
+      selectedMode() === "race" && progress?.bestPosition <= 3
+        ? progress.bestPosition
+        : null;
+    const trophy = button.querySelector(".track-trophy");
+    trophy.toggleAttribute("hidden", !trophyPosition);
+    trophy.dataset.place = trophyPosition ?? "";
+    button.classList.toggle("has-trophy", Boolean(trophyPosition));
     button.setAttribute(
       "aria-label",
       `${trackConfig.name}${unlocked ? "" : ", locked"}${progress ? `, best place ${progress.bestPosition}` : ""}`,
@@ -406,6 +415,7 @@ refreshTrackProgression();
 $("crafts").children[0].click();
 menuPreview.setClass(selectedSpeedClass);
 setMenuStage("mode");
+$("mode").onchange = refreshTrackProgression;
 $("speed-class").onchange = () => {
   selectedSpeedClass = Number(
     document.querySelector('input[name="speed-class"]:checked').value,
