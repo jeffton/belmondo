@@ -174,7 +174,7 @@ try {
     return window.tapReady;
   });
   // First real gesture must unlock actual output, without replaying controller cues.
-  await action([1320], () =>
+  await action([730, 1517], () =>
     page.locator('input[name="mode"][value="trial"]').check(),
   );
   await page.evaluate(() => window.tapReady);
@@ -182,15 +182,15 @@ try {
   await action([], () =>
     page.locator('input[name="mode"][value="trial"]').click(),
   );
-  await action([660, 1320], () => page.locator("#setup-next").tap());
-  await action([880], () => page.keyboard.press("Escape"));
+  await action([190, 893, 1447], () => page.locator("#setup-next").tap());
+  await action([310, 697], () => page.keyboard.press("Escape"));
   await page.locator('input[name="mode"][value="race"]').click();
-  await action([1320], () => page.keyboard.press("ArrowRight"));
+  await action([730, 1517], () => page.keyboard.press("ArrowRight"));
   await page.locator('input[name="mode"][value="trial"]').click();
   await action([], () => page.keyboard.press("Escape"));
-  await action([660, 1320], () => page.keyboard.press("Enter"));
-  await action([660, 1320], () => page.locator("#music-open").tap());
-  await action([880], () => page.keyboard.press("Enter"));
+  await action([190, 893, 1447], () => page.keyboard.press("Enter"));
+  await action([190, 893, 1447], () => page.locator("#music-open").tap());
+  await action([310, 697], () => page.keyboard.press("Enter"));
   // Real polling path with standard mapped controller button edges.
   await page.evaluate(() => {
     window.pad = {
@@ -212,9 +212,9 @@ try {
       window.pad.buttons[index] = { pressed: false, value: 0 };
     }, button);
   }
-  await action([1320], () => pad(15));
-  await action([660, 1320], () => pad(0));
-  await action([880], () => pad(1));
+  await action([730, 1517], () => pad(15));
+  await action([190, 893, 1447], () => pad(0));
+  await action([310, 697], () => pad(1));
   await page.evaluate(() => {
     window.pad = null;
   });
@@ -224,7 +224,7 @@ try {
   await action([], () => page.locator("#setup-back").tap(), false);
   await page.locator("#music-open").tap();
   await page.locator("#effects-volume").fill("0.7");
-  await action([880], () => page.locator("#music-dialog .close").tap());
+  await action([310, 697], () => page.locator("#music-dialog .close").tap());
   // Start and pause use the same output; paused race bus must not mute menu bus.
   for (let i = 0; i < 3; i++) await page.locator("#setup-next").click();
   await page.locator("#start").click();
@@ -233,10 +233,10 @@ try {
   );
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
-  await action([660, 1320], () => page.locator("#pause-music").tap());
-  await action([880], () => page.keyboard.press("Escape"));
-  await action([1320], () => page.keyboard.press("ArrowDown"));
-  await action([880], () => page.locator("#quit").tap());
+  await action([190, 893, 1447], () => page.locator("#pause-music").tap());
+  await action([310, 697], () => page.keyboard.press("Escape"));
+  await action([730, 1517], () => page.keyboard.press("ArrowDown"));
+  await action([310, 697], () => page.locator("#quit").tap());
   assert.deepEqual(
     await page.evaluate(() => [
       localStorage.getItem("nv-records"),

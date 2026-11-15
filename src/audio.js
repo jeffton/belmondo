@@ -199,37 +199,66 @@ export class AudioEngine {
     if (this.muted || this.hidden || this.volume === 0) return;
     const ctx = this.context;
     const t = ctx.currentTime;
-    const notes = {
-      move: [[0, 1320, 880, 0.055, 0.09]],
-      confirm: [
-        [0, 660, 990, 0.085, 0.1],
-        [0.045, 1320, 1760, 0.105, 0.075],
-      ],
-      back: [[0, 880, 330, 0.12, 0.11]],
+    // Dry alloy detent / magnetic latch / pressure release. Inharmonic partials
+    // and filtered air replace musical intervals and cartoon pitch glides.
+    const { duration, partials, air } = {
+      move: {
+        duration: 0.055,
+        partials: [
+          [730, 0.025, 0.027],
+          [1517, 0.012, 0.018],
+        ],
+        air: [3100, 1900, 0.038, 0.65],
+      },
+      confirm: {
+        duration: 0.17,
+        partials: [
+          [190, 0.065, 0.065],
+          [893, 0.023, 0.115],
+          [1447, 0.012, 0.08],
+        ],
+        air: [1800, 3400, 0.05, 0.8],
+      },
+      back: {
+        duration: 0.115,
+        partials: [
+          [310, 0.033, 0.075],
+          [697, 0.013, 0.045],
+        ],
+        air: [2400, 650, 0.065, 1.1],
+      },
     }[kind];
-    for (const [delay, from, to, duration, level] of notes) {
-      const oscillator = ctx.createOscillator();
-      oscillator.type = "triangle";
-      oscillator.frequency.setValueAtTime(from, t + delay);
-      oscillator.frequency.exponentialRampToValueAtTime(
-        to,
-        t + delay + duration,
-      );
+    const voice = (source, nodes, level, length) => {
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, t + delay);
-      gain.gain.linearRampToValueAtTime(level, t + delay + 0.003);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + delay + duration);
-      oscillator.connect(gain);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(level, t + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.00001, t + length);
+      gain.gain.linearRampToValueAtTime(0, t + length + 0.003);
+      nodes.at(-1).connect(gain);
       gain.connect(this.menuBus);
-      this.menuVoices.add(oscillator);
-      oscillator.onended = () => {
-        oscillator.disconnect();
-        gain.disconnect();
-        this.menuVoices.delete(oscillator);
+      this.menuVoices.add(source);
+      source.onended = () => {
+        for (const node of new Set([source, ...nodes, gain])) node.disconnect();
+        this.menuVoices.delete(source);
       };
-      oscillator.start(t + delay);
-      oscillator.stop(t + delay + duration + 0.005);
+      source.start(t);
+      source.stop(t + length + 0.005);
+    };
+    for (const [frequency, level, length] of partials) {
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, t);
+      voice(oscillator, [oscillator], level, length);
     }
+    const source = ctx.createBufferSource();
+    source.buffer = this.noise;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(air[0], t);
+    filter.frequency.exponentialRampToValueAtTime(air[1], t + duration);
+    filter.Q.value = air[3];
+    source.connect(filter);
+    voice(source, [filter], air[2], duration);
   }
 
   launchCue(stage) {
