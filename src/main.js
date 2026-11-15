@@ -686,8 +686,18 @@ function readMenuGamepad(pad, now = performance.now()) {
     padAxesConsumed = true;
   if (!pad || (Math.abs(x) < 0.12 && Math.abs(y) < 0.12))
     padAxesConsumed = false;
+  const wasPaused = paused;
   menuNavigator.gamepad(menuActive ? pad : null, now);
-  if (menuNavigator.lastAction === "activate") padAConsumed = true;
+  if (menuNavigator.lastAction === "activate") {
+    // Resume is also the pilot taking the throttle; other menu selections
+    // still require release before A can drive or arm the countdown launch.
+    padAConsumed = !(
+      wasPaused &&
+      menuNavigator.lastActivated === $("resume") &&
+      state === "race" &&
+      !paused
+    );
+  }
   if (menuNavigator.lastAction === "back" && pad?.buttons?.[9]?.pressed)
     padPauseConsumed = true;
   if (!pad?.buttons?.[0]?.pressed) padAConsumed = false;

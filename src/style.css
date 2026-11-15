@@ -2547,6 +2547,13 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   font-family: system-ui, sans-serif;
   font-size: 13px;
 }
+#pause-panel [data-gamepad-hint]:not(.menu-cursor)::before {
+  display: none;
+}
+body[data-input-mode="keyboard"] #pause-panel .menu-cursor::before {
+  content: attr(data-keyboard-hint);
+  font: 600 8px/1 var(--interface);
+}
 [data-input-mode="touch"] [data-keyboard-hint]::before {
   display: none;
 }

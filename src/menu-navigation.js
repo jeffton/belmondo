@@ -198,6 +198,7 @@ export class MenuNavigation {
 
   activateCursor() {
     this.sync();
+    this.lastActivated = this.cursor;
     if (!this.cursor) return;
     if (this.onActivate?.(this.cursor)) {
       this.sync();
@@ -247,6 +248,7 @@ export class MenuNavigation {
 
   gamepad(pad, now = performance.now()) {
     this.lastAction = null;
+    this.lastActivated = null;
     const root = this.root();
     if (!root || !pad) {
       this.padDirection = "";
@@ -290,7 +292,7 @@ export class MenuNavigation {
       this.lastAction = "activate";
       this.activate();
     }
-    if (b && !this.padB) {
+    if (b && !this.padB && root.id !== "pause-panel") {
       this.onInput("gamepad");
       this.lastAction = "back";
       this.back();

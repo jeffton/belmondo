@@ -154,6 +154,69 @@ try {
   const count = await page.evaluate(() => window.motorCalls.length);
   await page.waitForTimeout(250);
   expect(await page.evaluate(() => window.motorCalls.length)).toBe(count);
+  // B remains inert in the pause panel, including when held.
+  await button(1, 1);
+  await page.waitForTimeout(200);
+  expect((await page.evaluate(() => window.nullVector.telemetry)).paused).toBe(
+    true,
+  );
+  await button(1, 0);
+  // A on Resume must immediately become held throttle without another press.
+  await expect(page.locator("#resume")).toHaveClass(/menu-cursor/);
+  await button(0, 1);
+  await expect
+    .poll(async () => page.evaluate(() => window.nullVector.telemetry.paused))
+    .toBe(false);
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Number(window.nullVector.telemetry.controls.throttle),
+      ),
+    )
+    .toBe(1);
+  const resumeTime = await page.evaluate(
+    () => window.nullVector.telemetry.time,
+  );
+  await page.waitForTimeout(250);
+  expect(
+    (await page.evaluate(() => window.nullVector.telemetry)).time,
+  ).toBeGreaterThan(resumeTime);
+  expect(
+    Number(
+      (await page.evaluate(() => window.nullVector.telemetry)).controls
+        .throttle,
+    ),
+  ).toBe(1);
+  await button(0, 0);
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Number(window.nullVector.telemetry.controls.throttle),
+      ),
+    )
+    .toBe(0);
+  await button(9, 1);
+  await page.waitForFunction(() => window.nullVector.telemetry.paused);
+  await button(9, 0);
+  // Restart is not Resume: holding its activation must not arm launch.
+  await page.locator("#restart").dispatchEvent("pointerdown");
+  await button(0, 1);
+  await page.waitForFunction(
+    () =>
+      !window.nullVector.telemetry.paused &&
+      window.nullVector.telemetry.countdown > 0,
+  );
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        Number(window.nullVector.telemetry.controls.throttle),
+      ),
+    )
+    .toBe(0);
+  await button(0, 0);
+  await button(9, 1);
+  await page.waitForFunction(() => window.nullVector.telemetry.paused);
+  await button(9, 0);
   await page.locator("#quit").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "menu",
@@ -167,6 +230,21 @@ try {
   await expect(page.locator("#help-dialog .pad-labels")).toContainText(
     "Release: coast",
   );
+  // Let navigation sample the newly opened dialog with neutral buttons.
+  await button(1, 0);
+  // B still closes auxiliary dialogs and backs out of setup stages.
+  await button(1, 1);
+  await expect(page.locator("#help-dialog")).not.toBeVisible();
+  await button(1, 0);
+  const beforeBack = await page.evaluate(
+    () => window.nullVector.telemetry.menuStage,
+  );
+  expect(beforeBack).toBe("craft");
+  await button(1, 1);
+  await page.waitForFunction(
+    () => window.nullVector.telemetry.menuStage === "track",
+  );
+  await button(1, 0);
   expect(errors).toEqual([]);
   console.log(
     JSON.stringify({
@@ -176,6 +254,9 @@ try {
       coast: true,
       gameplayPulses: pulses,
       pauseStops: true,
+      pauseBInert: true,
+      resumeAHeldThrottle: true,
+      menuBBack: true,
       errors,
     }),
   );
