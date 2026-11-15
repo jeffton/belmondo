@@ -17,12 +17,13 @@ function itemForInput(element) {
 }
 
 export class MenuNavigation {
-  constructor({ document, root, onEscape, onInput, onActivate }) {
+  constructor({ document, root, onEscape, onInput, onActivate, feedback }) {
     this.document = document;
     this.root = root;
     this.onEscape = onEscape;
     this.onInput = onInput;
     this.onActivate = onActivate;
+    this.feedback = feedback;
     this.cursor = null;
     this.repeatAt = 0;
     this.padDirection = "";
@@ -83,6 +84,15 @@ export class MenuNavigation {
   }
 
   move(direction, now = performance.now(), repeated = false) {
+    this.sync();
+    return this.feedback
+      ? this.feedback.run("move", () =>
+          this.moveCursor(direction, now, repeated),
+        )
+      : this.moveCursor(direction, now, repeated);
+  }
+
+  moveCursor(direction, now, repeated) {
     this.sync();
     if (!this.cursor) return;
     if (repeated && now < this.repeatAt) return;
@@ -165,6 +175,29 @@ export class MenuNavigation {
 
   activate() {
     this.sync();
+    if (
+      !this.cursor ||
+      this.cursor.matches('input[type="range"], label:has(input[type="range"])')
+    )
+      return;
+    const kind = this.cursor.matches(
+      "#setup-back, #quit, #result-quit, #resume, .close",
+    )
+      ? "back"
+      : "confirm";
+    return this.feedback
+      ? this.feedback.run(kind, () => this.activateCursor())
+      : this.activateCursor();
+  }
+
+  back() {
+    return this.feedback
+      ? this.feedback.run("back", () => this.onEscape())
+      : this.onEscape();
+  }
+
+  activateCursor() {
+    this.sync();
     if (!this.cursor) return;
     if (this.onActivate?.(this.cursor)) {
       this.sync();
@@ -205,7 +238,7 @@ export class MenuNavigation {
       event.preventDefault();
       if (!event.repeat) {
         this.onInput("keyboard");
-        this.onEscape();
+        this.back();
       }
       return true;
     }
@@ -260,12 +293,12 @@ export class MenuNavigation {
     if (b && !this.padB) {
       this.onInput("gamepad");
       this.lastAction = "back";
-      this.onEscape();
+      this.back();
     }
     if (start && !this.padStart) {
       this.onInput("gamepad");
       this.lastAction = "back";
-      this.onEscape();
+      this.back();
     }
     this.padA = a;
     this.padB = b;

@@ -24,6 +24,7 @@ import {
 import { installZoomPolicy } from "./zoom-policy.js";
 import { MenuPreview } from "./menu-preview.js";
 import { MenuNavigation } from "./menu-navigation.js";
+import { MenuFeedback } from "./menu-feedback.js";
 import { frameDelta } from "./frame-clock.js";
 import { toKilometresPerHour } from "./units.js";
 import { halfstickPosition } from "./touch-halfstick.js";
@@ -554,7 +555,12 @@ function toggleView() {
   $("view").setAttribute("aria-pressed", String(world.view === "first-person"));
 }
 $("view").onclick = toggleView;
-$("pause").onclick = () => setPaused(!paused);
+function togglePauseFromInput() {
+  const before = paused;
+  setPaused(!paused);
+  if (paused !== before) sound.menuCue(paused ? "confirm" : "back");
+}
+$("pause").onclick = togglePauseFromInput;
 $("resume").onclick = () => setPaused(false);
 $("pause-panel").addEventListener("cancel", (e) => {
   e.preventDefault();
@@ -586,8 +592,10 @@ for (const d of document.querySelectorAll("dialog:not(#pause-panel)"))
         e.clientX > r.right ||
         e.clientY < r.top ||
         e.clientY > r.bottom
-      )
+      ) {
         d.close();
+        sound.menuCue("back");
+      }
     }
   });
 $("weapon").onclick = () => {
@@ -607,8 +615,31 @@ function navigationRoot() {
   if (state === "results") return $("results");
   return null;
 }
+const menuFeedback = new MenuFeedback({
+  document,
+  root: navigationRoot,
+  snapshot: () =>
+    JSON.stringify([
+      state,
+      paused,
+      menuStage,
+      navigationRoot()?.id,
+      menuNavigator?.cursor?.outerHTML,
+      selectedTrack,
+      selectedCraft,
+      selectedSpeedClass,
+      selectedMode(),
+      [
+        ...document.querySelectorAll(
+          'input[type="range"], input[type="checkbox"]',
+        ),
+      ].map((input) => [input.id, input.value, input.checked]),
+    ]),
+  play: (kind) => sound.menuCue(kind),
+});
 menuNavigator = new MenuNavigation({
   document,
+  feedback: menuFeedback,
   root: navigationRoot,
   onInput: setInputMode,
   onActivate: (cursor) => {
@@ -700,7 +731,7 @@ window.addEventListener("keydown", (e) => {
     setInputMode("keyboard");
   if (e.code === "Escape") {
     e.preventDefault();
-    if (!e.repeat) setPaused(!paused);
+    if (!e.repeat) togglePauseFromInput();
     return;
   }
   if (paused) return;
@@ -868,7 +899,7 @@ function input() {
         !padPause &&
         !document.querySelector("dialog[open]:not(#pause-panel)")
       )
-        setPaused(!paused);
+        togglePauseFromInput();
       padPause = pad.buttons[9]?.pressed;
     } else {
       padFire = pad.buttons[2]?.pressed;

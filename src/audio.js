@@ -19,6 +19,7 @@ export class AudioEngine {
     this.sampleVoices = new Set();
     this.sampleIndices = new Map();
     this.ready = null;
+    this.menuVoices = new Set();
     this.crowdBuffer = null;
     this.crowd = null;
     this.onBlur = () => {
@@ -158,6 +159,9 @@ export class AudioEngine {
     this.compressor.attack.value = 0.003;
     this.compressor.release.value = 0.16;
     this.master.connect(this.compressor);
+    // Menu feedback remains audible while race effects are paused.
+    this.menuBus = ctx.createGain();
+    this.menuBus.connect(this.compressor);
     this.compressor.connect(ctx.destination);
 
     // Shared two-second noise bed: no buffers or oscillators allocated per frame.
@@ -175,6 +179,57 @@ export class AudioEngine {
     this.wind = this.loopNoise("lowpass", 900, 0.6);
     this.brake = this.loopNoise("bandpass", 2200, 1.2);
     this.boost = this.loopNoise("bandpass", 800, 0.7);
+  }
+
+  menuCue(kind) {
+    // start() resumes synchronously in the input gesture; synthesis needs no fetch.
+    this.start().catch((error) => console.error("Menu audio:", error));
+    const ctx = this.context;
+    if (ctx.state === "running") this.playMenuCue(kind);
+    else if (navigator.userActivation.isActive)
+      ctx
+        .resume()
+        .then(() => this.playMenuCue(kind))
+        .catch((error) => console.error("Menu audio:", error));
+    // Controller polling is not an autoplay gesture. Never queue its cues
+    // behind a suspended context: they would burst out at the next click.
+  }
+
+  playMenuCue(kind) {
+    if (this.muted || this.hidden || this.volume === 0) return;
+    const ctx = this.context;
+    const t = ctx.currentTime;
+    const notes = {
+      move: [[0, 1320, 880, 0.055, 0.09]],
+      confirm: [
+        [0, 660, 990, 0.085, 0.1],
+        [0.045, 1320, 1760, 0.105, 0.075],
+      ],
+      back: [[0, 880, 330, 0.12, 0.11]],
+    }[kind];
+    for (const [delay, from, to, duration, level] of notes) {
+      const oscillator = ctx.createOscillator();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(from, t + delay);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        to,
+        t + delay + duration,
+      );
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, t + delay);
+      gain.gain.linearRampToValueAtTime(level, t + delay + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + delay + duration);
+      oscillator.connect(gain);
+      gain.connect(this.menuBus);
+      this.menuVoices.add(oscillator);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        gain.disconnect();
+        this.menuVoices.delete(oscillator);
+      };
+      oscillator.start(t + delay);
+      oscillator.stop(t + delay + duration + 0.005);
+    }
   }
 
   launchCue(stage) {
@@ -323,6 +378,10 @@ export class AudioEngine {
   applyVolume() {
     if (!this.master) return;
     if (this.muted || this.paused || this.hidden) this.stopSamples();
+    this.menuBus.gain.setValueAtTime(
+      this.muted || this.hidden ? 0 : this.volume,
+      this.context.currentTime,
+    );
     this.master.gain.setTargetAtTime(
       this.muted || this.paused || this.hidden ? 0 : this.volume,
       this.context.currentTime,
@@ -352,6 +411,7 @@ export class AudioEngine {
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.stopSamples();
     this.stopCrowd();
+    for (const voice of this.menuVoices) voice.stop();
     this.sources.forEach((source) => {
       source.stop();
       source.disconnect();

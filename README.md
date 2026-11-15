@@ -34,6 +34,8 @@ Grandstands and road-integrated checkerboard line each complete home straight. B
 
 The eight-track original Eleven Music soundtrack plays shuffled bags without back-to-back repeats. Music starts at reduced volume on the first menu selection; browser autoplay policy requires a user interaction. Music assets are distributed with the game, not the public source; see [music setup and rights](docs/music.md#soundtrack-credits). Music follows race pause/resume and has a separate volume from synthesized turbines and original generated weapon, impact and race cues. Sound-effect provenance is documented in [generated SFX](docs/generated-sfx/README.md). Choose audio files/folders or drop a folder to use local music; it stays on-device. BELMONDO OST restores the built-in tracks. Spotify integration is excluded by its [developer policy](https://developer.spotify.com/policy), which prohibits games. See [music API](docs/music.md).
 
+Menu selection, confirmation and back actions use original short synthesized tones, including pause and dialogs. They follow effects volume independently of music; zero is silent. Hover, unchanged selections and controller inputs before browser audio activation produce no queued feedback.
+
 ## Development
 
 Repository: https://github.com/jeffton/belmondo. Local checkout: `/home/roy/github/belmondo`.
@@ -50,6 +52,8 @@ npm run build
 ```
 
 `GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
+
+`GAME_URL=http://127.0.0.1:5187 node tests/menu-audio.browser.mjs` verifies real Web Audio output, autoplay locking, keyboard/gamepad/touch navigation, paused dialogs, zero effects volume and unchanged records.
 
 The browser test expects Vite at `http://127.0.0.1:5178`; start it with `npm run dev -- --port 5178`. Set `GAME_URL` to test another deployment. `npx playwright install chromium` installs its browser. SwiftShader is enabled for headless Linux without a GPU.
 
