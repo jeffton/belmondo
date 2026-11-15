@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#13171c" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>BELMONDO · haptiktest</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
+        background: #13171c;
+        color: #e5e8eb;
+      }
+      body {
+        max-width: 620px;
+        margin: auto;
+        padding: 24px 20px;
+      }
+      h1 {
+        font-size: 26px;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      p {
+        color: #bcc4cd;
+      }
+      a {
+        color: #ffab64;
+      }
+      fieldset {
+        border: 1px solid #48515d;
+        padding: 18px;
+        margin: 24px 0;
+      }
+      .control,
+      button {
+        display: block;
+        position: relative;
+        box-sizing: border-box;
+        padding: 16px;
+        margin: 12px 0;
+        width: 100%;
+        border: 1px solid #9b6d46;
+        border-radius: 3px;
+        background: #242b33;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        touch-action: manipulation;
+      }
+      input {
+        accent-color: #ed974e;
+      }
+      .probe-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        left: 0;
+        top: 0;
+      }
+      button:disabled,
+      fieldset:disabled .control {
+        opacity: 0.45;
+      }
+      .control:focus-within {
+        outline: 2px solid #ed974e;
+      }
+      #status {
+        border-left: 3px solid #ed974e;
+        padding-left: 12px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+        color: #bcc4cd;
+      }
+      details {
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>BELMONDO · haptiktest</h1>
+    <p>
+      Kun et forsøg — spillet er urørt. Afprøv på iPhone i Safari og eventuelt
+      fra hjemmeskærmen. Ingen lyd eller controller-rumble.
+    </p>
+    <label
+      ><input id="disconnected" type="checkbox" /> Jeg har frakoblet alle
+      controllere.</label
+    >
+    <p id="status" role="status">Testen er låst.</p>
+    <fieldset id="probes" disabled>
+      <legend>Mærk efter ved hvert tryk</legend>
+      <label class="control" for="native"
+        >1 · Synlig, ægte switch <input id="native" type="checkbox" switch
+      /></label>
+      <label class="control" id="overlay-label" for="overlay"
+        >2 · Direkte tryk på label
+        <input class="probe-input" id="overlay" type="checkbox" switch
+      /></label>
+      <button id="sync" type="button">
+        3 · JavaScript label.click() fra tryk
+      </button>
+      <button id="frame" type="button">
+        4 · label.click() i næste animation frame
+      </button>
+      <label id="script-label" for="script-input" hidden
+        >Programmatisk probe</label
+      >
+      <input
+        class="probe-input"
+        id="script-input"
+        type="checkbox"
+        switch
+        tabindex="-1"
+        aria-hidden="true"
+      />
+    </fieldset>
+    <p>
+      1 er reference. 2 undersøger et direkte label-tryk. 3 og 4 forventes tavse
+      i rettet WebKit. Eventloggen beviser ikke vibration.
+    </p>
+    <p>
+      Websiden kan først se en controller, når browseren eksponerer den. Et tomt
+      controllerresultat beviser ikke, at Bluetooth er frakoblet.
+    </p>
+    <details>
+      <summary>Teknisk log og kilder</summary>
+      <pre id="environment"></pre>
+      <pre id="log" aria-live="off"></pre>
+      <p>Loggen bliver kun på denne side, og nulstilles ved genindlæsning.</p>
+      <ul>
+        <li>
+          <a
+            href="https://webkit.org/blog/15865/webkit-features-in-safari-18-0/"
+            >WebKit: haptik på iPhone fra iOS 18</a
+          >
+        </li>
+        <li>
+          <a href="https://commits.webkit.org/313638@main"
+            >WebKit: trusted event + user gesture</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API"
+            >Gamepad API: controllerens synlighed</a
+          >
+        </li>
+      </ul>
+    </details>
+    <script type="module">
+      const consent = document.querySelector("#disconnected");
+      const probes = document.querySelector("#probes");
+      const status = document.querySelector("#status");
+      const log = document.querySelector("#log");
+      const scriptLabel = document.querySelector("#script-label");
+      let pendingFrame = null;
+      let controllerSeen = false;
+      let lastStatus = "";
+      function note(message) {
+        log.textContent = `${new Date().toLocaleTimeString()} ${message}\n${log.textContent}`;
+      }
+      function allowed() {
+        const pads = Array.from(navigator.getGamepads?.() || []);
+        const visiblePad = pads.some((pad) => pad?.connected);
+        const blocked =
+          controllerSeen || visiblePad || document.hidden || !consent.checked;
+        probes.disabled = blocked;
+        const message =
+          controllerSeen || visiblePad
+            ? "Controller set. Testen er låst; frakobl og genindlæs."
+            : document.hidden
+              ? "Siden er i baggrunden. Testen er låst."
+              : consent.checked
+                ? "Klar. Kun fysiske tryk kan bekræfte haptik."
+                : "Testen er låst.";
+        if (message !== lastStatus) {
+          status.textContent = message;
+          lastStatus = message;
+        }
+        if (blocked && pendingFrame !== null) {
+          cancelAnimationFrame(pendingFrame);
+          pendingFrame = null;
+        }
+        return !blocked;
+      }
+      consent.addEventListener("change", allowed);
+      window.addEventListener("gamepadconnected", () => {
+        controllerSeen = true;
+        consent.checked = false;
+        allowed();
+      });
+      window.addEventListener("gamepaddisconnected", allowed);
+      document.addEventListener("visibilitychange", allowed);
+      // Check immediately before native default activation, not only when polling.
+      for (const type of ["pointerdown", "click"]) {
+        probes.addEventListener(
+          type,
+          (event) => {
+            if (!allowed()) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          },
+          true,
+        );
+      }
+      for (const input of probes.querySelectorAll("input")) {
+        input.addEventListener("click", (event) => {
+          note(
+            `${input.id}: click trusted=${event.isTrusted}, activation=${navigator.userActivation?.isActive}`,
+          );
+        });
+        input.addEventListener("change", () =>
+          note(`${input.id}: checked=${input.checked}`),
+        );
+      }
+      document.querySelector("#sync").addEventListener("click", () => {
+        if (allowed()) scriptLabel.click();
+      });
+      document.querySelector("#frame").addEventListener("click", () => {
+        if (!allowed() || pendingFrame !== null) return;
+        pendingFrame = requestAnimationFrame(() => {
+          pendingFrame = null;
+          if (allowed()) scriptLabel.click();
+        });
+      });
+      document.querySelector("#environment").textContent =
+        `${navigator.userAgent}\nstandalone=${matchMedia("(display-mode: standalone)").matches || navigator.standalone === true}\nvibrate API=${typeof navigator.vibrate}\ninput.switch property=${"switch" in document.createElement("input")}`;
+      // Diagnostics only: no haptics, actuator calls or audio in this loop.
+      function poll() {
+        allowed();
+        requestAnimationFrame(poll);
+      }
+      poll();
+    </script>
+  </body>
+</html>

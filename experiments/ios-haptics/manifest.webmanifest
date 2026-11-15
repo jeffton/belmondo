@@ -1,0 +1,9 @@
+{
+  "name": "BELMONDO haptiktest",
+  "short_name": "Haptiktest",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#13171c",
+  "theme_color": "#13171c"
+}
