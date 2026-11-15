@@ -14,6 +14,8 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1100, height: 800 },
     hasTouch: true,
+    // The diagnostic AudioWorklet uses a blob; production synthesis has no worklet.
+    bypassCSP: true,
   });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -50,14 +52,14 @@ try {
               new Blob(
                 [
                   `
-          registerProcessor('peak-tap', class extends AudioWorkletProcessor {
-            process(inputs) {
-              const pcm = inputs[0]?.[0];
-              if (pcm) this.port.postMessage(Math.max(...pcm.map(Math.abs)));
-              return true;
-            }
-          });
-        `,
+            registerProcessor('peak-tap', class extends AudioWorkletProcessor {
+              process(inputs) {
+                const pcm = inputs[0]?.[0];
+                if (pcm) this.port.postMessage(Math.max(...pcm.map(Math.abs)));
+                return true;
+              }
+            });
+          `,
                 ],
                 { type: "text/javascript" },
               ),
@@ -86,7 +88,13 @@ try {
       throw new Error(JSON.stringify(response.exceptionDetails));
     return response.result.value;
   };
-  await page.waitForTimeout(3000);
+  await untrusted(async () => {
+    const deadline = performance.now() + 30000;
+    while (!window.nullVector) {
+      if (performance.now() > deadline) throw new Error("Menu failed to load");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  });
   assert.equal(
     await untrusted(() => window.nullVector?.telemetry.state),
     "menu",
