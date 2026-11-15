@@ -191,9 +191,8 @@ try {
   // A on Resume must immediately become held throttle without another press.
   await expect(page.locator("#resume")).toHaveClass(/menu-cursor/);
   // Navigate to Restart, then up + A in one poll: actual activation wins.
-  await button(13, 1);
-  await button(13, 0);
-  await assertHint("Ⓐ");
+  await page.keyboard.press("ArrowDown");
+  await assertHint("ENTER");
   await expect(page.locator("#restart")).toHaveClass(/menu-cursor/);
   await page.evaluate(() => {
     for (const index of [0, 12])
