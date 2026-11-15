@@ -36,7 +36,7 @@ Sound-settings verifies both silent and nonzero music PCM after staging the eigh
 
 Node tests run in file or course-filtered invocations capped at 55 seconds. `npc-driving` and `speed-classes` contain substantial physical driving matrices and require course shards rather than a single file-sized invocation. A timeout is not reported as a passing test.
 
-The sharded Node run covers 916 tests: 910 pass and six unresolved contracts fail, with no timeouts after course sharding.
+On audit base `9f31cc6` plus this cleanup, the sharded Node run covers 916 tests: 910 pass and six unresolved contracts fail, with no timeouts after course sharding. Tests added by concurrent feature work are outside that aggregate.
 
 Passing browser checks: menu DOM/input/state, thrust/input switching, controls diagrams, sound settings with zero/nonzero PCM and persistent volumes, six preview layouts, and real WebGL menu flow on desktop, portrait and landscape. Build and changed-file formatting checks pass. Repository-wide formatting reports an existing issue in untouched `gamepad-flight.browser.mjs`. Full browser-suite approval is not claimed.
 
