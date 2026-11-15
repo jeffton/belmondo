@@ -9,6 +9,11 @@ try {
   await page.goto(url);
   const report = await page.evaluate(async () => {
     const { AudioEngine } = await import("/src/audio.js");
+    const { MENU_SOUNDS } = await import("/src/menu-sound.js");
+    const durations = Object.entries(MENU_SOUNDS).map(([kind, cue]) => [
+      kind,
+      cue.duration + 0.006,
+    ]);
     const { soundtrack } = await import("/src/soundtrack.js");
     const decoder = new AudioContext();
     const tracks = await Promise.all(
@@ -28,6 +33,7 @@ try {
       const audio = new AudioEngine();
       audio.context = ctx;
       audio.build();
+      await audio.loadMenuSamples();
       audio.started = true;
       audio.volume = 0.8; // Production defaults: effects .8; music .65, menu gain .35.
       audio.applyVolume();
@@ -73,20 +79,12 @@ try {
       return { peak, rms: Math.sqrt(energy / samples) };
     };
     const cues = {};
-    for (const [kind, duration] of [
-      ["move", 0.115],
-      ["confirm", 0.242],
-      ["back", 0.187],
-    ])
+    for (const [kind, duration] of durations)
       cues[kind] = stats(await render(null, kind), duration);
     const mix = [];
     for (const track of tracks) {
       const music = await render(track.buffer, null);
-      for (const [kind, duration] of [
-        ["move", 0.115],
-        ["confirm", 0.242],
-        ["back", 0.187],
-      ]) {
+      for (const [kind, duration] of durations) {
         const bed = stats(music, duration);
         const combined = stats(await render(track.buffer, kind), duration);
         mix.push({

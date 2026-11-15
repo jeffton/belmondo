@@ -1,0 +1,96 @@
+{
+  "model": "elevenlabs/sound-effects/v3",
+  "api": "https://fal.ai/models/elevenlabs/sound-effects/v3",
+  "schema": "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=elevenlabs/sound-effects/v3",
+  "generatedCandidates": 27,
+  "requestedSecondsPerCandidate": 0.5,
+  "listedGenerationEstimateUsd": 0.027,
+  "billing": "List-price estimate at $0.002/second, not an inspected invoice.",
+  "selection": "Waveform, spectrum and envelope comparison. Audio-understanding services were rejected after failing controlled 200 Hz / 3000 Hz / noise calibration. No trustworthy subjective audition was available.",
+  "assets": [
+    {
+      "kind": "move",
+      "sourceId": "move-2",
+      "sourceSha256": "10a01aab55e78d0ba2cfde16ec4bd2224c7ee33f2c5e0358e90abf98eb0e7850",
+      "file": "public/audio/menu/move.mp3",
+      "sha256": "97c4d9450ca5e4456bd4097baebd39708ed9f0c7056fdbb6ba706f1774f4f3ba",
+      "bytes": 4640,
+      "durationSeconds": 0.22775510204081634,
+      "peak": 0.314642995595932,
+      "rms": 0.050910528749227524,
+      "trimSeconds": [0.01, 0.4],
+      "timeCompression": 1.75,
+      "constantGain": 0.8665531873703003,
+      "filters": [
+        "highpass180Hz",
+        "lowpass9500Hz",
+        "3ms attack fade",
+        "12ms tail fade",
+        "peak limiter 0.32"
+      ],
+      "prompt": {
+        "text": "Original premium futuristic antigravity racing interface, coherent cool titanium and spectral energy aesthetic. ONE very short navigation sound at start: precise silky electrical micro-swish, glassy granular data flick with a crisp detailed edge, 90 milliseconds then silence. Dry, sleek, tactile, not a pitched beep. No drums, percussion, melody, voice, music, bass boom or repeated clicks.",
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.75,
+        "output_format": "mp3_44100_192",
+        "loop": false
+      }
+    },
+    {
+      "kind": "confirm",
+      "sourceId": "confirm-7",
+      "sourceSha256": "ba1b5c518d7a8dd726930f3d149633a2a3229583b62f1d5bae84c80ab500e809",
+      "file": "public/audio/menu/confirm.mp3",
+      "sha256": "5b72fd82c747a156da41331a1a152b7f25a1a44fba2c20a69299605e81e24274",
+      "bytes": 7566,
+      "durationSeconds": 0.39383219954648524,
+      "peak": 0.4393951892852783,
+      "rms": 0.06924203783273697,
+      "trimSeconds": [0, 0.43],
+      "timeCompression": 1.15,
+      "constantGain": 3.5015339851379395,
+      "filters": [
+        "highpass180Hz",
+        "lowpass9500Hz",
+        "3ms attack fade",
+        "12ms tail fade",
+        "peak limiter 0.43"
+      ],
+      "prompt": {
+        "text": "Futuristic racing game menu accept sound. A tight electric ZHWOOM: rich midrange resonant digital energy swoosh with metallic shimmer, quickly opens wide then snaps into focus. High-end science fiction console, confident and weighty but not a physical impact. One coherent short sound only, dry studio detail. No drum, kick, snare, rhythm, musical phrase or speech.",
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.75,
+        "output_format": "mp3_44100_192",
+        "loop": false
+      }
+    },
+    {
+      "kind": "back",
+      "sourceId": "back-3",
+      "sourceSha256": "717f5f42078edef4f5c1d67196ec8ed3ea0c8c0eb5c8aa508275a8ccd7a58b1d",
+      "file": "public/audio/menu/back.mp3",
+      "sha256": "d00740d3d46791ab8108a79fdef37fafa5cefca8a30c07363c4e82938b61732b",
+      "bytes": 5894,
+      "durationSeconds": 0.31204081632653063,
+      "peak": 0.4095713496208191,
+      "rms": 0.05204852670431137,
+      "trimSeconds": [0.08, 0.48],
+      "timeCompression": 1.35,
+      "constantGain": 0.8169839978218079,
+      "filters": [
+        "highpass180Hz",
+        "lowpass9500Hz",
+        "3ms attack fade",
+        "12ms tail fade",
+        "peak limiter 0.37"
+      ],
+      "prompt": {
+        "text": "Original premium futuristic antigravity racing interface, coherent cool titanium and spectral energy aesthetic. ONE short back/cancel sound at start: sophisticated reverse-air data suction, inward folding electric texture with a smooth downward filtered zip and precise close, 160 milliseconds then silence. Distinct from selection, elegant and dry. No drum, percussion, melody, voice, music, bass boom or long laser siren.",
+        "duration_seconds": 0.5,
+        "prompt_influence": 0.75,
+        "output_format": "mp3_44100_192",
+        "loop": false
+      }
+    }
+  ]
+}

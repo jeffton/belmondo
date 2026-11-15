@@ -1,5 +1,5 @@
 import { SFX_CUES } from "./generated-sfx.js";
-import { createMenuSounds } from "./menu-sound.js";
+import { MENU_SOUNDS } from "./menu-sound.js";
 import { createEngineBed, updateEngineSound } from "./engine-sound.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -21,6 +21,9 @@ export class AudioEngine {
     this.sampleIndices = new Map();
     this.ready = null;
     this.menuVoices = new Set();
+    this.menuBuffers = new Map();
+    this.menuReady = null;
+    this.menuSequence = 0;
     this.crowdBuffer = null;
     this.crowd = null;
     this.onBlur = () => {
@@ -51,7 +54,8 @@ export class AudioEngine {
       window.addEventListener("focus", this.onFocus);
       document.addEventListener("visibilitychange", this.onVisibility);
       this.applyVolume();
-      this.ready = this.loadSamples();
+      this.menuReady = this.loadMenuSamples();
+      this.ready = Promise.all([this.loadSamples(), this.menuReady]);
       await Promise.all([unlocked, this.ready]);
     } else {
       await Promise.all([this.context.resume(), this.ready]);
@@ -63,6 +67,16 @@ export class AudioEngine {
     if (!response.ok)
       throw new Error(`Sound effect ${url}: HTTP ${response.status}`);
     return this.context.decodeAudioData(await response.arrayBuffer());
+  }
+
+  async loadMenuSamples() {
+    const buffers = await Promise.all(
+      Object.entries(MENU_SOUNDS).map(async ([kind, cue]) => [
+        kind,
+        await this.loadBuffer(cue.url),
+      ]),
+    );
+    this.menuBuffers = new Map(buffers);
   }
 
   async loadSamples() {
@@ -163,7 +177,6 @@ export class AudioEngine {
     // Menu feedback remains audible while race effects are paused.
     this.menuBus = ctx.createGain();
     this.menuBus.connect(this.compressor);
-    this.menuBuffers = createMenuSounds(ctx);
     this.compressor.connect(ctx.destination);
 
     // Shared two-second noise bed: no buffers or oscillators allocated per frame.
@@ -184,17 +197,26 @@ export class AudioEngine {
   }
 
   menuCue(kind) {
-    // start() resumes synchronously in the input gesture; synthesis needs no fetch.
+    // Resume stays synchronous in the original gesture; decode each sample once.
     this.start().catch((error) => console.error("Menu audio:", error));
     const ctx = this.context;
-    if (ctx.state === "running") this.playMenuCue(kind);
-    else if (navigator.userActivation.isActive)
-      ctx
-        .resume()
-        .then(() => this.playMenuCue(kind))
+    const sequence = ++this.menuSequence;
+    if (this.muted || this.hidden || this.volume === 0) return;
+    const play = () => {
+      if (sequence === this.menuSequence && ctx.state === "running")
+        this.playMenuCue(kind);
+    };
+    if (ctx.state === "running" && this.menuBuffers.size === 3) play();
+    else if (ctx.state === "running")
+      this.menuReady
+        .then(play)
         .catch((error) => console.error("Menu audio:", error));
-    // Controller polling is not an autoplay gesture. Never queue its cues
-    // behind a suspended context: they would burst out at the next click.
+    else if (navigator.userActivation.isActive)
+      Promise.all([ctx.resume(), this.menuReady])
+        .then(play)
+        .catch((error) => console.error("Menu audio:", error));
+    // Controller polling is not an autoplay gesture. Never queue suspended cues.
+    // During initial decoding, retain only the latest action, not a late burst.
   }
 
   playMenuCue(kind) {
@@ -357,6 +379,7 @@ export class AudioEngine {
   applyVolume() {
     if (!this.master) return;
     if (this.muted || this.paused || this.hidden) this.stopSamples();
+    if (this.muted || this.hidden || this.volume === 0) this.menuSequence++;
     this.menuBus.gain.setValueAtTime(
       this.muted || this.hidden ? 0 : this.volume,
       this.context.currentTime,
@@ -401,7 +424,9 @@ export class AudioEngine {
     this.sources = [];
     this.lastEffect.clear();
     this.sampleBuffers.clear();
-    this.menuBuffers = null;
+    this.menuBuffers.clear();
+    this.menuReady = null;
+    this.menuSequence++;
     this.crowdBuffer = null;
     this.sampleIndices.clear();
     this.ready = null;

@@ -16,6 +16,7 @@ try {
         const audio = new AudioEngine();
         audio.context = context;
         audio.build();
+        await audio.loadMenuSamples();
         audio.started = true;
         audio.volume = mode === "zero" ? 0 : 0.7;
         audio.muted = mode === "muted";
@@ -44,8 +45,8 @@ try {
     if (["zero", "muted", "hidden"].includes(mode)) assert.equal(peak, 0);
     else {
       assert(peak > 0.07 && peak < 0.5, `${kind}: moderate peak ${peak}`);
-      assert(end > 0.065 && end < 0.26, `${kind}: finite envelope ${end}`);
-      assert(pcm.slice(14000).every((x) => Math.abs(x) < 0.00001));
+      assert(end > 0.1 && end < 0.45, `${kind}: finite envelope ${end}`);
+      assert(pcm.slice(22000).every((x) => Math.abs(x) < 0.00001));
     }
     metrics.push({ kind, mode, peak, rms, end });
     if (mode !== "normal") continue;

@@ -104,7 +104,7 @@ try {
   );
   await synthesis.addScriptTag({
     content:
-      menuSource.replaceAll("export function ", "function ") +
+      menuSource.replaceAll("export const ", "const ") +
       "\n" +
       `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
       // Keep module scopes separate: both modules have their own clamp helper.

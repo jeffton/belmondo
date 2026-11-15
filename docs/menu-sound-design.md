@@ -1,25 +1,19 @@
 # Menu sound palette
 
-Original industrial one-shots rendered into cached stereo WebAudio buffers:
+Three original **ElevenLabs Sound Effects V3** samples replace procedural menu synthesis. Navigation is a brief bright electrical texture; confirmation is a fuller spectral-energy sweep; back uses an inward-building air/resonance gesture. Files are stereo MP3, approximately 228/394/312 ms and 18 KB combined. There are no visual, menu-action, music or gameplay-effect changes.
 
-- **Move:** sharp saturated metal detent with a short broadband rasp (108 ms).
-- **Confirm:** preparatory mechanical noise, delayed impact and low body (235 ms).
-- **Back:** short suction/release followed by a damped metallic latch (180 ms).
+## Generation and selection
 
-Inharmonic FM, transient noise, soft saturation and small asymmetric reflections create texture without melodic bleeps or long siren sweeps. Input triggers, music routing, volume, autoplay and gameplay effects are unchanged. Rendering happens once during audio initialization; a review-machine cold run took approximately 52 ms. Playback needs no fetch.
+27 candidates were generated through the existing server-side fal integration. Prompts describe original futuristic racing-interface sounds; no game recordings or artist replicas were supplied. Generation used `elevenlabs/sound-effects/v3`, 0.5-second requests, prompt influence .75 and MP3/44.1 kHz/192 kbps output. The API's minimum duration is 0.5 seconds; runtime samples have been trimmed, modestly time-compressed, filtered, faded and levelled, then encoded at 128 kbps. Selected source hashes, prompts, processing and delivery hashes are in [the provenance manifest](menu-generated-sfx.json). Original candidates and generation records remain in the private audio-assets directory.
 
-## Mix verification
+Listed generation estimate: $0.027 at $0.002/second; invoice not inspected. [Model/API and commercial-use designation](https://fal.ai/models/elevenlabs/sound-effects/v3), [official ElevenLabs API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).
 
-Actual realtime WebAudio output at the default effects gain (.8) measured approximately .376/.491/.416 peak for move/confirm/back. At effects .7 the peaks fell accordingly; zero effects volume produced silence.
+Selection used waveforms, spectra, event structure and envelopes, rejecting repeated pulses, heavy low-frequency hits and excessively thin high-frequency takes. No trustworthy subjective audition was available. Both fal audio-understanding and a Gemini audio-input route were investigated; their apparent listening assessments were discarded after a controlled 200 Hz tone / 3000 Hz tone / noise recording was incorrectly described as pitch-sweeping tonal effects. Those outputs are not listening evidence. No physical audio playback device was available.
 
-An offline mix test uses the actual eight soundtrack files, 30-second excerpts, music gain .65 × menu gain .35, stereo output and a warmed compressor. Active-window RMS was .077/.118/.100 for move/confirm/back. Cue energy was approximately 6.7–13.3 / 9.6–15.3 / 8.3–15.3 dB above those music windows; maximum combined peak was .557. Rapid navigation at 20 cues/second peaked at .448 with music. These are short-window RMS measurements, not integrated LUFS or whole-soundtrack worst-case guarantees. Starting an offline context and cue simultaneously understates this compressor's settled output and is unsuitable for mix balancing.
+## Playback and verification
 
-WAVs and spectrograms were rendered and inspected. Physical audition was unavailable: the server has no audio playback device. Neither implementation nor independent review claims a listening test.
+Samples decode once at audio startup. Context resume remains synchronous in the original gesture. The first action waits only for the small menu pack, not the gameplay pack; only its newest pending cue survives decoding. Suspended controller events are not queued. Mute, hidden state and effects-volume zero cancel pending feedback. No synthetic replacement is provided on fetch/decode failure; errors remain explicit.
 
-Real browser tests cover gesture unlock, suspended-controller behavior, keyboard/controller/touch, no-op and hover silence, pause/dialog transitions, volume zero and unchanged records. Buffer tests cover 44.1/48/96 kHz, finite output, stereo differences and tapered boundaries. The exhaustive gameplay-audio test completed its realtime driving sequence but hit its 55-second cap during the offline effects matrix; that full run is incomplete.
+Actual realtime WebAudio peaks at default effects gain .8 were approximately .37/.48/.47 for navigation/confirm/back. A warmed-compressor stereo mix test with all eight actual soundtrack excerpts at production music gains measured active-window RMS .059/.080/.060, 2.9–9.2 dB above those music windows. Maximum combined peak was .587; navigation at 20 cues/second with music peaked at .543. These are short-window RMS measurements, not integrated LUFS or whole-track worst-case guarantees.
 
-## Sources and rights
-
-[Kenney Sci-fi Sounds](https://kenney.nl/assets/sci-fi-sounds) was investigated as a ready-made CC0 source. No third-party recording was incorporated. All released waveform material is generated by `src/menu-sound.js`.
-
-[A Sound Effect's sci-fi UI design guide](https://www.asoundeffect.com/sci-fi-ui-sound-effects/) informed layering mechanical textures, functional distinctions and restrained duration. No WipEout audio was copied.
+Browser tests cover keyboard, controller, touch, autoplay, no-op/hover silence, pause/dialog transitions, volume zero, unchanged records and a cold portrait touch gesture without an existing AudioContext. Offline renders verify silence/cleanup; unit tests cover deferred first playback, newest-only pending feedback, no suspended-controller burst and mute cancellation during loading. Each test invocation is bounded to 55 seconds or less.

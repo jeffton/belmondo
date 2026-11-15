@@ -39,9 +39,9 @@ try {
         const original = source.start.bind(source);
         source.start = (...args) => {
           const cues = new Map([
-            [108, "move"],
-            [235, "confirm"],
-            [180, "back"],
+            [228, "move"],
+            [394, "confirm"],
+            [312, "back"],
           ]);
           const kind = cues.get(Math.round(source.buffer?.duration * 1000));
           if (kind) {
@@ -114,13 +114,13 @@ try {
   ]);
   const levels = [];
   async function action(expected, run, audible = expected.length > 0) {
-    await page.waitForTimeout(230);
+    await page.waitForTimeout(450);
     await page.evaluate(() => {
       window.cues = [];
       window.peaks = [];
     });
     await run();
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(450);
     const result = await page.evaluate(() => ({
       cues: window.cues,
       peak: Math.max(0, ...window.peaks),
@@ -132,7 +132,7 @@ try {
     levels.push({ cues: result.cues, peak: result.peak });
     if (audible === null) return result;
     if (audible)
-      assert(result.peak > 0.0001 && result.peak < 0.5, JSON.stringify(result));
+      assert(result.peak > 0.0001 && result.peak < 0.65, JSON.stringify(result));
     else assert(result.peak < 0.0001, JSON.stringify(result));
     return result;
   }
