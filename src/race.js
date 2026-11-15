@@ -757,7 +757,9 @@ export class Race {
         // A checkpoint return cannot sweep through gates or pickups.
         continue;
       }
-      if (r.grounded || (r.flight && onDeck && height > -3)) {
+      // Validate the swept crossing itself, not the end-of-step deck contact.
+      // A legal airborne crossing can end outside the deck beside a jump.
+      if (r.grounded || r.flight) {
         const gateS = track.finishS + (r.gate * track.length) / GATES;
         const gateFrame = track.frame(gateS, r.branch);
         const before = previous.clone().sub(gateFrame.p).dot(gateFrame.tangent);
@@ -804,6 +806,8 @@ export class Race {
             }
           }
         }
+      }
+      if (r.grounded || (r.flight && onDeck && height > -3)) {
         r.s = clamp(
           road.s,
           r.gate === 1
