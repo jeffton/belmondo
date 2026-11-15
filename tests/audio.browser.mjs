@@ -98,8 +98,14 @@ try {
     new URL("../src/engine-sound.js", import.meta.url),
     "utf8",
   );
+  const menuSource = await readFile(
+    new URL("../src/menu-sound.js", import.meta.url),
+    "utf8",
+  );
   await synthesis.addScriptTag({
     content:
+      menuSource.replaceAll("export function ", "function ") +
+      "\n" +
       `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
       // Keep module scopes separate: both modules have their own clamp helper.
       "const { createEngineBed, updateEngineSound } = (() => {\n" +

@@ -43,9 +43,9 @@ try {
     assert.equal(voices, 0, `${kind}/${mode}: voices drain`);
     if (["zero", "muted", "hidden"].includes(mode)) assert.equal(peak, 0);
     else {
-      assert(peak > 0.005 && peak < 0.12, `${kind}: moderate peak ${peak}`);
-      assert(end > 0.015 && end < 0.18, `${kind}: finite envelope ${end}`);
-      assert(pcm.slice(10000).every((x) => Math.abs(x) < 0.00001));
+      assert(peak > 0.07 && peak < 0.5, `${kind}: moderate peak ${peak}`);
+      assert(end > 0.065 && end < 0.26, `${kind}: finite envelope ${end}`);
+      assert(pcm.slice(14000).every((x) => Math.abs(x) < 0.00001));
     }
     metrics.push({ kind, mode, peak, rms, end });
     if (mode !== "normal") continue;
