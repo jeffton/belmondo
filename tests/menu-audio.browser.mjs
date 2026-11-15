@@ -18,7 +18,10 @@ try {
     bypassCSP: true,
   });
   const errors = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error) => {
+    errors.push(error.message);
+    console.error(error);
+  });
   await page.addInitScript(() => {
     window.pad = null;
     window.padReads = 0;
@@ -31,17 +34,23 @@ try {
     window.peaks = [];
     const NativeContext = window.AudioContext;
     window.AudioContext = class extends NativeContext {
-      createOscillator() {
-        const oscillator = super.createOscillator();
-        const original = oscillator.frequency.setValueAtTime.bind(
-          oscillator.frequency,
-        );
-        oscillator.frequency.setValueAtTime = (value, time) => {
-          window.cues.push(value);
-          window.timing.push([time, this.currentTime]);
-          return original(value, time);
+      createBufferSource() {
+        const source = super.createBufferSource();
+        const original = source.start.bind(source);
+        source.start = (...args) => {
+          const cues = new Map([
+            [108, "move"],
+            [235, "confirm"],
+            [180, "back"],
+          ]);
+          const kind = cues.get(Math.round(source.buffer?.duration * 1000));
+          if (kind) {
+            window.cues.push(kind);
+            window.timing.push([args[0] ?? this.currentTime, this.currentTime]);
+          }
+          return original(...args);
         };
-        return oscillator;
+        return source;
       }
       createDynamicsCompressor() {
         window.effectsContext = this;
@@ -103,6 +112,7 @@ try {
     localStorage.getItem("nv-records"),
     localStorage.getItem("nv-progression"),
   ]);
+  const levels = [];
   async function action(expected, run, audible = expected.length > 0) {
     await page.waitForTimeout(230);
     await page.evaluate(() => {
@@ -119,6 +129,7 @@ try {
       timing: window.timing,
     }));
     assert.deepEqual(result.cues, expected);
+    levels.push({ cues: result.cues, peak: result.peak });
     if (audible === null) return result;
     if (audible)
       assert(result.peak > 0.0001 && result.peak < 0.5, JSON.stringify(result));
@@ -174,7 +185,7 @@ try {
     return window.tapReady;
   });
   // First real gesture must unlock actual output, without replaying controller cues.
-  await action([730, 1517], () =>
+  await action(["move"], () =>
     page.locator('input[name="mode"][value="trial"]').check(),
   );
   await page.evaluate(() => window.tapReady);
@@ -182,15 +193,15 @@ try {
   await action([], () =>
     page.locator('input[name="mode"][value="trial"]').click(),
   );
-  await action([190, 893, 1447], () => page.locator("#setup-next").tap());
-  await action([310, 697], () => page.keyboard.press("Escape"));
+  await action(["confirm"], () => page.locator("#setup-next").tap());
+  await action(["back"], () => page.keyboard.press("Escape"));
   await page.locator('input[name="mode"][value="race"]').click();
-  await action([730, 1517], () => page.keyboard.press("ArrowRight"));
+  await action(["move"], () => page.keyboard.press("ArrowRight"));
   await page.locator('input[name="mode"][value="trial"]').click();
   await action([], () => page.keyboard.press("Escape"));
-  await action([190, 893, 1447], () => page.keyboard.press("Enter"));
-  await action([190, 893, 1447], () => page.locator("#music-open").tap());
-  await action([310, 697], () => page.keyboard.press("Enter"));
+  await action(["confirm"], () => page.keyboard.press("Enter"));
+  await action(["confirm"], () => page.locator("#music-open").tap());
+  await action(["back"], () => page.keyboard.press("Enter"));
   // Real polling path with standard mapped controller button edges.
   await page.evaluate(() => {
     window.pad = {
@@ -212,9 +223,9 @@ try {
       window.pad.buttons[index] = { pressed: false, value: 0 };
     }, button);
   }
-  await action([730, 1517], () => pad(15));
-  await action([190, 893, 1447], () => pad(0));
-  await action([310, 697], () => pad(1));
+  await action(["move"], () => pad(15));
+  await action(["confirm"], () => pad(0));
+  await action(["back"], () => pad(1));
   await page.evaluate(() => {
     window.pad = null;
   });
@@ -224,7 +235,7 @@ try {
   await action([], () => page.locator("#setup-back").tap(), false);
   await page.locator("#music-open").tap();
   await page.locator("#effects-volume").fill("0.7");
-  await action([310, 697], () => page.locator("#music-dialog .close").tap());
+  await action(["back"], () => page.locator("#music-dialog .close").tap());
   // Start and pause use the same output; paused race bus must not mute menu bus.
   for (let i = 0; i < 3; i++) await page.locator("#setup-next").click();
   await page.locator("#start").click();
@@ -233,10 +244,10 @@ try {
   );
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
-  await action([190, 893, 1447], () => page.locator("#pause-music").tap());
-  await action([310, 697], () => page.keyboard.press("Escape"));
-  await action([730, 1517], () => page.keyboard.press("ArrowDown"));
-  await action([310, 697], () => page.locator("#quit").tap());
+  await action(["confirm"], () => page.locator("#pause-music").tap());
+  await action(["back"], () => page.keyboard.press("Escape"));
+  await action(["move"], () => page.keyboard.press("ArrowDown"));
+  await action(["back"], () => page.locator("#quit").tap());
   assert.deepEqual(
     await page.evaluate(() => [
       localStorage.getItem("nv-records"),
@@ -245,6 +256,7 @@ try {
     storage,
   );
   assert.deepEqual(errors, []);
+  console.log("Realtime menu peaks:", levels);
   console.log(
     "Menu audio PASS: gesture-unlocked PCM; keyboard/gamepad/touch; no-op/hover; transitions/dialog/pause; zero volume; records unchanged",
   );
