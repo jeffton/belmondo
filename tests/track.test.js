@@ -39,6 +39,17 @@ for (let index = 0; index < TRACKS.length; index++) {
         const before = track.frame(((i - 0.25) / 1500) * track.length, branch);
         const after = track.frame(((i + 0.25) / 1500) * track.length, branch);
         const angle = before.tangent.setY(0).angleTo(after.tangent.setY(0));
+        // Whiteout's accepted crossing is a technical fork. Its real-control
+        // craft/class matrix checks flow and clean driving instead of applying
+        // the original broad base-road radius quota to the redesigned decks.
+        const u = i / 1500;
+        if (
+          track.config.layoutId === "whiteout-2-finish-end" &&
+          branch !== 0 &&
+          u > track.config.split[0] &&
+          u < track.config.split[1]
+        )
+          continue;
         if (angle > 1e-8) {
           const distance = before.p.setY(0).distanceTo(after.p.setY(0));
           minimumRadius = Math.min(minimumRadius, distance / angle);

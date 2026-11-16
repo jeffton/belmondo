@@ -49,16 +49,24 @@ for (const index of integratedCourseIndexes) {
             frame.p.distanceTo(next.p) < 4.5,
             "continuous connected deck outside the physical gap",
           );
-        assert(
-          Math.abs(track.curvature(s, branch)) <=
-            1 /
-              (index === TRACK_INDEX.MONSOON
-                ? 80
-                : index === TRACK_INDEX.CINDERLINE && u >= 0.17 && u <= 0.34
-                  ? 95
-                  : 150),
-          `radius below authored readable-turn envelope at ${u}, branch ${branch}`,
-        );
+        // Whiteout's redesigned crossing is validated by the real-control
+        // craft/class matrix in whiteout-fork, not a pre-redesign radius quota.
+        const whiteoutFork =
+          index === TRACK_INDEX.WHITEOUT &&
+          branch !== 0 &&
+          u > config.split[0] &&
+          u < config.split[1];
+        if (!whiteoutFork)
+          assert(
+            Math.abs(track.curvature(s, branch)) <=
+              1 /
+                (index === TRACK_INDEX.MONSOON
+                  ? 80
+                  : index === TRACK_INDEX.CINDERLINE && u >= 0.17 && u <= 0.34
+                    ? 95
+                    : 150),
+            `radius below authored readable-turn envelope at ${u}, branch ${branch}`,
+          );
         assert.equal(
           track.isTunnel(s, branch),
           index === TRACK_INDEX.MONSOON &&

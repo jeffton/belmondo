@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
 import { makeTrack, mod, clamp, TRACK_INDEX } from "../src/track.ts";
-import { Race } from "../src/race.ts";
+import { Race, CRAFT } from "../src/race.ts";
 import { createTerrain } from "../src/terrain.ts";
 import { buildNewCourseDistricts } from "../src/new-course-environments.ts";
 import { getTrackPickups } from "../src/pickups.ts";
@@ -129,8 +129,8 @@ test("WHITEOUT: branch-specific grounded landmarks and rewards match the two exp
   materials.forEach((m) => m.dispose());
 });
 
-function cleanLap(speedClass, fork) {
-  const race = new Race(track, 0, "trial", speedClass, terrain);
+function cleanLap(craft, speedClass, fork) {
+  const race = new Race(track, craft, "trial", speedClass, terrain);
   race.countdown = 0;
   const r = race.player;
   let sectorStart = null,
@@ -170,6 +170,9 @@ function cleanLap(speedClass, fork) {
     );
     const cornerSpeed = Math.min(
       Math.sqrt((82 * pace * pace) / Math.max(curvature, 0.0001)),
+      // The wide-line Raptor cannot sustain the Striker's angular speed.
+      // Brake for the craft's real stick yaw budget rather than adding grip.
+      (0.9 * CRAFT[craft].handling * pace) / Math.max(curvature, 0.0001),
       Math.sqrt((25 * pace * pace) / Math.max(crest, 0.0001)),
     );
     // Ordinary player controls; no AI identity, body teleport or route lock.
@@ -177,7 +180,11 @@ function cleanLap(speedClass, fork) {
       1 / 120,
       pilotInputs({
         throttle: r.speed < cornerSpeed && Math.abs(error) < 0.7,
-        steer: clamp(error * 2.5 - (r.yawRate * 0.25) / pace, -1, 1),
+        steer: clamp(
+          (error * 2.5 - (r.yawRate * 0.25) / pace) / CRAFT[craft].handling,
+          -1,
+          1,
+        ),
         air: clamp(error * 0.8, -1, 1),
         slowing: Math.max(
           clamp((r.speed - cornerSpeed) / (30 * pace), 0, 1),
@@ -210,18 +217,20 @@ function cleanLap(speedClass, fork) {
   return { lap: race.time, fork: sectorEnd - sectorStart };
 }
 
-for (const speedClass of [0, 2]) {
-  test(`WHITEOUT: C${speedClass + 1} real-control clean times for both distinct routes`, (t) => {
-    const ridge = cleanLap(speedClass, -1);
-    const cut = cleanLap(speedClass, 1);
-    t.diagnostic(
-      JSON.stringify({ ridge, cut, forkRatio: ridge.fork / cut.fork }),
-    );
-    // Visible physical tradeoff, not fake equal lengths or hidden speed forces.
-    assert(track.physicalLengths[-1] < track.physicalLengths[1]);
-    assert(
-      Math.abs(ridge.fork - cut.fork) / Math.min(ridge.fork, cut.fork) < 0.04,
-      "real-control pilot can use both routes competitively without boost compensation",
-    );
-  });
+for (const craft of [0, 1, 2]) {
+  for (const speedClass of [0, 1, 2]) {
+    test(`WHITEOUT: ${CRAFT[craft].name} C${speedClass + 1} real-control clean times for both distinct routes`, (t) => {
+      const ridge = cleanLap(craft, speedClass, -1);
+      const cut = cleanLap(craft, speedClass, 1);
+      t.diagnostic(
+        JSON.stringify({ ridge, cut, forkRatio: ridge.fork / cut.fork }),
+      );
+      // Visible physical tradeoff, not fake equal lengths or hidden speed forces.
+      assert(track.physicalLengths[-1] < track.physicalLengths[1]);
+      assert(
+        Math.abs(ridge.fork - cut.fork) / Math.min(ridge.fork, cut.fork) < 0.04,
+        "real-control pilot can use both routes competitively without boost compensation",
+      );
+    });
+  }
 }
