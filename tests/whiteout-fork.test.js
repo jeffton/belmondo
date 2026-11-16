@@ -15,22 +15,29 @@ after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 const hash = (value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-test("WHITEOUT: public spiral, base deck and existing fork stations are preserved", () => {
+test("WHITEOUT: public spiral, base alignment and existing fork stations are preserved", () => {
   assert.equal(track.config.layoutId, "whiteout-2-finish-end");
   assert.deepEqual(track.config.split, [0.74, 0.87]);
-  // Captured from d026dd3: every authored point and the full unsplit deck,
-  // including the beloved descending basin spiral, not just its section name.
+  // Authored points preserved since d026dd3, including the descending spiral.
   assert.equal(
     hash(track.config.points),
     "b648dcc87bb7ea44566829127f54630603f5103fa42a3cce2846e6f733dc655d",
   );
+  // Exact base-alignment invariant captured from 1529002. Preserve every
+  // sampled center, tangent, width, station and metric plus length/finishS.
+  // Exclude only bank/up/right: the approved physical-distance bank smoothing
+  // changes those orientation fields, not the authored route or gate stations.
   assert.equal(
-    hash(
-      Array.from({ length: 1500 }, (_, i) =>
-        track.frame((i / 1500) * track.length),
-      ),
-    ),
-    "ab50ac3fa3004241767fb709a15c5b9c61b3d0eeda52cd733011499c76822903",
+    hash({
+      length: track.length,
+      finishS: track.finishS,
+      frames: Array.from({ length: 1500 }, (_, i) => {
+        const s = (i / 1500) * track.length;
+        const { p, tangent, u, width, metric } = track.frame(s);
+        return { s, p, tangent, u, width, metric };
+      }),
+    }),
+    "2e40330165d16fa42471a5f13af6135c541a1a16d0f1602014366d243e161295",
   );
 });
 
