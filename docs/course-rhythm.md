@@ -14,6 +14,12 @@ Coast has a compact early waterfront sequence and a longer climbing reversal aft
 
 `coast-3` and `solar-3` isolate records from the previous layouts; existing browser record keys are not migrated or deleted.
 
+## FAULTLINE
+
+The quarry return uses linked direction changes after its landing apron, through the conveyor crossing and on the reclaimed climb. The final fork curves establish different launch preparations: a lower compression and climb in BORE, an upper crest and descent on BENCH. The opening and ballistic runway remain fixed. Substantial physical deck displacement, not cosmetic roadside obstacles, creates the corner sequences.
+
+The reference principle is acceleration → preparation → linked corners → release. [Mega Mall's guide](https://wipeout.fandom.com/wiki/Mega_Mall) describes sacrificing one corner's exit to prepare for the following reversal; [Gare d’Europa's guide](https://www.neoseeker.com/wipeout-2097/faqs/142255-walkthrough.html) alternates fast stretches with technical combinations and elevation. These are design references, not copied layouts or claims that the original games share BELMONDO's physics. The earlier research used written guides; its linked videos were not analysed.
+
 ## Acceptance
 
 CPU tests cover opposite steering demand, actual surface displacement, preserved finish/jump geometry, jump-marking clearance, the existing all-route radius guard, real AI through forks in all classes, all craft/pitch/class jumps, terrain sweeps, tunnel roof clearance and Night's crossing levels.

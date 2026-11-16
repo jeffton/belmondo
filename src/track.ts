@@ -965,7 +965,15 @@ export function roadBounds(
     leftInner.clone().sub(rightInner).dot(axis) >= 0 &&
     Math.abs(leftInner.y - rightInner.y) <= 0.05;
   if (!result.connected) {
-    if (!seamRegion) return result;
+    const independentQuarry =
+      track.config.biome === "quarry" &&
+      track.config.fork?.authored &&
+      f.u >= track.config.fork.authored.start &&
+      f.u <= track.config.fork.authored.end;
+    // These independent decks can overlap in the reference alignment's XZ
+    // projection while remaining far apart in 3D. Only their coplanar necks
+    // share a taper; the separated BORE/BENCH roads keep complete barriers.
+    if (!seamRegion || independentQuarry) return result;
     const gap = Math.max(0, rightInner.clone().sub(leftInner).dot(axis));
     const slope = RAIL_PROFILE.topOutset / RAIL_PROFILE.height;
     const expansion =

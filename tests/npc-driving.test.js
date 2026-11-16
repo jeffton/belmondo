@@ -72,7 +72,10 @@ for (let course = 0; course < TRACKS.length; course++) {
             racer.aiFire = Infinity;
             let walls = 0;
             let splitFrames = 0;
-            for (let step = 0; step < 120 * 150 && racer.lap < 2; step++) {
+            // FAULTLINE's linked turns add 5% physical distance; the slowest
+            // C1 craft completes a clean lap in ~152 s (previously ~144 s).
+            const horizon = course === TRACK_INDEX.FAULTLINE ? 160 : 150;
+            for (let step = 0; step < 120 * horizon && racer.lap < 2; step++) {
               race.update(1 / 120, {});
               walls += Number(racer.wallTouched);
               assert.equal(
@@ -95,7 +98,7 @@ for (let course = 0; course < TRACKS.length; course++) {
             assert.equal(
               racer.lap,
               2,
-              "earns a physical lap within 150 seconds",
+              `earns a physical lap within ${horizon} seconds`,
             );
             assert.equal(walls, 0, "does not ride either rail");
             if (track.config.split[0] >= 0)

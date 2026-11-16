@@ -185,6 +185,38 @@ test("FAULTLINE independent spline necks clear neighboring full-width road and r
   }
 });
 
+test("FAULTLINE separated BORE/BENCH decks retain complete visible collision rails", () => {
+  const track = makeTrack(TRACK_INDEX.FAULTLINE);
+  const { start, end } = track.config.fork.authored;
+  for (let i = 0; i <= 600; i++) {
+    const s = (start + ((end - start) * i) / 600) * track.length;
+    for (const branch of [-1, 1]) {
+      const frame = track.frame(s, branch);
+      const bounds = track.bounds(s, branch);
+      assert.equal(
+        bounds.connected,
+        false,
+        "no lane changes between independent decks",
+      );
+      assert.equal(bounds.railMinHeight, RAIL_PROFILE.height);
+      assert.equal(bounds.railMaxHeight, RAIL_PROFILE.height);
+      for (const side of [-1, 1]) {
+        const point = railPoint(
+          { ...frame, ...bounds, branch },
+          side * frame.width,
+          side,
+          RAIL_PROFILE.height,
+        );
+        assert(
+          Math.abs(point.sub(frame.p).dot(frame.up) - RAIL_PROFILE.height) <
+            1e-8,
+          "rendered rail face matches the full collision height",
+        );
+      }
+    }
+  }
+});
+
 test("joined fork halves have a level seam and expose common visual/physical bounds", () => {
   for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index),

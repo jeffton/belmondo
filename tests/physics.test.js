@@ -702,10 +702,10 @@ for (const index of Object.values(TRACK_INDEX)) {
     // Locomotion must earn ordered gates; armed-pack survival is tested separately.
     // A permanent combat elimination must not fail this driving-only test.
     for (const racer of race.racers) racer.aiFire = Infinity;
-    // The quarry's 16.6 km physical route already takes >105 s at the
-    // slowest hull's ideal C1 cruise, before grid acceleration and corners.
-    // It shares the 150 s lap horizon used by the terrain driving matrix.
-    const seconds = index === TRACK_INDEX.FAULTLINE ? 150 : 100;
+    // FAULTLINE's linked turns add 5% physical distance; its slowest C1
+    // craft needs ~152 s, before any pack-contact delay. Keep the horizon
+    // aligned with the terrain driving matrix, without bypassing gates.
+    const seconds = index === TRACK_INDEX.FAULTLINE ? 160 : 100;
     drive(race, seconds, { ...neutral, throttle: false });
     for (const r of race.racers.slice(1)) {
       assert(

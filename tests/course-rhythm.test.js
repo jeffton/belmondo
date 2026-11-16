@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
-// V4's bends are authored in the control polygon, not the removed additive
-// rhythm displacement. Measure the real connected counterturn sectors.
+// V4's bends are authored in the control polygon. Measure the real connected
+// counterturn sectors, independently of how each course authors its deck.
 for (const [index, range] of [
   [TRACK_INDEX.COAST, [0.53, 0.69]],
   [TRACK_INDEX.SOLAR, [0.77, 0.94]],
@@ -66,3 +66,51 @@ for (const [index, range] of [
     }
   });
 }
+
+test("FAULTLINE extraction shelves require substantial linked counterturns", () => {
+  const track = makeTrack(TRACK_INDEX.FAULTLINE);
+  const turns = [];
+  let previous, turn;
+  for (let s = 0.52 * track.length; s < 0.91 * track.length; s += 8) {
+    const frame = track.frame(s);
+    if (previous) {
+      const angle = Math.atan2(
+        previous.tangent.z * frame.tangent.x -
+          previous.tangent.x * frame.tangent.z,
+        previous.tangent.x * frame.tangent.x +
+          previous.tangent.z * frame.tangent.z,
+      );
+      const sign =
+        Math.abs(angle / previous.p.distanceTo(frame.p)) > 1 / 700
+          ? Math.sign(angle)
+          : 0;
+      if (sign && sign !== turn?.sign) {
+        turn = { sign, angle: 0, points: [previous.p] };
+        turns.push(turn);
+      }
+      if (turn) {
+        turn.angle += angle;
+        turn.points.push(frame.p);
+      }
+    }
+    previous = frame;
+  }
+  const substantial = turns.filter(({ angle, points }) => {
+    const start = points[0];
+    const chord = points.at(-1).clone().sub(start).setY(0).normalize();
+    const deviation = Math.max(
+      ...points.map((point) =>
+        point.clone().sub(start).setY(0).cross(chord).length(),
+      ),
+    );
+    // A straight racing line cannot erase bends wider than the entire deck.
+    return Math.abs(angle) > Math.PI / 8 && deviation > 2 * track.config.width;
+  });
+  let reversals = 0;
+  for (let i = 1; i < substantial.length; i++)
+    if (substantial[i].sign !== substantial[i - 1].sign) reversals++;
+  assert(
+    reversals >= 3,
+    "linked corners require repeated, unavoidable countersteering",
+  );
+});

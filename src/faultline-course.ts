@@ -59,6 +59,14 @@ export const FAULTLINE_COURSE: TrackConfig = {
     [0.255, 0.285, 0.01],
     [0.49, 0.92, 0.025],
   ],
+  // Station-anchored deck alignment preserves the approved opening, fork
+  // necks and ballistic receiving straight. These are hundreds of world units
+  // of actual road displacement, not steering assistance or wider lines.
+  rhythm: [
+    { start: 0.52, end: 0.65, offset: -470 },
+    { start: 0.68, end: 0.81, offset: -320 },
+    { start: 0.81, end: 0.91, offset: 240 },
+  ],
   ramp: { start: 0.38, height: 60, length: 0.03, profile: "arc" },
   jump: 0.41,
   gapLength: 0.0143,
@@ -75,12 +83,12 @@ export const FAULTLINE_COURSE: TrackConfig = {
         [
           [-1800, 170, 1450],
           [-2420, 120, 1100],
-          [-2100, 200, 300],
+          [-2100, 160, 0],
         ],
         [
           [-1900, 410, 1250],
           [-2450, 380, 600],
-          [-1950, 250, 100],
+          [-1950, 300, -200],
         ],
       ],
     },
