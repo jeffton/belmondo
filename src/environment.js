@@ -4,6 +4,7 @@ import { buildForkEnvironments } from "./fork-environments.js";
 import { buildCourseGeography } from "./course-geography.js";
 import { newCourseRecipe } from "./new-course-recipes.js";
 import { buildNewTerrainSurface } from "./new-course-environments.js";
+import { mineralGroundTexture } from "./mineral-ground-texture.js";
 
 const SEA_LEVEL = -16;
 
@@ -30,28 +31,17 @@ export function buildEnvironment(scene, track, textures, preparedTerrain) {
   const metal = material(harbor ? 0x365d88 : 0x4e8b96, textures.facade);
   const paint = material(track.config.color, textures.paint);
   const vegetated = !desert && !harbor;
-  const pixels = new Uint8Array(64 * 64 * 4);
-  for (let y = 0; y < 64; y++)
-    for (let x = 0; x < 64; x++) {
-      const u = (x / 64) * Math.PI * 2;
-      const v = (y / 64) * Math.PI * 2;
-      const fold = Math.sin(u + Math.sin(v) * 0.7);
-      const basin = Math.cos(v + Math.sin(u) * 0.5);
-      // Authored mineral beds and wet/dry masses, not per-pixel gravel.
-      const stratum = Math.sin(v * (desert ? 3 : 2) + fold);
-      const value = Math.round(
-        (vegetated ? 222 : 219) +
-          fold * (vegetated ? 16 : 6) +
-          basin * (vegetated ? 14 : 7) -
-          (desert && stratum > 0.92 ? 17 : 0) -
-          (!desert && basin + fold * 0.4 < -0.5 ? (vegetated ? 20 : 8) : 0),
-      );
-      pixels.set([value, value, value, 255], (y * 64 + x) * 4);
-    }
-  const groundMap = new THREE.DataTexture(pixels, 64, 64);
-  groundMap.wrapS = groundMap.wrapT = THREE.RepeatWrapping;
-  groundMap.magFilter = THREE.NearestFilter;
-  groundMap.needsUpdate = true;
+  const groundMap = mineralGroundTexture((_u, v, fold, basin) => {
+    // Authored mineral beds and wet/dry masses, not per-pixel gravel.
+    const stratum = Math.sin(v * (desert ? 3 : 2) + fold);
+    return (
+      (vegetated ? 222 : 219) +
+      fold * (vegetated ? 16 : 6) +
+      basin * (vegetated ? 14 : 7) -
+      (desert && stratum > 0.92 ? 17 : 0) -
+      (!desert && basin + fold * 0.4 < -0.5 ? (vegetated ? 20 : 8) : 0)
+    );
+  });
   const groundMaterial = new THREE.MeshLambertMaterial({
     vertexColors: true,
     map: groundMap,
