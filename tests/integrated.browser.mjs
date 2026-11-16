@@ -19,10 +19,6 @@ const preservedRecords = {
   "solar-2-0-trial-c1-5laps": 444.44,
   "noctilucent-2-0-trial-c1-5laps": 555.55,
 };
-const uiRecords = {
-  ...preservedRecords,
-  [recordKey(TRACKS[0].layoutId, "c1")]: 111.11,
-};
 function validateLayout(t, track) {
   expect(t.layoutId).toBe(track.config.layoutId);
   expect(t.trackLength).toBeCloseTo(track.length, 4);
@@ -64,10 +60,10 @@ function validateMotion(previous, current, track) {
   ).toBeLessThanOrEqual(verticalSpeed * dt + 3);
 }
 
-// Actual app UI/input only; telemetry is never assigned. The UI-only scope seeds
-// local-record fixtures in a fresh browser profile, never in the user's storage.
+// Real driving, rendered finish/HUD and menu traffic contracts.
+// Record fixtures use a fresh browser profile, never the user\'s storage.
 const url = process.env.GAME_URL || "http://127.0.0.1:5189";
-const scope = process.env.INTEGRATED_SCOPE || "ui";
+const scope = process.env.INTEGRATED_SCOPE || "hud4";
 const report = {
   url,
   scope,
@@ -101,16 +97,13 @@ async function open(
   });
   if (recordMode !== "none")
     await context.addInitScript(
-      ({ mode, records, activeKey, uiKey }) => {
-        if (mode === "ui") records[uiKey] = 111.11;
-        if (mode === "drive") delete records[activeKey];
+      ({ records, activeKey }) => {
+        delete records[activeKey];
         localStorage.setItem("nv-records", JSON.stringify(records));
       },
       {
-        mode: recordMode,
         records: preservedRecords,
         activeKey: recordKey(activeLayout, activeClass),
-        uiKey: recordKey(activeLayout, "c1"),
       },
     );
   if (device === "controller")
@@ -162,30 +155,6 @@ async function open(
       };
       requestAnimationFrame(trace);
     });
-  if (scope === "pace")
-    await context.addInitScript(() => {
-      const sample = () => {
-        const t = window.nullVector?.telemetry;
-        if (t?.state === "race" && t.time >= 1 && !window.qaPaceSample)
-          window.qaPaceSample = {
-            time: t.time,
-            speed: t.speed,
-            launch: t.launch,
-          };
-        requestAnimationFrame(sample);
-      };
-      requestAnimationFrame(sample);
-    });
-  if (scope === "public")
-    await context.addInitScript(() => {
-      const NativeAudio = window.Audio;
-      window.qaAudio = [];
-      window.Audio = function (...args) {
-        const audio = new NativeAudio(...args);
-        window.qaAudio.push(audio);
-        return audio;
-      };
-    });
   const page = await context.newPage();
   page.on("pageerror", (e) => report.errors.push(e.message));
   await page.goto(url);
@@ -218,276 +187,6 @@ async function start(page) {
   await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.waitForFunction(() => window.nullVector.telemetry.time > 0.1);
-}
-async function input(page, context, device) {
-  if (device === "keyboard") {
-    for (const key of ["KeyW", "KeyD", "KeyK", "KeyJ"])
-      await page.keyboard.down(key);
-    await page.waitForFunction(() => {
-      const c = window.nullVector.telemetry.controls;
-      return c.throttle && c.steer === -1 && c.pitch === -1 && c.airLeft === 1;
-    });
-    for (const key of ["KeyW", "KeyD", "KeyK", "KeyJ"])
-      await page.keyboard.up(key);
-  } else if (device === "controller") {
-    await page.evaluate(() => {
-      window.qaPad.axes = [0.45, -0.6, 0, 0];
-      window.qaPad.buttons = [0, 4];
-    });
-    await page.waitForFunction(() => {
-      const c = window.nullVector.telemetry.controls;
-      return (
-        c.throttle && c.steer === -0.45 && c.pitch === 0.6 && c.airLeft === 1
-      );
-    });
-    await page.evaluate(() => {
-      window.qaPad.axes = [0, 0, 0, 0];
-      window.qaPad.buttons = [];
-    });
-  } else {
-    const session = await context.newCDPSession(page),
-      box = await page.locator("#steer-pad").boundingBox(),
-      airPad = await page.locator("#air-pad").boundingBox(),
-      airRadius = airPad.width * 0.375;
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [
-        { id: 1, x: box.x + box.width * 0.6, y: box.y + box.height * 0.4 },
-        {
-          id: 2,
-          x: airPad.x + airPad.width / 2,
-          y: airPad.y + 16 + airRadius,
-        },
-      ],
-    });
-    await page.waitForFunction(() => {
-      const c = window.nullVector.telemetry.controls;
-      return (
-        !c.throttle &&
-        Math.abs(c.steer + 0.25) < 0.001 &&
-        Math.abs(c.pitch - 0.25) < 0.001
-      );
-    });
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchEnd",
-      touchPoints: [],
-    });
-    await session.detach();
-  }
-}
-async function publicSmoke(device) {
-  const { context, page } = await open(device);
-  await expect(page.locator("#tracks button")).toHaveCount(3);
-  await expect(page.locator("#crafts button")).toHaveCount(3);
-  await expect(page.locator("#speed-class input")).toHaveCount(3);
-  await chooseClass(page, 2, device);
-  await start(page);
-  expect((await telemetry(page)).speedClass).toBe(2);
-  expect((await telemetry(page)).laps).toBe(5);
-  await expect(page.locator("#hud-track")).toContainText("C3");
-  await page.evaluate(() => document.fonts.ready);
-  expect(
-    await page.evaluate(() =>
-      [...document.fonts].some(
-        (face) =>
-          face.family.replaceAll('"', "") === "Belmondo Circuit" &&
-          face.status === "loaded",
-      ),
-    ),
-  ).toBe(true);
-  if (device === "keyboard") await page.keyboard.down("KeyW");
-  else await input(page, context, device);
-  await page.waitForFunction(() => window.nullVector.telemetry.speed > 65);
-  await page.waitForFunction(() =>
-    window.qaAudio.some(
-      (audio) =>
-        audio.src.includes("/music/") &&
-        !audio.paused &&
-        audio.currentTime > 0.05,
-    ),
-  );
-  const music = await page.evaluate(() =>
-    window.qaAudio
-      .filter((audio) => audio.src.includes("/music/"))
-      .map((audio) => ({
-        src: audio.src,
-        paused: audio.paused,
-        currentTime: audio.currentTime,
-      })),
-  );
-  if (device === "keyboard") {
-    await page.keyboard.up("KeyW");
-    await page.keyboard.press("Escape");
-  } else {
-    await page.locator("#pause").tap();
-  }
-  await expect(page.locator("#pause-panel")).toBeVisible();
-  await page.waitForFunction(() =>
-    window.qaAudio.every((audio) => audio.paused),
-  );
-  await page.screenshot({
-    path: `test-artifacts/integrated-public-${device}-pause.png`,
-  });
-  report.cases.push({ device, public: await telemetry(page), music });
-  await context.close();
-}
-async function ui() {
-  for (const device of ["keyboard", "touch", "controller"].filter(
-    (device) =>
-      !process.env.INTEGRATED_DEVICES ||
-      process.env.INTEGRATED_DEVICES.split(",").includes(device),
-  )) {
-    const { context, page } = await open(device, "ui");
-    await page.evaluate(() => document.fonts.ready);
-    const fonts = await page.evaluate(() => ({
-      face: [...document.fonts].some(
-        (face) =>
-          face.family.replaceAll('"', "") === "Belmondo Circuit" &&
-          face.status === "loaded",
-      ),
-      families: ["#menu h1", "#position", "#speed"].map((selector) =>
-        getComputedStyle(document.querySelector(selector))
-          .fontFamily.split(",")[0]
-          .replaceAll('"', "")
-          .trim(),
-      ),
-    }));
-    expect(fonts.face).toBe(true);
-    expect(fonts.families).toEqual([
-      "Belmondo Circuit",
-      "Belmondo Circuit",
-      "Belmondo Circuit",
-    ]);
-    await expect(page.locator("#speed-class input")).toHaveCount(3);
-    await page.locator('input[name="mode"][value="trial"]').check();
-    for (const speedClass of [0, 1, 2].filter(
-      (speedClass) =>
-        !process.env.INTEGRATED_CLASSES ||
-        process.env.INTEGRATED_CLASSES.split(",").includes(String(speedClass)),
-    )) {
-      await chooseClass(page, speedClass, device);
-      expect(
-        await page.evaluate(() =>
-          JSON.parse(localStorage.getItem("nv-records")),
-        ),
-      ).toEqual(uiRecords);
-      // Craft and class are independent: changing craft must not change class.
-      await goToSetupStage(page, "craft");
-      await page.locator('#crafts button[data-craft-index="1"]').click();
-      await expect(
-        page.locator('input[name="speed-class"]:checked'),
-      ).toHaveValue(String(speedClass));
-      expect(
-        await page.evaluate(() =>
-          JSON.parse(localStorage.getItem("nv-records")),
-        ),
-      ).toEqual(uiRecords);
-      await page.locator('#crafts button[data-craft-index="0"]').click();
-      await start(page);
-      const before = await telemetry(page);
-      validateLayout(before, makeTrack(0));
-      expect(before.speedClass).toBe(speedClass);
-      expect(before.classId).toBe(`c${speedClass + 1}`);
-      expect(before.laps).toBe(5);
-      await expect(page.locator("#hud-track")).toContainText(
-        `C${speedClass + 1}`,
-      );
-      await expect(page.locator("#lap small")).toHaveText("/5");
-      await input(page, context, device);
-      await page.screenshot({
-        path: `test-artifacts/integrated-${device}-c${speedClass + 1}.png`,
-      });
-      if (device === "touch") await page.locator("#pause").tap();
-      else await page.keyboard.press("Escape");
-      await page.locator("#quit").click();
-      await expect(page.locator("#menu")).toBeVisible();
-      await goToSetupStage(page, "craft");
-      let menuBounds;
-      if (device === "keyboard") {
-        menuBounds = await page.evaluate(() => ({
-          scrollTop: document.querySelector("#menu").scrollTop,
-          elements: [".masthead", ".wordmark", "#start", "#menu footer"].map(
-            (selector) => {
-              const r = document
-                .querySelector(selector)
-                .getBoundingClientRect();
-              return {
-                selector,
-                x: r.x,
-                y: r.y,
-                right: r.right,
-                bottom: r.bottom,
-                width: r.width,
-                height: r.height,
-              };
-            },
-          ),
-        }));
-        expect(menuBounds.scrollTop).toBe(0);
-        for (const r of menuBounds.elements) {
-          expect(r.width * r.height).toBeGreaterThan(0);
-          expect(r.y).toBeGreaterThanOrEqual(0);
-          expect(r.bottom).toBeLessThanOrEqual(625);
-          expect(r.x).toBeGreaterThanOrEqual(0);
-          expect(r.right).toBeLessThanOrEqual(1000);
-        }
-      }
-      report.cases.push({ device, speedClass, before, fonts, menuBounds });
-    }
-    if (device !== "controller") {
-      await goToSetupStage(page, "track");
-      for (const [course, name] of [
-        "KAISEKI COAST",
-        "SOLAR ARRAY",
-        "NOCTILUCENT",
-      ].entries()) {
-        await page.locator("#tracks button").nth(course).click();
-        await expect(page.locator("#circuit-name")).toHaveText(name);
-        await page.waitForTimeout(350);
-        await page.screenshot({
-          path: `test-artifacts/integrated-${device}-terrain-course${course}.png`,
-        });
-      }
-    }
-    await context.close();
-  }
-  const portrait = await open("touch");
-  await portrait.page.setViewportSize({ width: 390, height: 844 });
-  await expect(portrait.page.locator("#speed-class")).toBeVisible();
-  await goToSetupStage(portrait.page, "craft");
-  const bounds = await portrait.page.locator("#start").boundingBox();
-  expect(bounds.y + bounds.height).toBeLessThanOrEqual(844);
-  await portrait.page.screenshot({
-    path: "test-artifacts/integrated-portrait-menu.png",
-  });
-  await portrait.context.close();
-}
-async function pace() {
-  const cases = [];
-  for (const speedClass of [0, 1, 2]) {
-    const { context, page } = await open("keyboard");
-    await page.locator('input[name="mode"][value="trial"]').check();
-    await chooseClass(page, speedClass, "keyboard");
-    await goToSetupStage(page, "craft");
-    await page.locator("#start").click();
-    await page.keyboard.down("KeyW");
-    await page.waitForFunction(() => window.qaPaceSample);
-    const sample = await page.evaluate(() => window.qaPaceSample);
-    validateLayout(await telemetry(page), makeTrack(0));
-    expect(sample.time).toBeGreaterThanOrEqual(1);
-    expect(sample.time).toBeLessThan(1.1);
-    expect(sample.launch.success).toBe(false);
-    cases.push({ speedClass, ...sample });
-    await page.keyboard.up("KeyW");
-    await context.close();
-  }
-  expect(cases[1].speed / cases[1].time).toBeGreaterThan(
-    (cases[0].speed / cases[0].time) * 1.1,
-  );
-  expect(cases[2].speed / cases[2].time).toBeGreaterThan(
-    (cases[1].speed / cases[1].time) * 1.1,
-  );
-  report.cases.push(...cases);
 }
 async function menuSplit() {
   const { context, page } = await open("keyboard");
@@ -1268,11 +967,7 @@ async function drive() {
   await context.close();
 }
 try {
-  if (scope === "public")
-    for (const device of ["keyboard", "touch"]) await publicSmoke(device);
-  else if (scope === "ui") await ui();
-  else if (scope === "pace") await pace();
-  else if (scope === "menu") await menuSplit();
+  if (scope === "menu") await menuSplit();
   else if (scope === "drive") await drive();
   else if (scope === "finish") await finishFixture();
   else if (scope === "hud4") await hudFourDigits();

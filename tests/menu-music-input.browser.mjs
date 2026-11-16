@@ -74,10 +74,14 @@ async function fixture() {
 const playing =
   'musicElements.length === 1 && !musicElements[0].paused && musicElements[0].currentTime > 0.05 && musicContext.state === "running"';
 try {
-  for (const key of ["ArrowRight", "Enter", "Tab"]) {
+  for (const action of ["ArrowRight", "Enter", "Tab", "pointer", "touch"]) {
     const { context, page, evaluate, wait } = await fixture();
     assert.equal(await evaluate("document.activeElement.tagName"), "BODY");
-    await page.keyboard.press(key);
+    if (action === "pointer")
+      await page.locator('input[name="mode"][value="trial"]').click();
+    else if (action === "touch")
+      await page.locator('input[name="mode"][value="trial"]').tap();
+    else await page.keyboard.press(action);
     await wait(playing);
     await evaluate(`window.musicTap = musicContext.createAnalyser();
       const silent = musicContext.createGain(); silent.gain.value = 0;
@@ -150,7 +154,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "PASS strict autoplay: keyboard from body, no synthetic/gamepad-mock unlock, focus resume, single music element, zero volume and explicit pause",
+    "PASS strict autoplay: keyboard from body, pointer and touch, no synthetic/gamepad-mock unlock, focus resume, single music element, zero volume and explicit pause",
   );
 } finally {
   await browser.close();

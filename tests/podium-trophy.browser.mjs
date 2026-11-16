@@ -253,10 +253,20 @@ try {
           requestAnimationFrame(() => requestAnimationFrame(resolve)),
         ),
     );
+    // Select Return to paddock, then confirm; B is deliberately inert.
     await page.evaluate(() => {
-      window.__testPad.buttons[1] = { pressed: true, value: 1 };
+      window.__testPad.buttons[13] = { pressed: true, value: 1 };
     });
-  } else await page.keyboard.press("Escape");
+    await expect(page.locator("#result-quit")).toHaveClass(/menu-cursor/);
+    await page.evaluate(() => {
+      window.__testPad.buttons[13] = { pressed: false, value: 0 };
+      window.__testPad.buttons[0] = { pressed: true, value: 1 };
+    });
+  } else {
+    await page.keyboard.press("ArrowDown");
+    await expect(page.locator("#result-quit")).toHaveClass(/menu-cursor/);
+    await page.keyboard.press("Enter");
+  }
   await page.waitForFunction(
     () =>
       window.nullVector.telemetry.state === "menu" &&

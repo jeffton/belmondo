@@ -242,7 +242,7 @@ try {
   expect(new Set(pauseSizes.map((size) => size.height)).size).toBe(1);
   await page.screenshot({ path: `${output}/${viewport.join("x")}-pause.png` });
   await page.locator("#quit").click();
-  await page.keyboard.press("Escape");
+  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
   await page.keyboard.press("Escape");
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
   await expect(page.locator(".world-caption")).toBeHidden();

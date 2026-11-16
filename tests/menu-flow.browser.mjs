@@ -47,6 +47,15 @@ try {
       TRACKS.map((track) => track.layoutId),
     );
     const page = await context.newPage();
+    const insets =
+      width >= 900
+        ? { top: 0, right: 0, bottom: 0, left: 0 }
+        : height > width
+          ? { top: 59, right: 0, bottom: 34, left: 0 }
+          : { top: 0, right: 47, bottom: 21, left: 47 };
+    await (
+      await context.newCDPSession(page)
+    ).send("Emulation.setSafeAreaInsetsOverride", { insets });
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url);
     await page.waitForFunction(
@@ -132,7 +141,7 @@ try {
       expect(nativePreview.height).toBeGreaterThanOrEqual(
         Math.floor(nativePreview.cssHeight * 0.55),
       );
-      const layout = await page.evaluate(() => {
+      const layout = await page.evaluate((insets) => {
         const menu = document.getElementById("menu");
         const model = document
           .getElementById("menu-model")
@@ -164,15 +173,15 @@ try {
             .filter((e) => {
               const b = e.getBoundingClientRect();
               return (
-                b.left < -1 ||
-                b.top < -1 ||
-                b.right > innerWidth + 1 ||
-                b.bottom > innerHeight + 1
+                b.left < insets.left - 1 ||
+                b.top < insets.top - 1 ||
+                b.right > innerWidth - insets.right + 1 ||
+                b.bottom > innerHeight - insets.bottom + 1
               );
             })
             .map((e) => e.id || e.textContent),
         };
-      });
+      }, insets);
       expect(layout.scroll, JSON.stringify(layout)).toBeLessThanOrEqual(1);
       expect(layout.outside, JSON.stringify(layout)).toEqual([]);
       expect(layout.model.top).toBeGreaterThanOrEqual(0);
@@ -218,8 +227,12 @@ try {
     await page.keyboard.press("Escape");
     await expect(page.locator("#pause-panel")).toBeVisible();
     await page.locator("#quit").click();
-    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");
-    await expect(page.locator("#start")).toBeVisible();
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await expect(page.locator("#tracks button").nth(6)).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.locator("#start")).toBeHidden();
     await page.waitForFunction(
       (s) => window.nullVector.telemetry.menuRacers[0].s !== s,
       landing,
