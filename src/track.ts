@@ -700,13 +700,18 @@ export function makeTrack(index: number): Track {
       );
     }
   }
+  // A full left/right reversal spans 0.36 radians. Spread its triangular
+  // smoothing kernel over at least 0.36 / 0.008 = 45 track-station metres
+  // on each side. Banking tests also check the final composed fade envelope.
+  // The former 12-sample radius (~36 m) let saturated S-bends roll too fast.
+  const bankSmoothingRadius = Math.ceil(0.36 / 0.008 / (length / count));
   for (const frames of Object.values(routes)) {
     const bank = frames.slice(0, count).map((f) => f.bank);
     for (let i = 0; i < count; i++) {
       let value = 0,
         weight = 0;
-      for (let j = -12; j <= 12; j++) {
-        const w = 13 - Math.abs(j);
+      for (let j = -bankSmoothingRadius; j <= bankSmoothingRadius; j++) {
+        const w = bankSmoothingRadius + 1 - Math.abs(j);
         value += bank[mod(i + j, count)]! * w;
         weight += w;
       }

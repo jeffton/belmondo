@@ -11,7 +11,14 @@ function bends(track) {
   const frames = Array.from({ length: 500 }, (_, i) => {
     const s = (i / 500) * track.length;
     return { s, ...track.frame(s) };
-  });
+    // branch 0 is only a reference line between separated fork decks, not a
+    // surface on which the physical rail/hover fixtures can place a racer.
+  }).filter(
+    (f) =>
+      f.u <= track.config.split[0] ||
+      f.u >= track.config.split[1] ||
+      track.bounds(f.s, 0).connected,
+  );
   return [
     frames.reduce((a, b) => (a.bank > b.bank ? a : b)),
     frames.reduce((a, b) => (a.bank < b.bank ? a : b)),
@@ -21,12 +28,13 @@ function bends(track) {
 for (const index of Object.values(TRACK_INDEX)) {
   test(`course ${index}: composed banks are smooth, inward, and absent at connected seams/jumps/start`, () => {
     const track = makeTrack(index);
+    const spacing = 0.25;
     let previous = track.frame(0);
-    for (let s = 1; s < track.length; s += 1) {
+    for (let s = spacing; s < track.length; s += spacing) {
       const f = track.frame(s);
       assert(Math.abs(f.bank) <= 0.18 + 1e-12);
       assert(
-        Math.abs(f.bank - previous.bank) < 0.008,
+        Math.abs(f.bank - previous.bank) < 0.008 * spacing,
         "no roll step between road samples",
       );
       assert(Math.abs(f.up.dot(f.right)) < 1e-10);
@@ -168,6 +176,48 @@ for (const index of Object.values(TRACK_INDEX)) {
       const before = pickupPoint(track, pad, 0, -pad.length, 2.2);
       const after = pickupPoint(track, pad, 0, pad.length, 2.2);
       assert(crossesPickup(track, pad, before, after, pad.branch));
+    }
+  });
+}
+
+for (const [name, index, reversal] of [
+  ["Cinderline", TRACK_INDEX.CINDERLINE, 0.205],
+  ["Vesper", TRACK_INDEX.VESPER, 0.137],
+]) {
+  test(`${name}: driving across the bank reversal preserves hover and visible road support`, () => {
+    const track = makeTrack(index);
+    for (let c = 0; c < SPEED_CLASSES.length; c++) {
+      const race = new Race(track, 0, "trial", c);
+      race.countdown = 0;
+      const p = race.player;
+      const s = reversal * track.length - 25;
+      const f = track.frame(s);
+      p.s = p.contactS = s;
+      p.gate = Math.floor((s / track.length) * 32) + 1;
+      p.position.copy(f.p);
+      p.position.y += 2.2;
+      p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      p.velocity.copy(f.tangent).multiplyScalar(160 * race.classSpec.pace);
+      for (let i = 0; i < 48; i++) {
+        race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
+        assert(p.grounded, "bank reversal must support a moving racer");
+        assert.equal(
+          p.shield,
+          100,
+          "bank transition must not cause rail damage",
+        );
+        assert(!p.wallTouched);
+        const road = projectRoad(track, p.position, p.contactS, p.branch);
+        assert(
+          Math.abs(p.position.y - roadHeight(road, p.position) - 2.2) < 0.5,
+        );
+        const visible = track.frame(road.s, p.branch);
+        assert(road.up.dot(visible.up) > 0.999);
+      }
+      assert(
+        p.contactS > reversal * track.length,
+        "fixture crosses the reversal",
+      );
     }
   });
 }
