@@ -15,14 +15,6 @@ Compared with `8b19e9d`:
 
 The baseline/candidate buffer comparison is saved privately in `/var/tmp/belmondo-solar-mountain-comparison.json`.
 
-## Pending visual acceptance
+## Visual evidence
 
-No browser/GPU inspection or device performance claim is included in CPU acceptance. Run `tests/solar-mountain.browser.mjs` only after central exclusive GPU grant, against separate Vite servers for baseline and candidate:
-
-```sh
-SOLAR_MOUNTAIN_GPU_GRANTED=1 SOURCE_URL=http://127.0.0.1:PORT OUTPUT_DIR=/var/tmp/solar-mountain-before node tests/solar-mountain.browser.mjs
-```
-
-Repeat against the candidate with `OUTPUT_DIR=/var/tmp/solar-mountain-after`. The baseline source is the detached worktree `/var/tmp/belmondo-solar-mountain-baseline` at `8b19e9d`; candidate is `/var/tmp/belmondo-solar-mountain`.
-
-The harness uses actual World/Race rendering at matched physical stations: 180, 70 and 15 m before the tunnel, and 25/180 m inside it. Capture chase and first-person, desktop 1280×800 and mobile-framed 844×390, with the default low-resolution renderer. Inspect the actual tunnel mountain's silhouette, rock depth, open portal and natural faceting. Compare draw calls, triangles, geometry and texture counts from `report.json`. These posed race views are visual fixtures, not native-input driving or physical-device benchmarks.
+CPU acceptance does not establish visual quality or device performance. The historical screenshot harness captured posed views around the tunnel; it had no visual pass/fail oracle and is excluded from the maintained regression suite. `solar-mountain.test.js` retains corridor, portal and grounding checks. Current rendered gameplay is exercised by the browser smoke tests.

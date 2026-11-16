@@ -10,6 +10,6 @@ The model extrudes the circuit-button SVG silhouette, including both open handle
 
 Matrix verified: Combat places 1/2/3/4, Combat elimination, Time Attack finish/elimination; all three classes; 1280×800, 390×844 and 844×390; keyboard, touch and simulated controller; reduced motion. Screenshots are under untracked `test-artifacts/podium/`.
 
-`node tests/podium-trophy-public.browser.mjs` exercises the deployed compiled bundle with the same kind of near-finish fixture, without rebuilding the app or bypassing result/menu handlers. Set `PODIUM_PLACE`, `VIEWPORT` and optionally `GAME_URL`.
+The source-level test owns this result contract. The compiled-bundle probe depended on minifier-specific source rewriting and is excluded from the maintained suite; deployment smoke tests do not claim fixture-driven podium coverage.
 
 Build, formatting and 40 finish/progression unit regressions pass. The complete suite was attempted with a 55-second cap: 542 passed, 35 failed, 28 cancelled; existing geometry/AI/layout hashes and the existing missing-rumble mock fail, with remaining cases cancelled at the time limit. The full suite is not green.
