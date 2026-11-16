@@ -921,9 +921,16 @@ export function makeTrack(index: number): Track {
     );
   }
   function curvature(s: number, branch = 0) {
-    const a = frame(s - 6, branch).tangent,
-      b = frame(s + 6, branch).tangent;
-    return Math.atan2(a.z * b.x - a.x * b.z, a.dot(b)) / 12;
+    const a = frame(s - 6, branch),
+      b = frame(s + 6, branch);
+    // Small-window signed tangent turn per physical metre. Authored alignments
+    // can compress or stretch station spacing independently of world distance.
+    return (
+      Math.atan2(
+        a.tangent.z * b.tangent.x - a.tangent.x * b.tangent.z,
+        a.tangent.dot(b.tangent),
+      ) / a.p.distanceTo(b.p)
+    );
   }
   function isTunnel(s: number, branch = 0) {
     const u = mod(s, length) / length;

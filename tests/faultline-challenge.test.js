@@ -53,6 +53,40 @@ test("FAULTLINE return sustains technical corners rather than isolated curvature
   }
 });
 
+test("curvature reports physical turning radius when authored stations are compressed", () => {
+  for (const u of [0.57, 0.62, 0.67, 0.765, 0.81]) {
+    const s = u * track.length;
+    const a = track.frame(s - 6).p;
+    const b = track.frame(s).p;
+    const c = track.frame(s + 6).p;
+    const ab = b.clone().sub(a).setY(0);
+    const bc = c.clone().sub(b).setY(0);
+    const ac = c.clone().sub(a).setY(0);
+    // Independent three-point circumcircle, using only physical deck positions.
+    const oracle =
+      (2 * Math.abs(ab.x * bc.z - ab.z * bc.x)) /
+      (ab.length() * bc.length() * ac.length());
+    assert(track.frame(s).metric < 0.8, "exercises non-unit station spacing");
+    for (const branch of [-1, 0, 1]) {
+      const signed = track.curvature(s, branch);
+      const reported = Math.abs(signed);
+      assert.equal(
+        Math.sign(signed),
+        Math.sign(ab.z * bc.x - ab.x * bc.z),
+        "retains physical turn direction for either selected fork",
+      );
+      assert(
+        Math.abs(reported / oracle - 1) < 0.02,
+        "AI receives actual physical curvature, not station-rate curvature",
+      );
+      assert(
+        Math.abs(1 / reported - 175) < 7,
+        "the known 175m arc is not reported as a broad sweep",
+      );
+    }
+  }
+});
+
 test("FAULTLINE runtime fork rewards fit the road and leave the flight receiver clear", () => {
   const pads = getTrackPickups(track);
   for (const branch of [-1, 1]) {

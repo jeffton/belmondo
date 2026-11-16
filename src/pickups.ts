@@ -300,11 +300,11 @@ const layouts: Record<string, PickupRecord[]> = {
     [0.55, 0, 5, "weapon", "Outer setup line after the clear receiving apron"],
     [0.655, 0, -6, "weapon", "Lower extraction shelf after the flight runout"],
     [
-      0.745,
+      0.835,
       0,
       -5,
       "boost",
-      "Extraction-corner exit reward before the climbing reversal",
+      "Reclaimed straight release after the final tight climbing corner",
     ],
     [0.81, 0, 8, "weapon", "Reclamation climb outside armament line"],
     [

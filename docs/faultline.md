@@ -10,7 +10,7 @@ BORE and BENCH use independently authored three-dimensional curves, with distinc
 
 After the clear receiving apron, a compact extraction circuit links sustained 175-unit corners, staggered apexes and climbing releases. Technical sections narrow to 19 units; the reclaimed climb opens to 23. Entering a reversal too fast costs the following line, while differential airbraking provides rotation. Tangent-matched joins preserve the receiving straight and home approach. Terrain, banking, projection, scenery and pickups follow the physical deck. Race controls and physics are unchanged.
 
-Both selected routes carry three boost and six weapon pads. Branch rewards are equal; laterally offset weapons invite a different preparation line, and an extraction-exit boost rewards a clean reversal. The ballistic launch and receiving apron remain clear of pickups.
+Both selected routes carry three boost and six weapon pads. Branch rewards are equal; laterally offset weapons invite a different preparation line, and a reclaimed-climb boost rewards the exit from the technical sequence. The ballistic launch and receiving apron remain clear of pickups.
 
 Recovery distinguishes forward airborne travel inside the receiving straight from lost racers. Sideways loss, stalling, reversal, passing the receiving straight and falling below the road retain recovery. Post-finish presentation does not alter the frozen race result.
 
