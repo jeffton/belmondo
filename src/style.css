@@ -2935,4 +2935,9 @@ body[data-input-mode="touch"] #menu .setup-navigation button:active {
     left: 65%;
     right: max(2%, env(safe-area-inset-right));
   }
+  #craft-stats .craft-stat dt {
+    font-size: 8px;
+    line-height: 10px;
+    letter-spacing: 0;
+  }
 }
