@@ -1,30 +1,27 @@
 # FAULTLINE
 
-Fifth circuit: an excavated green highland, with pale quarry benches, a western mineral-transfer hall, a cross-pit jump, low extraction shelves and a planted reclamation climb. Nine working districts, haul lanes, a bucket-wheel excavator and a separate elevated conveyor give the excavation a readable scale. The circuit has no fork.
+Fifth circuit: a reclaimed highland megaquarry. The upper-rim esses lead to two independent alignments: the elevated **BENCH**, exposed above the excavation, and the descending **BORE**, enclosed by copper-coloured mineral walls. A shared launch crosses the central pit. Lower extraction shelves weave beneath the high approach before climbing through the reclaimed uplands.
 
 ## Driving
 
-The physical ramp rises 60 world units before a 299-unit horizontal opening (about 261 metres at the game's craft scale). A straight, 76-unit-wide receiving apron lies about 81 units below the lip. Pitch and finite TURBO change the ballistic trajectory; no added lift, steering assistance or landing repositioning is applied. Tested flights land before the receiving straight ends, including held nose-down/up across all craft and classes. The outgoing sweep has a sampled minimum physical horizontal radius above 150 world units.
+The physical launch arc begins with zero additional slope and curvature, then progressively steepens into takeoff. Its roughly 253-metre opening retains a broad, lower receiving apron. Craft follow the ordinary ballistic integrator: pitch and finite TURBO affect flight, but neither added lift, steering assistance nor landing repositioning is applied. The mandatory flight does not require TURBO or a boost pad.
 
-Two optional boosts and four weapon sockets sit outside the jump corridor. The mandatory flight does not require either boost or TURBO.
+BORE and BENCH use independently authored three-dimensional curves, with distinct elevation and corner profiles. Connected entry and exit decks permit lane selection before separation. Weapon rewards are equal on both routes. Three grade-separated crossings weave the lower return beneath earlier sections of the circuit.
 
-Recovery distinguishes forward airborne travel inside an authored receiving straight from lost racers. Horizontal velocity and displacement must both point forward. Sideways loss, stalling, reversal, passing the receiving straight and falling below the road retain recovery. Presentation-only post-finish motion interpolates continuously across missing decks; it does not alter the frozen race result.
+Recovery distinguishes forward airborne travel inside the receiving straight from lost racers. Sideways loss, stalling, reversal, passing the receiving straight and falling below the road retain recovery. Post-finish presentation does not alter the frozen race result.
 
-## Identity and environment
+## Landscape
 
-`faultline-1-finish-end` is inserted after Solar Array. The previous seven layout IDs and record keys remain unchanged. Version-1 progression retains its previously unlocked layouts per class without awarding wins or trophies. New progression follows the displayed course order.
+Warm ironstone, chalk, copper and slate bands separate the quarry faces. Grassy benches, highland groves, gorse and rock outcrops break up the reclaimed rim. Turquoise water fills a retained cut beside BENCH and collects in the abandoned sump; the working excavator stands on its dry extraction apron. Orange and teal transfer structures, mineral-bore portals and the large excavator provide course-scale landmarks.
 
-Visible terrain and collision queries share the worker-serialized heightfield. Graded road shelves, district pads and both finish spectator footprints belong to that surface. The missing road remains open over the deep pit. Quarry art is spatially instanced; the other circuits retain their existing environment paths.
+Visible terrain and collision queries share the worker-serialized heightfield. Scenery placement checks both split routes. Spatial instancing groups vegetation and industrial structures for frustum culling.
+
+## Stored data
+
+The stable layout ID is `faultline-1-finish-end`. Records, wins, trophies and previously unlocked circuits remain stored. The changed racing line makes historical FAULTLINE lap times incomparable; the game does not delete them. The previous seven circuits keep their geometry and identifiers.
 
 ## Verification
 
-- Parameterized ballistic tests cover all three craft, all three classes, three held pitch positions and finite TURBO, plus failed-flight recovery boundaries.
-- Full ordered-lap player and eight-ship NPC simulations exercise the production integrator and terrain. Player fixtures supply only ordinary inputs.
-- Existing course, storage, record, camera, advertising, spectator and resource-lifetime contracts cover the expanded registry.
-- Desktop and mobile WebGL captures inspect the approach, flight, receiving apron, transport hall and reclamation landscape. Geometry audits check scenery volumes against the banked racing corridor and worker hydration against direct construction.
+Ballistic tests exercise craft, speed class, pitch, TURBO and failed-flight recovery. Player-control and eight-ship simulations exercise ordered laps, both fork choices, contacts and landings through the production integrator. Geometry checks cover branch lengths, scenery clearance and the grade-separated crossing. Desktop and mobile race-camera captures cover both complete routes, the launch, landing and menu lifecycle.
 
-The Node suite passes 1,118/1,118 cases without skips. Exact frame comparisons preserve the previous seven courses' geometry at 42,000 sampled frames. Nine complete player races cover 36 laps; final eight-ship packs finish all three classes without rail contact or recovery.
-
-At 844×390 LOWRES, five representative views peak at 185,492 rendered triangles and 510 draw calls on FAULTLINE, versus 129,870/290 on Vesper and 84,198/268 on Cinderline. The larger open excavation intentionally costs more scenery than enclosed circuits. Resource-cycle checks retain stable geometry/texture counts when rebuilding the same circuit.
-
-Software-rendered frame timings compare construction and scene cost, not physical-phone FPS. FAULTLINE's farther view retains opponent visibility across the excavation.
+At 844×390 LOWRES, 23 matched chase-camera views average 385 draw calls and 206,000 triangles. FAULTLINE’s 512-unit road batches reduce submissions by 23.5% against 256-unit batches, with 3.4% more triangles; sampled raster output is identical. The other circuits retain their existing batching. At the fork, actual BORE/BENCH views submit 596/661 calls and 310,000/339,000 triangles, versus 223 calls and 114,000 triangles on the unsplit baseline. The larger split vista costs more geometry. Software-rendered timings are not physical-phone FPS.

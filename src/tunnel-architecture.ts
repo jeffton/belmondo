@@ -17,12 +17,12 @@ const PALETTES: Record<
   }
 > = {
   FAULTLINE: {
-    wall: 0xb5b7a5,
-    base: 0x465353,
-    roof: 0x465f5b,
-    pier: 0xced1b8,
-    light: 0xe5f4b1,
-    inset: 0x2e4040,
+    wall: 0xb07c54,
+    base: 0x285d5e,
+    roof: 0x8e9a73,
+    pier: 0xda8b4e,
+    light: 0x8de2d5,
+    inset: 0x304b4c,
     spacing: 30,
     shoulder: 32,
     chamfer: 3,
@@ -115,7 +115,13 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
     } else {
       panel(wall, 4.35, wall, 8.6, palette.wall);
       panel(wall, 8.6, wall, 9.5, palette.inset, "edge");
-      panel(wall, 9.5, wall, shoulder, palette.wall);
+      if (track.config.name === "FAULTLINE") {
+        // Broad exposed mineral seams remain legible through the bore's curves.
+        panel(wall, 9.5, wall, 17, palette.wall);
+        panel(wall, 17, wall, 21, 0x4d8a83);
+        panel(wall, 21, wall, 24, 0xc7b77c);
+        panel(wall, 24, wall, shoulder, palette.wall);
+      } else panel(wall, 9.5, wall, shoulder, palette.wall);
     }
     panel(
       wall,

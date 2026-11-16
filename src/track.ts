@@ -44,12 +44,18 @@ export interface TrackConfig {
   split: StationRange;
   jump: number | null;
   gapLength: number | null;
-  ramp?: { start: number; height: number; length: number } | null;
+  ramp?: {
+    start: number;
+    height: number;
+    length: number;
+    profile?: "arc";
+  } | null;
   tunnel: StationRange | null;
   tunnelBranches?: number[];
   banks?: number[][];
   sections: TrackSections;
   rhythm?: { start: number; end: number; offset: number }[];
+  runwayEntryFade?: number;
   runwayExitFade?: number;
   // World-space distance to the outgoing Bezier control point of the exit sweep.
   runwayExitHandle?: number;
@@ -400,7 +406,7 @@ export function makeTrack(index: number): Track {
         .clone()
         .sub(approachPoint)
         .divideScalar(runwayEnd - runwayStart))!;
-    const runwayFade = 0.07;
+    const runwayFade = config.runwayEntryFade ?? 0.07;
     const runwayExitFade = config.runwayExitFade ?? runwayFade;
     if (runway && u >= runwayStart && u <= runwayEnd) {
       p.copy(approachPoint).lerp(
@@ -516,10 +522,14 @@ export function makeTrack(index: number): Track {
           bend.offset * Math.sin(Math.PI * t) ** 2 * Math.sin(2 * Math.PI * t),
         );
     }
-    if (config.ramp && u >= config.ramp.start && u < config.jump!)
-      p.y +=
-        ((u - config.jump! + config.ramp.length) / config.ramp.length) *
-        config.ramp.height;
+    if (config.ramp && u >= config.ramp.start && u < config.jump!) {
+      const t = (u - config.jump! + config.ramp.length) / config.ramp.length;
+      // The integrated cosine arc joins with zero added slope/curvature,
+      // then progressively rotates into a takeoff slope of 2 * height/length.
+      const rise =
+        config.ramp.profile === "arc" ? t - Math.sin(Math.PI * t) / Math.PI : t;
+      p.y += rise * config.ramp.height;
+    }
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     return { p, tangent, right, up };
   });
@@ -732,15 +742,27 @@ export function makeTrack(index: number): Track {
   }
   function frame(s: number, branch = 0): TrackFrame {
     const frames = routes[branch];
-    const u = mod(s, length) / length;
+    let u = mod(s, length) / length;
+    const atArcLip =
+      config.ramp?.profile === "arc" &&
+      Math.abs(u - config.jump!) <= Number.EPSILON * 4;
+    if (atArcLip) u = config.jump!;
     const n = u * count;
-    const a = frames[Math.floor(n)],
-      b = frames[Math.floor(n) + 1];
-    const p = a.p.clone().lerp(b.p, n % 1);
-    const tangent = a.tangent
-      .clone()
-      .lerp(b.tangent, n % 1)
-      .normalize();
+    const index = atArcLip
+      ? Math.ceil(config.jump! * count) - 1
+      : Math.floor(n);
+    const a = frames[index],
+      b = frames[index + 1];
+    const fraction = atArcLip ? n - index : n % 1;
+    const arcLaunchCell =
+      config.ramp?.profile === "arc" &&
+      u <= config.jump! &&
+      index / count < config.jump! &&
+      (index + 1) / count >= config.jump!;
+    const p = a.p.clone().lerp(b.p, fraction);
+    const tangent = arcLaunchCell
+      ? a.tangent.clone()
+      : a.tangent.clone().lerp(b.tangent, fraction).normalize();
     const right = new THREE.Vector3(tangent.z, 0, -tangent.x).normalize();
     // Composed banking lives only in selected bends, away from forks, ramps
     // and the start/finish. Both signs follow the actual local turn direction.
@@ -759,7 +781,7 @@ export function makeTrack(index: number): Track {
               ? window(0.76, 0.82, 0.02)
               : window(0.48, 0.69, 0.04),
         );
-    const bank = THREE.MathUtils.lerp(a.bank!, b.bank!, n % 1) * envelope;
+    const bank = THREE.MathUtils.lerp(a.bank!, b.bank!, fraction) * envelope;
     right.applyAxisAngle(tangent, -bank);
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     const [start, end] = config.split;
@@ -782,12 +804,12 @@ export function makeTrack(index: number): Track {
     // Do not interpolate the last pre-lip sample down into the absent gap deck.
     if (
       config.jump !== null &&
-      u < config.jump &&
-      (Math.floor(n) + 1) / count >= config.jump
+      (u < config.jump || arcLaunchCell) &&
+      (index + 1) / count >= config.jump
     )
       p.copy(a.p).addScaledVector(
         a.tangent,
-        (u - Math.floor(n) / count) * length * a.metric,
+        (u - index / count) * length * a.metric,
       );
     return {
       p,
@@ -801,7 +823,9 @@ export function makeTrack(index: number): Track {
           ? mainWidth -
             (mainWidth - config.branchWidths[branch === -1 ? 0 : 1]) * narrowing
           : mainWidth,
-      metric: a.metric + (b.metric - a.metric) * (n % 1),
+      metric: arcLaunchCell
+        ? a.metric
+        : a.metric + (b.metric - a.metric) * fraction,
     };
   }
   function gap(u: number) {

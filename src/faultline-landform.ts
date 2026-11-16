@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type { Track } from "./track.ts";
 
 /** The excavation is cut out of a living ridge, not an island in a sea. */
 export const FAULTLINE_PIT = {
@@ -8,6 +9,33 @@ export const FAULTLINE_PIT = {
   radiusZ: 1630,
   floor: -118,
 };
+
+/** Route-authored retained reservoir on the outer BENCH, shared with collision land. */
+export function faultlineFloodedCut(track: Track) {
+  const frame = track.frame(0.29 * track.length, 1);
+  const right = new THREE.Vector3(
+    frame.tangent.z,
+    0,
+    -frame.tangent.x,
+  ).normalize();
+  const forward = new THREE.Vector3(
+    frame.tangent.x,
+    0,
+    frame.tangent.z,
+  ).normalize();
+  const outward = Math.sign(right.x * frame.p.x + right.z * frame.p.z);
+  const center = frame.p
+    .clone()
+    .addScaledVector(right, outward * (frame.width + 115));
+  return {
+    center,
+    right,
+    forward,
+    width: 140,
+    length: 260,
+    water: frame.p.y - 5,
+  };
+}
 
 export function faultlineRadius(x: number, z: number) {
   return Math.hypot(
@@ -46,6 +74,19 @@ export function faultlineLandHeight(x: number, z: number) {
     FAULTLINE_PIT.floor,
     1 - THREE.MathUtils.smoothstep(machineApron, 0.82, 1.15),
   );
+  // Rain collects in the abandoned central cut; the active machine apron stays dry.
+  const sump = Math.hypot((x + 190) / 250, (z + 25) / 220);
+  height = THREE.MathUtils.lerp(
+    height,
+    -151,
+    1 - THREE.MathUtils.smoothstep(sump, 0.65, 1.1),
+  );
+  // Long grassy buttresses break up the outer skyline without erasing the benches.
+  const upland = THREE.MathUtils.smoothstep(r, 0.98, 1.25);
+  height +=
+    upland *
+    (18 * Math.sin(x * 0.006 + z * 0.003) +
+      12 * Math.cos(x * 0.003 - z * 0.008));
   return height;
 }
 
@@ -59,17 +100,27 @@ export function faultlineGroundColor(
   const r = faultlineRadius(x, z);
   const variation =
     Math.sin(x * 0.015 + z * 0.006) * Math.cos(z * 0.019) * 0.025;
-  const reclaimed = z < -1650 || (z < -650 && r > 0.65) || r > 0.955;
-  if (reclaimed && slope < 0.8) {
+  const reclaimed = z < -1650 || (z < -650 && r > 0.65) || r > 0.88;
+  // Moss and grasses recolonise horizontal ledges even inside the working pit.
+  const meadow = reclaimed || (slope < 0.22 && y > -50);
+  if (meadow && slope < 0.8) {
+    const heather = Math.sin(x * 0.007 - z * 0.004) > 0.72;
     color.setHSL(
-      0.27 + 0.025 * Math.sin(z * 0.002),
-      0.32,
-      0.32 + variation + Math.max(0, y - 300) * 0.00018,
+      heather ? 0.205 : 0.285 + 0.025 * Math.sin(z * 0.002),
+      heather ? 0.37 : 0.43,
+      0.34 + variation + Math.max(0, y - 300) * 0.00018,
     );
-  } else if (reclaimed && slope < 1.4) {
-    color.setHSL(0.235, 0.28, 0.41 + variation);
+  } else if (reclaimed && slope < 1.35) {
+    color.setHSL(0.225, 0.38, 0.43 + variation);
   } else {
-    const seam = Math.sin(y * 0.135) > 0.58;
-    color.setHSL(0.115, seam ? 0.13 : 0.18, (seam ? 0.54 : 0.67) + variation);
+    // Faulted strata: warm ironstone, chalk, blue slate and copper-bearing seams.
+    // Broad bands survive the terrain's 23 m vertex grid at racing speed.
+    const stratum =
+      (((y + 0.11 * x + 9 * Math.sin(z * 0.002)) % 128) + 128) % 128;
+    if (stratum < 28) color.setHSL(0.055, 0.43, 0.48 + variation);
+    else if (stratum < 51) color.setHSL(0.105, 0.29, 0.66 + variation);
+    else if (stratum < 78) color.setHSL(0.49, 0.23, 0.4 + variation);
+    else if (stratum < 98) color.setHSL(0.6, 0.16, 0.39 + variation);
+    else color.setHSL(0.125, 0.28, 0.59 + variation);
   }
 }

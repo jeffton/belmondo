@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACKS } from "../src/track.ts";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { railPoint, railBackDepth } from "../src/rail-geometry.ts";
+import { RAIL_PROFILE } from "../src/rail-profile.ts";
 
 test("all courses expose wider main decks and keep both split routes clear", () => {
   for (let index = 0; index < TRACKS.length; index++) {
@@ -57,6 +59,15 @@ for (let index = 0; index < TRACKS.length; index++) {
         // craft/class matrix checks flow and clean driving instead of applying
         // the original broad base-road radius quota to the redesigned decks.
         const u = i / 1500;
+        // Once the fork halves separate, branch 0 is a reference alignment,
+        // not a rendered or driveable carriageway.
+        if (
+          branch === 0 &&
+          u > track.config.split[0] &&
+          u < track.config.split[1] &&
+          !track.bounds(u * track.length, -1).connected
+        )
+          continue;
         if (
           track.config.layoutId === "whiteout-2-finish-end" &&
           branch !== 0 &&
@@ -88,7 +99,18 @@ for (let index = 0; index < TRACKS.length; index++) {
       );
     if (track.config.jump !== null) {
       const launch = track.frame(track.config.jump * track.length);
-      for (const offset of [0.014, 0.03, 0.055, 0.075]) {
+      const landingOffsets =
+        track.config.layoutId === "faultline-1-finish-end"
+          ? [0, 1 / 3, 2 / 3, 1].map(
+              (fraction) =>
+                track.config.gapLength +
+                fraction *
+                  (track.config.sections.runway[1] -
+                    track.config.jump -
+                    track.config.gapLength),
+            )
+          : [0.014, 0.03, 0.055, 0.075];
+      for (const offset of landingOffsets) {
         const landing = track.frame(
           (track.config.jump + offset) * track.length,
         );
@@ -101,6 +123,67 @@ for (let index = 0; index < TRACKS.length; index++) {
     }
   });
 }
+
+test("FAULTLINE arc lip has one physical frame across exact stations and wrapped lap gates", () => {
+  const track = makeTrack(TRACK_INDEX.FAULTLINE);
+  const launchS = track.config.jump * track.length;
+  const before = track.frame(launchS - 1e-6);
+  const gate = Math.round(((launchS - track.finishS) * 32) / track.length);
+  for (let lap = 0; lap <= 5; lap++) {
+    for (const s of [
+      launchS + lap * track.length,
+      track.finishS + ((gate + lap * 32) * track.length) / 32,
+    ]) {
+      const lip = track.frame(s);
+      assert(
+        lip.p.distanceTo(before.p) < 1e-4,
+        "no interpolation into the gap",
+      );
+      assert(lip.tangent.distanceTo(before.tangent) < 1e-9);
+      assert(lip.right.distanceTo(before.right) < 1e-9);
+      assert(lip.up.distanceTo(before.up) < 1e-9);
+    }
+  }
+});
+
+test("FAULTLINE independent spline necks clear neighboring full-width road and rail footprints", () => {
+  const track = makeTrack(TRACK_INDEX.FAULTLINE);
+  const { start, end } = track.config.fork.authored;
+  const offsets = [-track.config.width, 0, track.config.width];
+  for (const u of [start, end]) {
+    for (const leftOffset of offsets) {
+      for (const rightOffset of offsets) {
+        const frames = [-1, 1].map((branch, i) => {
+          const s = u * track.length + [leftOffset, rightOffset][i];
+          return Object.assign(
+            track.frame(s, branch),
+            track.bounds(s, branch),
+            {
+              branch,
+            },
+          );
+        });
+        const [a, b] = frames;
+        const axis = a.right.clone().add(b.right).normalize();
+        const side = Math.sign(b.p.clone().sub(a.p).dot(axis));
+        const caps = frames.map((frame, i) => {
+          const innerSide = i === 0 ? side : -side;
+          return railPoint(
+            frame,
+            innerSide * frame.width,
+            innerSide,
+            RAIL_PROFILE.height,
+            railBackDepth(track, frame, innerSide),
+          );
+        });
+        assert(
+          caps[1].sub(caps[0]).dot(axis) * side > 0,
+          `independent spline neck overlaps adjacent deck/rail at ${u}`,
+        );
+      }
+    }
+  }
+});
 
 test("joined fork halves have a level seam and expose common visual/physical bounds", () => {
   for (let index = 0; index < TRACKS.length; index++) {

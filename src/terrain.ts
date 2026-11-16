@@ -6,6 +6,7 @@ import { getFinishDistrictLayout } from "./finish-district.ts";
 import {
   faultlineLandHeight,
   faultlineGroundColor,
+  faultlineFloodedCut,
 } from "./faultline-landform.ts";
 import {
   newCourseRecipe,
@@ -64,6 +65,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
   assertKnownEnvironment(track);
   const recipe = newCourseRecipe(track);
   const faultline = track.config.name === "FAULTLINE";
+  const floodedCut = faultline ? faultlineFloodedCut(track) : null;
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
   const samples: (TrackFrame & { branch: number })[] = [];
@@ -224,6 +226,19 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     let y = THREE.MathUtils.lerp(base, fill, grade);
     // Higher ground outside the shoulder forms real cuttings, not floating rock walls.
     if (distance > f.width + (faultline ? 95 : 38)) y = Math.max(y, base);
+    if (floodedCut && distance > f.width + 29) {
+      const dx = x - floodedCut.center.x,
+        dz = z - floodedCut.center.z;
+      const across =
+        Math.abs(dx * floodedCut.right.x + dz * floodedCut.right.z) /
+        floodedCut.width;
+      const along =
+        Math.abs(dx * floodedCut.forward.x + dz * floodedCut.forward.z) /
+        floodedCut.length;
+      // A retained working reservoir cut into the high BENCH, not a floating plane.
+      const basin = 1 - smooth(0.79, 1.04, Math.max(across, along));
+      y = THREE.MathUtils.lerp(y, Math.min(y, floodedCut.water - 19), basin);
+    }
     // The outer Coast fork follows a sea cliff, beyond the existing occupied
     // waterfront galleries. The inner fork retains its sheltered rock shelf.
     if (!recipe && !desert && !harbor && f.branch === 1) {

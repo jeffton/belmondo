@@ -26,7 +26,7 @@ Difficulty progression:
 - **Monsoon — 7.5 km:** terraced hydraulic city, a curved dry lock below retained reservoirs and a pump-island fork.
 - **Kaiseki Coast — 5.9 km:** linked waterfront esses, a deep curved headland bore versus a high inlet flyover, and a long ravine jump with an aligned landing straight.
 - **Solar Array — 6.6 km:** alternating outcrop bends, a curved rock-cut tunnel and a split-route corner sequence.
-- **Faultline:** green highland shelves around a vast terraced quarry, a transport hall and a mandatory cross-pit jump onto a wide lower terrace.
+- **Faultline:** highland-rim esses, an exposed quarry-bench fork versus a deep mineral bore, a curved cross-pit launch and low extraction shelves weaving beneath the upper approach.
 - **Cinderline — 8.2 km:** three continuous-deck compression waves, a basalt-gorge S-route versus a broad banked caldera rim, and grounded geothermal works.
 - **Noctilucent — 6.1 km:** grade-separated figure-eight, a 124 m-high crossing and a steep descent into the home straight.
 - **Vesper Circuit:** tight elevated metropolitan turns, tunnels and sustained airbrake demands.

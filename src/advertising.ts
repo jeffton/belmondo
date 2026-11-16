@@ -162,7 +162,7 @@ export function getTrackAdvertisingLayout(track: Track) {
   const campaigns: Record<string, number[][]> = {
     FAULTLINE: [
       [0.12, -1, 7, 56],
-      [0.39, -1, 2, 54],
+      [0.51, 1, 2, 54],
       [0.77, 1, 5, 60],
       [0.87, 1, -1, 48],
     ],

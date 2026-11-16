@@ -588,6 +588,9 @@ export class World {
           quads.push(...tunnelSegment(a, b, track));
       }
     }
+    // The open quarry sees multiple stacked road sectors at once. Larger
+    // render-only cells reduce submissions without merging the whole circuit.
+    const roadChunkSize = faultline ? 512 : 256;
     for (const kind of [
       "road",
       "concrete",
@@ -623,7 +626,7 @@ export class World {
               });
       const chunks = new Map<string, SurfaceQuad[]>();
       for (const q of quads.filter((q) => q.kind === kind)) {
-        const key = `${Math.floor(q.p[0].x / 256)}:${Math.floor(q.p[0].z / 256)}`;
+        const key = `${Math.floor(q.p[0].x / roadChunkSize)}:${Math.floor(q.p[0].z / roadChunkSize)}`;
         if (!chunks.has(key)) chunks.set(key, []);
         chunks.get(key)!.push(q);
       }

@@ -21,14 +21,18 @@ export function buildFaultlineMachinery(
       color: 0x48535a,
       flatShading: true,
     }),
-    hull: new THREE.MeshLambertMaterial({ color: 0xc9c1a8, flatShading: true }),
+    hull: new THREE.MeshLambertMaterial({ color: 0xe3d2a1, flatShading: true }),
     hullShade: new THREE.MeshLambertMaterial({
       color: 0x827f70,
       flatShading: true,
     }),
-    teal: new THREE.MeshLambertMaterial({ color: 0x347d7c, flatShading: true }),
+    teal: new THREE.MeshLambertMaterial({ color: 0x218c86, flatShading: true }),
     tealShade: new THREE.MeshLambertMaterial({
       color: 0x20565a,
+      flatShading: true,
+    }),
+    orange: new THREE.MeshLambertMaterial({
+      color: 0xc66a35,
       flatShading: true,
     }),
     belt: new THREE.MeshLambertMaterial({ color: 0x171f23, flatShading: true }),
@@ -37,7 +41,7 @@ export function buildFaultlineMachinery(
       flatShading: true,
     }),
     tooth: new THREE.MeshLambertMaterial({
-      color: 0xd0a66c,
+      color: 0xeb9b44,
       flatShading: true,
     }),
   };
@@ -154,13 +158,13 @@ export function buildFaultlineMachinery(
   // Rotating platform, operator house, engine deck and the broad counterweight.
   beam(materials.hullShade, -7, 8.2, 0, 34, 3.5, 23);
   beam(materials.teal, -12, 13.0, 0, 31, 6.8, 20);
-  beam(materials.hull, -29, 17.5, 0, 15, 10.5, 22);
+  beam(materials.orange, -29, 17.5, 0, 15, 10.5, 22);
   beam(materials.hullShade, -31, 12.5, 0, 16, 2.0, 23);
   beam(materials.tealShade, -13, 19.1, -5.0, 12, 7.0, 8.6);
   beam(materials.hull, -13, 20.0, -5.0, 9.4, 4.4, 6.1);
   beam(materials.tealShade, -13, 19.8, -1.82, 8.2, 3.7, 0.32);
   beam(materials.hull, -7, 17.2, 4.8, 13, 4.8, 9.3);
-  beam(materials.hullShade, -32.0, 18.0, 0, 2.4, 11.5, 24);
+  beam(materials.orange, -32.0, 18.0, 0, 2.4, 11.5, 24);
   beam(materials.steel, -24.5, 11.0, 0, 2.0, 3.0, 25);
 
   // Long raised truss boom reaching to the toothed wheel; the paired chords and

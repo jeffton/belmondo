@@ -280,8 +280,9 @@ const layouts: Record<string, PickupRecord[]> = {
   ],
   FAULTLINE: [
     [0.075, 0, 0, "weapon", "Accessible upper-rim approach armament"],
-    [0.2, 0, -8, "boost", "Broad rim-shelf exit acceleration"],
-    [0.365, 0, 7, "weapon", "Outside setup before the transport cutting"],
+    [0.16, 0, -8, "boost", "High-rim exit before the independent routes"],
+    [0.28, -1, -6, "weapon", "Deep bore outside armament line"],
+    [0.28, 1, 6, "weapon", "Open bench outside armament line"],
     [0.655, 0, -6, "weapon", "Lower extraction shelf after the flight runout"],
     [0.81, 0, 8, "weapon", "Reclamation climb outside armament line"],
     [
