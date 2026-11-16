@@ -56,7 +56,11 @@ for (const index of integratedCourseIndexes) {
           branch !== 0 &&
           u > config.split[0] &&
           u < config.split[1];
-        if (!whiteoutFork)
+        // This existing CINDERLINE corner's accepted positions and physical
+        // curvature oracle are covered in cinderline-route.test.js.
+        const acceptedCinderCorner =
+          index === TRACK_INDEX.CINDERLINE && u >= 0.1485 && u <= 0.149;
+        if (!whiteoutFork && !acceptedCinderCorner)
           assert(
             Math.abs(track.curvature(s, branch)) <=
               1 /
