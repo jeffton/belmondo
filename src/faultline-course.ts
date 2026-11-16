@@ -62,11 +62,20 @@ export const FAULTLINE_COURSE: TrackConfig = {
   // Station-anchored deck alignment preserves the approved opening, fork
   // necks and ballistic receiving straight. These are hundreds of world units
   // of actual road displacement, not steering assistance or wider lines.
-  rhythm: [
-    { start: 0.52, end: 0.65, offset: -470 },
-    { start: 0.68, end: 0.81, offset: -320 },
-    { start: 0.81, end: 0.91, offset: 240 },
-  ],
+  returnRoute: {
+    start: 0.515,
+    end: 0.94,
+    radius: 175,
+    knots: [
+      [150, 70, -1185],
+      [550, 90, -1800],
+      [-150, 120, -2150],
+      [250, 100, -2650],
+      [-450, 170, -3000],
+      [-750, 220, -2400],
+      [450, 190, -2310],
+    ],
+  },
   ramp: { start: 0.38, height: 60, length: 0.03, profile: "arc" },
   jump: 0.41,
   gapLength: 0.0143,
@@ -81,14 +90,14 @@ export const FAULTLINE_COURSE: TrackConfig = {
       end: 0.345,
       knots: [
         [
-          [-1800, 170, 1450],
-          [-2420, 120, 1100],
-          [-2100, 160, 0],
+          [-1700, 180, 1300],
+          [-1900, 140, 700],
+          [-1700, 190, 50],
         ],
         [
-          [-1900, 410, 1250],
-          [-2450, 380, 600],
-          [-1950, 300, -200],
+          [-1700, 410, 1450],
+          [-1850, 380, 750],
+          [-1550, 300, 0],
         ],
       ],
     },
@@ -98,6 +107,8 @@ export const FAULTLINE_COURSE: TrackConfig = {
   runwayExitHandle: 450,
   widthSections: [
     { start: 0.36, fullStart: 0.38, fullEnd: 0.47, end: 0.5, width: 38 },
+    { start: 0.515, fullStart: 0.54, fullEnd: 0.76, end: 0.8, width: 19 },
+    { start: 0.85, fullStart: 0.875, fullEnd: 0.91, end: 0.94, width: 19 },
   ],
   sections: {
     finishStraight: [0.965, 1.035],

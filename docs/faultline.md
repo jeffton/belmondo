@@ -8,7 +8,9 @@ The physical launch arc begins with zero additional slope and curvature, then pr
 
 BORE and BENCH use independently authored three-dimensional curves, with distinct elevation and corner profiles. BORE compresses into a rising exit; BENCH crests and descends into the shared launch setup. Connected, coplanar entry and exit decks permit lane selection. The separated routes have complete physical and visible barriers: the lower deck is not an alternate landing route. Weapon rewards are equal on both routes.
 
-After the clear receiving apron, three substantial alternating corner sequences interrupt the long quarry sweeps. The descending extraction cut, conveyor crossing and reclaimed climb require successive changes of line rather than one sustained left followed by one sustained right. Terrain, banking, projection, scenery and pickups follow the displaced physical deck. The opening, takeoff, gap and receiving straight retain their geometry; race controls and physics are unchanged.
+After the clear receiving apron, a compact extraction circuit links sustained 175-unit corners, staggered apexes and climbing releases. Technical sections narrow to 19 units; the reclaimed climb opens to 23. Entering a reversal too fast costs the following line, while differential airbraking provides rotation. Tangent-matched joins preserve the receiving straight and home approach. Terrain, banking, projection, scenery and pickups follow the physical deck. Race controls and physics are unchanged.
+
+Both selected routes carry three boost and six weapon pads. Branch rewards are equal; laterally offset weapons invite a different preparation line, and an extraction-exit boost rewards a clean reversal. The ballistic launch and receiving apron remain clear of pickups.
 
 Recovery distinguishes forward airborne travel inside the receiving straight from lost racers. Sideways loss, stalling, reversal, passing the receiving straight and falling below the road retain recovery. Post-finish presentation does not alter the frozen race result.
 
@@ -20,7 +22,7 @@ Visible terrain and collision queries share the worker-serialized heightfield. S
 
 ## Stored data
 
-The stable layout ID is `faultline-1-finish-end`. Records, wins, trophies and previously unlocked circuits remain stored. The changed racing line makes historical FAULTLINE lap times incomparable; the game does not delete them. The previous seven circuits keep their geometry and identifiers.
+The stable layout ID is `faultline-1-finish-end`. Records, wins, trophies and previously unlocked circuits remain stored. The selected physical routes are approximately 24% shorter than the preceding layout, making historical FAULTLINE lap times incomparable; the game does not delete them. The previous seven circuits keep their geometry and identifiers.
 
 ## Verification
 

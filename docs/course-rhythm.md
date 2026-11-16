@@ -16,7 +16,9 @@ Coast has a compact early waterfront sequence and a longer climbing reversal aft
 
 ## FAULTLINE
 
-The quarry return uses linked direction changes after its landing apron, through the conveyor crossing and on the reclaimed climb. The final fork curves establish different launch preparations: a lower compression and climb in BORE, an upper crest and descent on BENCH. The opening and ballistic runway remain fixed. Substantial physical deck displacement, not cosmetic roadside obstacles, creates the corner sequences.
+The quarry return uses compact, tangent-matched straight-and-arc geometry after its landing apron. Sustained 175-unit corners, 19-unit technical decks and wider climbing releases create successive line and speed decisions; the road crosses itself at separate elevations. BORE compresses and climbs into launch preparation, while BENCH crests and descends. The opening and ballistic runway remain fixed. Selected physical lap lengths are approximately 24% shorter than the preceding layout.
+
+Heading reversals alone do not establish driving demand. FAULTLINE acceptance compares identical legal-input feedback steering with and without airbrakes, checks sector contacts and speed, and separately verifies clean expert completion, actual application input, camera readability and both forks. Automated success establishes fairness and control demand, not subjective enjoyment.
 
 The reference principle is acceleration → preparation → linked corners → release. [Mega Mall's guide](https://wipeout.fandom.com/wiki/Mega_Mall) describes sacrificing one corner's exit to prepare for the following reversal; [Gare d’Europa's guide](https://www.neoseeker.com/wipeout-2097/faqs/142255-walkthrough.html) alternates fast stretches with technical combinations and elevation. These are design references, not copied layouts or claims that the original games share BELMONDO's physics. The earlier research used written guides; its linked videos were not analysed.
 

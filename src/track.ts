@@ -55,6 +55,12 @@ export interface TrackConfig {
   banks?: number[][];
   sections: TrackSections;
   rhythm?: { start: number; end: number; offset: number }[];
+  returnRoute?: {
+    start: number;
+    end: number;
+    radius: number;
+    knots: number[][];
+  };
   runwayEntryFade?: number;
   runwayExitFade?: number;
   // World-space distance to the outgoing Bezier control point of the exit sweep.
@@ -533,12 +539,91 @@ export function makeTrack(index: number): Track {
     const up = new THREE.Vector3().crossVectors(tangent, right).normalize();
     return { p, tangent, right, up };
   });
+  const returnRoute = config.returnRoute;
+  if (returnRoute) {
+    const station = (u: number) => {
+      const n = u * count;
+      return base[Math.floor(n)].p.clone().lerp(base[Math.ceil(n)].p, n % 1);
+    };
+    const points = [
+      station(returnRoute.start),
+      ...returnRoute.knots.map((p) => new THREE.Vector3(...p)),
+      station(returnRoute.end),
+    ];
+    // Lock the first/last polygon legs to the retained deck's full 3D
+    // tangents. Guide knots set their lengths, not a new seam direction.
+    for (const [endpoint, guide, u, sign] of [
+      [0, 1, returnRoute.start, 1],
+      [points.length - 1, points.length - 2, returnRoute.end, -1],
+    ]) {
+      const tangent = station(u + 1 / count)
+        .sub(station(u - 1 / count))
+        .normalize();
+      const distance = points[endpoint].distanceTo(points[guide]);
+      points[guide]
+        .copy(points[endpoint])
+        .addScaledVector(tangent, sign * distance);
+    }
+    const path = new THREE.CurvePath<THREE.Vector3>();
+    let previous = points[0];
+    let previousTrim = 0;
+    // Round the control polygon with sustained, physical-radius corners.
+    // Entry/exit handles follow the graded straights, smoothing elevation as
+    // well as heading; the unrounded legs are deliberate acceleration space.
+    for (let i = 1; i < points.length - 1; i++) {
+      const incoming = points[i].clone().sub(points[i - 1]);
+      const outgoing = points[i + 1].clone().sub(points[i]);
+      incoming.divideScalar(Math.hypot(incoming.x, incoming.z));
+      outgoing.divideScalar(Math.hypot(outgoing.x, outgoing.z));
+      const angle = Math.acos(
+        clamp(incoming.x * outgoing.x + incoming.z * outgoing.z, -1, 1),
+      );
+      const trim = returnRoute.radius * Math.tan(angle / 2);
+      const handle = (4 / 3) * returnRoute.radius * Math.tan(angle / 4);
+      const leg = points[i].clone().sub(points[i - 1]);
+      if (previousTrim + trim >= Math.hypot(leg.x, leg.z))
+        throw new Error(`${config.name}: return corners overlap at knot ${i}`);
+      previousTrim = trim;
+      const entry = points[i].clone().addScaledVector(incoming, -trim);
+      const exit = points[i].clone().addScaledVector(outgoing, trim);
+      path.add(new THREE.LineCurve3(previous, entry));
+      path.add(
+        new THREE.CubicBezierCurve3(
+          entry,
+          entry.clone().addScaledVector(incoming, handle),
+          exit.clone().addScaledVector(outgoing, -handle),
+          exit,
+        ),
+      );
+      previous = exit;
+    }
+    const finalLeg = points.at(-1)!.clone().sub(points.at(-2)!);
+    if (previousTrim >= Math.hypot(finalLeg.x, finalLeg.z))
+      throw new Error(
+        `${config.name}: return corner consumes the exit straight`,
+      );
+    path.add(new THREE.LineCurve3(previous, points.at(-1)!));
+    for (
+      let i = Math.ceil(returnRoute.start * count);
+      i <= Math.floor(returnRoute.end * count);
+      i++
+    )
+      base[i].p.copy(
+        path.getPoint(
+          (i / count - returnRoute.start) /
+            (returnRoute.end - returnRoute.start),
+        ),
+      );
+  }
   // Fork offsets must follow the authored deck, including the added bends.
-  if (config.rhythm)
+  if (config.rhythm || returnRoute)
     for (let i = 0; i <= count; i++) {
       const f = base[i];
       const u = i / count;
-      if (!config.rhythm.some((bend) => u > bend.start && u < bend.end))
+      if (
+        !(config.rhythm ?? []).some((bend) => u > bend.start && u < bend.end) &&
+        !(returnRoute && u >= returnRoute.start && u <= returnRoute.end)
+      )
         continue;
       f.tangent = base[(i + 1) % count].p
         .clone()

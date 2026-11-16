@@ -8,7 +8,7 @@ import { getTrackAdvertisingLayout } from "./advertising.ts";
 const SERVICE_SITES: Record<string, [number, number][]> = {
   FAULTLINE: [
     [0.31, -1],
-    [0.76, 1],
+    [0.84, 1],
   ],
   "KAISEKI COAST": [
     [0.16, -1],
