@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { collectCraftResources } from "../src/craft.js";
-import { World } from "../src/world.js";
+import { collectCraftResources } from "../src/craft.ts";
+import { World } from "../src/world.ts";
 
 function attachedResources(scene) {
   const geometries = new Set();

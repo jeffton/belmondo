@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { getTrackAdvertisingLayout } from "../src/advertising.js";
-import { buildRacingInfrastructure } from "../src/racing-infrastructure.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
+import { buildRacingInfrastructure } from "../src/racing-infrastructure.ts";
 
 function emittedTriangles(group) {
   const triangles = [];

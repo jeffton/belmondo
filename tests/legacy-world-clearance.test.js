@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildCity } from "../src/city.js";
-import { buildFinishDistrict } from "../src/finish-district.js";
-import { buildFlagship } from "../src/flagship.js";
-import { getWaterfrontDistricts } from "../src/course-geography.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
+import { buildFinishDistrict } from "../src/finish-district.ts";
+import { buildFlagship } from "../src/flagship.ts";
+import { getWaterfrontDistricts } from "../src/course-geography.ts";
 
 for (const [legacyIndex, index] of [
   TRACK_INDEX.COAST,

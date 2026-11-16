@@ -6,7 +6,7 @@ import {
   recordProgressionResult,
   trackIsUnlocked,
   trackProgress,
-} from "../src/progression.js";
+} from "../src/progression.ts";
 
 const tracks = Array.from({ length: 7 }, (_, index) => ({
   layoutId: `course-${index}`,

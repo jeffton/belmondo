@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { Race, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { steeringBank, updateShipBank } from "../src/ship-bank.js";
-import { gamepadFlightControls } from "../src/gamepad-controls.js";
+import { stripTypeScriptTypes } from "node:module";
+import { Race, SPEED_CLASSES } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { steeringBank, updateShipBank } from "../src/ship-bank.ts";
+import { gamepadFlightControls } from "../src/gamepad-controls.ts";
 
 function trajectory(steer, digital, fps = 120, speedClass = 0) {
   const race = new Race(makeTrack(TRACK_INDEX.COAST), 0, "trial", speedClass);
@@ -81,17 +82,16 @@ test("touch stick and gamepad analog trajectories retain direct yaw-derived hull
 });
 
 test("actual input routing distinguishes keyboard taps from touch/gamepad analog, including release", () => {
-  const source = readFileSync(
-    new URL("../src/main.js", import.meta.url),
-    "utf8",
+  const source = stripTypeScriptTypes(
+    readFileSync(new URL("../src/main.ts", import.meta.url), "utf8"),
   );
   const inputFunction = source.slice(
-    source.indexOf("function input() {"),
+    source.search(/function input\(\)\s*\{/),
     source.indexOf("const mapCtx ="),
   );
   const connectedGamepadFunction = source.slice(
-    source.indexOf("function connectedGamepad() {"),
-    source.indexOf("function pollMenuGamepad() {"),
+    source.search(/function connectedGamepad\(\)\s*\{/),
+    source.search(/function pollMenuGamepad\(\)\s*\{/),
   );
   let pad = null;
   const context = vm.createContext({

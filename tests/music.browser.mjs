@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { soundtrack } from "../src/soundtrack.js";
+import { soundtrack } from "../src/soundtrack.ts";
 import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";

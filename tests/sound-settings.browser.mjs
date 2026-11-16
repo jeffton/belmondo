@@ -29,7 +29,7 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
-    await page.route("**/src/main.js", async (route) => {
+    await page.route("**/src/main.ts", async (route) => {
       const response = await route.fetch();
       await route.fulfill({
         response,

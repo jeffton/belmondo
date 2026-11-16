@@ -40,7 +40,7 @@ try {
     );
     await page.goto(`${source}/__billboards__.html`);
     await page.evaluate(async () => {
-      const code = await (await fetch("/src/world.js")).text();
+      const code = await (await fetch("/src/world.ts")).text();
       const three = code.match(/from\s+["']([^"']*\/three\.js[^"']*)["']/)[1];
       const [
         { World },
@@ -49,10 +49,10 @@ try {
         { getTrackAdvertisingLayout },
         THREE,
       ] = await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
-        import("/src/advertising.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
+        import("/src/advertising.ts"),
         import(three),
       ]);
       window.adQA = {

@@ -2,11 +2,11 @@ import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, mod, TRACK_INDEX } from "../src/track.js";
-import { Race, SPEED_CLASSES } from "../src/race.js";
-import { projectRoad } from "../src/road-projection.js";
-import { solveContacts, hullExtent } from "../src/contacts.js";
-import { railBounds } from "../src/rail-profile.js";
+import { makeTrack, mod, TRACK_INDEX } from "../src/track.ts";
+import { Race, SPEED_CLASSES } from "../src/race.ts";
+import { projectRoad } from "../src/road-projection.ts";
+import { solveContacts, hullExtent } from "../src/contacts.ts";
+import { railBounds } from "../src/rail-profile.ts";
 
 const neutral = { throttle: 1, steer: 0, airLeft: 0, airRight: 0 };
 function circuit({ gap = false, split = false } = {}) {

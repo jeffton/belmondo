@@ -3,11 +3,11 @@ import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { makeTrack, mod, clamp, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildNewCourseDistricts } from "../src/new-course-environments.js";
-import { getTrackPickups } from "../src/pickups.js";
+import { makeTrack, mod, clamp, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildNewCourseDistricts } from "../src/new-course-environments.ts";
+import { getTrackPickups } from "../src/pickups.ts";
 
 const track = makeTrack(TRACK_INDEX.WHITEOUT);
 const terrain = createTerrain(track);

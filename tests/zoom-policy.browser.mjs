@@ -25,7 +25,7 @@ const fixture = `<!doctype html>
 </div>
 <dialog><button id="close">Close</button><div style="height:1200px">Controls help</div></dialog>
 <script type="module">
-  import { installZoomPolicy } from '/src/zoom-policy.js';
+  import { installZoomPolicy } from '/src/zoom-policy.ts';
   window.removeZoomPolicy = installZoomPolicy();
   window.state = { active: [], fire: 0, clicks: 0, moves: 0, touchCanceled: [] };
   document.querySelector('#next').onclick = () => state.clicks++;

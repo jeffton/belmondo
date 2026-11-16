@@ -52,7 +52,7 @@ try {
       await page.addInitScript(() => {
         window.requestAnimationFrame = () => 0;
       });
-      await page.route("**/src/world.js", (route) =>
+      await page.route("**/src/world.ts", (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: `export class World {
@@ -68,7 +68,7 @@ try {
           }`,
         }),
       );
-      await page.route("**/src/course-preparation.js**", (route) =>
+      await page.route("**/src/course-preparation.ts**", (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: `export class CoursePreparation {
@@ -77,7 +77,7 @@ try {
           }`,
         }),
       );
-      await page.route("**/src/menu-preview.js", (route) =>
+      await page.route("**/src/menu-preview.ts", (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: `export class MenuPreview {
@@ -86,7 +86,7 @@ try {
           }`,
         }),
       );
-      await page.route("**/src/audio.js", (route) =>
+      await page.route("**/src/audio.ts", (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: `export class AudioEngine {
@@ -96,7 +96,7 @@ try {
         }),
       );
     }
-    await page.route("**/src/main.js", async (route) => {
+    await page.route("**/src/main.ts", async (route) => {
       const response = await route.fetch();
       await route.fulfill({
         response,

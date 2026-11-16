@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildEnvironment } from "../src/environment.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildEnvironment } from "../src/environment.ts";
 
 const textures = Object.fromEntries(
   ["concrete", "road", "paint", "facade", "edge"].map((name) => [name, null]),

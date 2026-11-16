@@ -1,10 +1,10 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
-import { getJumpMarkingLayout } from "../src/jump-markings.js";
-import { projectRoad } from "../src/road-projection.js";
+import { TRACKS, makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { getJumpMarkingLayout } from "../src/jump-markings.ts";
+import { projectRoad } from "../src/road-projection.ts";
 
 const integratedCourseIndexes = [
   TRACK_INDEX.WHITEOUT,

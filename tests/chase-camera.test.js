@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Vector3 } from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { chaseCameraSurface, clearChaseCamera } from "../src/chase-camera.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { chaseCameraSurface, clearChaseCamera } from "../src/chase-camera.ts";
 
 const up = new Vector3(0, 1, 0);
 

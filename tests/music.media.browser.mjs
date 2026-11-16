@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
-import { soundtrack } from "../src/soundtrack.js";
+import { soundtrack } from "../src/soundtrack.ts";
 
 // Native media integration without constructing a WebGL scene.
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
@@ -15,8 +15,8 @@ try {
     route.fulfill({
       contentType: "text/html",
       body: `<button id="start">Play</button><script type="module">
-        import { MusicPlayer } from '/src/music.js';
-        import { soundtrack } from '/src/soundtrack.js';
+        import { MusicPlayer } from '/src/music.ts';
+        import { soundtrack } from '/src/soundtrack.ts';
         window.player = new MusicPlayer(state => window.musicState = state);
         player.loadTracks(soundtrack, { shuffle: true });
         document.querySelector('button').onclick = () => player.play();
@@ -95,7 +95,7 @@ try {
   await page.evaluate(() => player.next());
   assert.equal(await page.evaluate(() => musicState.name), "second.mp3");
   await page.evaluate(async () => {
-    const { soundtrack } = await import("/src/soundtrack.js");
+    const { soundtrack } = await import("/src/soundtrack.ts");
     player.loadTracks(soundtrack, { shuffle: true });
     await player.play();
   });

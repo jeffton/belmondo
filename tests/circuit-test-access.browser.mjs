@@ -20,7 +20,7 @@ try {
     await page.addInitScript(() => {
       window.requestAnimationFrame = () => 0;
     });
-    await page.route("**/src/world.js", (route) =>
+    await page.route("**/src/world.ts", (route) =>
       route.fulfill({
         contentType: "text/javascript",
         body: `
@@ -34,7 +34,7 @@ try {
       }`,
       }),
     );
-    await page.route("**/src/course-preparation.js*", (route) =>
+    await page.route("**/src/course-preparation.ts*", (route) =>
       route.fulfill({
         contentType: "text/javascript",
         body: "export class CoursePreparation { async load() { return { workerMs: 0 }; } }",
@@ -44,14 +44,14 @@ try {
       ["audio", "AudioEngine"],
       ["music", "MusicPlayer"],
     ]) {
-      await page.route(`**/src/${file}.js`, (route) =>
+      await page.route(`**/src/${file}.ts`, (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: `export class ${name} { constructor() { return new Proxy({audio:{paused:true}}, {get:(o,k)=>k in o?o[k]:(()=>{})}); } }`,
         }),
       );
     }
-    await page.route("**/src/main.js", async (route) => {
+    await page.route("**/src/main.ts", async (route) => {
       const response = await route.fetch();
       await route.fulfill({
         response,

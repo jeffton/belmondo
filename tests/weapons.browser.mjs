@@ -38,17 +38,17 @@ try {
     );
     await page.goto(`${url}/__weapons_fixture__.html`);
     await page.evaluate(async (device) => {
-      const source = await (await fetch("/src/world.js")).text();
+      const source = await (await fetch("/src/world.ts")).text();
       const threeModule = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
       const [{ World }, { Race, CRAFT, WEAPONS }, { makeTrack }, THREE, ui] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
           import(threeModule),
-          import("/src/weapon-ui.js"),
+          import("/src/weapon-ui.ts"),
         ]);
       const html = new DOMParser().parseFromString(
         await (await fetch("/index.html")).text(),
@@ -155,12 +155,12 @@ try {
           });
           document.querySelector("#hud-track").textContent = track.config.name;
         },
-        getTrackPickups: (await import("/src/pickups.js")).getTrackPickups,
+        getTrackPickups: (await import("/src/pickups.ts")).getTrackPickups,
         draw,
         counts,
         updateHUD,
         makeTrack,
-        pickups: (await import("/src/pickups.js")).getTrackPickups(track),
+        pickups: (await import("/src/pickups.ts")).getTrackPickups(track),
       };
       place();
       draw();
@@ -542,7 +542,7 @@ try {
         });
     const coursePads = await page.evaluate(async () => {
       const f = window.fixture;
-      const { buildTrackPads } = await import("/src/track-pads.js");
+      const { buildTrackPads } = await import("/src/track-pads.ts");
       return [0, 1, 2].map((course) => {
         const scene = new f.THREE.Scene();
         buildTrackPads(scene, f.makeTrack(course), f.world.textures);

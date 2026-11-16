@@ -137,15 +137,15 @@ try {
   );
   await page.goto(`${url}/__visibility_fixture__.html`);
   const result = await page.evaluate(async () => {
-    const worldSource = await (await fetch("/src/world.js")).text();
+    const worldSource = await (await fetch("/src/world.ts")).text();
     const threeModule = worldSource.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
       await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
         import(threeModule),
       ]);
     const world = new World(document.querySelector("canvas"));
@@ -420,7 +420,7 @@ try {
   expect(result.initialView).toBe("chase");
   expect(
     requests.some((request) =>
-      /\/(?:src\/main\.js|@vite\/client)/.test(request),
+      /\/(?:src\/main\.ts|@vite\/client)/.test(request),
     ),
   ).toBe(false);
   for (const item of result.cases) {

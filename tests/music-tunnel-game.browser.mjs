@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
-import { TRACKS } from "../src/track.js";
+import { TRACKS } from "../src/track.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Production main-loop integration fixture, not a driving/physics test.
@@ -17,7 +17,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 844, height: 390 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.route("**/src/main.js*", async (route) => {
+  await page.route("**/src/main.ts*", async (route) => {
     const response = await route.fetch();
     const source = await response.text();
     await route.fulfill({

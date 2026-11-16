@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { getTrackPickups } from "../src/pickups.js";
+import { Race, CRAFT, SPEED_CLASSES } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { getTrackPickups } from "../src/pickups.ts";
 
 for (const [index, u] of [
   [TRACK_INDEX.SOLAR, 0.968],

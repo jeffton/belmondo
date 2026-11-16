@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
 import {
   railFacePixels,
   createRailFaceTexture,
   railFaceUV,
   RAIL_FACE_PATTERN,
-} from "../src/rail-face.js";
-import { RAIL_PROFILE } from "../src/rail-profile.js";
+} from "../src/rail-face.ts";
+import { RAIL_PROFILE } from "../src/rail-profile.ts";
 
 function averagePanel(pixels, start, end) {
   const { width, height } = RAIL_FACE_PATTERN;

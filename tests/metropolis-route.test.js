@@ -1,10 +1,10 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { METROPOLIS_COURSE } from "../src/metropolis-course.js";
-import { TRACKS, makeTrack } from "../src/track.js";
-import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
+import { METROPOLIS_COURSE } from "../src/metropolis-course.ts";
+import { TRACKS, makeTrack } from "../src/track.ts";
+import { Race, CRAFT, SPEED_CLASSES } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 function physicalCurvature(track, s, branch) {

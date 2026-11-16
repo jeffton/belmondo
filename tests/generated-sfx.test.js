@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { AudioEngine } from "../src/audio.js";
-import { SFX_CUES } from "../src/generated-sfx.js";
-import { MENU_SOUNDS } from "../src/menu-sound.js";
-import { Race, LAPS_BY_CLASS } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { AudioEngine } from "../src/audio.ts";
+import { SFX_CUES } from "../src/generated-sfx.ts";
+import { MENU_SOUNDS } from "../src/menu-sound.ts";
+import { Race, LAPS_BY_CLASS } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
 globalThis.window = undefined;
 const LAPS = LAPS_BY_CLASS[2];

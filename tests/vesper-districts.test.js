@@ -1,17 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 import {
   buildMetropolis,
   clearsMetropolisRoad,
-} from "../src/metropolis-world.js";
+} from "../src/metropolis-world.ts";
 import {
   buildVesperDistricts,
   overlapsVesperVolume,
   VESPER_DISTRICTS,
-} from "../src/vesper-districts.js";
+} from "../src/vesper-districts.ts";
 
 test("Vesper inhabited districts preserve road, advertising views and complete architectural footprints", () => {
   const track = makeTrack(TRACK_INDEX.VESPER);

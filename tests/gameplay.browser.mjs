@@ -1,7 +1,7 @@
 import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real browser input only: telemetry is read, never assigned; Race.update is never called.

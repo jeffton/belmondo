@@ -1,16 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { Race } from "../src/race.js";
-import { makeTrack } from "../src/track.js";
-import { projectRoad } from "../src/road-projection.js";
+import { Race } from "../src/race.ts";
+import { makeTrack } from "../src/track.ts";
+import { projectRoad } from "../src/road-projection.ts";
 import {
   railBounds,
   railFaceNormal,
   respondToRail,
   RAIL_PROFILE,
-} from "../src/rail-profile.js";
-import { hullExtent, HULL_HEIGHT } from "../src/contacts.js";
+} from "../src/rail-profile.ts";
+import { hullExtent, HULL_HEIGHT } from "../src/contacts.ts";
 
 const controls = { throttle: true, steer: 0, air: 0 };
 function straight() {

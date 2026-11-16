@@ -8,12 +8,12 @@ const output = resolve(
   process.argv[3] || "/var/tmp/coast-divergent-qa/player.json",
 );
 const mode = process.argv[4] || "trial";
-const { makeTrack } = await import(pathToFileURL(join(root, "src/track.js")));
+const { makeTrack } = await import(pathToFileURL(join(root, "src/track.ts")));
 const { Race, CRAFT, SPEED_CLASSES } = await import(
-  pathToFileURL(join(root, "src/race.js"))
+  pathToFileURL(join(root, "src/race.ts"))
 );
 const { createTerrain } = await import(
-  pathToFileURL(join(root, "src/terrain.js"))
+  pathToFileURL(join(root, "src/terrain.ts"))
 );
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 function curvature(track, s, branch) {

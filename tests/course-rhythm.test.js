@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
 // V4's bends are authored in the control polygon, not the removed additive
 // rhythm displacement. Measure the real connected counterturn sectors.

@@ -1,8 +1,8 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, clamp, mod } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { makeTrack, clamp, mod } from "../src/track.ts";
+import { Race } from "../src/race.ts";
 
 // Test driver supplies ordinary controls to player 0. The other seven ships use
 // production AI; IDs, targeting indexes, weapons and hull contacts stay intact.

@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildCity } from "../src/city.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
 import {
   biomeLandHeight,
   NEW_COURSE_RECIPES,
-} from "../src/new-course-recipes.js";
+} from "../src/new-course-recipes.ts";
 
 test("Monsoon rounded uplands do not quantize neighboring samples into twelve-metre cubes", () => {
   const heights = Array.from({ length: 300 }, (_, i) =>

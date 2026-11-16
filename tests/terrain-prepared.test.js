@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 test("transferable terrain hydrates identical buffers and collision queries on every course", () => {
   for (let i = 0; i < TRACKS.length; i++) {

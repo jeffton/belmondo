@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { RAIL_PROFILE, railFaceNormal } from "../src/rail-profile.js";
-import { railPoint, railHeight, railBackDepth } from "../src/rail-geometry.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { RAIL_PROFILE, railFaceNormal } from "../src/rail-profile.ts";
+import { railPoint, railHeight, railBackDepth } from "../src/rail-geometry.ts";
 
 function frameAt(track, u, branch) {
   const f = track.frame(u * track.length, branch);

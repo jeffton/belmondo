@@ -19,13 +19,13 @@ try {
   );
   await page.goto("http://127.0.0.1:5178/__road_mesh_fixture__.html");
   const observations = await page.evaluate(async () => {
-    const source = await (await fetch("/src/world.js")).text();
+    const source = await (await fetch("/src/world.ts")).text();
     const threePath = source.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { makeTrack }, THREE] = await Promise.all([
-      import("/src/world.js"),
-      import("/src/track.js"),
+      import("/src/world.ts"),
+      import("/src/track.ts"),
       import(threePath),
     ]);
     const world = new World(document.querySelector("canvas"));

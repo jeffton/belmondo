@@ -8,7 +8,7 @@ try {
   const page = await browser.newPage();
   await page.goto(url);
   const results = await page.evaluate(async () => {
-    const { AudioEngine } = await import("/src/audio.js");
+    const { AudioEngine } = await import("/src/audio.ts");
     const results = [];
     for (const kind of ["move", "confirm", "back"]) {
       for (const mode of [

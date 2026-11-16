@@ -29,12 +29,12 @@ try {
     );
     await page.goto(`${url}/announcer-qa`);
     await page.evaluate(async () => {
-      const { AudioEngine } = await import("/src/audio.js");
-      const { Race, LAPS_BY_CLASS } = await import("/src/race.js");
+      const { AudioEngine } = await import("/src/audio.ts");
+      const { Race, LAPS_BY_CLASS } = await import("/src/race.ts");
       const lapCount = LAPS_BY_CLASS[2];
       window.lapCount = lapCount;
-      const { makeTrack } = await import("/src/track.js");
-      const { pickupPoint } = await import("/src/pickups.js");
+      const { makeTrack } = await import("/src/track.ts");
+      const { pickupPoint } = await import("/src/pickups.ts");
       window.calls = [];
       const audio = new AudioEngine();
       const play = audio.playSample.bind(audio);

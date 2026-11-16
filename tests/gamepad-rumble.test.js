@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GamepadRumble } from "../src/gamepad-rumble.js";
-import { gamepadFlightControls } from "../src/gamepad-controls.js";
+import { GamepadRumble } from "../src/gamepad-rumble.ts";
+import { gamepadFlightControls } from "../src/gamepad-controls.ts";
 
 function device() {
   const calls = [];

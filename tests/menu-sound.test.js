@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { MENU_SOUNDS } from "../src/menu-sound.js";
-import { AudioEngine } from "../src/audio.js";
+import { MENU_SOUNDS } from "../src/menu-sound.ts";
+import { AudioEngine } from "../src/audio.ts";
 
 test("generated menu files match the selected source provenance", async () => {
   const provenance = JSON.parse(

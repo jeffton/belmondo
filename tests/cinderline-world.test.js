@@ -1,11 +1,11 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { getTrackPickups } from "../src/pickups.js";
-import { getTrackAdvertisingLayout } from "../src/advertising.js";
-import { newCourseRecipe } from "../src/new-course-recipes.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { getTrackPickups } from "../src/pickups.ts";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
+import { newCourseRecipe } from "../src/new-course-recipes.ts";
 
 const track = makeTrack(TRACK_INDEX.CINDERLINE);
 const terrain = createTerrain(track);

@@ -26,10 +26,10 @@ try {
     async ({ index, u }) => {
       const [{ World }, { Race, CRAFT }, { makeTrack }, { getTrackPickups }] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
-          import("/src/pickups.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
+          import("/src/pickups.ts"),
         ]);
       const track = makeTrack(index);
       const race = new Race(track, 0, "race");

@@ -20,9 +20,11 @@ The baseline is `ea3c8d8`. Comparison of type-erased source ASTs found 79 of 84 
 
 Production main JavaScript is 878,340 bytes versus 878,285 baseline (+55); gzip level 9 is 247,709 versus 247,705 (+4). Worker JavaScript is 161,186 versus 161,190 bytes (−4); gzip is 48,830 versus 48,832 (−2). Assets, records and progression formats are unchanged.
 
+Deterministic baseline/candidate simulation compared all seven tracks × three classes × both forks: 42 complete NPC trial races per version, using real terrain and configured 3/4/5 laps. All 1,019,360 fixed steps, 168 laps and 5,376 gate crossings per version match exactly, including unrounded mutable state, events and final clocks. No rail touches or rescues occurred. This single-ship fixture uses one craft per class; combat and the other craft/class combinations remain covered by separate contract tests.
+
 Tests that evaluate source snippets erase TypeScript first. The approved airbrake implementation retains its existing baseline hash after identical JavaScript formatting. Dynamic diagnostic imports and browser mock routes target `.ts` modules.
 
-Node contract tests run in bounded file/course/case shards. Existing baseline failures remain visible rather than changing physics to satisfy them: two banking envelopes, Whiteout's radius, historical Coast NPC fork parity, Solar's connected-seam contact and Cinderline's airborne splitter endpoint.
+Node contract tests run in bounded file/course/case shards. Baseline and candidate have the same 932 unique contracts: 926 pass, the same six fail, and none are incomplete, missing or added. Existing baseline failures remain visible rather than changing physics to satisfy them: two banking envelopes, Whiteout's radius, historical Coast NPC fork parity, Solar's connected-seam contact and Cinderline's airborne splitter endpoint.
 
 Software-WebGL comparison uses production builds, isolated storage and identical Chromium/SwiftShader settings. Matched Coast/class 0 and Cinderline/class 2 runs cover desktop and portrait viewports, with a reverse-order Coast repeat. Shared-host variation reversed the apparent winner between repetitions: these samples show neither a supported regression nor a speedup. They are not physical-phone or hardware-controller benchmarks. Full track/class/lap correctness is checked separately from frame pacing.
 

@@ -17,8 +17,8 @@ try {
       <button id="race">Race/restart</button><button id="menu">Menu/quit</button>
       <button id="next">Next</button><button id="local">Local files</button>
       <button id="ost">OST</button><script type="module">
-        import { MusicPlayer } from '/src/music.js';
-        import { soundtrack } from '/src/soundtrack.js';
+        import { MusicPlayer } from '/src/music.ts';
+        import { soundtrack } from '/src/soundtrack.ts';
         window.player = new MusicPlayer(state => window.musicState = state);
         window.enabled = true;
         window.tracks = soundtrack;

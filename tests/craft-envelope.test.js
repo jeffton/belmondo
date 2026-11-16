@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { createCraft } from "../src/craft.js";
+import { createCraft } from "../src/craft.ts";
 
 test("all solid airframes fit physical contact bounds without degenerate or non-finite faces", (t) => {
   t.mock.method(

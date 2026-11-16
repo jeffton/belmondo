@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
-import { TRACKS } from "../src/track.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { TRACKS } from "../src/track.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";

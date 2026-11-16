@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { halfstickPosition } from "../src/touch-halfstick.js";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { halfstickPosition } from "../src/touch-halfstick.ts";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
 test("halfstick preserves analog travel, projects diagonals to its arc and excludes up", () => {
   assert.deepEqual(halfstickPosition(-0.3, 0.4), { x: -0.3, y: 0.4 });

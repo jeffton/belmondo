@@ -35,8 +35,8 @@ try {
     window.__testPad = null;
     navigator.getGamepads = () => [window.__testPad];
   });
-  await page.route("**/src/main.js", async (route) => {
-    const { code: body } = await server.transformRequest("/src/main.js");
+  await page.route("**/src/main.ts", async (route) => {
+    const { code: body } = await server.transformRequest("/src/main.ts");
     await route.fulfill({
       contentType: "text/javascript",
       body:

@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 test("armed Night pack keeps its physical descent without rear-contact rescues", () => {
   const track = makeTrack(TRACK_INDEX.NOCTILUCENT);

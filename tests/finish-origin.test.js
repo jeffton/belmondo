@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { Race } from "../src/race.ts";
 import {
   buildTimingStripe,
   getFinishDistrictLayout,
-} from "../src/finish-district.js";
-import { countdownBoardStage } from "../src/start-gantry.js";
+} from "../src/finish-district.ts";
+import { countdownBoardStage } from "../src/start-gantry.ts";
 
 function place(racer, track, s, speed = 0) {
   const f = track.frame(s);

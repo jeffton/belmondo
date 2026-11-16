@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { railPoint, railBackDepth, railHeight } from "../src/rail-geometry.js";
-import { RAIL_PROFILE } from "../src/rail-profile.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { railPoint, railBackDepth, railHeight } from "../src/rail-geometry.ts";
+import { RAIL_PROFILE } from "../src/rail-profile.ts";
 
 const production = JSON.parse(
   readFileSync(new URL("./fixtures/legacy-v3-configs.json", import.meta.url)),

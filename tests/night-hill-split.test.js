@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race, CRAFT } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildCourseGeography } from "../src/course-geography.js";
-import { projectRoad } from "../src/road-projection.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race, CRAFT } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildCourseGeography } from "../src/course-geography.ts";
+import { projectRoad } from "../src/road-projection.ts";
 
 test("Night hill routes cross at two physical levels and return on opposite sides", () => {
   const track = makeTrack(TRACK_INDEX.NOCTILUCENT),

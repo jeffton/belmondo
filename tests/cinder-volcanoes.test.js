@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildCinderVolcanoes } from "../src/cinder-volcanoes.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildCinderVolcanoes } from "../src/cinder-volcanoes.ts";
 
 test("volcano triangles stay outside both racing branches and root in the actual terrain", () => {
   const track = makeTrack(TRACK_INDEX.CINDERLINE);

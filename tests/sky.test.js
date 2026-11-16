@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { TRACKS, TRACK_INDEX } from "../src/track.js";
-import { createSky, paintSky } from "../src/sky.js";
-import { celestialDirection } from "../src/track-lighting.js";
+import { TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { createSky, paintSky } from "../src/sky.ts";
+import { celestialDirection } from "../src/track-lighting.ts";
 
 const pixel = (image, x, y) => [
   ...image.data.slice((y * image.width + x) * 4, (y * image.width + x) * 4 + 4),

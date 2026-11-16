@@ -1,8 +1,8 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);

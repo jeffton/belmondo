@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race, CRAFT } from "../src/race.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race, CRAFT } from "../src/race.ts";
 
 const legacy = [
   {

@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 import {
   buildFinishDistrict,
   getFinishDistrictLayout,
-} from "../src/finish-district.js";
-import { getWaterfrontDistricts } from "../src/course-geography.js";
+} from "../src/finish-district.ts";
+import { getWaterfrontDistricts } from "../src/course-geography.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: finish district is grounded, clears the racing corridor and culminates at the real line`, () => {

@@ -1,10 +1,10 @@
 import * as T from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildCity } from "../src/city.js";
-import { buildFlagship, loadFlagshipAssets } from "../src/flagship.js";
-import { buildFinishDistrict } from "../src/finish-district.js";
-import { getTrackAdvertisingLayout } from "../src/advertising.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
+import { buildFlagship, loadFlagshipAssets } from "../src/flagship.ts";
+import { buildFinishDistrict } from "../src/finish-district.ts";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
 T.TextureLoader.prototype.load = () => new T.Texture();
 const unit = new T.Box3(
   new T.Vector3(-0.5, -0.5, -0.5),

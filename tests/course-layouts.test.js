@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race, CRAFT } from "../src/race.js";
-import { projectRoad } from "../src/road-projection.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race, CRAFT } from "../src/race.ts";
+import { projectRoad } from "../src/road-projection.ts";
 
 // Authored v4 world routes, including Coast's accepted 12 m launch lip.
 const authoredCourses = [

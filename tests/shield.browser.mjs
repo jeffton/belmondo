@@ -30,15 +30,15 @@ try {
     );
     await page.goto(`${url}/__shield_fixture__.html`);
     const result = await page.evaluate(async () => {
-      const source = await (await fetch("/src/world.js")).text();
+      const source = await (await fetch("/src/world.ts")).text();
       const threeModule = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
       const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
           import(threeModule),
         ]);
       const world = new World(document.querySelector("canvas"));

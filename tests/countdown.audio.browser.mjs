@@ -31,7 +31,7 @@ try {
     });
   });
   const results = await page.evaluate(async () => {
-    const { AudioEngine } = await import("/src/audio.js");
+    const { AudioEngine } = await import("/src/audio.ts");
     const results = [];
     for (const stage of [
       3,

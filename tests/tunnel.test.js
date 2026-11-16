@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
 
 test("tunnel metadata matches enclosed courses, not Kaiseki's open canopy", () => {
   const coast = makeTrack(TRACK_INDEX.COAST);

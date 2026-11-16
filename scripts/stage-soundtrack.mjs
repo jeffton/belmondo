@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, mkdir, copyFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { soundtrack } from "../src/soundtrack.js";
+import { soundtrack } from "../src/soundtrack.ts";
 
 const source = process.argv[2];
 if (!source)

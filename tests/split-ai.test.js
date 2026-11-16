@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack } from "../src/track.js";
-import { Race, CRAFT } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack } from "../src/track.ts";
+import { Race, CRAFT } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 for (let index = 0; index < 3; index++) {
   test(`physical AI follows either separated route through the real merge on course ${index}`, () => {

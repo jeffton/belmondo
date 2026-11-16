@@ -26,7 +26,7 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     if (process.env.BASELINE === "1")
-      await page.route("**/src/cinder-volcanoes.js*", (route) =>
+      await page.route("**/src/cinder-volcanoes.ts*", (route) =>
         route.fulfill({
           contentType: "text/javascript",
           body: "export function buildCinderVolcanoes() {}",
@@ -40,15 +40,15 @@ try {
     );
     await page.goto(`${sourceUrl}/__cinder_volcano__.html`);
     const volcanoCount = await page.evaluate(async () => {
-      const source = await (await fetch("/src/world.js")).text();
+      const source = await (await fetch("/src/world.ts")).text();
       const threePath = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
       const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
           import(threePath),
         ]);
       const ready = new Promise((resolve, reject) => {

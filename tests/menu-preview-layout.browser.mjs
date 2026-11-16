@@ -17,7 +17,7 @@ const browser = await chromium.launch({
 const measurements = {};
 try {
   const page = await browser.newPage({ deviceScaleFactor: 2 });
-  await page.route("**/src/main.js", (route) =>
+  await page.route("**/src/main.ts", (route) =>
     route.fulfill({ contentType: "text/javascript", body: "" }),
   );
   for (const [name, width, height] of [
@@ -34,10 +34,10 @@ try {
     await page.evaluate(async () => {
       await document.fonts.ready;
       const THREE = await import("/node_modules/.vite/deps/three.js");
-      const { MenuPreview } = await import("/src/menu-preview.js");
-      const { TRACKS, makeTrack } = await import("/src/track.js");
-      const { CRAFT } = await import("/src/race.js");
-      const { SPEED_CLASSES } = await import("/src/speed-classes.js");
+      const { MenuPreview } = await import("/src/menu-preview.ts");
+      const { TRACKS, makeTrack } = await import("/src/track.ts");
+      const { CRAFT } = await import("/src/race.ts");
+      const { SPEED_CLASSES } = await import("/src/speed-classes.ts");
       document.querySelector("#tracks").innerHTML = TRACKS.map(
         (t) =>
           `<button class="choice"><b>${t.name}</b><small class="track-progress">★ BEST / 1ST</small></button>`,

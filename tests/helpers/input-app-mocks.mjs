@@ -1,7 +1,7 @@
 // Real application DOM, input handlers and Race; only renderer/audio are replaced.
 // No WebGL context or audio assets are allocated by these input-only checks.
 export async function mockInputApp(page) {
-  await page.route("**/src/menu-preview.js**", (route) =>
+  await page.route("**/src/menu-preview.ts**", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class MenuPreview {
@@ -14,7 +14,7 @@ export async function mockInputApp(page) {
       }`,
     }),
   );
-  await page.route("**/src/world.js", (route) =>
+  await page.route("**/src/world.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `import { PerspectiveCamera, Vector3 } from '/node_modules/.vite/deps/three.js';
@@ -45,7 +45,7 @@ export async function mockInputApp(page) {
         }`,
     }),
   );
-  await page.route("**/src/course-preparation.js**", (route) =>
+  await page.route("**/src/course-preparation.ts**", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class CoursePreparation {
@@ -54,7 +54,7 @@ export async function mockInputApp(page) {
       }`,
     }),
   );
-  await page.route("**/src/audio.js", (route) =>
+  await page.route("**/src/audio.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class AudioEngine {
@@ -64,7 +64,7 @@ export async function mockInputApp(page) {
       }`,
     }),
   );
-  await page.route("**/src/music.js", (route) =>
+  await page.route("**/src/music.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class MusicPlayer {

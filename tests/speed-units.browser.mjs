@@ -1,5 +1,5 @@
 import { chromium, expect } from "@playwright/test";
-import { toKilometresPerHour } from "../src/units.js";
+import { toKilometresPerHour } from "../src/units.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const browser = await chromium.launch({

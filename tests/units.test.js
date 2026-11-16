@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { createCraft } from "../src/craft.js";
-import { WEAPON_UI } from "../src/weapon-ui.js";
-import { METRES_PER_UNIT, RAPTOR_LENGTH_UNITS } from "../src/units.js";
+import { createCraft } from "../src/craft.ts";
+import { WEAPON_UI } from "../src/weapon-ui.ts";
+import { METRES_PER_UNIT, RAPTOR_LENGTH_UNITS } from "../src/units.ts";
 
 test("missile briefing reports its lock range in physical metres", () => {
   assert.equal(WEAPON_UI.MISSILE.description, "Homing missile / 192 m lock");

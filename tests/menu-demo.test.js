@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { World } from "../src/world.js";
-import { createTerrain } from "../src/terrain.js";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { World } from "../src/world.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 test("returning an all-DNF field to the menu restores demo hulls without resurrecting racers", () => {
   const track = makeTrack(TRACK_INDEX.COAST);

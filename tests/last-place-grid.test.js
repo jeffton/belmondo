@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Race, CRAFT, AI_THROTTLE } from "../src/race.js";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { Race, CRAFT, AI_THROTTLE } from "../src/race.ts";
+import { makeTrack, TRACKS } from "../src/track.ts";
 
 test("grid handicap reduces NPC engine input without reducing player acceleration", () => {
   const track = makeTrack(0);

@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { getTrackPickups } from "../src/pickups.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { getTrackPickups } from "../src/pickups.ts";
 import {
   getJumpMarkingLayout,
   buildJumpMarkings,
-} from "../src/jump-markings.js";
+} from "../src/jump-markings.ts";
 
 function deckDistance(track, start, end) {
   const steps = Math.ceil(Math.abs(end - start) / 0.5);

@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildFinishDistrict } from "../src/finish-district.js";
-import { getCrowdMix } from "../src/crowd.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildFinishDistrict } from "../src/finish-district.ts";
+import { getCrowdMix } from "../src/crowd.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: crowd follows rendered stands across the finish seam, not track phase`, () => {

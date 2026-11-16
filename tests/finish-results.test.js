@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Race, LAPS_BY_CLASS } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { AudioEngine } from "../src/audio.js";
+import { Race, LAPS_BY_CLASS } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { AudioEngine } from "../src/audio.ts";
 
 function place(track, racer, s, speed = 80) {
   const frame = track.frame(s);

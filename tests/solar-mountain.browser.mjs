@@ -32,15 +32,15 @@ try {
     );
     await page.goto(`${sourceUrl}/__solar_mountain__.html`);
     await page.evaluate(async () => {
-      const source = await (await fetch("/src/world.js")).text();
+      const source = await (await fetch("/src/world.ts")).text();
       const threePath = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
       const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
           import(threePath),
         ]);
       const ready = new Promise((resolve, reject) => {

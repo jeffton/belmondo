@@ -68,7 +68,7 @@ export function visibility(
   }
   return results;
 }
-import { getTrackAdvertisingLayout } from "../src/advertising.js";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
 
 // Regression stations where collision-free placements were hidden by towers.
 for (const [course, panels] of [

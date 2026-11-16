@@ -250,7 +250,7 @@ try {
   await action(["confirm"], () => page.locator("#pause-music").tap());
   await action(["back"], () => page.keyboard.press("Escape"));
   await action(["move"], () => page.keyboard.press("ArrowDown"));
-  await action(["back"], () => page.locator("#quit").tap());
+  await action(["confirm"], () => page.locator("#quit").tap());
   assert.deepEqual(
     await page.evaluate(() => [
       localStorage.getItem("nv-records"),

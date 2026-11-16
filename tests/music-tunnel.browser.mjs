@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
-import { soundtrack } from "../src/soundtrack.js";
+import { soundtrack } from "../src/soundtrack.ts";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -14,8 +14,8 @@ try {
     route.fulfill({
       contentType: "text/html",
       body: `<button>Play</button><script type="module">
-      import { MusicPlayer } from '/src/music.js';
-      import { soundtrack } from '/src/soundtrack.js';
+      import { MusicPlayer } from '/src/music.ts';
+      import { soundtrack } from '/src/soundtrack.ts';
       window.player = new MusicPlayer(state => window.musicState = state);
       player.volume = .65;
       player.loadTracks(soundtrack);

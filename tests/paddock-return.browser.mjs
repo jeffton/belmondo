@@ -52,8 +52,8 @@ try {
     },
     { testAccess },
   );
-  await page.route("**/src/main.js", async (route) => {
-    const { code } = await server.transformRequest("/src/main.js");
+  await page.route("**/src/main.ts", async (route) => {
+    const { code } = await server.transformRequest("/src/main.ts");
     await route.fulfill({
       contentType: "text/javascript",
       body: `${code}

@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race, SPEED_CLASSES } from "../src/race.js";
-import { projectRoad, roadHeight } from "../src/road-projection.js";
-import { railBounds } from "../src/rail-profile.js";
-import { getTrackPickups, pickupPoint, crossesPickup } from "../src/pickups.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race, SPEED_CLASSES } from "../src/race.ts";
+import { projectRoad, roadHeight } from "../src/road-projection.ts";
+import { railBounds } from "../src/rail-profile.ts";
+import { getTrackPickups, pickupPoint, crossesPickup } from "../src/pickups.ts";
 
 function bends(track) {
   const frames = Array.from({ length: 500 }, (_, i) => {

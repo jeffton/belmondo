@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildHydraulicLock } from "../src/hydraulic-lock.js";
-import { terrainFootprint } from "../src/terrain-footprint.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildHydraulicLock } from "../src/hydraulic-lock.ts";
+import { terrainFootprint } from "../src/terrain-footprint.ts";
 
 function fixture() {
   // Parent owns route configuration; exercise its refined contract without

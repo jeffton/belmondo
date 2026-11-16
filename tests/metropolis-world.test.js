@@ -1,16 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 import {
   buildMetropolis,
   clearsMetropolisRoad,
   METROPOLIS_SIGN_ATLAS,
-} from "../src/metropolis-world.js";
-import { newCourseRecipe, biomeLandHeight } from "../src/new-course-recipes.js";
-import { getTrackPickups } from "../src/pickups.js";
-import { createSky, paintSky } from "../src/sky.js";
+} from "../src/metropolis-world.ts";
+import { newCourseRecipe, biomeLandHeight } from "../src/new-course-recipes.ts";
+import { getTrackPickups } from "../src/pickups.ts";
+import { createSky, paintSky } from "../src/sky.ts";
 import { readFileSync } from "node:fs";
 
 function dispose(root) {

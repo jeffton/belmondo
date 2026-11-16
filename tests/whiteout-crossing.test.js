@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { projectRoad } from "../src/road-projection.js";
-import { railHeight } from "../src/rail-geometry.js";
-import { RAIL_PROFILE } from "../src/rail-profile.js";
-import { Race } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { projectRoad } from "../src/road-projection.ts";
+import { railHeight } from "../src/rail-geometry.ts";
+import { RAIL_PROFILE } from "../src/rail-profile.ts";
+import { Race } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 const track = makeTrack(TRACK_INDEX.WHITEOUT);
 const [start, end] = track.config.split;

@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { gridApproachBlend } from "../src/start-sequence.js";
-import { countdownBoardStage } from "../src/start-gantry.js";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { gridApproachBlend } from "../src/start-sequence.ts";
+import { countdownBoardStage } from "../src/start-gantry.ts";
 
 const released = { throttle: 0, launchIntent: false };
 const pressed = { throttle: 1, launchIntent: true };

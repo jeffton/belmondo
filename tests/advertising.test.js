@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { getTrackAdvertisingLayout } from "../src/advertising.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: large close campaigns remain distinct and clear every real road level`, () => {

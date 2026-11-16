@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Race, CRITICAL_SHIELD } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { Race, CRITICAL_SHIELD } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
 const input = { throttle: true, steer: 0, air: 0 };
 function setup(speedClass = 0, mode = "race") {

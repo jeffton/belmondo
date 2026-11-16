@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { createHash } from "node:crypto";
-import { clearChaseCamera } from "../src/chase-camera.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildForkEnvironments } from "../src/fork-environments.js";
+import { clearChaseCamera } from "../src/chase-camera.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildForkEnvironments } from "../src/fork-environments.ts";
 
 const track = makeTrack(TRACK_INDEX.COAST);
 const [boreStart, boreEnd] = track.config.sections.headlandBore;

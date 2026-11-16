@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import * as THREE from "three";
-import { createAdvertising } from "../src/advertising.js";
-import { ROADSIDE_ART } from "../src/advertising-art.js";
+import { createAdvertising } from "../src/advertising.ts";
+import { ROADSIDE_ART } from "../src/advertising-art.ts";
 
 const artPath = new URL("../public/art/", import.meta.url);
 

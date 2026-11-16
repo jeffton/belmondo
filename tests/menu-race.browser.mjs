@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { preview } from "vite";
 import { mkdir } from "node:fs/promises";
-import { TRACKS } from "../src/track.js";
+import { TRACKS } from "../src/track.ts";
 
 let server;
 let url = process.env.GAME_URL;

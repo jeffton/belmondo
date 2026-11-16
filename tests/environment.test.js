@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: landscape stays below every route and buildings have land foundations`, () => {

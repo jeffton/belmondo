@@ -70,11 +70,11 @@ async function open(viewport, touch) {
   if (touch)
     // Equip one real SHIELD in the isolated fixture; application input and
     // Race.fire stay production code, with no writable application telemetry.
-    await page.route("**/src/race.js", (route) =>
+    await page.route("**/src/race.ts", (route) =>
       route.fulfill({
         contentType: "text/javascript",
-        body: `export * from "/src/race.js?touch-fire-fixture";
-          import { Race as Base } from "/src/race.js?touch-fire-fixture";
+        body: `export * from "/src/race.ts?touch-fire-fixture";
+          import { Race as Base } from "/src/race.ts?touch-fire-fixture";
           export class Race extends Base {
             constructor(...args) {
               super(...args);

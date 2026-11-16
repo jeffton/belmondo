@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const gameUrl = process.env.GAME_URL || "http://127.0.0.1:5189";
@@ -251,15 +251,15 @@ async function visuals(deltaOnly = false) {
   );
   await page.goto(`${sourceUrl}/__flagship_fixture__.html`);
   const result = await page.evaluate(async (deltaOnly) => {
-    const source = await (await fetch("/src/world.js")).text();
+    const source = await (await fetch("/src/world.ts")).text();
     const threePath = source.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
       await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
         import(threePath),
       ]);
     const ready = () =>

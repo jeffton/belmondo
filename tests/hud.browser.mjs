@@ -40,7 +40,7 @@ try {
       document.querySelector("#menu").hidden = true;
       document.querySelector("#hud").hidden = false;
       document.body.classList.toggle("touch", touch);
-      const { createWeaponHUD } = await import("/src/weapon-ui.js");
+      const { createWeaponHUD } = await import("/src/weapon-ui.ts");
       window.updateFixtureHUD = createWeaponHUD(
         document.querySelector("#weapon"),
         document.querySelector("#touch-fire"),

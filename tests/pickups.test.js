@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, roadBounds, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { makeTrack, roadBounds, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
 import {
   getTrackPickups,
   pickupOutline,
   pickupPoint,
   crossesPickup,
-} from "../src/pickups.js";
-import { buildTrackPads } from "../src/track-pads.js";
+} from "../src/pickups.ts";
+import { buildTrackPads } from "../src/track-pads.ts";
 
 const hoverPoint = (track, pad, x, z) =>
   pickupPoint(track, pad, x, z).add(new THREE.Vector3(0, 2.2, 0));

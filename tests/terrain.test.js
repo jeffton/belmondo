@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { createTerrain, groundedGeometryOffset } from "../src/terrain.js";
-import { buildCity } from "../src/city.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain, groundedGeometryOffset } from "../src/terrain.ts";
+import { buildCity } from "../src/city.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: land meets the course without entering either real route or its jump`, () => {

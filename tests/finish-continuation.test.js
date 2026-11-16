@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACKS } from "../src/track.ts";
 
 function approach(race, racer, distance = 2) {
   const s = race.track.finishS + race.lapCount * race.track.length - distance;

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CoursePreparation } from "../src/course-preparation.js";
+import { CoursePreparation } from "../src/course-preparation.ts";
 
 function setup() {
   const workers = [];

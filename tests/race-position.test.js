@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, mod, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
+import { makeTrack, mod, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
 
 function approach(race, gate, branch = 0, lateral = 0, distance = 0.5) {
   const r = race.player;

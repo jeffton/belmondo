@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { WeaponEffects } from "../src/weapon-effects.js";
+import { WeaponEffects } from "../src/weapon-effects.ts";
 
 const race = () => ({ shots: [], mines: [], racers: [] });
 const shot = (type) => ({

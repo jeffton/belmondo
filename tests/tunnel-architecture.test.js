@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { tunnelSegment } from "../src/tunnel-architecture.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { tunnelSegment } from "../src/tunnel-architecture.ts";
 
 for (const [index, branch] of [
   [TRACK_INDEX.MONSOON, 0],

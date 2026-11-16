@@ -8,13 +8,13 @@ try {
   const page = await browser.newPage();
   await page.goto(url);
   const report = await page.evaluate(async () => {
-    const { AudioEngine } = await import("/src/audio.js");
-    const { MENU_SOUNDS } = await import("/src/menu-sound.js");
+    const { AudioEngine } = await import("/src/audio.ts");
+    const { MENU_SOUNDS } = await import("/src/menu-sound.ts");
     const durations = Object.entries(MENU_SOUNDS).map(([kind, cue]) => [
       kind,
       cue.duration + 0.006,
     ]);
-    const { soundtrack } = await import("/src/soundtrack.js");
+    const { soundtrack } = await import("/src/soundtrack.ts");
     const decoder = new AudioContext();
     const tracks = await Promise.all(
       soundtrack.map(async (track) => {

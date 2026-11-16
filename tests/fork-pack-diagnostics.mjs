@@ -9,10 +9,10 @@ const option = (name, fallback) =>
 const root = resolve(option("source", "."));
 const output = resolve(option("output", "/var/tmp/belmondo-fork-pack"));
 const index = Number(option("track", "4"));
-const { makeTrack } = await import(pathToFileURL(join(root, "src/track.js")));
-const { Race } = await import(pathToFileURL(join(root, "src/race.js")));
+const { makeTrack } = await import(pathToFileURL(join(root, "src/track.ts")));
+const { Race } = await import(pathToFileURL(join(root, "src/race.ts")));
 const { createTerrain } = await import(
-  pathToFileURL(join(root, "src/terrain.js"))
+  pathToFileURL(join(root, "src/terrain.ts"))
 );
 const track = makeTrack(index);
 const terrain = createTerrain(track);

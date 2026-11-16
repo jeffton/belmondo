@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { TRACKS, TRACK_INDEX } from "../src/track.js";
-import { trackIsUnlocked, trackProgress } from "../src/progression.js";
+import { TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { trackIsUnlocked, trackProgress } from "../src/progression.ts";
 
 const accessible = (data, classId, index) =>
   trackIsUnlocked(data, classId, TRACKS[index].layoutId, index, TRACKS);

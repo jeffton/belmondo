@@ -1,8 +1,8 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
-import { LAPS_BY_CLASS } from "../src/race.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
+import { LAPS_BY_CLASS } from "../src/race.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const recordKey = (layoutId, classId, craft = 0) => {
@@ -586,15 +586,15 @@ async function finishFixture() {
   );
   await page.goto(`${url}/__finish_fixture__.html`);
   await page.evaluate(async () => {
-    const source = await (await fetch("/src/world.js")).text();
+    const source = await (await fetch("/src/world.ts")).text();
     const threeModule = source.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
       await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
         import(threeModule),
       ]);
     const world = new World(document.querySelector("canvas"));

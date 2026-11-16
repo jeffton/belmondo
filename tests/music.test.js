@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { createShuffleBag, soundtrack } from "../src/soundtrack.js";
+import { createShuffleBag, soundtrack } from "../src/soundtrack.ts";
 
 function seededRandom(seed) {
   return () => {

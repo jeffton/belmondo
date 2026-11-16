@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { createEngineBed, updateEngineSound } from "../src/engine-sound.js";
+import { stripTypeScriptTypes } from "node:module";
+import { format } from "prettier";
+import { createEngineBed, updateEngineSound } from "../src/engine-sound.ts";
 
 const context = {
   createBuffer(channels, length, sampleRate) {
@@ -124,12 +126,15 @@ test("coasting unloads the engine at equal speed; boost and air change its press
   assert(air[0] < drive[0] && air[1] === drive[1]);
 });
 
-// Explicit user invariant: these exact original noise/airbrake implementation
-// regions are unchanged, including random seed, filter, gain and smoothing.
-test("approved airbrake synthesis and automation remain byte-identical", () => {
-  const source = readFileSync(
-    new URL("../src/audio.js", import.meta.url),
-    "utf8",
+// Explicit user invariant: preserve the original noise/airbrake JavaScript,
+// including random seed, filter, gain and smoothing. Strip types and format both
+// baseline and candidate identically; the original baseline hash is unchanged.
+test("approved airbrake synthesis and automation retain identical JavaScript", async () => {
+  const source = await format(
+    stripTypeScriptTypes(
+      readFileSync(new URL("../src/audio.ts", import.meta.url), "utf8"),
+    ),
+    { parser: "babel" },
   );
   const sections = [
     source.match(/    this\.noise =[\s\S]*?\n    }/)[0],

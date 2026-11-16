@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { racingLine, followingBrake } from "../src/ai-racing-line.js";
+import { racingLine, followingBrake } from "../src/ai-racing-line.ts";
 
 test("closing traffic requests real braking, but a clear adjacent passing lane does not", () => {
   assert(followingBrake([{ front: 10, lane: 0, closing: 20 }], 0, 1.2) > 0);
@@ -68,8 +68,8 @@ test("drivers maintain distinct cruising lines and return after a completed pass
 });
 
 test("real connected fork lanes sense opposite-branch traffic but not separated decks", async () => {
-  const { makeTrack } = await import("../src/track.js");
-  const { Race } = await import("../src/race.js");
+  const { makeTrack } = await import("../src/track.ts");
+  const { Race } = await import("../src/race.ts");
 
   function approach(condition) {
     const track = makeTrack(0);

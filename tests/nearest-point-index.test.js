@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createNearestPointIndex } from "../src/nearest-point-index.js";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { createNearestPointIndex } from "../src/nearest-point-index.ts";
+import { makeTrack, TRACKS } from "../src/track.ts";
 
 function exhaustive(points, x, z) {
   let best = 0,

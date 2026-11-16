@@ -26,16 +26,16 @@ try {
   );
   await page.goto("http://127.0.0.1:5178/__fork_camera_fixture__.html");
   result = await page.evaluate(async () => {
-    const source = await (await fetch("/src/world.js")).text();
+    const source = await (await fetch("/src/world.ts")).text();
     const threePath = source.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { Race, CRAFT }, { makeTrack }, { hullExtent }, THREE] =
       await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
-        import("/src/contacts.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
+        import("/src/contacts.ts"),
         import(threePath),
       ]);
     const loaded = () =>

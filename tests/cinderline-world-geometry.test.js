@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS } from "../src/track.js";
-import { Race } from "../src/race.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildCity } from "../src/city.js";
-import { buildFinishDistrict } from "../src/finish-district.js";
-import { buildTrackAdvertising } from "../src/advertising.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
+import { Race } from "../src/race.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
+import { buildFinishDistrict } from "../src/finish-district.ts";
+import { buildTrackAdvertising } from "../src/advertising.ts";
 
 // Independent triangle-level acceptance: no heightAt, raycast, foundation
 // contacts, or production terrainFootprint extrema are used as the oracle.

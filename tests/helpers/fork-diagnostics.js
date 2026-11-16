@@ -8,23 +8,23 @@ export async function measureFork(sourceRoot, trackIndex, maxSeconds = 240) {
   const root = resolve(sourceRoot);
   const index = trackIndex;
   const dt = 1 / 120;
-  const { makeTrack } = await import(pathToFileURL(join(root, "src/track.js")));
+  const { makeTrack } = await import(pathToFileURL(join(root, "src/track.ts")));
   const { Race, CRAFT } = await import(
-    pathToFileURL(join(root, "src/race.js"))
+    pathToFileURL(join(root, "src/race.ts"))
   );
   const { createTerrain } = await import(
-    pathToFileURL(join(root, "src/terrain.js"))
+    pathToFileURL(join(root, "src/terrain.ts"))
   );
   const { SPEED_CLASSES } = await import(
-    pathToFileURL(join(root, "src/speed-classes.js"))
+    pathToFileURL(join(root, "src/speed-classes.ts"))
   );
   const files = [
-    "track.js",
-    "course-layouts.js",
-    "race.js",
-    "contacts.js",
-    "road-projection.js",
-    "terrain.js",
+    "track.ts",
+    "course-layouts.ts",
+    "race.ts",
+    "contacts.ts",
+    "road-projection.ts",
+    "terrain.ts",
   ];
   const sourceHashes = {};
   for (const name of files) {

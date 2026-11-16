@@ -1,9 +1,9 @@
 import { chromium, expect } from "@playwright/test";
 import { createServer } from "vite";
-import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
-import { LAPS_BY_CLASS } from "../src/race.js";
-import { localRecordKey } from "../src/records.js";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
+import { LAPS_BY_CLASS } from "../src/race.ts";
+import { localRecordKey } from "../src/records.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real menu handlers and Race constructor, with rendering/audio dependencies mocked.
@@ -42,7 +42,7 @@ const trackButton = (page, index) =>
   page.locator(`#tracks button[data-index="${index}"]`);
 
 async function installMenuHarness(page) {
-  await page.route("**/src/world.js", (route) =>
+  await page.route("**/src/world.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `import { PerspectiveCamera, Vector3 } from '/node_modules/.vite/deps/three.js';
@@ -66,7 +66,7 @@ async function installMenuHarness(page) {
       }`,
     }),
   );
-  await page.route("**/src/course-preparation.js**", (route) =>
+  await page.route("**/src/course-preparation.ts**", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class CoursePreparation {
@@ -81,7 +81,7 @@ async function installMenuHarness(page) {
       }`,
     }),
   );
-  await page.route("**/src/audio.js", (route) =>
+  await page.route("**/src/audio.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class AudioEngine {
@@ -90,7 +90,7 @@ async function installMenuHarness(page) {
       }`,
     }),
   );
-  await page.route("**/src/music.js", (route) =>
+  await page.route("**/src/music.ts", (route) =>
     route.fulfill({
       contentType: "text/javascript",
       body: `export class MusicPlayer {
@@ -99,7 +99,7 @@ async function installMenuHarness(page) {
       }`,
     }),
   );
-  await page.route("**/src/main.js", async (route) => {
+  await page.route("**/src/main.ts", async (route) => {
     const response = await route.fetch();
     await route.fulfill({
       response,

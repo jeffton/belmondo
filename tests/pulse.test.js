@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { Race, CRAFT } from "../src/race.js";
-import { WeaponEffects } from "../src/weapon-effects.js";
+import { Race, CRAFT } from "../src/race.ts";
+import { WeaponEffects } from "../src/weapon-effects.ts";
 
 const track = {
   length: 100_000,

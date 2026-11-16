@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Race, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { Race, SPEED_CLASSES } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 for (let index = 0; index < 3; index++) {
   test(`off-road hulls hit the actual terrain and rescue without false progression on course ${index}`, () => {

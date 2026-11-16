@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { Race } from "../src/race.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { Race } from "../src/race.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 for (const [legacyIndex, index] of [
   TRACK_INDEX.COAST,

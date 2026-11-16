@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { celestialDirection } from "../src/track-lighting.js";
-import { buildSectionalValues } from "../src/sectional-values.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { celestialDirection } from "../src/track-lighting.ts";
+import { buildSectionalValues } from "../src/sectional-values.ts";
 
 function fixture(index) {
   const track = makeTrack(index);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { World } from "../src/world.js";
+import { World } from "../src/world.ts";
 
 test("standalone render dimensions follow the full canvas, not the shortened layout viewport", () => {
   const calls = [];

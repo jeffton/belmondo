@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Launch } from "../src/launch.js";
-import { Race } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { Launch } from "../src/launch.ts";
+import { Race } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 
 const idle = {
   throttle: 0,

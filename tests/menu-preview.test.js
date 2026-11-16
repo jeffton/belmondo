@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { MenuPreview } from "../src/menu-preview.js";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { createCraft } from "../src/craft.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
-import { localRecordKey } from "../src/records.js";
+import { MenuPreview } from "../src/menu-preview.ts";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { createCraft } from "../src/craft.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
+import { localRecordKey } from "../src/records.ts";
 
 const rect = (left, top, width, height) => ({
   left,

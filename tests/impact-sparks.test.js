@@ -1,10 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
+import { stripTypeScriptTypes } from "node:module";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { ImpactSparks } from "../src/impact-sparks.js";
-import { World } from "../src/world.js";
-import { frameDelta } from "../src/frame-clock.js";
+import { ImpactSparks } from "../src/impact-sparks.ts";
+import { World } from "../src/world.ts";
+import { frameDelta } from "../src/frame-clock.ts";
 
 function fixture(side = 1, speed = 180, bank = 0) {
   const rotation = new THREE.Quaternion().setFromAxisAngle(
@@ -109,11 +110,10 @@ test("hot metallic streaks cool, expire quickly and recycle without scene growth
 });
 
 test("first race RAF after start completes and schedules its successor", async () => {
-  const source = await readFile(
-    new URL("../src/main.js", import.meta.url),
-    "utf8",
+  const source = stripTypeScriptTypes(
+    await readFile(new URL("../src/main.ts", import.meta.url), "utf8"),
   );
-  const start = source.indexOf("function animate(now) {");
+  const start = source.search(/function animate\(now\s*\)\s*\{/);
   const end = source.indexOf("\nasync function loadFiles(", start);
   assert.ok(start >= 0 && end > start);
   const animateSource = source.slice(start, end);

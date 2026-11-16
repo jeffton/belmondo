@@ -38,15 +38,15 @@ try {
     );
     await page.goto(`${url}/__gantry_fixture__.html`);
     await page.evaluate(async () => {
-      const source = await (await fetch("/src/world.js")).text();
+      const source = await (await fetch("/src/world.ts")).text();
       const threePath = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
       const [{ World }, { Race, CRAFT }, { makeTrack }, THREE] =
         await Promise.all([
-          import("/src/world.js"),
-          import("/src/race.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/race.ts"),
+          import("/src/track.ts"),
           import(threePath),
         ]);
       const world = new World(document.querySelector("canvas"));
@@ -213,7 +213,7 @@ try {
       };
     });
     const courseCount = await page.evaluate(
-      async () => (await import("/src/track.js")).TRACKS.length,
+      async () => (await import("/src/track.ts")).TRACKS.length,
     );
     for (let course = 0; course < courseCount; course++) {
       const prefix = `${mobile ? "mobile" : "desktop"}-course${course}`;

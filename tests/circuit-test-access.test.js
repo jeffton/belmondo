@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   createCircuitTestAccess,
   TEST_ACCESS_KEY,
-} from "../src/circuit-test-access.js";
+} from "../src/circuit-test-access.ts";
 
 function storage(values = {}) {
   return {

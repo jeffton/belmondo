@@ -36,10 +36,10 @@ try {
     const result = await page.evaluate(
       async ({ width, height }) => {
         const THREE = await import("/node_modules/.vite/deps/three.js");
-        const { MenuPreview } = await import("/src/menu-preview.js");
-        const { makeTrack, TRACKS } = await import("/src/track.js");
-        const { CRAFT } = await import("/src/race.js");
-        const { SPEED_CLASSES } = await import("/src/speed-classes.js");
+        const { MenuPreview } = await import("/src/menu-preview.ts");
+        const { makeTrack, TRACKS } = await import("/src/track.ts");
+        const { CRAFT } = await import("/src/race.ts");
+        const { SPEED_CLASSES } = await import("/src/speed-classes.ts");
         const main = document.querySelector("main");
         main.replaceChildren();
         const element = document.createElement("div");

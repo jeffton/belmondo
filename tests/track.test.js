@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACKS } from "../src/track.js";
+import { makeTrack, TRACKS } from "../src/track.ts";
 
 test("all courses expose wider main decks and keep both split routes clear", () => {
   for (let index = 0; index < TRACKS.length; index++) {

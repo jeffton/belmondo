@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildWhiteoutFork } from "../src/whiteout-fork.js";
-import { buildNewCourseDistricts } from "../src/new-course-environments.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildWhiteoutFork } from "../src/whiteout-fork.ts";
+import { buildNewCourseDistricts } from "../src/new-course-environments.ts";
 
 const track = makeTrack(TRACK_INDEX.WHITEOUT);
 const terrain = createTerrain(track);

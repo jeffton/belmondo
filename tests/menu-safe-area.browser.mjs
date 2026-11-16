@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "@playwright/test";
 import { createServer } from "vite";
-import { TRACKS } from "../src/track.js";
-import { CRAFT } from "../src/race.js";
+import { TRACKS } from "../src/track.ts";
+import { CRAFT } from "../src/race.ts";
 
 const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
 await server.listen();

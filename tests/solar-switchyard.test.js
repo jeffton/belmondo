@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
-import { buildRouteDistricts } from "../src/route-districts.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
+import { buildRouteDistricts } from "../src/route-districts.ts";
 
 test("Solar collector yard has low connected busbars with continuous grounded supports", () => {
   const track = makeTrack(TRACK_INDEX.SOLAR);

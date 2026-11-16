@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { getTrackPickups } from "../src/pickups.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { getTrackPickups } from "../src/pickups.ts";
 import { mockInputApp } from "./helpers/input-app-mocks.mjs";
 import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 const inputMocks = process.env.INPUT_MOCKS === "1";

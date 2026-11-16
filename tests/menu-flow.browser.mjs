@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
-import { TRACKS } from "../src/track.js";
+import { TRACKS } from "../src/track.ts";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5196";
 const output = process.env.MENU_ARTIFACTS || "/var/tmp/belmondo-menu-flow";

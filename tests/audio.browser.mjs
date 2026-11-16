@@ -1,7 +1,8 @@
 import { chromium } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { stripTypeScriptTypes } from "node:module";
 import assert from "node:assert/strict";
-import { SFX_CUES } from "../src/generated-sfx.js";
+import { SFX_CUES } from "../src/generated-sfx.ts";
 import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
@@ -91,27 +92,30 @@ try {
   );
   await synthesis.goto(`${url.replace(/\/$/, "")}/audio-check`);
   const source = await readFile(
-    new URL("../src/audio.js", import.meta.url),
+    new URL("../src/audio.ts", import.meta.url),
     "utf8",
   );
   const engineSource = await readFile(
-    new URL("../src/engine-sound.js", import.meta.url),
+    new URL("../src/engine-sound.ts", import.meta.url),
     "utf8",
   );
   const menuSource = await readFile(
-    new URL("../src/menu-sound.js", import.meta.url),
+    new URL("../src/menu-sound.ts", import.meta.url),
     "utf8",
   );
   await synthesis.addScriptTag({
     content:
-      menuSource.replaceAll("export const ", "const ") +
+      stripTypeScriptTypes(menuSource).replaceAll("export const ", "const ") +
       "\n" +
       `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
       // Keep module scopes separate: both modules have their own clamp helper.
       "const { createEngineBed, updateEngineSound } = (() => {\n" +
-      engineSource.replaceAll("export function ", "function ") +
+      stripTypeScriptTypes(engineSource).replaceAll(
+        "export function ",
+        "function ",
+      ) +
       "\nreturn { createEngineBed, updateEngineSound }; })();\n" +
-      source
+      stripTypeScriptTypes(source)
         .replace(/^import[^\n]*\n/gm, "")
         .replaceAll("export class ", "class ") +
       "\nwindow.AudioEngineUnderTest = AudioEngine;",

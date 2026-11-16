@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { Race, CRAFT, SPEED_CLASSES } from "../src/race.js";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { Race, CRAFT, SPEED_CLASSES } from "../src/race.ts";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 
 const neutral = { throttle: true, steer: 0, air: 0 };
 function straight(width = 100) {

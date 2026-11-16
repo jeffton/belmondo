@@ -18,13 +18,13 @@ try {
   console.log(
     JSON.stringify(
       await page.evaluate(async () => {
-        const source = await (await fetch("/src/world.js")).text();
+        const source = await (await fetch("/src/world.ts")).text();
         const three = source.match(
           /from\s+["']([^"']*\/three\.js[^"']*)["']/,
         )[1];
         const [{ World }, { makeTrack }, THREE] = await Promise.all([
-          import("/src/world.js"),
-          import("/src/track.js"),
+          import("/src/world.ts"),
+          import("/src/track.ts"),
           import(three),
         ]);
         const world = new World(document.createElement("canvas")),

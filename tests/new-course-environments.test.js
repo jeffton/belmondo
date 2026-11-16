@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { buildEnvironment } from "../src/environment.js";
-import { buildCity } from "../src/city.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
+import { createTerrain } from "../src/terrain.ts";
 import {
   getFinishDistrictLayout,
   buildFinishDistrict,
-} from "../src/finish-district.js";
+} from "../src/finish-district.ts";
 
 function dispose(scene) {
   const geometries = new Set(),

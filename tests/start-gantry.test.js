@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { buildStartGantry } from "../src/start-gantry.js";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { Race, LAPS_BY_CLASS } from "../src/race.js";
+import { buildStartGantry } from "../src/start-gantry.ts";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { Race, LAPS_BY_CLASS } from "../src/race.ts";
 
 const LAPS = LAPS_BY_CLASS[2];
 

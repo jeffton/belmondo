@@ -1,9 +1,9 @@
 import { chromium, webkit, expect } from "@playwright/test";
 import { createServer } from "vite";
-import { CRAFT } from "../src/race.js";
-import { TRACKS, TRACK_INDEX } from "../src/track.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
-import { localRecordKey } from "../src/records.js";
+import { CRAFT, LAPS_BY_CLASS } from "../src/race.ts";
+import { TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
+import { localRecordKey } from "../src/records.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 // Real markup, CSS and menu handlers; no WebGL/GPU allocation or RAF rendering.
@@ -11,7 +11,11 @@ const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
 await server.listen();
 const errors = [];
 try {
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium, webkit].filter(
+    (engine) =>
+      !process.env.BROWSER_ENGINE ||
+      engine.name() === process.env.BROWSER_ENGINE,
+  )) {
     const browser = await engine.launch({
       headless: true,
       ...(engine === chromium
@@ -35,12 +39,13 @@ try {
         await page.addInitScript(() => {
           window.requestAnimationFrame = () => 0;
           localStorage.setItem("nv-records", '{"preserved":42}');
+          localStorage.setItem("nv-test-access", "on");
           Object.defineProperty(navigator, "getGamepads", {
             get: () => () => (window.testPad ? [window.testPad] : []),
           });
         });
         for (const [module, body] of Object.entries({
-          "world.js": `export class World {
+          "world.ts": `export class World {
             environment = {}; view = 'chase';
             resize() {} setupRacers() {}
             async prepare(_track, _data, current, setup) {
@@ -49,19 +54,19 @@ try {
             }
             adopt(candidate) { Object.assign(this, candidate); }
           }`,
-          "course-preparation.js": `export class CoursePreparation {
+          "course-preparation.ts": `export class CoursePreparation {
             async load() { return {workerMs: 0}; } cancel() {}
           }`,
-          "menu-preview.js": `export class MenuPreview {
+          "menu-preview.ts": `export class MenuPreview {
             setStage(stage) { window.previewStage = stage; }
             setCraft(index) { window.previewCraft = index; }
             setClass() {} setTrack() {} dispose() {}
           }`,
-          "audio.js": `export class AudioEngine {
+          "audio.ts": `export class AudioEngine {
             async start() {} setMuted() {} setPaused() {} setVolume() {}
-            stopSamples() {} stopCrowd() {}
+            stopSamples() {} stopCrowd() {} menuCue() {}
           }`,
-          "music.js": `export class MusicPlayer {
+          "music.ts": `export class MusicPlayer {
             audio = {paused: true}; loadTracks() {} setMenu() {} setTunnel() {}
             async play() {} pause() {}
           }`,
@@ -70,7 +75,7 @@ try {
             route.fulfill({ contentType: "text/javascript", body }),
           );
         }
-        await page.route("**/src/main.js", async (route) => {
+        await page.route("**/src/main.ts", async (route) => {
           const response = await route.fetch();
           await route.fulfill({
             response,
@@ -101,23 +106,31 @@ try {
           "data-craft-index",
           "2",
         );
-        // Native focus/activation follows the visible order, not physics indices.
+        // Virtual cursor/activation follows visible order, not physics indices.
         await expect(
           page.locator('#crafts [data-craft-index="2"]'),
-        ).toBeFocused();
+        ).toHaveClass(/\bmenu-cursor\b/);
+        const first = await page
+          .locator('#crafts [data-craft-index="2"]')
+          .boundingBox();
+        const second = await page
+          .locator('#crafts [data-craft-index="0"]')
+          .boundingBox();
+        const horizontal =
+          Math.abs(second.x - first.x) > Math.abs(second.y - first.y);
+        const forward = horizontal ? "ArrowRight" : "ArrowDown";
+        const backward = horizontal ? "ArrowLeft" : "ArrowUp";
         for (const identity of [0, 1]) {
-          await page.keyboard.press("Tab");
+          await page.keyboard.press(forward);
           await expect(
             page.locator(`#crafts [data-craft-index="${identity}"]`),
-          ).toBeFocused();
-          await page.keyboard.press("Enter");
+          ).toHaveClass(/\bmenu-cursor\b/);
           expect(
             await page.evaluate(() => window.craftQA().selectedCraft),
           ).toBe(identity);
         }
-        await page.keyboard.press("Shift+Tab");
-        await page.keyboard.press("Shift+Tab");
-        await page.keyboard.press("Enter");
+        await page.keyboard.press(backward);
+        await page.keyboard.press(backward);
         expect(await page.evaluate(() => window.craftQA().selectedCraft)).toBe(
           2,
         );
@@ -200,7 +213,7 @@ try {
             i,
             "race",
             SPEED_CLASSES[0],
-            5,
+            LAPS_BY_CLASS[0],
           );
           expect((await page.evaluate(() => window.craftQA())).key).toBe(key);
           await page.locator("#start").click();
@@ -227,6 +240,7 @@ try {
           });
           await page.keyboard.press("Escape");
           await page.locator("#quit").click();
+          await goToSetupStage(page, "craft");
         }
         expect(
           await page.evaluate(() => localStorage.getItem("nv-records")),

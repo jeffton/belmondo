@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { makeTrack, TRACK_INDEX } from "../src/track.js";
+import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { goToSetupStage } from "./helpers/setup-menu.mjs";
 
 const sourceUrl = process.env.SOURCE_URL || "http://127.0.0.1:5178";
@@ -33,16 +33,16 @@ try {
   );
   await page.goto(`${sourceUrl}/__contacts_fixture__.html`);
   report.fixture = await page.evaluate(async () => {
-    const moduleText = await (await fetch("/src/world.js")).text();
+    const moduleText = await (await fetch("/src/world.ts")).text();
     const threePath = moduleText.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
     const [{ World }, { Race, CRAFT }, { makeTrack }, { hullExtent }, THREE] =
       await Promise.all([
-        import("/src/world.js"),
-        import("/src/race.js"),
-        import("/src/track.js"),
-        import("/src/contacts.js"),
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
+        import("/src/contacts.ts"),
         import(threePath),
       ]);
     const world = new World(document.querySelector("canvas"));

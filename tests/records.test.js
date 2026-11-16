@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { localRecordKey } from "../src/records.js";
-import { SPEED_CLASSES } from "../src/speed-classes.js";
+import { localRecordKey } from "../src/records.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
 
 test("changed physical pace cannot reuse a class record or collide with another tier", () => {
   const keys = new Set();

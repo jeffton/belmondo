@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.js";
-import { createTerrain } from "../src/terrain.js";
+import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
+import { createTerrain } from "../src/terrain.ts";
 import {
   buildRouteDistricts,
   ROUTE_DISTRICTS,
-} from "../src/route-districts.js";
+} from "../src/route-districts.ts";
 
 function fixture(index) {
   const track = makeTrack(index);
