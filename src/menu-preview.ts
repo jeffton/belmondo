@@ -1,0 +1,610 @@
+import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { SPEED_CLASSES } from "./speed-classes.ts";
+import { createCraft, collectCraftResources } from "./craft.ts";
+import { CRAFT } from "./race.ts";
+import type { Track, TrackFrame, RoadBounds } from "./track.ts";
+
+interface PreviewObject extends THREE.Object3D {
+  geometry?: THREE.BufferGeometry;
+  material?:
+    | (THREE.Material & { map?: THREE.Texture | null })
+    | (THREE.Material & { map?: THREE.Texture | null })[];
+}
+type PreviewStage = "class" | "track" | "craft";
+type SymbolPart = "shell" | "emitter" | "copper" | "ferrite";
+type PreviewMaterials = {
+  deck: THREE.MeshStandardMaterial;
+  edge: THREE.LineBasicMaterial;
+};
+type Triple = [number, number, number];
+
+function releaseScene(scene: THREE.Scene) {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
+  scene.traverse((object: PreviewObject) => {
+    if (object.geometry) geometries.add(object.geometry);
+    if (object.material)
+      for (const material of Array.isArray(object.material)
+        ? object.material
+        : [object.material]) {
+        materials.add(material);
+        if (material.map) textures.add(material.map);
+      }
+  });
+  // createCraft caches even detached variants and shield/shadow resources by scene.
+  collectCraftResources(scene, { geometries, materials, textures });
+  geometries.forEach((geometry) => geometry.dispose());
+  materials.forEach((material) => material.dispose());
+  textures.forEach((texture) => texture.dispose());
+  scene.clear();
+}
+
+function lightScene(scene: THREE.Scene) {
+  scene.add(new THREE.HemisphereLight(0xdaf5ff, 0x25374b, 2.2));
+  const key = new THREE.DirectionalLight(0xffffff, 2.8);
+  key.position.set(-3, 6, 4);
+  const rim = new THREE.DirectionalLight(0x45dcff, 1.7);
+  rim.position.set(4, 1, -3);
+  scene.add(key, rim);
+}
+
+function trackModel(track: Track, materials: PreviewMaterials) {
+  const positions: number[] = [];
+  const edges: number[] = [];
+  const { config, length } = track;
+  // World-space stations retain authored split tips and jump openings. Sampling
+  // at road-construction scale also preserves tight corners and vertical drops.
+  const count = Math.ceil(length / 5);
+  const stations = [
+    ...new Set([
+      ...Array.from({ length: count + 1 }, (_, i) => i / count),
+      ...config.split,
+      ...(config.jump === null
+        ? []
+        : [config.jump, config.jump + config.gapLength!]),
+      ...(config.ramp ? [config.ramp.start] : []),
+    ]),
+  ].sort((a, b) => a - b);
+  const point = (
+    frame: TrackFrame,
+    bounds: RoadBounds,
+    side: number,
+    depth = 0,
+  ) => {
+    // Diagram-scale road width keeps small previews legible; route centers,
+    // elevation, banking, jump openings and connected split seams stay authored.
+    const x = (side < 0 ? bounds.clipMin : bounds.clipMax) * 2.3;
+    const p =
+      bounds.connected && side === bounds.innerSide
+        ? bounds.seam!.clone()
+        : frame.p.clone().addScaledVector(frame.right, x);
+    return p.addScaledVector(frame.up, depth);
+  };
+  const quad = (
+    a: THREE.Vector3,
+    b: THREE.Vector3,
+    c: THREE.Vector3,
+    d: THREE.Vector3,
+  ) => {
+    for (const p of [a, b, c, a, c, d]) positions.push(p.x, p.y, p.z);
+  };
+  for (let i = 0; i < stations.length - 1; i++) {
+    const u = stations[i];
+    if (track.gap(u)) continue;
+    const split = u >= config.split[0] && u < config.split[1];
+    for (const branch of split ? [-1, 1] : [0]) {
+      const s = u * length;
+      const end =
+        stations[i + 1] * length -
+        (stations[i + 1] === config.jump ? 0.000001 : 0);
+      const a = track.frame(s, branch);
+      const b = track.frame(end, branch);
+      const ba = track.bounds(s, branch);
+      const bb = track.bounds(end, branch);
+      const al = point(a, ba, -1);
+      const ar = point(a, ba, 1);
+      const bl = point(b, bb, -1);
+      const br = point(b, bb, 1);
+      // A substantial slab reads as a road rather than a thin route wire.
+      const dal = point(a, ba, -1, -9);
+      const dar = point(a, ba, 1, -9);
+      const dbl = point(b, bb, -1, -9);
+      const dbr = point(b, bb, 1, -9);
+      quad(al, ar, br, bl);
+      quad(dal, dbl, dbr, dar);
+      quad(al, bl, dbl, dal);
+      quad(ar, dar, dbr, br);
+      for (const [side, from, to] of [
+        [-1, al, bl],
+        [1, ar, br],
+      ] as [number, THREE.Vector3, THREE.Vector3][]) {
+        if (ba.connected && bb.connected && side === ba.innerSide) continue;
+        edges.push(...from.toArray(), ...to.toArray());
+      }
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  geometry.computeVertexNormals();
+  const deck = new THREE.Mesh(geometry, materials.deck);
+  const edgeGeometry = new THREE.BufferGeometry();
+  edgeGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(edges, 3),
+  );
+  const group = new THREE.Group();
+  group.add(deck, new THREE.LineSegments(edgeGeometry, materials.edge));
+  return group;
+}
+
+function classSymbol(index: number) {
+  const parts = new Map<SymbolPart, THREE.BufferGeometry[]>();
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: SymbolPart,
+    position: Triple = [0, 0, 0],
+    rotation: Triple = [0, 0, 0],
+    scale: Triple = [1, 1, 1],
+  ) => {
+    const transform = new THREE.Matrix4().compose(
+      new THREE.Vector3(...position),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)),
+      new THREE.Vector3(...scale),
+    );
+    let baked = geometry;
+    if (geometry.index) {
+      baked = geometry.toNonIndexed();
+      geometry.dispose();
+    }
+    baked.deleteAttribute("uv");
+    baked.applyMatrix4(transform);
+    if (!parts.has(material)) parts.set(material, []);
+    parts.get(material)!.push(baked);
+  };
+  if (index === 0) {
+    // INDUCTION: an open laminated stator, two terminal shoes and a suspended
+    // diamond armature. The large horseshoe aperture remains open as it turns.
+    const arc = Math.PI * 1.5;
+    const turn = Math.PI * 0.75;
+    add(
+      new THREE.TorusGeometry(0.65, 0.15, 6, 24, arc),
+      "shell",
+      [0, 0, 0],
+      [0, 0, turn],
+    );
+    add(
+      new THREE.TorusGeometry(0.65, 0.044, 4, 24, arc),
+      "emitter",
+      [0, 0, 0.143],
+      [0, 0, turn],
+    );
+    add(
+      new THREE.TorusGeometry(0.65, 0.044, 4, 24, arc),
+      "emitter",
+      [0, 0, -0.143],
+      [0, 0, turn],
+    );
+    for (const angle of [Math.PI * 0.25, Math.PI * 0.75]) {
+      add(
+        new THREE.BoxGeometry(0.25, 0.19, 0.34),
+        "copper",
+        [Math.cos(angle) * 0.65, Math.sin(angle) * 0.65, 0],
+        [0, 0, angle],
+      );
+    }
+    add(
+      new THREE.OctahedronGeometry(0.27),
+      "ferrite",
+      [0, 0, 0],
+      [0, 0, 0],
+      [0.75, 1.9, 0.75],
+    );
+    add(
+      new THREE.OctahedronGeometry(0.16),
+      "emitter",
+      [0, 0.12, 0],
+      [0, 0, 0],
+      [0.6, 1.6, 0.6],
+    );
+    add(new THREE.BoxGeometry(0.24, 0.12, 0.32), "ferrite", [0, -0.77, 0]);
+  } else if (index === 1) {
+    // RESONANCE: two substantial splayed tuning blades on one solid foot.
+    // The broad open notch reads as a fork, without crossing bars or loops.
+    const plate = (points: number[][], depth: number) => {
+      const shape = new THREE.Shape(
+        points.map(([x, y]) => new THREE.Vector2(x, y)),
+      );
+      return new THREE.ExtrudeGeometry(shape, {
+        depth,
+        bevelEnabled: false,
+        steps: 1,
+      }).translate(0, 0, -depth / 2);
+    };
+    for (const side of [-1, 1]) {
+      const outline = [
+        [0.2, -0.47],
+        [0.52, 0.76],
+        [0.79, 0.67],
+        [0.46, -0.47],
+      ];
+      add(
+        plate(
+          outline.map(([x, y]) => [side * x, y]),
+          0.38,
+        ),
+        "shell",
+      );
+      const inlay = [
+        [0.24, -0.38],
+        [0.52, 0.65],
+        [0.57, 0.63],
+        [0.29, -0.38],
+      ];
+      for (const face of [-1, 1]) {
+        add(
+          plate(
+            inlay.map(([x, y]) => [side * x, y]),
+            0.012,
+          ),
+          "emitter",
+          [0, 0, face * 0.196],
+        );
+      }
+      add(
+        new THREE.BoxGeometry(0.31, 0.1, 0.43),
+        "copper",
+        [side * 0.655, 0.715, 0],
+        [0, 0, -side * 0.32],
+      );
+    }
+    add(new THREE.BoxGeometry(0.98, 0.23, 0.5), "ferrite", [0, -0.55, 0]);
+    add(new THREE.BoxGeometry(0.72, 0.055, 0.51), "copper", [0, -0.55, 0]);
+  } else {
+    // SINGULARITY: one dense faceted gravity seed, not a containment cage.
+    // Its filled double-pyramid silhouette stays solid throughout rotation.
+    for (const side of [-1, 1]) {
+      add(
+        new THREE.ConeGeometry(0.67, 0.66, 4),
+        "shell",
+        [0, side * 0.38, 0],
+        [side < 0 ? Math.PI : 0, Math.PI / 4, 0],
+      );
+      add(new THREE.OctahedronGeometry(0.075), "copper", [0, side * 0.71, 0]);
+    }
+    add(
+      new THREE.CylinderGeometry(0.64, 0.64, 0.1, 4),
+      "ferrite",
+      [0, 0, 0],
+      [0, Math.PI / 4, 0],
+    );
+    add(
+      new THREE.CylinderGeometry(0.65, 0.65, 0.025, 4),
+      "emitter",
+      [0, 0, 0],
+      [0, Math.PI / 4, 0],
+    );
+  }
+  const group = new THREE.Group();
+  group.name = SPEED_CLASSES[index].name;
+  const colors = {
+    shell: 0xd5e1df,
+    ferrite: 0x172a36,
+    copper: 0xca9561,
+    emitter: 0x8affd6,
+  };
+  for (const [kind, geometries] of parts) {
+    const geometry = mergeGeometries(geometries);
+    geometries.forEach((part) => part.dispose());
+    const material = new THREE.MeshStandardMaterial({
+      color: colors[kind],
+      metalness: kind === "emitter" ? 0.15 : 0.65,
+      roughness: kind === "ferrite" ? 0.36 : 0.28,
+      emissive: kind === "emitter" ? colors[kind] : 0x000000,
+      emissiveIntensity: 0.7,
+      flatShading: true,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = kind;
+    group.add(mesh);
+  }
+  const box = new THREE.Box3().setFromObject(group);
+  const center = box.getCenter(new THREE.Vector3());
+  const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+  const pivot = new THREE.Group();
+  group.position.copy(center).multiplyScalar(-1 / radius);
+  group.scale.setScalar(1 / radius);
+  pivot.name = group.name;
+  pivot.add(group);
+  return pivot;
+}
+
+// Exact envelope of the visible vertices swept through a full Y rotation.
+// Flat craft need much less vertical space than their bounding sphere suggests.
+// Cache this once per model: stable framing, with no per-frame vertex traversal
+// or zoom pulsing as the sculpture turns.
+function rotationEnvelope(model: THREE.Object3D, elevation: number) {
+  model.updateMatrixWorld(true);
+  const point = new THREE.Vector3();
+  let halfWidth = 0;
+  let bottom = Infinity;
+  let top = -Infinity;
+  model.traverseVisible((object: PreviewObject) => {
+    const positions = object.geometry?.getAttribute("position");
+    if (!positions) return;
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(object.matrixWorld);
+      const radius = Math.hypot(point.x, point.z);
+      halfWidth = Math.max(halfWidth, radius);
+      const center = point.y * Math.cos(elevation);
+      const excursion = radius * Math.sin(elevation);
+      bottom = Math.min(bottom, center - excursion);
+      top = Math.max(top, center + excursion);
+    }
+  });
+  return { halfWidth, bottom, top };
+}
+
+/** Transparent model inset sharing World's LOWRES/clean quality selection. */
+export class MenuPreview {
+  declare renderer: THREE.WebGLRenderer | null;
+  declare size: { width: number; height: number; pixelRatio: number };
+  declare element: HTMLElement;
+  declare stage: PreviewStage;
+  declare quality: string;
+  declare time: number;
+  declare trackScene: THREE.Scene;
+  declare craftScene: THREE.Scene;
+  declare classScene: THREE.Scene;
+  declare crafts: Map<number, THREE.Group>;
+  declare classes: Map<number, THREE.Group>;
+  declare trackMaterials: PreviewMaterials | null;
+  declare camera: THREE.OrthographicCamera;
+  declare track: Track;
+  declare course: THREE.Group | null;
+  declare coursePivot: THREE.Group | null;
+  declare craft: THREE.Group | null;
+  declare classModel: THREE.Group | null;
+  constructor(element: HTMLElement) {
+    this.renderer = null;
+    this.size = { width: 0, height: 0, pixelRatio: 0 };
+    this.element = element;
+    this.stage = "class";
+    this.quality = "retro";
+    this.time = 0;
+    this.trackScene = new THREE.Scene();
+    this.craftScene = new THREE.Scene();
+    this.classScene = new THREE.Scene();
+    lightScene(this.trackScene);
+    lightScene(this.craftScene);
+    lightScene(this.classScene);
+    this.crafts = new Map();
+    this.classes = new Map();
+    this.trackMaterials = null;
+    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+    this.camera.position.set(0, 1.25, 1.8).normalize().multiplyScalar(5);
+    this.camera.lookAt(0, 0, 0);
+  }
+
+  setTrack(track: Track) {
+    if (this.track === track) return;
+    if (this.coursePivot) {
+      this.trackScene.remove(this.coursePivot);
+      this.course!.traverse((object: PreviewObject) =>
+        object.geometry?.dispose(),
+      );
+    }
+    // Course selection changes geometry/color, not shader programs. Retain both
+    // material instances until final disposal to keep their compiled programs.
+    this.trackMaterials ??= {
+      deck: new THREE.MeshStandardMaterial({
+        color: 0xaac3cc,
+        metalness: 0.35,
+        roughness: 0.55,
+        side: THREE.DoubleSide,
+        flatShading: true,
+      }),
+      edge: new THREE.LineBasicMaterial(),
+    };
+    this.trackMaterials.edge.color.set(track.config.color);
+    this.track = track;
+    this.course = trackModel(track, this.trackMaterials);
+    this.trackScene.add(this.course);
+    const box = new THREE.Box3().setFromObject(this.course);
+    const center = box.getCenter(new THREE.Vector3());
+    // A box's diagonal sphere wastes space on elongated courses. Fit actual
+    // vertices instead: rotation remains bounded without changing route shape.
+    let radius = 0;
+    const vertex = new THREE.Vector3();
+    this.course.traverse((object: PreviewObject) => {
+      const positions = object.geometry?.getAttribute("position");
+      if (!positions) return;
+      for (let i = 0; i < positions.count; i++)
+        radius = Math.max(
+          radius,
+          vertex.fromBufferAttribute(positions, i).distanceTo(center),
+        );
+    });
+    // Uniform scale preserves the actual elevation changes and route proportions.
+    this.course.position.copy(center).multiplyScalar(-1 / radius);
+    this.course.scale.setScalar(1 / radius);
+    this.coursePivot = new THREE.Group();
+    this.trackScene.remove(this.course);
+    this.coursePivot.add(this.course);
+    this.trackScene.add(this.coursePivot);
+  }
+
+  setCraft(index: number) {
+    if (this.craft) this.craft.visible = false;
+    if (!this.crafts.has(index)) {
+      const craft = createCraft(this.craftScene, CRAFT[index].color, index);
+      craft.userData.shadow.visible = false;
+      const box = new THREE.Box3().setFromObject(craft);
+      const center = box.getCenter(new THREE.Vector3());
+      const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+      craft.position.copy(center).multiplyScalar(-1 / radius);
+      craft.scale.setScalar(1 / radius);
+      const pivot = new THREE.Group();
+      this.craftScene.remove(craft);
+      pivot.add(craft);
+      this.craftScene.add(pivot);
+      this.crafts.set(index, pivot);
+    }
+    this.craft = this.crafts.get(index)!;
+    this.craft.visible = true;
+  }
+
+  setClass(index: number) {
+    if (this.classModel) this.classModel.visible = false;
+    if (!this.classes.has(index)) {
+      const model = classSymbol(index);
+      this.classes.set(index, model);
+      this.classScene.add(model);
+    }
+    this.classModel = this.classes.get(index)!;
+    this.classModel.visible = true;
+  }
+
+  setStage(stage: PreviewStage) {
+    this.stage = stage;
+  }
+
+  createRenderer() {
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: false,
+      powerPreference: "high-performance",
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000, 0);
+    return renderer;
+  }
+
+  get resources() {
+    return {
+      geometries: this.renderer?.info.memory.geometries ?? 0,
+      textures: this.renderer?.info.memory.textures ?? 0,
+      width: this.renderer?.domElement.width ?? 0,
+      height: this.renderer?.domElement.height ?? 0,
+      pixelRatio: this.size.pixelRatio,
+      renderCalls: this.renderer?.info.render.calls ?? 0,
+      frames: this.renderer?.info.render.frame ?? 0,
+    };
+  }
+
+  draw(dt: number) {
+    if (this.element.ownerDocument.hidden) return;
+    const model = {
+      class: this.classModel,
+      track: this.coursePivot,
+      craft: this.craft,
+    }[this.stage];
+    if (!model) return;
+    const rect = this.element.getBoundingClientRect();
+    const view = this.element.ownerDocument.defaultView!;
+    if (
+      !rect.width ||
+      !rect.height ||
+      rect.right <= 0 ||
+      rect.bottom <= 0 ||
+      rect.left >= view.innerWidth ||
+      rect.top >= view.innerHeight
+    )
+      return;
+    if (!this.renderer) {
+      this.renderer = this.createRenderer();
+      const canvas = this.renderer.domElement;
+      canvas.className = "menu-preview-canvas";
+      canvas.setAttribute("aria-hidden", "true");
+      Object.assign(canvas.style, {
+        position: "absolute",
+        inset: "0",
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        imageRendering: "pixelated",
+      });
+      // Existing positioned labels follow the canvas in paint order.
+      this.element.prepend(canvas);
+    }
+    const renderer = this.renderer;
+    const canvas = renderer.domElement.getBoundingClientRect();
+    const pixelRatio = this.quality === "retro" ? 0.55 : view.devicePixelRatio;
+    if (
+      canvas.width !== this.size.width ||
+      canvas.height !== this.size.height ||
+      pixelRatio !== this.size.pixelRatio
+    ) {
+      renderer.setDrawingBufferSize(canvas.width, canvas.height, pixelRatio);
+      this.size = { width: canvas.width, height: canvas.height, pixelRatio };
+    }
+
+    this.time += dt;
+    model.rotation.y =
+      this.time * { class: 0.25, track: 0.16, craft: 0.32 }[this.stage];
+    const cameraHeight = this.stage === "track" ? 2.15 : 1.25;
+    this.camera.position
+      .set(0, cameraHeight, 1.8)
+      .normalize()
+      .multiplyScalar(5);
+    this.camera.lookAt(0, 0, 0);
+    if (!model.userData.previewEnvelope) {
+      // Fit in the unrotated pivot's coordinate system, not its current heading.
+      const heading = model.rotation.y;
+      model.rotation.y = 0;
+      model.userData.previewEnvelope = rotationEnvelope(
+        model,
+        Math.atan2(cameraHeight, 1.8),
+      );
+      model.rotation.y = heading;
+    }
+    const bounds = model.userData.previewEnvelope;
+    const label = this.element.querySelector<HTMLElement>("#model-name");
+    const labelInset =
+      label && !label.hidden
+        ? Math.max(0, canvas.bottom - label.getBoundingClientRect().top + 4)
+        : 0;
+    const modelHeight = canvas.height - labelInset;
+    const unitsPerPixel =
+      Math.max(
+        (2 * bounds.halfWidth) / canvas.width,
+        (bounds.top - bounds.bottom) / modelHeight,
+      ) / 0.94;
+    const centerY = (bounds.top + bounds.bottom) / 2;
+    this.camera.left = (-unitsPerPixel * canvas.width) / 2;
+    this.camera.right = -this.camera.left;
+    this.camera.top = centerY + (unitsPerPixel * modelHeight) / 2;
+    this.camera.bottom = this.camera.top - unitsPerPixel * canvas.height;
+    this.camera.updateProjectionMatrix();
+
+    renderer.render(
+      {
+        class: this.classScene,
+        track: this.trackScene,
+        craft: this.craftScene,
+      }[this.stage],
+      this.camera,
+    );
+  }
+
+  dispose() {
+    releaseScene(this.trackScene);
+    releaseScene(this.craftScene);
+    releaseScene(this.classScene);
+    this.crafts.clear();
+    this.classes.clear();
+    this.trackMaterials = null;
+    this.course = this.coursePivot = this.craft = this.classModel = null;
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+      this.renderer.domElement.remove();
+      this.renderer = null;
+    }
+    this.size = { width: 0, height: 0, pixelRatio: 0 };
+  }
+}

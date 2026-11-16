@@ -1,6 +1,6 @@
 # BELMONDO
 
-Original browser-based anti-gravity combat racer. Seven circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with Three.js and Vite. No account, backend, analytics or uploaded audio.
+Original browser-based anti-gravity combat racer. Seven circuits, eight pilots, three craft, five weapons, split routes and ballistic jumps. Built with TypeScript, Three.js and Vite. No account, backend, analytics or uploaded audio.
 
 ## Play
 
@@ -47,6 +47,7 @@ Repository: https://github.com/jeffton/belmondo. Local checkout: `/home/roy/gith
 ```sh
 npm ci
 npm run dev
+npm run typecheck
 npm test
 npm run test:browser
 npm run test:steering
@@ -54,6 +55,8 @@ npm run test:audio
 npm run test:music
 npm run build
 ```
+
+Node 26 or later runs the JavaScript test harnesses and erases imported TypeScript directly. `npm run typecheck` checks browser and worker entrypoints separately with strict types; `npm run build` includes this check. Vite strips types without changing its browser target. Three.js and its matching `@types/three` package stay on the same release.
 
 `GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
 
