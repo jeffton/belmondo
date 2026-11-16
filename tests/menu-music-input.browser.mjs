@@ -11,6 +11,11 @@ const browser = await chromium.launch({
     "--disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies",
   ],
 });
+// MUSIC_INPUT_CASE selects a fresh-profile shard for bounded browser runs.
+const selectedCase = process.env.MUSIC_INPUT_CASE;
+const actions = ["ArrowRight", "Enter", "Tab", "pointer", "touch"];
+if (selectedCase && ![...actions, "synthetic", "manual"].includes(selectedCase))
+  throw new Error(`Unknown MUSIC_INPUT_CASE: ${selectedCase}`);
 const errors = [];
 async function fixture() {
   const context = await browser.newContext({ hasTouch: true });
@@ -74,7 +79,9 @@ async function fixture() {
 const playing =
   'musicElements.length === 1 && !musicElements[0].paused && musicElements[0].currentTime > 0.05 && musicContext.state === "running"';
 try {
-  for (const action of ["ArrowRight", "Enter", "Tab", "pointer", "touch"]) {
+  for (const action of actions.filter(
+    (action) => !selectedCase || selectedCase === action,
+  )) {
     const { context, page, evaluate, wait } = await fixture();
     assert.equal(await evaluate("document.activeElement.tagName"), "BODY");
     if (action === "pointer")
@@ -108,7 +115,7 @@ try {
     await wait(playing);
     await context.close();
   }
-  {
+  if (!selectedCase || selectedCase === "synthetic") {
     const { context, page, evaluate, wait } = await fixture();
     await evaluate(`window.dispatchEvent(new KeyboardEvent("keydown", {key:"ArrowRight", bubbles:true}));
       window.dispatchEvent(new Event("gamepadconnected"));
@@ -135,7 +142,7 @@ try {
     assert.equal(await evaluate("musicElements.length"), 1);
     await context.close();
   }
-  {
+  if (!selectedCase || selectedCase === "manual") {
     const { context, page, evaluate, wait } = await fixture();
     await page.locator("#music-open").tap();
     await wait(playing);
@@ -153,9 +160,7 @@ try {
     await context.close();
   }
   assert.deepEqual(errors, []);
-  console.log(
-    "PASS strict autoplay: keyboard from body, pointer and touch, no synthetic/gamepad-mock unlock, focus resume, single music element, zero volume and explicit pause",
-  );
+  console.log(`PASS strict autoplay: ${selectedCase || "all cases"}`);
 } finally {
   await browser.close();
 }

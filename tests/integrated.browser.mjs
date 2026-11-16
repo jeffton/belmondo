@@ -1,5 +1,5 @@
 import { chromium, expect } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { makeTrack, TRACKS } from "../src/track.ts";
 import { SPEED_CLASSES } from "../src/speed-classes.ts";
 import { LAPS_BY_CLASS } from "../src/race.ts";
@@ -468,10 +468,12 @@ async function finishFixture() {
 }
 async function hudFourDigits() {
   // Exact frozen production HTML/CSS; UI-only fixture, not simulated driving.
-  const html = (await (await fetch(url)).text()).replace(
-    /<script\b[^>]*>[\s\S]*?<\/script>/g,
-    "",
-  );
+  const html = (await (await fetch(url)).text())
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
+    .replace(
+      "</head>",
+      `<style>${await readFile(new URL("../src/style.css", import.meta.url), "utf8")}</style></head>`,
+    );
   const context = await browser.newContext({
     viewport: { width: 844, height: 390 },
     hasTouch: true,
@@ -487,6 +489,7 @@ async function hudFourDigits() {
     document.querySelector("#menu").hidden = true;
     document.querySelector("#hud").hidden = false;
     document.body.classList.add("touch");
+    document.body.dataset.inputMode = "touch";
     document.querySelector("#hud-track").textContent = "NOCTILUCENT / C3";
     document.querySelector("#speed").textContent = "1234";
     document.querySelector("#speed-bar").style.width = "100%";

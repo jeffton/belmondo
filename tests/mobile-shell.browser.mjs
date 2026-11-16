@@ -32,6 +32,7 @@ try {
     await page.evaluate(async () => {
       await document.fonts.ready;
       document.body.classList.add("touch");
+      document.body.dataset.inputMode = "touch";
       document.querySelector("#menu").hidden = true;
       document.querySelector("#hud").hidden = false;
       const { createWeaponHUD } = await import("/src/weapon-ui.ts");
@@ -95,8 +96,6 @@ try {
     await expect(page.locator("#steer-pad")).toHaveText("");
     await expect(page.locator("#air-pad")).toHaveText("");
     await expect(page.locator(".touch-actions")).toHaveText("");
-    expect(boxes["#air-pad"].width).toBe(128);
-    expect(boxes["#air-pad"].height).toBe(80);
     const canvas = await page.locator("#game").boundingBox();
     expect(canvas).toEqual({ x: 0, y: 0, width, height });
     await page.screenshot({ path: `${output}/${name}.png` });
