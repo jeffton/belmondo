@@ -53,7 +53,7 @@ for (const version of ["production-v3", "redesigned-v4"])
               if (
                 u > start &&
                 u < end &&
-                !track.bounds(r.contactS, r.branch).connected
+                !track.bounds(r.contactS, id % 2 ? -1 : 1).connected
               ) {
                 assert.equal(r.branch, id % 2 ? -1 : 1);
                 observed = true;
