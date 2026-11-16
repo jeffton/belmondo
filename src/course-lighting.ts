@@ -17,6 +17,16 @@ export interface CourseLighting {
   flare: boolean;
 }
 export const COURSE_LIGHTING: Record<string, CourseLighting> = {
+  FAULTLINE: {
+    direction: [-0.52, 0.48, 0.68],
+    skyGlow: [[207, 224, 213], 0.055],
+    hemisphere: [0xc5dced, 0x414839],
+    key: [0xfff0d1, 1.85],
+    fill: [0x92b8cc, 0.42],
+    sun: ["#fff9e8", "#f0e5c4", "#cad7d4"],
+    halo: [0xf2e8ca, 0.12],
+    flare: false,
+  },
   "VESPER CIRCUIT": {
     direction: [0.25, 0.2, -0.8],
     skyGlow: [[100, 158, 186], 0.025],

@@ -278,6 +278,20 @@ const layouts: Record<string, PickupRecord[]> = {
       "Plateau acceleration after the vertical fork merges",
     ],
   ],
+  FAULTLINE: [
+    [0.075, 0, 0, "weapon", "Accessible upper-rim approach armament"],
+    [0.2, 0, -8, "boost", "Broad rim-shelf exit acceleration"],
+    [0.365, 0, 7, "weapon", "Outside setup before the transport cutting"],
+    [0.655, 0, -6, "weapon", "Lower extraction shelf after the flight runout"],
+    [0.81, 0, 8, "weapon", "Reclamation climb outside armament line"],
+    [
+      0.925,
+      0,
+      0,
+      "boost",
+      "Accessible final shelf release toward the home straight",
+    ],
+  ],
   NOCTILUCENT: [
     [0.065, 0, 7, "weapon", "Safer outside line through the opening left"],
     [0.15, 0, 2, "boost", "Accessible right-kink exit before the next left"],

@@ -60,7 +60,7 @@ function trackModel(track: Track, materials: PreviewMaterials) {
   const stations = [
     ...new Set([
       ...Array.from({ length: count + 1 }, (_, i) => i / count),
-      ...config.split,
+      ...config.split.filter((u) => u >= 0 && u <= 1),
       ...(config.jump === null
         ? []
         : [config.jump, config.jump + config.gapLength!]),

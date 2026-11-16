@@ -16,6 +16,17 @@ const PALETTES: Record<
     chamfer: number;
   }
 > = {
+  FAULTLINE: {
+    wall: 0xb5b7a5,
+    base: 0x465353,
+    roof: 0x465f5b,
+    pier: 0xced1b8,
+    light: 0xe5f4b1,
+    inset: 0x2e4040,
+    spacing: 30,
+    shoulder: 32,
+    chamfer: 3,
+  },
   "SOLAR ARRAY": {
     wall: 0xc5b39b,
     base: 0x696660,
@@ -57,6 +68,7 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
   const quads = [];
   const s = a.u * track.length;
   const { spacing, shoulder, chamfer } = palette;
+  const ceiling = track.config.name === "FAULTLINE" ? 40 : 16;
   const rib =
     Math.floor(s / spacing) !== Math.floor((b.u * track.length) / spacing);
   const recess = rib ? 0 : 0.85;
@@ -109,7 +121,7 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
       wall,
       shoulder,
       side * (chamfer + recess),
-      16 + recess,
+      ceiling + recess,
       palette.roof,
       "tunnel",
     );
@@ -119,7 +131,7 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
         const profile = [
           [0.001, 4.35],
           [0.001, shoulder],
-          [chamfer, 16],
+          [chamfer, ceiling],
         ];
         for (let j = 0; j < profile.length - 1; j++) {
           const [x, y] = profile[j],
@@ -131,7 +143,7 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
               point(
                 f,
                 side * (f.width + nx + 0.85),
-                ny + (ny === 16 ? 0.85 : 0),
+                ny + (ny === ceiling ? 0.85 : 0),
               ),
               point(f, side * (f.width + x + 0.85), y),
             ],
@@ -144,10 +156,10 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
   }
   quads.push({
     p: [
-      point(a, -a.width - chamfer - recess, 16 + recess),
-      point(b, -b.width - chamfer - recess, 16 + recess),
-      point(b, b.width + chamfer + recess, 16 + recess),
-      point(a, a.width + chamfer + recess, 16 + recess),
+      point(a, -a.width - chamfer - recess, ceiling + recess),
+      point(b, -b.width - chamfer - recess, ceiling + recess),
+      point(b, b.width + chamfer + recess, ceiling + recess),
+      point(a, a.width + chamfer + recess, ceiling + recess),
     ],
     color: palette.roof,
     kind: "tunnel",
@@ -162,10 +174,10 @@ export function tunnelSegment(a: TrackFrame, b: TrackFrame, track: Track) {
     for (const f of [a, b])
       quads.push({
         p: [
-          point(f, -f.width - chamfer, 16),
-          point(f, f.width + chamfer, 16),
-          point(f, f.width + chamfer + 0.85, 16.85),
-          point(f, -f.width - chamfer - 0.85, 16.85),
+          point(f, -f.width - chamfer, ceiling),
+          point(f, f.width + chamfer, ceiling),
+          point(f, f.width + chamfer + 0.85, ceiling + 0.85),
+          point(f, -f.width - chamfer - 0.85, ceiling + 0.85),
         ],
         color: palette.base,
         kind: "edge",

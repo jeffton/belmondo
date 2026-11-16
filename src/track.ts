@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RAIL_PROFILE } from "./rail-profile.ts";
 import { NEW_COURSES } from "./course-layouts.ts";
+import { FAULTLINE_COURSE } from "./faultline-course.ts";
 
 export type StationRange = [number, number];
 export interface TrackCrossing {
@@ -49,6 +50,9 @@ export interface TrackConfig {
   banks?: number[][];
   sections: TrackSections;
   rhythm?: { start: number; end: number; offset: number }[];
+  runwayExitFade?: number;
+  // World-space distance to the outgoing Bezier control point of the exit sweep.
+  runwayExitHandle?: number;
   widthSections?: {
     start: number;
     fullStart: number;
@@ -217,9 +221,10 @@ export const TRACK_INDEX = Object.freeze({
   MONSOON: 1,
   COAST: 2,
   SOLAR: 3,
-  CINDERLINE: 4,
-  NOCTILUCENT: 5,
-  VESPER: 6,
+  FAULTLINE: 4,
+  CINDERLINE: 5,
+  NOCTILUCENT: 6,
+  VESPER: 7,
 });
 
 export const TRACKS: TrackConfig[] = [
@@ -316,11 +321,12 @@ export const TRACKS: TrackConfig[] = [
     jump: 0.64,
     tunnel: [0.2, 0.28],
   },
-  { ...NEW_COURSES[2], subtitle: "05 / Volcanic upland" },
+  FAULTLINE_COURSE,
+  { ...NEW_COURSES[2], subtitle: "06 / Volcanic upland" },
   {
     name: "NOCTILUCENT",
     curveType: "centripetal",
-    subtitle: "06 / Midnight freight loop",
+    subtitle: "07 / Midnight freight loop",
     color: 0xff4f9b,
     sky: 0x15163e,
     fog: 0x293b68,
@@ -351,7 +357,7 @@ export const TRACKS: TrackConfig[] = [
     jump: 0.48,
     tunnel: [0.34, 0.39],
   },
-  { ...NEW_COURSES[3], subtitle: "07 / Vertical neon metropolis" },
+  { ...NEW_COURSES[3], subtitle: "08 / Vertical neon metropolis" },
 ];
 export const mod = (n: number, m: number) => ((n % m) + m) % m;
 export const clamp = (n: number, a: number, b: number) =>
@@ -395,6 +401,7 @@ export function makeTrack(index: number): Track {
         .sub(approachPoint)
         .divideScalar(runwayEnd - runwayStart))!;
     const runwayFade = 0.07;
+    const runwayExitFade = config.runwayExitFade ?? runwayFade;
     if (runway && u >= runwayStart && u <= runwayEnd) {
       p.copy(approachPoint).lerp(
         landingPoint,
@@ -412,16 +419,21 @@ export function makeTrack(index: number): Track {
           (u - runwayStart + runwayFade) / runwayFade,
         ),
       );
-    } else if (runway && u > runwayEnd && u <= runwayEnd + runwayFade) {
+    } else if (runway && u > runwayEnd && u <= runwayEnd + runwayExitFade) {
       p.copy(
         transition(
           landingPoint,
-          curve.getPointAt(runwayEnd + runwayFade),
-          runwayDirection.clone().multiplyScalar(runwayFade),
+          curve.getPointAt(runwayEnd + runwayExitFade),
+          config.runwayExitHandle === undefined
+            ? runwayDirection.clone().multiplyScalar(runwayExitFade)
+            : runwayDirection
+                .clone()
+                .normalize()
+                .multiplyScalar(3 * config.runwayExitHandle),
           curve
-            .getTangentAt(runwayEnd + runwayFade)
-            .multiplyScalar(length * runwayFade),
-          (u - runwayEnd) / runwayFade,
+            .getTangentAt(runwayEnd + runwayExitFade)
+            .multiplyScalar(length * runwayExitFade),
+          (u - runwayEnd) / runwayExitFade,
         ),
       );
     }

@@ -173,7 +173,7 @@ test("being below the upper bridge cannot snap a hull to that deck or steal prog
 test("a diagonal arrival cannot earn a gate crossed outside its finite road width", () => {
   const track = {
     length: 1000,
-    config: { split: [0.8, 0.9], jump: 0.95 },
+    config: { split: [0.8, 0.9], jump: 0.95, sections: {} },
     gap: () => false,
     curvature: () => 0,
     frame: (s) => ({

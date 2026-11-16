@@ -10,7 +10,7 @@ function straight(width = 100) {
   return {
     length: 1_000_000,
     finishS: 0,
-    config: { split: [0.9, 0.95], jump: 0.99 },
+    config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
     curvature: () => 0,
     gap: () => false,
     frame: (s) => ({

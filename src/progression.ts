@@ -1,5 +1,20 @@
+import { SPEED_CLASSES } from "./speed-classes.ts";
+
+// The order before FAULTLINE was introduced. Storage uses layout identities,
+// never their position in the current course selector.
+const ORIGINAL_LAYOUTS = [
+  "whiteout-2-finish-end",
+  "monsoon-4-finish-end",
+  "coast-4-finish-end",
+  "solar-4-finish-end",
+  "cinderline-2-finish-end",
+  "noctilucent-4-finish-end",
+  "vesper-1-finish-end",
+];
+
 export interface Progression {
   version: number;
+  unlocked?: Record<string, string[]>;
   classes: Record<
     string,
     Record<string, { bestPosition: number; won: boolean }>
@@ -18,9 +33,25 @@ export const PROGRESSION_STORAGE_KEY = "nv-progression";
 export function loadProgression(
   storage: Pick<Storage, "getItem">,
 ): Progression {
-  return JSON.parse(
-    storage.getItem(PROGRESSION_STORAGE_KEY) || '{"version":1,"classes":{}}',
-  );
+  const saved = storage.getItem(PROGRESSION_STORAGE_KEY);
+  if (!saved) return { version: 2, classes: {} };
+  const progression: Progression = JSON.parse(saved);
+  if (progression.version === 1) {
+    progression.unlocked = Object.fromEntries(
+      SPEED_CLASSES.map(({ id }) => [
+        id,
+        ORIGINAL_LAYOUTS.filter(
+          (_, index) =>
+            index < 3 ||
+            ORIGINAL_LAYOUTS.slice(0, index).every(
+              (layoutId) => progression.classes[id]?.[layoutId]?.won === true,
+            ),
+        ),
+      ]),
+    );
+    progression.version = 2;
+  }
+  return progression;
 }
 
 export function trackProgress(
@@ -38,7 +69,8 @@ export function trackIsUnlocked(
   trackIndex: number,
   tracks: ReadonlyArray<{ layoutId: string }>,
 ) {
-  if (trackIndex < 3) return true;
+  if (trackIndex < 3 || progression.unlocked?.[classId]?.includes(layoutId))
+    return true;
   return tracks
     .slice(0, trackIndex)
     .every(

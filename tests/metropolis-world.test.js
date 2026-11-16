@@ -28,8 +28,8 @@ function dispose(root) {
 test("VESPER has an explicit urban biome and distinct unaliased records/menu identity", () => {
   const course = TRACKS.find((c) => c.name === "VESPER CIRCUIT");
   assert(course);
-  assert.equal(TRACKS.indexOf(course), 6);
-  assert(!TRACKS.slice(0, 6).some((c) => c.layoutId === course.layoutId));
+  assert.equal(TRACKS.indexOf(course), TRACK_INDEX.VESPER);
+  assert.equal(TRACKS.filter((c) => c.layoutId === course.layoutId).length, 1);
   const recipe = newCourseRecipe({ config: course });
   assert.equal(recipe.biome, "metropolis");
   assert.equal(biomeLandHeight(recipe, 0, 0, {}), 12);

@@ -154,6 +154,7 @@ for (const [index, config] of TRACKS.entries()) {
     const expected = {
       "KAISEKI COAST": 2,
       "SOLAR ARRAY": 3,
+      FAULTLINE: 2,
       NOCTILUCENT: 1,
       WHITEOUT: 1,
       MONSOON: 1,

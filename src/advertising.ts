@@ -14,6 +14,7 @@ export function buildSplitMarkers(
   terrain: TerrainSurface,
 ) {
   const [start, end] = track.config.split;
+  if (start < 0) return;
   let fork = start * track.length;
   for (let s = fork + 1; s < end * track.length; s += 2) {
     if (!track.bounds(s, -1).connected) {
@@ -159,6 +160,12 @@ export function getTrackAdvertisingLayout(track: Track) {
   // Four individually staged landmarks per lap: three different campaigns and
   // one full-size Pierre panel. Nothing is tiled along the running rail.
   const campaigns: Record<string, number[][]> = {
+    FAULTLINE: [
+      [0.12, -1, 7, 56],
+      [0.39, -1, 2, 54],
+      [0.77, 1, 5, 60],
+      [0.87, 1, -1, 48],
+    ],
     "KAISEKI COAST": [
       [0.195, 1, 0, 56],
       [0.485, 1, 2, 50],

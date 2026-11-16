@@ -17,7 +17,7 @@ function straight() {
   return {
     length: 100000,
     finishS: 0,
-    config: { split: [0.8, 0.9], jump: 0.95 },
+    config: { split: [0.8, 0.9], jump: 0.95, sections: {} },
     gap: () => false,
     curvature: () => 0,
     frame: (s) => ({

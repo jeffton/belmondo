@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
 import { celestialDirection } from "../src/track-lighting.ts";
 import { buildSectionalValues } from "../src/sectional-values.ts";
 
@@ -77,8 +77,8 @@ test("Vesper gallery values do not leak into the separated roof route", () => {
   assert.ok(shade(upper) > 0.92);
 });
 
-test("all seven courses retain restrained, finite deck values without geometry changes", () => {
-  for (let index = 0; index < 7; index++) {
+test("all courses retain restrained, finite deck values without geometry changes", () => {
+  for (let index = 0; index < TRACKS.length; index++) {
     const { track, shade } = fixture(index);
     const before = track.frame(0.37 * track.length, -1).p.toArray();
     for (let u = 0; u < 1; u += 0.005)

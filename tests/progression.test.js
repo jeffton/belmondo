@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { TRACKS } from "../src/track.ts";
+import { SPEED_CLASSES } from "../src/speed-classes.ts";
 import {
   PROGRESSION_STORAGE_KEY,
   loadProgression,
@@ -8,7 +10,7 @@ import {
   trackProgress,
 } from "../src/progression.ts";
 
-const tracks = Array.from({ length: 7 }, (_, index) => ({
+const tracks = Array.from({ length: 8 }, (_, index) => ({
   layoutId: `course-${index}`,
   config: { layoutId: `course-${index}` },
 }));
@@ -27,7 +29,7 @@ test("first three tracks are open and later tracks require every earlier class w
     tracks.map((track, index) =>
       trackIsUnlocked(progression, "c1", track.layoutId, index, tracks),
     ),
-    [true, true, true, false, false, false, false],
+    [true, true, true, false, false, false, false, false],
   );
   progression.classes.c1 = {};
   for (const track of tracks.slice(0, 3))
@@ -77,6 +79,90 @@ test("only combat finishes record class-specific best places and wins", () => {
     false,
   );
   assert.equal(trackProgress(progression, "c1", tracks[1].layoutId), null);
+});
+
+const originalLayouts = [
+  "whiteout-2-finish-end",
+  "monsoon-4-finish-end",
+  "coast-4-finish-end",
+  "solar-4-finish-end",
+  "cinderline-2-finish-end",
+  "noctilucent-4-finish-end",
+  "vesper-1-finish-end",
+];
+
+function storageFor(progression) {
+  return {
+    getItem: (key) =>
+      key === PROGRESSION_STORAGE_KEY ? JSON.stringify(progression) : null,
+  };
+}
+
+test("inserting FAULTLINE preserves every previously open course without inventing wins", () => {
+  // Exercise every old unlock boundary, independently in every speed class.
+  for (let wonCount = 0; wonCount <= originalLayouts.length; wonCount++) {
+    const old = { version: 1, classes: {} };
+    for (const [classIndex, { id }] of SPEED_CLASSES.entries()) {
+      const count = Math.max(0, wonCount - classIndex);
+      old.classes[id] = Object.fromEntries(
+        originalLayouts
+          .slice(0, count)
+          .map((layoutId) => [layoutId, { bestPosition: 1, won: true }]),
+      );
+    }
+    const migrated = loadProgression(storageFor(old));
+    assert.equal(migrated.version, 2);
+    assert.deepEqual(migrated.classes, old.classes);
+    for (const { id } of SPEED_CLASSES) {
+      for (const [oldIndex, layoutId] of originalLayouts.entries()) {
+        const previouslyOpen =
+          oldIndex < 3 ||
+          originalLayouts
+            .slice(0, oldIndex)
+            .every((previous) => old.classes[id][previous]?.won);
+        const index = TRACKS.findIndex((track) => track.layoutId === layoutId);
+        assert(index >= 0, `${layoutId} keeps its identity`);
+        assert.equal(
+          trackIsUnlocked(migrated, id, layoutId, index, TRACKS),
+          previouslyOpen,
+          `${id}: ${layoutId}, ${wonCount} old wins`,
+        );
+      }
+      const index = TRACKS.findIndex((track) => track.name === "FAULTLINE");
+      assert(index >= 0);
+      const layoutId = TRACKS[index].layoutId;
+      assert.equal(trackProgress(migrated, id, layoutId), null);
+      assert.equal(
+        trackIsUnlocked(migrated, id, layoutId, index, TRACKS),
+        TRACKS.slice(0, index).every(
+          (track) => old.classes[id][track.layoutId]?.won,
+        ),
+      );
+    }
+    assert.deepEqual(loadProgression(storageFor(migrated)), migrated);
+  }
+});
+
+test("fresh progression unlocks all eight in course order rather than inheriting veteran access", () => {
+  const progression = loadProgression({ getItem: () => null });
+  assert.equal(progression.version, 2);
+  for (let index = 0; index < TRACKS.length; index++) {
+    const track = TRACKS[index];
+    assert(trackIsUnlocked(progression, "c1", track.layoutId, index, TRACKS));
+    if (index >= 3 && index + 1 < TRACKS.length)
+      assert(
+        !trackIsUnlocked(
+          progression,
+          "c1",
+          TRACKS[index + 1].layoutId,
+          index + 1,
+          TRACKS,
+        ),
+      );
+    recordProgressionResult(progression, result(), { config: track });
+  }
+  assert.equal(Object.keys(progression.classes.c1).length, 8);
+  assert(!trackIsUnlocked(progression, "c2", TRACKS[3].layoutId, 3, TRACKS));
 });
 
 test("progression uses separate persistent storage and leaves lap-time records intact", () => {

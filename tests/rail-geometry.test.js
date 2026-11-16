@@ -72,42 +72,43 @@ for (const [index, config] of TRACKS.entries()) {
     assert(banked > 0);
   });
 
-  test(`${config.name}: opposed split tips/caps meet without entering the other carriageway`, () => {
-    const track = makeTrack(index),
-      [start, end] = config.split;
-    for (let i = 0; i <= 1000; i++) {
-      const u = start + ((end - start) * i) / 1000;
-      const first = frameAt(track, u, -1),
-        second = frameAt(track, u, 1);
-      if (Math.abs(first.p.y - second.p.y) > 0.05) continue;
-      const a = first.innerSide === 1 ? first : second,
-        b = first.innerSide === 1 ? second : first;
-      const axis = track.frame(u * track.length).right;
-      const left = railPoint(
-        a,
-        a.clipMax,
-        1,
-        RAIL_PROFILE.height,
-        railBackDepth(track, a, 1),
-      );
-      const right = railPoint(
-        b,
-        b.clipMin,
-        -1,
-        RAIL_PROFILE.height,
-        railBackDepth(track, b, -1),
-      );
-      assert(
-        right.clone().sub(left).dot(axis) >= -1e-7,
-        "sloped median caps cannot overlap or hide a collider in the other route",
-      );
-      if (a.connected)
-        assert.equal(
-          railHeight(a, 1),
-          0,
-          "divider emerges from zero height at the connected root",
+  if (config.split[0] >= 0)
+    test(`${config.name}: opposed split tips/caps meet without entering the other carriageway`, () => {
+      const track = makeTrack(index),
+        [start, end] = config.split;
+      for (let i = 0; i <= 1000; i++) {
+        const u = start + ((end - start) * i) / 1000;
+        const first = frameAt(track, u, -1),
+          second = frameAt(track, u, 1);
+        if (Math.abs(first.p.y - second.p.y) > 0.05) continue;
+        const a = first.innerSide === 1 ? first : second,
+          b = first.innerSide === 1 ? second : first;
+        const axis = track.frame(u * track.length).right;
+        const left = railPoint(
+          a,
+          a.clipMax,
+          1,
+          RAIL_PROFILE.height,
+          railBackDepth(track, a, 1),
         );
-      if (b.connected) assert.equal(railHeight(b, -1), 0);
-    }
-  });
+        const right = railPoint(
+          b,
+          b.clipMin,
+          -1,
+          RAIL_PROFILE.height,
+          railBackDepth(track, b, -1),
+        );
+        assert(
+          right.clone().sub(left).dot(axis) >= -1e-7,
+          "sloped median caps cannot overlap or hide a collider in the other route",
+        );
+        if (a.connected)
+          assert.equal(
+            railHeight(a, 1),
+            0,
+            "divider emerges from zero height at the connected root",
+          );
+        if (b.connected) assert.equal(railHeight(b, -1), 0);
+      }
+    });
 }

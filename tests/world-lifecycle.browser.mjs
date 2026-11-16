@@ -62,12 +62,20 @@ try {
     }
     const assets = Object.values(world.flagshipAssets);
     const rebuilds = [];
-    for (const index of [TRACK_INDEX.MONSOON, TRACK_INDEX.COAST]) {
+    for (const index of [
+      TRACK_INDEX.FAULTLINE,
+      TRACK_INDEX.COAST,
+      TRACK_INDEX.FAULTLINE,
+      TRACK_INDEX.COAST,
+    ]) {
       track = makeTrack(index);
       world.build(track);
       reset(0);
       rebuilds.push({
         coast: !!world.scene.getObjectByName("kaiseki-waterfront"),
+        excavator: !!world.scene.getObjectByName("faultline-excavator"),
+        gpuGeometries: world.renderer.info.memory.geometries,
+        gpuTextures: world.renderer.info.memory.textures,
         sameTextures: Object.values(world.flagshipAssets).every(
           (map, i) => map === assets[i],
         ),
@@ -84,10 +92,22 @@ try {
     assert.equal(row.oldDetached, true);
     assert.equal(row.sparksReset, true);
   }
-  assert.deepEqual(report.rebuilds, [
-    { coast: false, sameTextures: true, imagesLoaded: true },
-    { coast: true, sameTextures: true, imagesLoaded: true },
-  ]);
+  for (const [index, row] of report.rebuilds.entries()) {
+    assert.equal(row.coast, index % 2 === 1);
+    assert.equal(row.excavator, index % 2 === 0);
+    assert.equal(row.sameTextures, true);
+    assert.equal(row.imagesLoaded, true);
+  }
+  for (const index of [0, 1]) {
+    assert.equal(
+      report.rebuilds[index + 2].gpuGeometries,
+      report.rebuilds[index].gpuGeometries,
+    );
+    assert.equal(
+      report.rebuilds[index + 2].gpuTextures,
+      report.rebuilds[index].gpuTextures,
+    );
+  }
   assert.deepEqual(errors, []);
   console.log(
     "PASS World restart/rebuild: stable resources, detached ships, reset sparks, persistent loaded textures",

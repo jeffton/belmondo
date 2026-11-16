@@ -9,6 +9,7 @@ import {
 } from "./new-course-recipes.ts";
 
 const DISTRICTS: Record<string, string[]> = {
+  FAULTLINE: ["quarry-rim-grandstand", "reclamation-gallery"],
   "VESPER CIRCUIT": ["neon-boulevard-grandstand", "transit-concourse-gallery"],
   "KAISEKI COAST": ["civic-terrace", "transit-gallery"],
   "SOLAR ARRAY": ["sandstone-bank", "test-apron"],

@@ -13,6 +13,7 @@ const browser = await chromium.launch({
   ],
 });
 const errors = [];
+const faultlineIndex = TRACKS.findIndex((track) => track.name === "FAULTLINE");
 try {
   const viewports = process.env.MENU_VIEWPORTS
     ? JSON.parse(process.env.MENU_VIEWPORTS)
@@ -76,9 +77,43 @@ try {
     await page.locator('input[name="speed-class"][value="2"]').check();
     await page.locator("#setup-next").click();
     for (const stage of ["track", "craft"]) {
-      if (stage === "track")
-        await page.locator("#tracks button").nth(6).click();
-      else await page.locator('#crafts button[data-craft-index="2"]').click();
+      if (stage === "track") {
+        await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
+        for (const [index, track] of TRACKS.entries())
+          await expect(page.locator("#tracks button").nth(index)).toContainText(
+            track.name,
+          );
+        const courseIndices = process.env.MENU_COURSES
+          ? JSON.parse(process.env.MENU_COURSES)
+          : TRACKS.map((_, index) => index);
+        for (const index of courseIndices) {
+          const track = TRACKS[index];
+          const button = page.locator("#tracks button").nth(index);
+          await button.scrollIntoViewIfNeeded();
+          if (width < 900) await button.tap();
+          else await button.click();
+          await expect(page.locator("#circuit-name")).toHaveText(track.name);
+          await page.waitForFunction((index) => {
+            const t = window.nullVector.telemetry;
+            return !t.trackLoading && t.loadedTrack === index;
+          }, index);
+          const bounds = await button.boundingBox();
+          expect(bounds.x).toBeGreaterThanOrEqual(insets.left - 1);
+          expect(bounds.x + bounds.width).toBeLessThanOrEqual(
+            width - insets.right + 1,
+          );
+          expect(bounds.y).toBeGreaterThanOrEqual(insets.top - 1);
+          expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+            height - insets.bottom + 1,
+          );
+          expect(
+            await page.evaluate(
+              () => window.nullVector.telemetry.previewResources.geometries,
+            ),
+          ).toBeGreaterThan(0);
+        }
+        await page.locator("#tracks button").nth(faultlineIndex).click();
+      } else await page.locator('#crafts button[data-craft-index="2"]').click();
       await expect(page.locator("#menu")).toHaveAttribute("data-stage", stage);
       await expect(page.locator("#menu-model")).toBeVisible();
       const rotation = await page.evaluate(
@@ -90,8 +125,13 @@ try {
       );
       if (width === 1440 && stage === "track") {
         const samples = [];
-        for (let cycle = 0; cycle < 2; cycle++) {
-          for (let i = 0; i < 7; i++) {
+        const resourceCycles = Number(process.env.MENU_RESOURCE_CYCLES ?? 2);
+        for (let cycle = 0; cycle < resourceCycles; cycle++) {
+          for (
+            let i = 0;
+            i < (await page.locator("#tracks button").count());
+            i++
+          ) {
             await page.locator("#tracks button").nth(i).click();
             const before = await page.evaluate(
               () => window.nullVector.telemetry.menuModelRotation,
@@ -110,11 +150,14 @@ try {
         }
         // The live feed's moving camera changes visible World buffers. The
         // complete inset model has a fixed footprint across replacement cycles.
-        expect(samples[1].preview.geometries).toBe(
-          samples[0].preview.geometries,
-        );
-        expect(samples[1].preview.textures).toBe(samples[0].preview.textures);
-        console.log("Seven-track resource cycle stable:", samples[1]);
+        if (resourceCycles >= 2) {
+          expect(samples[1].preview.geometries).toBe(
+            samples[0].preview.geometries,
+          );
+          expect(samples[1].preview.textures).toBe(samples[0].preview.textures);
+          console.log("Course resource cycle stable:", samples[1]);
+        }
+        await page.locator("#tracks button").nth(faultlineIndex).click();
       }
       const backgroundBuffer = await page
         .locator("#game")
@@ -153,6 +196,18 @@ try {
           ...document.querySelectorAll("#menu button, #menu a, #menu input"),
         ].filter((e) => e.getClientRects().length);
         return {
+          stage: menu.dataset.stage,
+          content: [...document.querySelectorAll(".menu-body > *")]
+            .filter((element) => element.getClientRects().length)
+            .map((element) => {
+              const rect = element.getBoundingClientRect();
+              return {
+                id: element.id,
+                top: rect.top,
+                bottom: rect.bottom,
+                height: rect.height,
+              };
+            }),
           scroll: menu.scrollHeight - menu.clientHeight,
           width: innerWidth,
           height: innerHeight,
@@ -182,6 +237,9 @@ try {
             .map((e) => e.id || e.textContent),
         };
       }, insets);
+      await page.screenshot({
+        path: `${output}/${width}-${height}-${stage}.png`,
+      });
       expect(layout.scroll, JSON.stringify(layout)).toBeLessThanOrEqual(1);
       expect(layout.outside, JSON.stringify(layout)).toEqual([]);
       expect(layout.model.top).toBeGreaterThanOrEqual(0);
@@ -195,16 +253,19 @@ try {
         expect(layout.model.bottom, JSON.stringify(layout)).toBeLessThanOrEqual(
           layout.body.top + 2,
         );
-      await page.screenshot({
-        path: `${output}/${width}-${height}-${stage}.png`,
-      });
       if (stage === "track") await page.locator("#setup-next").click();
     }
+    if (process.env.MENU_LAYOUT_ONLY === "1") {
+      console.log(
+        `${width}×${height}: eight course names, live previews and track/craft bounds PASS`,
+      );
+      await context.close();
+      continue;
+    }
     await page.locator("#setup-back").click();
-    await expect(page.locator("#tracks button").nth(6)).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(
+      page.locator("#tracks button").nth(faultlineIndex),
+    ).toHaveAttribute("aria-pressed", "true");
     await page.locator("#setup-back").click();
     await expect(
       page.locator('input[name="speed-class"][value="2"]'),
@@ -228,10 +289,9 @@ try {
     await expect(page.locator("#pause-panel")).toBeVisible();
     await page.locator("#quit").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
-    await expect(page.locator("#tracks button").nth(6)).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(
+      page.locator("#tracks button").nth(faultlineIndex),
+    ).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#start")).toBeHidden();
     await page.waitForFunction(
       (s) => window.nullVector.telemetry.menuRacers[0].s !== s,

@@ -18,7 +18,9 @@ for (let course = 0; course < TRACKS.length; course++) {
   const track = makeTrack(course);
   const pads = getTrackPickups(track);
   test(`${track.config.name}: authored pickup lines fit the deck and offer accessible and edge rewards`, () => {
-    for (const branch of [-1, 1]) assert(pads.some((p) => p.branch === branch));
+    const branches = track.config.split[0] >= 0 ? [-1, 1] : [0];
+    for (const branch of branches)
+      assert(pads.some((p) => p.branch === branch));
     for (const type of ["boost", "weapon"]) {
       assert(
         pads.some((p) => p.type === type && Math.abs(p.lateral) < p.width / 2),

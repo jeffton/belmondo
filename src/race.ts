@@ -486,6 +486,40 @@ export class Race {
       r.finishOffset!.multiplyScalar(Math.exp(-dt * 3));
       const previous = r.position.clone();
       r.position.copy(f.p).addScaledVector(f.right, r.x);
+      let pitch = -Math.asin(f.tangent.y);
+      if (track.gap(u)) {
+        // The missing deck starts below the ramp lip. Cooldown presentation
+        // bridges that discontinuity instead of snapping a finished hull down
+        // onto the absent road; race physics and earned results are untouched.
+        const launchS = track.config.jump! * track.length;
+        const landingS = launchS + track.config.gapLength! * track.length;
+        const span = landingS - launchS;
+        const lip = track.frame(launchS - 0.001, r.branch);
+        const landing = track.frame(landingS, r.branch);
+        const rise =
+          ((lip.p.y - track.frame(launchS - 6, r.branch).p.y) / 5.999) * span;
+        const fall =
+          ((track.frame(landingS + 6, r.branch).p.y - landing.p.y) / 6) * span;
+        const t = (u * track.length - launchS) / span;
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const height =
+          (2 * t3 - 3 * t2 + 1) * lip.p.y +
+          (t3 - 2 * t2 + t) * rise +
+          (-2 * t3 + 3 * t2) * landing.p.y +
+          (t3 - t2) * fall;
+        const slope =
+          ((6 * t2 - 6 * t) * lip.p.y +
+            (3 * t2 - 4 * t + 1) * rise +
+            (-6 * t2 + 6 * t) * landing.p.y +
+            (3 * t2 - 2 * t) * fall) /
+          span;
+        r.position.y += height - f.p.y;
+        pitch = -Math.atan2(
+          slope,
+          Math.hypot(f.tangent.x, f.tangent.z) * f.metric,
+        );
+      }
       r.position.y += HOVER;
       r.position.add(r.finishOffset!);
       r.velocity.copy(r.position).sub(previous).divideScalar(dt);
@@ -494,7 +528,7 @@ export class Race {
         (1 - Math.exp(-dt * 6));
       r.yaw += turn;
       r.yawRate = turn / dt;
-      r.pitch += (-Math.asin(f.tangent.y) - r.pitch) * (1 - Math.exp(-dt * 6));
+      r.pitch += (pitch - r.pitch) * (1 - Math.exp(-dt * 6));
       r.h *= Math.exp(-dt * 3);
       r.vx = r.velocity.dot(f.right);
       r.vy = r.velocity.y;
@@ -1020,7 +1054,22 @@ export class Race {
         this.eliminate(r);
         continue;
       }
-      if (height < -18 || r.offroad > 3) {
+      // Long authored jumps can remain airborne beyond the lost-racer timer.
+      // Keep that timer for missing the corridor, reversing/stalling, or flying
+      // past the receiving straight; gravity and deck contact remain unchanged.
+      const runway = track.config.sections.runway;
+      const validRunwayFlight =
+        r.flight &&
+        track.config.jump !== null &&
+        runway &&
+        u >= track.config.jump &&
+        u < runway[1] &&
+        onDeck &&
+        r.velocity.x * road.tangent.x + r.velocity.z * road.tangent.z > 0 &&
+        (r.position.x - previous.x) * road.tangent.x +
+          (r.position.z - previous.z) * road.tangent.z >
+          0;
+      if (height < -18 || (r.offroad > 3 && !validRunwayFlight)) {
         r.shield = Math.max(10, r.shield - 24);
         this.recover(r);
         if (!ai) this.emit("hit", "RESCUE");

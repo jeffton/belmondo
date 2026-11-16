@@ -71,6 +71,18 @@ export const VEGETATION_PROFILES: Record<string, VegetationProfile> = {
     waterline: -14,
     tint: 0x8eaaa8,
   },
+  FAULTLINE: {
+    ranges: [
+      [0.015, 0.34],
+      [0.61, 0.98],
+    ],
+    species: ["tree", "bush", "bush", "scrub"],
+    spacing: 60,
+    cluster: [6, 12],
+    setback: [45, 130],
+    waterline: 50,
+    tint: 0x91ac70,
+  },
   WHITEOUT: { ranges: [], species: [] },
   "VESPER CIRCUIT": { ranges: [], species: [] },
   CINDERLINE: {

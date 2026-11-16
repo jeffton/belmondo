@@ -28,6 +28,17 @@ export interface LandContext {
 
 /** Explicit environments; unknown courses must never become a coastal city. */
 export const NEW_COURSE_RECIPES: Record<string, CourseRecipe> = {
+  FAULTLINE: {
+    biome: "quarry",
+    ground: [0.13, 0.18, 0.65],
+    rock: 0xbdb99e,
+    wall: 0xc4c3ad,
+    pale: 0xe5e2cc,
+    accent: 0xc8df57,
+    vegetation: 0x477c44,
+    districts: [],
+    approaches: [],
+  },
   "VESPER CIRCUIT": {
     biome: "metropolis",
     ground: [0.64, 0.34, 0.18],

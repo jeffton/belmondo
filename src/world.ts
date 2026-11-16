@@ -264,6 +264,7 @@ export class World {
     this.cameraReady = false;
     const cfg = track.config;
     const flagship = cfg.name === "KAISEKI COAST";
+    const faultline = cfg.name === "FAULTLINE";
     const fogColor = flagship ? 0x788391 : cfg.fog;
     const textures: ReturnType<typeof circuitTextures> & {
       rail?: THREE.Texture;
@@ -271,7 +272,11 @@ export class World {
     textures.rail = createRailFaceTexture(cfg.name);
     this.textures = textures;
     this.scene.background = createSky(cfg, fogColor, prepared?.sky);
-    this.scene.fog = new THREE.Fog(fogColor, flagship ? 240 : 180, 1100);
+    this.scene.fog = new THREE.Fog(
+      fogColor,
+      faultline ? 900 : flagship ? 240 : 180,
+      faultline ? 3600 : 1100,
+    );
     this.lighting = buildTrackLighting(this.scene, track);
     const sea = new THREE.Mesh(
       new THREE.PlaneGeometry(12000, 12000, 1, 1),
@@ -279,7 +284,7 @@ export class World {
     );
     textures.water.repeat.set(250, 250);
     sea.rotation.x = -Math.PI / 2;
-    sea.position.y = -16;
+    sea.position.y = faultline ? -200 : -16;
     this.scene.add(sea);
     yield;
     const environment = buildEnvironment(
@@ -366,7 +371,7 @@ export class World {
     const stations = [
       ...new Set([
         ...Array.from({ length: steps + 1 }, (_, i) => i / steps),
-        ...cfg.split,
+        ...cfg.split.filter((u) => u >= 0 && u <= 1),
         ...(cfg.ramp ? [cfg.ramp.start] : []),
         ...(cfg.jump === null ? [] : [cfg.jump, cfg.jump + cfg.gapLength!]),
       ]),
@@ -633,7 +638,9 @@ export class World {
       }
     }
     yield;
-    this.city = buildCity(this.scene, track, textures, environment);
+    this.city = faultline
+      ? Object.assign(new THREE.Group(), { update(_time: number) {} })
+      : buildCity(this.scene, track, textures, environment);
     yield;
     if (flagship)
       buildFlagship(
@@ -841,6 +848,11 @@ export class World {
   }
   draw(race: Race, dt: number, demo = false, steeringKind = "analog") {
     this.time += dt;
+    const far = this.track.config.name === "FAULTLINE" ? 4400 : 1700;
+    if (this.camera.far !== far) {
+      this.camera.far = far;
+      this.camera.updateProjectionMatrix();
+    }
     this.city.update(this.time);
     this.startGantry.update(race, demo);
     this.finishDistrict.update(this.time);

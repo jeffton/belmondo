@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { measureFork } from "./helpers/fork-diagnostics.js";
+import { TRACK_INDEX } from "../src/track.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 for (const [name, index] of [
-  ["Whiteout", 0],
-  ["Coast", 2],
-  ["Cinderline", 4],
+  ["Whiteout", TRACK_INDEX.WHITEOUT],
+  ["Coast", TRACK_INDEX.COAST],
+  ["Cinderline", TRACK_INDEX.CINDERLINE],
 ]) {
   test(`${name}: both redesigned branches earn a clean pickup-free merge for every craft/class`, async () => {
     const report = await measureFork(root, index);

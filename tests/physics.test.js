@@ -12,7 +12,11 @@ const neutral = { throttle: 1, steer: 0, airLeft: 0, airRight: 0 };
 function circuit({ gap = false, split = false } = {}) {
   const radius = 200,
     length = Math.PI * 2 * radius;
-  const config = { split: split ? [0.25, 0.45] : [0.9, 0.9], jump: 0.7 };
+  const config = {
+    split: split ? [0.25, 0.45] : [0.9, 0.9],
+    jump: 0.7,
+    sections: {},
+  };
   return {
     length,
     finishS: 0,
@@ -47,7 +51,7 @@ function straight(width = 15) {
   return {
     length: 1_000_000,
     finishS: 0,
-    config: { split: [0.9, 0.95], jump: 0.99 },
+    config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
     curvature: () => 0,
     gap: () => false,
     frame: (s) => ({
@@ -370,6 +374,7 @@ function connectedSeamStations(track) {
 test("joined production forks and merges have no hidden branch-edge wall", () => {
   for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index);
+    if (track.config.split[0] < 0) continue;
     for (const s of connectedSeamStations(track)) {
       for (const branch of [-1, 1]) {
         const race = setup(track),
@@ -414,6 +419,7 @@ test("a forward drive into the separating splitter tip hits a real barrier", () 
   for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
+    if (start < 0) continue;
     let separation = start * track.length;
     while (
       track.bounds(separation + 0.2, -1).connected ||
@@ -461,6 +467,7 @@ test("route selection follows the connected fork, but separated routes retain th
   for (const index of Object.values(TRACK_INDEX)) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
+    if (start < 0) continue;
     for (const s of connectedSeamStations(track)) {
       for (const branch of [-1, 1]) {
         const f = track.frame(s, -branch);
@@ -689,13 +696,17 @@ test("AI uses the same body integrator rather than assigning track position or y
   assert(ai.s > 200, "AI earns forward progress using its driver");
 });
 
-test("unarmed body AI earns an ordered lap on every production course, including every craft's jump", () => {
-  for (const index of Object.values(TRACK_INDEX)) {
+for (const index of Object.values(TRACK_INDEX)) {
+  test(`production course ${index}: unarmed body AI earns an ordered lap including every craft's jump`, () => {
     const race = setup(makeTrack(index), "race");
     // Locomotion must earn ordered gates; armed-pack survival is tested separately.
     // A permanent combat elimination must not fail this driving-only test.
     for (const racer of race.racers) racer.aiFire = Infinity;
-    drive(race, 100, { ...neutral, throttle: false });
+    // The quarry's 16.6 km physical route already takes >105 s at the
+    // slowest hull's ideal C1 cruise, before grid acceleration and corners.
+    // It shares the 150 s lap horizon used by the terrain driving matrix.
+    const seconds = index === TRACK_INDEX.FAULTLINE ? 150 : 100;
+    drive(race, seconds, { ...neutral, throttle: false });
     for (const r of race.racers.slice(1)) {
       assert(
         r.lap >= 2,
@@ -706,8 +717,8 @@ test("unarmed body AI earns an ordered lap on every production course, including
           Number.isFinite(r.velocity.length()),
       );
     }
-  }
-});
+  });
+}
 
 test("grid racers behind the start retain negative physical progression", () => {
   const race = setup(circuit(), "race");

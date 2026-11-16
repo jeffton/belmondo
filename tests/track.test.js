@@ -13,6 +13,20 @@ test("all courses expose wider main decks and keep both split routes clear", () 
       routeSeparation = left.p.distanceTo(right.p);
 
     assert(main.width >= 18, `${track.config.name}: main deck is not wider`);
+    if (split[0] < 0) {
+      for (let u = 0; u < 1; u += 0.01) {
+        const center = track.frame(u * track.length);
+        for (const branch of [-1, 1]) {
+          const route = track.frame(u * track.length, branch);
+          assert(
+            route.p.distanceTo(center.p) < 1e-8,
+            "unsplit course cannot create a phantom branch",
+          );
+          assert.equal(route.width, center.width);
+        }
+      }
+      continue;
+    }
     assert(
       left.width >= track.config.branchWidths[0] &&
         right.width >= track.config.branchWidths[1],
@@ -92,6 +106,7 @@ test("joined fork halves have a level seam and expose common visual/physical bou
   for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index),
       [start, end] = track.config.split;
+    if (start < 0) continue;
     for (const u of [start, end]) {
       for (const branch of [-1, 1]) {
         const bounds = track.bounds(u * track.length, branch);

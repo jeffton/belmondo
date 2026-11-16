@@ -15,9 +15,11 @@ export function chaseCameraSurface(
     const f = track.frame(s, branch);
     const dx = position.x - f.p.x;
     const dz = position.z - f.p.z;
+    // Find the actual banked cross-section in XZ. The horizontal tangent
+    // is not perpendicular to its right vector when grade and bank combine.
     s +=
-      (dx * f.tangent.x + dz * f.tangent.z) /
-      ((f.tangent.x ** 2 + f.tangent.z ** 2) * f.metric);
+      (dx * f.right.z - dz * f.right.x) /
+      ((f.tangent.x * f.right.z - f.tangent.z * f.right.x) * f.metric);
   }
   const f = track.frame(s, branch);
   const dx = position.x - f.p.x;

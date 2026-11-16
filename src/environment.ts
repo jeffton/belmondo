@@ -6,6 +6,7 @@ import { buildCourseGeography } from "./course-geography.ts";
 import { newCourseRecipe } from "./new-course-recipes.ts";
 import { buildNewTerrainSurface } from "./new-course-environments.ts";
 import { mineralGroundTexture } from "./mineral-ground-texture.ts";
+import { buildFaultlineEnvironment } from "./faultline-environment.ts";
 
 export interface CircuitTextures {
   road: THREE.Texture;
@@ -39,6 +40,13 @@ export function buildEnvironment(
   textures: CircuitTextures,
   preparedTerrain?: Parameters<typeof createTerrain>[1],
 ): EnvironmentSurface {
+  if (track.config.name === "FAULTLINE")
+    return buildFaultlineEnvironment(
+      scene,
+      track,
+      textures,
+      createTerrain(track, preparedTerrain),
+    );
   if (newCourseRecipe(track))
     return buildNewTerrainSurface(
       scene,

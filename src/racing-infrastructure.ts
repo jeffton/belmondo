@@ -6,6 +6,10 @@ import { getTrackAdvertisingLayout } from "./advertising.ts";
 
 // Only these approach landmarks receive relief. The running barrier is untouched.
 const SERVICE_SITES: Record<string, [number, number][]> = {
+  FAULTLINE: [
+    [0.31, -1],
+    [0.76, 1],
+  ],
   "KAISEKI COAST": [
     [0.16, -1],
     [0.57, 1],

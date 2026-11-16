@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Vector3 } from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
 import { createTerrain } from "../src/terrain.ts";
 import { chaseCameraSurface, clearChaseCamera } from "../src/chase-camera.ts";
 
@@ -31,7 +31,7 @@ test("Night drop camera clears the upstream deck after focus transport", () => {
 });
 
 test("all course forks keep chase clearance through moving drop approaches", () => {
-  for (let index = 0; index < 7; index++) {
+  for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index);
     const terrain = createTerrain(track);
     for (const branch of [-1, 0, 1]) {
@@ -71,7 +71,7 @@ test("Night lower crossing remains attached to its own deck, not the overpass", 
 
 test("projected floors match independently authored banked road points", () => {
   const terrain = { heightAt: () => -Infinity };
-  for (let index = 0; index < 7; index++) {
+  for (let index = 0; index < TRACKS.length; index++) {
     const track = makeTrack(index);
     for (const branch of [-1, 0, 1])
       for (const u of [0.12, 0.25, 0.36, 0.48, 0.6, 0.78, 0.87145]) {
@@ -81,7 +81,10 @@ test("projected floors match independently authored banked road points", () => {
         for (const side of [-0.8, 0, 0.8]) {
           const point = f.p.clone().addScaledVector(f.right, side * f.width);
           const floor = chaseCameraSurface(track, s, branch, point, terrain);
-          assert.ok(Math.abs(floor - point.y) < 0.02);
+          assert.ok(
+            Math.abs(floor - point.y) < 0.02,
+            `${track.config.name} branch ${branch}, u ${u}, side ${side}: floor ${floor}, road ${point.y}`,
+          );
         }
       }
   }

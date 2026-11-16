@@ -80,7 +80,8 @@ for (const [index, config] of TRACKS.entries()) {
     const before = railFaceUV(0.9999, RAIL_PROFILE.height, track.length);
     const after = railFaceUV(1, RAIL_PROFILE.height, track.length);
     assert(
-      after[0] > before[0] && after[0] - before[0] < 0.1,
+      after[0] > before[0] &&
+        Math.abs(after[0] - before[0] - cycles * 0.0001) < 1e-9,
       "last road quad cannot smear a whole lap of paint",
     );
     for (let i = 0; i < 400; i++) {

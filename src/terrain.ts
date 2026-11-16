@@ -2,6 +2,11 @@ import type { Track, TrackFrame } from "./track.ts";
 import * as THREE from "three";
 import { createNearestPointIndex } from "./nearest-point-index.ts";
 import { getWaterfrontDistricts } from "./course-geography.ts";
+import { getFinishDistrictLayout } from "./finish-district.ts";
+import {
+  faultlineLandHeight,
+  faultlineGroundColor,
+} from "./faultline-landform.ts";
 import {
   newCourseRecipe,
   assertKnownEnvironment,
@@ -58,6 +63,7 @@ export type Terrain = ReturnType<typeof createTerrain>;
 export function createTerrain(track: Track, prepared?: PreparedTerrain) {
   assertKnownEnvironment(track);
   const recipe = newCourseRecipe(track);
+  const faultline = track.config.name === "FAULTLINE";
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
   const samples: (TrackFrame & { branch: number })[] = [];
@@ -136,6 +142,37 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
       (1 - smooth(100, 230, across))
     );
   }
+  const faultlineDistricts = faultline
+    ? [
+        [0.075, -1],
+        [0.165, -1],
+        [0.285, 1],
+        [0.38, -1],
+        [0.57, 1],
+        [0.675, -1],
+        [0.77, 1],
+        [0.87, 1],
+        [0.94, -1],
+      ].map(([u, side]) => {
+        const f = track.frame(u * track.length);
+        const right = new THREE.Vector3(
+          f.tangent.z,
+          0,
+          -f.tangent.x,
+        ).normalize();
+        const forward = new THREE.Vector3(
+          f.tangent.x,
+          0,
+          f.tangent.z,
+        ).normalize();
+        return {
+          center: f.p.clone().addScaledVector(right, side * (f.width + 100)),
+          right,
+          forward,
+          y: f.p.y - 4.5,
+        };
+      })
+    : [];
   const nearestIndex =
     !prepared && createNearestPointIndex(samples.map((f) => f.p));
   function nearest(x: number, z: number) {
@@ -150,7 +187,9 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     const { frame: f, distance } = nearest(x, z);
     const r = Math.hypot((x - centerX) / radiusX, (z - centerZ) / radiusZ);
     let base;
-    if (recipe) {
+    if (faultline) {
+      base = faultlineLandHeight(x, z);
+    } else if (recipe) {
       base = biomeLandHeight(recipe, x, z, {
         centerX,
         centerZ,
@@ -173,14 +212,18 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     }
     // Broad graded land carries the course, rather than a thin ribbon on columns.
     const grade =
-      recipe?.biome === "metropolis" || onUpperBridge(f.u)
+      recipe?.biome === "metropolis" ||
+      onUpperBridge(f.u) ||
+      (faultline && track.gap(f.u))
         ? 0
-        : 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
+        : faultline
+          ? 1 - smooth(f.width + 38, f.width + 115, distance)
+          : 1 - smooth(desert ? 75 : 65, desert ? 240 : 190, distance);
     const fill =
       f.p.y - (f.up.x * (x - f.p.x) + f.up.z * (z - f.p.z)) / f.up.y - 4.5;
     let y = THREE.MathUtils.lerp(base, fill, grade);
     // Higher ground outside the shoulder forms real cuttings, not floating rock walls.
-    if (distance > f.width + 38) y = Math.max(y, base);
+    if (distance > f.width + (faultline ? 95 : 38)) y = Math.max(y, base);
     // The outer Coast fork follows a sea cliff, beyond the existing occupied
     // waterfront galleries. The inner fork retains its sheltered rock shelf.
     if (!recipe && !desert && !harbor && f.branch === 1) {
@@ -207,7 +250,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
         headland * shoulder * outer,
       );
     }
-    const cut = Math.max(waterway(x, z), ravine(x, z));
+    const cut = faultline ? 0 : Math.max(waterway(x, z), ravine(x, z));
     y = THREE.MathUtils.lerp(y, desert ? 15 : -25, cut);
     if (recipe?.biome === "volcanic" && f.branch === -1) {
       const [start, end] = track.config.split;
@@ -230,6 +273,15 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
       // the dry road remains lower still. No water is placed on the deck.
       if (f.u >= start - 0.015 && f.u <= end + 0.015 && distance < 145)
         y = Math.min(y, f.p.y + 16);
+    }
+    for (const site of faultlineDistricts) {
+      const dx = x - site.center.x,
+        dz = z - site.center.z;
+      const across = Math.abs(dx * site.right.x + dz * site.right.z);
+      const along = Math.abs(dx * site.forward.x + dz * site.forward.z);
+      const footprint =
+        (1 - smooth(58, 87, across)) * (1 - smooth(39, 68, along));
+      y = THREE.MathUtils.lerp(y, site.y, footprint);
     }
     return y;
   }
@@ -266,6 +318,25 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
         );
       }
     };
+    if (faultline) {
+      // Reserve every actual spectator footprint in the shared collision land,
+      // including end bays on both sides of the wrapped finish straight.
+      for (const stand of getFinishDistrictLayout(track)) {
+        for (let x = -stand.width / 2 - 3; x <= stand.width / 2 + 3; x += 2) {
+          for (
+            let z = -stand.length / 2 - 3;
+            z <= stand.length / 2 + 3;
+            z += 2
+          ) {
+            const p = stand.center
+              .clone()
+              .addScaledVector(stand.right, x)
+              .addScaledVector(stand.forward, z);
+            lowerCell(p.x, p.z, stand.frame.p.y - 4.5);
+          }
+        }
+      }
+    }
     if (recipe?.biome === "hydraulic") {
       // Excavate the full authored flume beneath its visible water mesh. Apply
       // the cut through lowerCell so heightAt and the rendered terrain triangles
@@ -496,7 +567,21 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
             positions.setXYZ(index, x, h, z);
             uv.setXY(index, x / 45, z / 45);
             const variation = Math.sin(x * 0.021) * Math.cos(z * 0.017) * 0.025;
-            if (recipe) {
+            if (faultline) {
+              const dx =
+                heights[(row + iz) * STRIDE + Math.min(CELLS, col + ix + 1)] -
+                heights[(row + iz) * STRIDE + Math.max(0, col + ix - 1)];
+              const dz =
+                heights[Math.min(CELLS, row + iz + 1) * STRIDE + col + ix] -
+                heights[Math.max(0, row + iz - 1) * STRIDE + col + ix];
+              faultlineGroundColor(
+                x,
+                h,
+                z,
+                tint,
+                Math.hypot(dx, dz) / (STEP * 2),
+              );
+            } else if (recipe) {
               const [hue, saturation, lightness] = recipe.ground;
               const ice = recipe.biome === "polar";
               const sulfur =

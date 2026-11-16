@@ -81,7 +81,10 @@ try {
     const switches = [];
     for (const i of process.env.COURSE_INDICES
       ? JSON.parse(process.env.COURSE_INDICES)
-      : [0, 1, 2, 3, 4, 5, 6]) {
+      : Array.from(
+          { length: await page.locator("#tracks button").count() },
+          (_, i) => i,
+        )) {
       const click = await page.evaluate((i) => {
         window.courseLongTasks = [];
         const start = performance.now();

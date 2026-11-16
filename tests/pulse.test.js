@@ -7,7 +7,7 @@ import { WeaponEffects } from "../src/weapon-effects.ts";
 const track = {
   length: 100_000,
   finishS: 0,
-  config: { split: [0.9, 0.95], jump: 0.99 },
+  config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
   curvature: () => 0,
   gap: () => false,
   frame: (s) => ({
