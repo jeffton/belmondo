@@ -380,8 +380,9 @@ export class AudioEngine {
     if (!this.master) return;
     if (this.muted || this.paused || this.hidden) this.stopSamples();
     if (this.muted || this.hidden || this.volume === 0) this.menuSequence++;
+    // Fixed -6.02 dB trim for menu feedback; the user's effects setting is unchanged.
     this.menuBus.gain.setValueAtTime(
-      this.muted || this.hidden ? 0 : this.volume,
+      this.muted || this.hidden ? 0 : this.volume * 0.5,
       this.context.currentTime,
     );
     this.master.gain.setTargetAtTime(

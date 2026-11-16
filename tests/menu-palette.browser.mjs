@@ -11,7 +11,14 @@ try {
     const { AudioEngine } = await import("/src/audio.js");
     const results = [];
     for (const kind of ["move", "confirm", "back"]) {
-      for (const mode of ["normal", "zero", "muted", "hidden", "paused"]) {
+      for (const mode of [
+        "normal",
+        "previous-level",
+        "zero",
+        "muted",
+        "hidden",
+        "paused",
+      ]) {
         const context = new OfflineAudioContext(1, 24000, 48000);
         const audio = new AudioEngine();
         audio.context = context;
@@ -23,6 +30,8 @@ try {
         audio.hidden = mode === "hidden";
         audio.paused = mode === "paused";
         audio.applyVolume();
+        if (mode === "previous-level")
+          audio.menuBus.gain.setValueAtTime(audio.volume, 0);
         audio.playMenuCue(kind);
         const rendered = await context.startRendering();
         results.push({
@@ -33,6 +42,27 @@ try {
         });
       }
     }
+    // Gameplay PCM must survive the menu trim within renderer float precision.
+    const engine = async (previousLevel) => {
+      const context = new OfflineAudioContext(1, 24000, 48000);
+      const audio = new AudioEngine();
+      audio.context = context;
+      audio.build();
+      audio.started = true;
+      audio.applyVolume();
+      if (previousLevel) audio.menuBus.gain.setValueAtTime(audio.volume, 0);
+      audio.update(1, false, { throttle: true, acceleration: 0 });
+      return (await context.startRendering()).getChannelData(0);
+    };
+    const currentEngine = await engine(false);
+    const previousEngine = await engine(true);
+    const engineDifference = Math.max(
+      ...currentEngine.map((sample, i) => Math.abs(sample - previousEngine[i])),
+    );
+    if (engineDifference > 0.000001)
+      throw new Error(
+        `Menu trim changed gameplay engine PCM: ${engineDifference}`,
+      );
     return results;
   });
   await mkdir("test-artifacts", { recursive: true });
@@ -44,7 +74,7 @@ try {
     assert.equal(voices, 0, `${kind}/${mode}: voices drain`);
     if (["zero", "muted", "hidden"].includes(mode)) assert.equal(peak, 0);
     else {
-      assert(peak > 0.07 && peak < 0.5, `${kind}: moderate peak ${peak}`);
+      assert(peak > 0.005 && peak < 0.5, `${kind}: moderate peak ${peak}`);
       assert(end > 0.1 && end < 0.45, `${kind}: finite envelope ${end}`);
       assert(pcm.slice(22000).every((x) => Math.abs(x) < 0.00001));
     }
@@ -65,6 +95,18 @@ try {
     wav.writeUInt32LE(pcm.length * 2, 40);
     pcm.forEach((x, i) => wav.writeInt16LE(Math.round(x * 32767), 44 + i * 2));
     await writeFile(`test-artifacts/menu-${kind}.wav`, wav);
+  }
+  for (const kind of ["move", "confirm", "back"]) {
+    const current = metrics.find((x) => x.kind === kind && x.mode === "normal");
+    const previous = metrics.find(
+      (x) => x.kind === kind && x.mode === "previous-level",
+    );
+    const ratio = current.rms / previous.rms;
+    assert(
+      ratio >= 0.49 && ratio < 0.7,
+      `${kind}: audible PCM reduction ${ratio}`,
+    );
+    console.log(kind, "RMS reduction dB:", 20 * Math.log10(ratio));
   }
   await writeFile(
     "test-artifacts/menu-palette.json",
