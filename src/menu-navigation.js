@@ -72,7 +72,7 @@ export class MenuNavigation {
         items[0] ||
         null;
     }
-    if (root?.id === "pause-panel")
+    if (root?.id === "pause-panel" || root?.id === "results")
       for (const button of root.querySelectorAll("[data-gamepad-hint]")) {
         if (button === this.cursor)
           button.setAttribute("data-keyboard-hint", "ENTER");
@@ -180,9 +180,7 @@ export class MenuNavigation {
       this.cursor.matches('input[type="range"], label:has(input[type="range"])')
     )
       return;
-    const kind = this.cursor.matches(
-      "#setup-back, #quit, #result-quit, #resume, .close",
-    )
+    const kind = this.cursor.matches("#setup-back, #resume, .close")
       ? "back"
       : "confirm";
     return this.feedback

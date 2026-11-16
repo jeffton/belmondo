@@ -2547,10 +2547,12 @@ body[data-gamepad-connected="true"] [data-gamepad-hint]::before {
   font-family: system-ui, sans-serif;
   font-size: 13px;
 }
-#pause-panel [data-gamepad-hint]:not(.menu-cursor)::before {
+:is(#pause-panel, #results) [data-gamepad-hint]:not(.menu-cursor)::before {
   display: none;
 }
-body[data-input-mode="keyboard"] #pause-panel .menu-cursor::before {
+body[data-input-mode="keyboard"]
+  :is(#pause-panel, #results)
+  .menu-cursor::before {
   content: attr(data-keyboard-hint);
   font: 600 8px/1 var(--interface);
 }

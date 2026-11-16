@@ -155,16 +155,14 @@ try {
   await page.waitForTimeout(250);
   expect(await page.evaluate(() => window.motorCalls.length)).toBe(count);
   const hints = () =>
-    page
-      .locator("#pause-panel [data-gamepad-hint]")
-      .evaluateAll((items) =>
-        items.map((item) => ({
-          id: item.id,
-          selected: item.classList.contains("menu-cursor"),
-          content: getComputedStyle(item, "::before").content,
-          display: getComputedStyle(item, "::before").display,
-        })),
-      );
+    page.locator("#pause-panel [data-gamepad-hint]").evaluateAll((items) =>
+      items.map((item) => ({
+        id: item.id,
+        selected: item.classList.contains("menu-cursor"),
+        content: getComputedStyle(item, "::before").content,
+        display: getComputedStyle(item, "::before").display,
+      })),
+    );
   const assertHint = async (content) => {
     const visible = (await hints()).filter((item) => item.display !== "none");
     expect(visible).toHaveLength(1);
@@ -279,10 +277,10 @@ try {
   const beforeBack = await page.evaluate(
     () => window.nullVector.telemetry.menuStage,
   );
-  expect(beforeBack).toBe("craft");
+  expect(beforeBack).toBe("track");
   await button(1, 1);
   await page.waitForFunction(
-    () => window.nullVector.telemetry.menuStage === "track",
+    () => window.nullVector.telemetry.menuStage === "class",
   );
   await button(1, 0);
   expect(errors).toEqual([]);

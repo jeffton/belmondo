@@ -567,7 +567,7 @@ function returnToPaddock() {
 $("start").onclick = start;
 $("again").onclick = start;
 $("restart").onclick = start;
-$("quit").onclick = quit;
+$("quit").onclick = returnToPaddock;
 $("result-quit").onclick = returnToPaddock;
 function toggleView() {
   world.setView(world.view === "chase" ? "first-person" : "chase");
@@ -691,8 +691,7 @@ menuNavigator = new MenuNavigation({
       const dialog = dialogs[dialogs.length - 1];
       if (dialog.id === "pause-panel") setPaused(false);
       else dialog.close();
-    } else if (state === "results") returnToPaddock();
-    else if (state === "menu" && menuStage !== "mode")
+    } else if (state === "menu" && menuStage !== "mode")
       setMenuStage(menuStages[menuStages.indexOf(menuStage) - 1]);
     menuNavigator.sync();
   },

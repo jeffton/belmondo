@@ -39,9 +39,7 @@ export class MenuFeedback {
         const selection = item.matches(
           '#tracks .choice, #crafts .choice, input[type="radio"]',
         );
-        const kind = item.matches(
-          "#setup-back, #quit, #result-quit, #resume, .close",
-        )
+        const kind = item.matches("#setup-back, #resume, .close")
           ? "back"
           : selection
             ? "move"
