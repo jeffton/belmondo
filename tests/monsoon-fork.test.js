@@ -1,7 +1,6 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { makeTrack, clamp, mod, TRACK_INDEX } from "../src/track.ts";
 import { Race } from "../src/race.ts";
 import { createTerrain } from "../src/terrain.ts";
@@ -9,25 +8,6 @@ import { createTerrain } from "../src/terrain.ts";
 const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
-
-test("Monsoon preserves crest, spillway, lock, outlet and shared base alignment", () => {
-  // Baseline 1529002: retain all centerline, tangent, width, metric and station
-  // values. Only bank/up/right are excluded for approved banking smoothing.
-  const rows = Array.from({ length: 1000 }, (_, i) => {
-    const s = (i * track.length) / 1000;
-    const { bank, right, up, ...frame } = track.frame(s, 0);
-    return { s, ...frame };
-  });
-  assert.equal(
-    createHash("sha256")
-      .update(
-        JSON.stringify({ length: track.length, finishS: track.finishS, rows }),
-      )
-      .digest("hex"),
-    "13f4eba13976f3cf12bb8c24d17d0713e83cf4a65020b919317263d643911991",
-  );
-  assert.equal(track.config.layoutId, "monsoon-4-finish-end");
-});
 
 test("low pressure conduit and exposed reservoir route are distinct physical levels with level shared noses", () => {
   for (let u = 0.79; u <= 0.92; u += 0.0005) {

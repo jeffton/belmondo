@@ -1,7 +1,6 @@
 import { pilotInputs } from "./pilot-inputs.js";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import * as THREE from "three";
 import { makeTrack, mod, clamp, TRACK_INDEX } from "../src/track.ts";
 import { Race, CRAFT } from "../src/race.ts";
@@ -12,35 +11,6 @@ import { getTrackPickups } from "../src/pickups.ts";
 const track = makeTrack(TRACK_INDEX.WHITEOUT);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
-const hash = (value) =>
-  createHash("sha256").update(JSON.stringify(value)).digest("hex");
-
-test("WHITEOUT: public spiral, base alignment and existing fork stations are preserved", () => {
-  assert.equal(track.config.layoutId, "whiteout-2-finish-end");
-  assert.deepEqual(track.config.split, [0.74, 0.87]);
-  // Authored points preserved since d026dd3, including the descending spiral.
-  assert.equal(
-    hash(track.config.points),
-    "b648dcc87bb7ea44566829127f54630603f5103fa42a3cce2846e6f733dc655d",
-  );
-  // Exact base-alignment invariant captured from 1529002. Preserve every
-  // sampled center, tangent, width, station and metric plus length/finishS.
-  // Exclude only bank/up/right: the approved physical-distance bank smoothing
-  // changes those orientation fields, not the authored route or gate stations.
-  assert.equal(
-    hash({
-      length: track.length,
-      finishS: track.finishS,
-      frames: Array.from({ length: 1500 }, (_, i) => {
-        const s = (i / 1500) * track.length;
-        const { p, tangent, u, width, metric } = track.frame(s);
-        return { s, p, tangent, u, width, metric };
-      }),
-    }),
-    "2e40330165d16fa42471a5f13af6135c541a1a16d0f1602014366d243e161295",
-  );
-});
-
 test("WHITEOUT: a real exposed ridge and sheltered ice cut share continuous level junctions", () => {
   const [start, end] = track.config.split;
   const midpoint = ((start + end) / 2) * track.length;

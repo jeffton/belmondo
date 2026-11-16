@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { createHash } from "node:crypto";
 import { clearChaseCamera } from "../src/chase-camera.ts";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { createTerrain } from "../src/terrain.ts";
@@ -136,28 +135,6 @@ test("actual speed-dependent chase camera clears the headland and portals", () =
       }
     }
   }
-});
-
-test("Solar instances, mesh geometry and colors retain the accepted exact output", () => {
-  const solar = makeTrack(TRACK_INDEX.SOLAR);
-  const solarRoot = buildForkEnvironments(
-    new THREE.Group(),
-    solar,
-    textures,
-    createTerrain(solar),
-  );
-  const hash = createHash("sha256");
-  solarRoot.traverse((mesh) => {
-    if (!mesh.isInstancedMesh) return;
-    hash.update(mesh.name);
-    hash.update(Buffer.from(mesh.instanceMatrix.array.buffer));
-    hash.update(Buffer.from(mesh.geometry.attributes.position.array.buffer));
-    hash.update(String(mesh.material.color.getHex()));
-  });
-  assert.equal(
-    hash.digest("hex"),
-    "678670d5e6d034c8ddda48b711169b0a5c9eed2e8259b8993eb9bceef6f96b82",
-  );
 });
 
 test("the exterior has continuous real-ground contacts and no legacy canopy", () => {

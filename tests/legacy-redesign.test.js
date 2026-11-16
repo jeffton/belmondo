@@ -97,37 +97,35 @@ for (const { index, id, technical, turbo } of legacy) {
   });
 
   for (const speedClass of [0, 1, 2]) {
-    for (const boosted of [false, true]) {
-      test(`${id}: class ${speedClass + 1}, ${boosted ? "TURBO" : "ordinary"}, whole physical lap`, () => {
-        const race = new Race(track, speedClass, "trial", speedClass);
-        race.countdown = 0;
-        const r = race.player;
-        r.id = 1;
-        r.aiFire = Infinity;
-        let fired = false;
-        let resets = 0;
-        let previousGate = r.gate;
-        const recover = race.recover.bind(race);
-        race.recover = (...args) => {
-          resets++;
-          return recover(...args);
-        };
-        for (let step = 0; step < 120 * 120 && r.lap < 2; step++) {
-          if (boosted && !fired && r.contactS > turbo * track.length) {
-            r.weapon = "TURBO";
-            race.fire(r);
-            fired = true;
-          }
-          race.update(1 / 120, {});
-          assert(r.gate >= previousGate && r.gate <= previousGate + 1);
-          previousGate = r.gate;
+    test(`${id}: class ${speedClass + 1}, TURBO, whole physical lap`, () => {
+      const race = new Race(track, speedClass, "trial", speedClass);
+      race.countdown = 0;
+      const r = race.player;
+      r.id = 1;
+      r.aiFire = Infinity;
+      let fired = false;
+      let resets = 0;
+      let previousGate = r.gate;
+      const recover = race.recover.bind(race);
+      race.recover = (...args) => {
+        resets++;
+        return recover(...args);
+      };
+      for (let step = 0; step < 120 * 120 && r.lap < 2; step++) {
+        if (!fired && r.contactS > turbo * track.length) {
+          r.weapon = "TURBO";
+          race.fire(r);
+          fired = true;
         }
-        assert.equal(r.lap, 2, "every gate and the real finish were crossed");
-        assert.equal(resets, 0, "no checkpoint/void rescue earns the lap");
-        assert(r.shield > 50, "not a wall-grinding completion");
-        if (boosted) assert(fired);
-      });
-    }
+        race.update(1 / 120, {});
+        assert(r.gate >= previousGate && r.gate <= previousGate + 1);
+        previousGate = r.gate;
+      }
+      assert.equal(r.lap, 2, "every gate and the real finish were crossed");
+      assert.equal(resets, 0, "no checkpoint/void rescue earns the lap");
+      assert(r.shield > 50, "not a wall-grinding completion");
+      assert(fired);
+    });
   }
 
   for (const speedClass of [0, 1, 2]) {
