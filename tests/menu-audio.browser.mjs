@@ -39,8 +39,8 @@ try {
         const original = source.start.bind(source);
         source.start = (...args) => {
           const cues = new Map([
-            [228, "move"],
-            [394, "confirm"],
+            [170, "move"],
+            [256, "confirm"],
             [312, "back"],
           ]);
           const kind = cues.get(Math.round(source.buffer?.duration * 1000));
@@ -132,7 +132,10 @@ try {
     levels.push({ cues: result.cues, peak: result.peak });
     if (audible === null) return result;
     if (audible)
-      assert(result.peak > 0.0001 && result.peak < 0.65, JSON.stringify(result));
+      assert(
+        result.peak > 0.0001 && result.peak < 0.65,
+        JSON.stringify(result),
+      );
     else assert(result.peak < 0.0001, JSON.stringify(result));
     return result;
   }

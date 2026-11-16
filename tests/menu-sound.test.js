@@ -23,6 +23,16 @@ test("generated menu files match the selected source provenance", async () => {
   }
 });
 
+test("David's approved back sound remains byte-identical", async () => {
+  const bytes = await readFile(
+    new URL("../public/audio/menu/back.mp3", import.meta.url),
+  );
+  assert.equal(
+    createHash("sha256").update(bytes).digest("hex"),
+    "d00740d3d46791ab8108a79fdef37fafa5cefca8a30c07363c4e82938b61732b",
+  );
+});
+
 function pendingMenu(t, state = "running", activated = false) {
   Object.defineProperty(navigator, "userActivation", {
     value: { isActive: activated },

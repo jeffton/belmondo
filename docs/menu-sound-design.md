@@ -1,19 +1,25 @@
 # Menu sound palette
 
-Three original **ElevenLabs Sound Effects V3** samples replace procedural menu synthesis. Navigation is a brief bright electrical texture; confirmation is a fuller spectral-energy sweep; back uses an inward-building air/resonance gesture. Files are stereo MP3, approximately 228/394/312 ms and 18 KB combined. There are no visual, menu-action, music or gameplay-effect changes.
+Three original **ElevenLabs Sound Effects V3** stereo samples serve the menus:
+
+- **Navigation:** a short, clean resonant electronic chirp, 170 ms.
+- **Confirmation:** a fuller harmonic electronic acknowledgement, 256 ms.
+- **Back:** an inward-building air/resonance gesture, 312 ms.
+
+The approved back file has SHA-256 `d00740d3d46791ab8108a79fdef37fafa5cefca8a30c07363c4e82938b61732b`; its bytes, playback level and routing are preserved. The runtime audio engine, music and gameplay effects are unchanged.
 
 ## Generation and selection
 
-27 candidates were generated through the existing server-side fal integration. Prompts describe original futuristic racing-interface sounds; no game recordings or artist replicas were supplied. Generation used `elevenlabs/sound-effects/v3`, 0.5-second requests, prompt influence .75 and MP3/44.1 kHz/192 kbps output. The API's minimum duration is 0.5 seconds; runtime samples have been trimmed, modestly time-compressed, filtered, faded and levelled, then encoded at 128 kbps. Selected source hashes, prompts, processing and delivery hashes are in [the provenance manifest](menu-generated-sfx.json). Original candidates and generation records remain in the private audio-assets directory.
+Sources are generated through the server-side fal integration with `elevenlabs/sound-effects/v3`; no game recordings or artist replicas are supplied. [Provenance](menu-generated-sfx.json) records selected source hashes, prompts, processing and delivery hashes. Eight candidates cover two navigation and two confirmation briefs, with two takes each. Navigation uses the cleaner, shorter second chirp take; confirmation uses the second harmonic acknowledgement take rather than the bass-heavy first take or longer automatic-duration alternatives. Candidate waveforms, spectra and envelopes are compared before trimming, constant-gain adjustment, filtering and fades. Runtime files use 128 kbps MP3. Original candidates remain in the private audio-assets directory.
 
-Listed generation estimate: $0.027 at $0.002/second; invoice not inspected. [Model/API and commercial-use designation](https://fal.ai/models/elevenlabs/sound-effects/v3), [official ElevenLabs API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).
+No trustworthy subjective audition is claimed. Audio-understanding services failed controlled tone/noise calibration; an additional Gemini 2.5 Flash check also misclassified the 200 Hz reference as high-pitched. Their assessments are not used for selection. Physical audio playback is unavailable.
 
-Selection used waveforms, spectra, event structure and envelopes, rejecting repeated pulses, heavy low-frequency hits and excessively thin high-frequency takes. No trustworthy subjective audition was available. Both fal audio-understanding and a Gemini audio-input route were investigated; their apparent listening assessments were discarded after a controlled 200 Hz tone / 3000 Hz tone / noise recording was incorrectly described as pitch-sweeping tonal effects. Those outputs are not listening evidence. No physical audio playback device was available.
+[Model/API and commercial-use designation](https://fal.ai/models/elevenlabs/sound-effects/v3), [official ElevenLabs API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert).
 
 ## Playback and verification
 
-Samples decode once at audio startup. Context resume remains synchronous in the original gesture. The first action waits only for the small menu pack, not the gameplay pack; only its newest pending cue survives decoding. Suspended controller events are not queued. Mute, hidden state and effects-volume zero cancel pending feedback. No synthetic replacement is provided on fetch/decode failure; errors remain explicit.
+Samples decode once. Context resume remains synchronous in the original gesture. Only the newest pending action survives initial decoding; suspended controller events are never queued. Muted, hidden and zero-volume actions cannot reappear later. Fetch/decode errors remain explicit; there is no synthetic replacement.
 
-Actual realtime WebAudio peaks at default effects gain .8 were approximately .37/.48/.47 for navigation/confirm/back. A warmed-compressor stereo mix test with all eight actual soundtrack excerpts at production music gains measured active-window RMS .059/.080/.060, 2.9–9.2 dB above those music windows. Maximum combined peak was .587; navigation at 20 cues/second with music peaked at .543. These are short-window RMS measurements, not integrated LUFS or whole-track worst-case guarantees.
+Realtime default-gain peaks are approximately .23/.37/.47 for navigation/confirmation/back. Warmed-compressor stereo measurements with all eight actual soundtrack excerpts give active-window RMS .055/.088/.060 and maximum combined peak .533. Navigation at 20 cues/second with music peaks at .317. The back-only mix measurements match the approved version. These are short-window measurements, not integrated LUFS or whole-track worst-case guarantees.
 
-Browser tests cover keyboard, controller, touch, autoplay, no-op/hover silence, pause/dialog transitions, volume zero, unchanged records and a cold portrait touch gesture without an existing AudioContext. Offline renders verify silence/cleanup; unit tests cover deferred first playback, newest-only pending feedback, no suspended-controller burst and mute cancellation during loading. Each test invocation is bounded to 55 seconds or less.
+Browser tests cover keyboard/controller/touch, autoplay, a cold first touch, no-op/hover silence, pause/dialog transitions, volume zero and unchanged records. Unit tests also lock the approved back hash. Each test invocation is bounded to 55 seconds or less.

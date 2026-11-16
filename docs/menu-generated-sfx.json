@@ -2,64 +2,64 @@
   "model": "elevenlabs/sound-effects/v3",
   "api": "https://fal.ai/models/elevenlabs/sound-effects/v3",
   "schema": "https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=elevenlabs/sound-effects/v3",
-  "generatedCandidates": 27,
+  "generatedCandidates": 35,
   "requestedSecondsPerCandidate": 0.5,
-  "listedGenerationEstimateUsd": 0.027,
-  "billing": "List-price estimate at $0.002/second, not an inspected invoice.",
+  "listedGenerationEstimateUsd": 0.045,
+  "billing": "Approximate cumulative list-price estimate; the latest eight candidates include automatically inferred durations. Invoice not inspected.",
   "selection": "Waveform, spectrum and envelope comparison. Audio-understanding services were rejected after failing controlled 200 Hz / 3000 Hz / noise calibration. No trustworthy subjective audition was available.",
   "assets": [
     {
       "kind": "move",
-      "sourceId": "move-2",
-      "sourceSha256": "10a01aab55e78d0ba2cfde16ec4bd2224c7ee33f2c5e0358e90abf98eb0e7850",
+      "sourceId": "move-a-2",
+      "generationSet": "menu-move-confirm-20261116",
+      "sourceSha256": "d39893b9370d97defec7d890d85390071200078134d64335e915587218baf8bc",
       "file": "public/audio/menu/move.mp3",
-      "sha256": "97c4d9450ca5e4456bd4097baebd39708ed9f0c7056fdbb6ba706f1774f4f3ba",
-      "bytes": 4640,
-      "durationSeconds": 0.22775510204081634,
-      "peak": 0.314642995595932,
-      "rms": 0.050910528749227524,
-      "trimSeconds": [0.01, 0.4],
-      "timeCompression": 1.75,
-      "constantGain": 0.8665531873703003,
+      "sha256": "8310129d9563e3c310f6ff18ec1c1221217a8134d6d794f79e798b728beba0b8",
+      "bytes": 3804,
+      "durationSeconds": 0.17,
+      "peak": 0.19286246597766876,
+      "rms": 0.04755902290344238,
+      "trimSeconds": [0, 0.17],
+      "timeCompression": 1,
+      "constantGain": 0.7260125279426575,
       "filters": [
-        "highpass180Hz",
-        "lowpass9500Hz",
+        "highpass700Hz",
+        "lowpass6500Hz",
         "3ms attack fade",
-        "12ms tail fade",
-        "peak limiter 0.32"
+        "18ms tail fade"
       ],
       "prompt": {
-        "text": "Original premium futuristic antigravity racing interface, coherent cool titanium and spectral energy aesthetic. ONE very short navigation sound at start: precise silky electrical micro-swish, glassy granular data flick with a crisp detailed edge, 90 milliseconds then silence. Dry, sleek, tactile, not a pitched beep. No drums, percussion, melody, voice, music, bass boom or repeated clicks.",
+        "text": "One short, clean electronic cursor chirp for a premium futuristic racing interface. A smooth resonant digital pip with a tiny downward pitch inflection and a silky glass-like tail. Responsive, precise, cool and grown-up, not playful. Very brief single gesture, dry and close. Pure synthesized texture rather than a physical hit. No drum, percussion, melody, buzzy noise or voice.",
         "duration_seconds": 0.5,
-        "prompt_influence": 0.75,
+        "prompt_influence": 0.6,
         "output_format": "mp3_44100_192",
         "loop": false
       }
     },
     {
       "kind": "confirm",
-      "sourceId": "confirm-7",
-      "sourceSha256": "ba1b5c518d7a8dd726930f3d149633a2a3229583b62f1d5bae84c80ab500e809",
+      "sourceId": "confirm-a-2",
+      "generationSet": "menu-move-confirm-20261116",
+      "sourceSha256": "954cc59f94a4b5d5a58e0e7a5b6c65bb34099544a932841ac55522204daf8c5e",
       "file": "public/audio/menu/confirm.mp3",
-      "sha256": "5b72fd82c747a156da41331a1a152b7f25a1a44fba2c20a69299605e81e24274",
-      "bytes": 7566,
-      "durationSeconds": 0.39383219954648524,
-      "peak": 0.4393951892852783,
-      "rms": 0.06924203783273697,
-      "trimSeconds": [0, 0.43],
-      "timeCompression": 1.15,
-      "constantGain": 3.5015339851379395,
+      "sha256": "196265ee6e2f20545c2681c75c748c23babeb877ea18329e109d513aa43a04b2",
+      "bytes": 5058,
+      "durationSeconds": 0.2564625850340136,
+      "peak": 0.3163430094718933,
+      "rms": 0.07588080316781998,
+      "trimSeconds": [0.02, 0.42],
+      "timeCompression": 1.55,
+      "constantGain": 1.3311280012130737,
       "filters": [
-        "highpass180Hz",
-        "lowpass9500Hz",
+        "highpass220Hz",
+        "lowpass6500Hz",
         "3ms attack fade",
-        "12ms tail fade",
-        "peak limiter 0.43"
+        "18ms tail fade"
       ],
       "prompt": {
-        "text": "Futuristic racing game menu accept sound. A tight electric ZHWOOM: rich midrange resonant digital energy swoosh with metallic shimmer, quickly opens wide then snaps into focus. High-end science fiction console, confident and weighty but not a physical impact. One coherent short sound only, dry studio detail. No drum, kick, snare, rhythm, musical phrase or speech.",
+        "text": "A satisfying futuristic menu selection acknowledgement: one compact upward arc of smooth electronic resonance that resolves into a glossy crystal shimmer. Two closely connected phases, confident opening then precise tonal lock. Rich, refined and spacious, not aggressive. High-end anti-gravity racing console. No drums, physical impacts, harsh noise, retro arcade melody, long siren or voice.",
         "duration_seconds": 0.5,
-        "prompt_influence": 0.75,
+        "prompt_influence": 0.6,
         "output_format": "mp3_44100_192",
         "loop": false
       }
@@ -92,5 +92,11 @@
         "loop": false
       }
     }
-  ]
+  ],
+  "latestGeneration": {
+    "generationSet": "menu-move-confirm-20261116",
+    "candidates": 8,
+    "scope": "Only navigation and confirmation replaced; approved back sample and its mix preserved byte-identically.",
+    "audition": "Additional Gemini 2.5 Flash calibration failed to distinguish the low 200 Hz reference from 3000 Hz; no listening assessment relied upon."
+  }
 }
