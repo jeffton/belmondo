@@ -17,7 +17,7 @@ The cleanup removes one complete test file and ten obsolete snapshot cases. Acro
 
 Most existing failures were stale course identities, missing mock APIs, obsolete input bindings or obsolete snapshots. Connected-seam tests select actual connected interiors instead of assuming fixed split phases. Locomotion tests disable NPC weapons so permanent combat elimination is not mistaken for stalled driving; armed combat and elimination tests remain separate.
 
-Six Node contracts remain failing, without altered tolerances:
+The audit identified six failing Node contracts. Their resolution is documented in `docs/test-contract-resolution-2026-11-16.md`:
 
 1. Whiteout's redesigned split has a minimum radius of 131.86 units; the existing contract requires 150.
 2. Historical v3 Coast NPC 5 selects the opposite branch in class 0. The historical fixture and branch assertion remain.
@@ -26,7 +26,7 @@ Six Node contracts remain failing, without altered tolerances:
 5. Solar's connected-seam crossing touches a wall.
 6. Cinderline's splitter contact leaves the ship airborne at the checked endpoint.
 
-These are behavioral/design mismatches requiring separate judgment, not disposable text assertions. A failing contract is not by itself proof of a player-visible bug.
+These required individual behavioral/design assessment, not blanket deletion. A failing contract is not by itself proof of a player-visible bug.
 
 Remove an unrelated final-full-health assertion from the Cinderline driving pack test. The test explicitly exercises hull-contact damage; its earned laps, positive shields, no walls/rescues and forbidden weapon damage remain checked.
 
