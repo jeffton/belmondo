@@ -385,7 +385,11 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
         p.branch = branch;
         p.gate = Math.floor((s / track.length) * 32) + 1;
         assert(track.bounds(s, branch).connected);
-        for (let step = 0; step < 20; step++) {
+        // Stop once the hull has crossed the old branch edge: continuing the
+        // transverse drive eventually hits the opposite, legitimate outer rail.
+        const crossedBranchEdge = () =>
+          p.position.clone().sub(f.p).dot(f.right) * inward > f.width + 2;
+        for (let step = 0; step < 20 && !crossedBranchEdge(); step++) {
           race.update(1 / 120, { ...neutral, throttle: false });
           assert(
             !p.wallTouched,
@@ -398,7 +402,7 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
         }
         assert.equal(p.shield, 100);
         assert(
-          p.position.clone().sub(f.p).dot(f.right) * inward > f.width + 2,
+          crossedBranchEdge(),
           "the body crossed the old independent branch collision boundary",
         );
       }
@@ -431,15 +435,23 @@ test("a forward drive into the separating splitter tip hits a real barrier", () 
       p.branch = branch;
       p.gate = Math.floor((s / track.length) * 32) + 1;
       let contact = false;
-      for (let step = 0; step < 80; step++) {
+      // Inspect the impact itself, not an arbitrary endpoint after continuing
+      // straight through a diverging fork without steering.
+      for (let step = 0; step < 80 && !contact; step++) {
         race.update(1 / 120, { ...neutral, throttle: false });
-        contact ||= p.wallTouched;
+        contact = p.wallTouched;
       }
       assert(contact, `splitter nose must collide: ${index}/${branch}`);
       assert(p.shield < 100);
       assert(
         p.grounded,
         `${track.config.name}/${branch}: tip contact deflects onto a deck rather than passing through the divider`,
+      );
+      const road = projectRoad(track, p.position, p.contactS, p.branch);
+      const bounds = railBounds(p, road, p.position);
+      assert(
+        road.x >= bounds.min - 0.05 && road.x <= bounds.max + 0.05,
+        `${track.config.name}/${branch}: the hull clears the splitter at impact`,
       );
     }
   }
