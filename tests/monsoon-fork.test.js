@@ -10,13 +10,21 @@ const track = makeTrack(TRACK_INDEX.MONSOON);
 const terrain = createTerrain(track);
 after(() => terrain.geometries.forEach((geometry) => geometry.dispose()));
 
-test("Monsoon fork changes no crest, spillway, lock, outlet or shared base frames", () => {
-  const rows = Array.from({ length: 1000 }, (_, i) =>
-    track.frame((i * track.length) / 1000, 0),
-  );
+test("Monsoon preserves crest, spillway, lock, outlet and shared base alignment", () => {
+  // Baseline 1529002: retain all centerline, tangent, width, metric and station
+  // values. Only bank/up/right are excluded for approved banking smoothing.
+  const rows = Array.from({ length: 1000 }, (_, i) => {
+    const s = (i * track.length) / 1000;
+    const { bank, right, up, ...frame } = track.frame(s, 0);
+    return { s, ...frame };
+  });
   assert.equal(
-    createHash("sha256").update(JSON.stringify(rows)).digest("hex"),
-    "acd548bf47f2ff2b2f0d743a16b0ed3fb97f0d489ab735abfdb947d29ea914ed",
+    createHash("sha256")
+      .update(
+        JSON.stringify({ length: track.length, finishS: track.finishS, rows }),
+      )
+      .digest("hex"),
+    "13f4eba13976f3cf12bb8c24d17d0713e83cf4a65020b919317263d643911991",
   );
   assert.equal(track.config.layoutId, "monsoon-4-finish-end");
 });

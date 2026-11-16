@@ -125,25 +125,86 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
   });
 }
 
-// Accepted terrain for untouched circuits. Whiteout's crossover and
-// Cinderline's gorge have complete deck-clearance/environment regressions.
+// Baseline 1529002 terrain with bank-neutral frames. Banked road normals drive
+// shoulder grading and cell excavation: smoothing legitimately changes their Y.
+// Preserve the complete neutral landscape byte-for-byte, then check the actual
+// banked terrain topology and clearance across both full-width decks.
 for (const [index, expected] of [
   [
     TRACK_INDEX.NOCTILUCENT,
-    "cc6affd35fc979a58fd73590b928f6dd563f720076e0ee96e7d96e0a622de954",
+    "0f639ea68781dcb01fa9fae56d9f2a6c88961d38675ad8c42be1e3c7e51ccbe8",
   ],
   [
     TRACK_INDEX.MONSOON,
-    "118aa36d2e32c0031c1004b3285b19c3aff330b8c4e7d22d5cc017dcab775c8c",
+    "b09dd433e96b18df029b8597a0e93cade2ee5b1425ce62d6e4bb98775d1b9c7a",
   ],
 ]) {
-  test(`course ${index}: terrain output remains byte-identical`, () => {
-    const terrain = createTerrain(makeTrack(index));
-    const hash = createHash("sha256");
-    for (const geometry of terrain.geometries) {
-      hash.update(Buffer.from(geometry.attributes.position.array.buffer));
-      geometry.dispose();
+  test(`course ${index}: bank-neutral landscape is preserved and banked terrain clears both decks`, () => {
+    const track = makeTrack(index);
+    const neutralTrack = {
+      ...track,
+      frame(s, branch = 0) {
+        const f = track.frame(s, branch);
+        const right = new THREE.Vector3(
+          f.tangent.z,
+          0,
+          -f.tangent.x,
+        ).normalize();
+        return {
+          ...f,
+          bank: 0,
+          right,
+          up: new THREE.Vector3().crossVectors(f.tangent, right).normalize(),
+        };
+      },
+    };
+    const neutral = createTerrain(neutralTrack);
+    const terrain = createTerrain(track);
+    try {
+      const hash = createHash("sha256");
+      assert.equal(terrain.geometries.length, neutral.geometries.length);
+      for (let i = 0; i < neutral.geometries.length; i++) {
+        const base = neutral.geometries[i];
+        const actual = terrain.geometries[i];
+        const positions = base.attributes.position.array;
+        hash.update(Buffer.from(positions.buffer));
+        assert.deepEqual(
+          actual.index.array,
+          base.index.array,
+          "same terrain topology",
+        );
+        assert.equal(
+          actual.attributes.position.count,
+          base.attributes.position.count,
+        );
+        for (let j = 0; j < positions.length; j += 3) {
+          assert.equal(actual.attributes.position.array[j], positions[j]);
+          assert.equal(
+            actual.attributes.position.array[j + 2],
+            positions[j + 2],
+          );
+          assert(Number.isFinite(actual.attributes.position.array[j + 1]));
+        }
+      }
+      assert.equal(hash.digest("hex"), expected);
+      for (const f of terrain.samples) {
+        const bounds = track.bounds(f.u * track.length, f.branch);
+        for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+          const x = THREE.MathUtils.lerp(
+            bounds.clipMin,
+            bounds.clipMax,
+            fraction,
+          );
+          const p = f.p.clone().addScaledVector(f.right, x);
+          assert(
+            p.y - terrain.heightAt(p.x, p.z) > 3.5,
+            "graded land clears the actual banked road across its full width",
+          );
+        }
+      }
+    } finally {
+      for (const geometry of [...neutral.geometries, ...terrain.geometries])
+        geometry.dispose();
     }
-    assert.equal(hash.digest("hex"), expected);
   });
 }
