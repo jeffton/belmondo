@@ -5,7 +5,7 @@ import { makeTrack, TRACKS } from "../src/track.ts";
 import { getTrackPickups } from "../src/pickups.ts";
 import {
   getJumpMarkingLayout,
-  buildJumpMarkings,
+  applyJumpMarkings,
 } from "../src/jump-markings.ts";
 
 function deckDistance(track, start, end) {
@@ -22,41 +22,56 @@ function deckDistance(track, start, end) {
 
 for (const [index, config] of TRACKS.entries()) {
   if (config.jump === null) {
-    test(`${config.name}: continuous deck has no jump paint or paint resources`, () => {
+    test(`${config.name}: continuous deck has no jump paint or shader changes`, () => {
       const track = makeTrack(index);
-      const scene = new THREE.Scene();
+      const material = new THREE.MeshLambertMaterial();
+      const compile = material.onBeforeCompile;
+      const key = material.customProgramCacheKey();
       assert.deepEqual(getJumpMarkingLayout(track), []);
-      assert.deepEqual(buildJumpMarkings(scene, track, null), {
-        mesh: null,
-        layout: [],
-      });
-      assert.equal(scene.children.length, 0);
+      assert.equal(applyJumpMarkings(material, track), null);
+      assert.equal(material.onBeforeCompile, compile);
+      assert.equal(material.customProgramCacheKey(), key);
+      material.dispose();
     });
     continue;
   }
-  test(`${config.name}: approach and landing paint follows real jump edges and deck metres`, () => {
+  test(`${config.name}: coherent launch and receiving marks follow real jump edges and deck metres`, () => {
     const track = makeTrack(index),
       layout = getJumpMarkingLayout(track);
     const pads = getTrackPickups(track);
-    assert(
-      layout.some((patch) => patch.kind === "approach") &&
-        layout.some((patch) => patch.kind === "landing"),
-    );
-    for (const [i, patch] of layout.entries()) {
-      for (const other of layout.slice(i + 1))
+    for (const kind of ["approach", "landing"]) {
+      const apron = layout.filter((patch) => patch.kind === kind);
+      const crossbars = apron.filter(
+        (patch) => patch.left < 0 && patch.right > 0,
+      );
+      assert.equal(
+        crossbars.length,
+        kind === "approach" ? 2 : 1,
+        "one launch threshold and one plain receiving sill, not repeated fragments",
+      );
+      assert.equal(
+        apron.filter((patch) => patch.right < 0 || patch.left > 0).length,
+        kind === "approach" ? 2 : 0,
+        "shoulder arms lead to launch; no painted landing frame",
+      );
+      const ends = apron
+        .flatMap((patch) => [patch.start, patch.end])
+        .sort((a, b) => a - b);
+      for (let s = ends[0]; s < ends.at(-1); s += 0.5)
         assert(
-          patch.end <= other.start ||
-            patch.start >= other.end ||
-            patch.right <= other.left ||
-            patch.left >= other.right,
-          "paint layers must not overlap and flicker on the same deck",
+          apron.some(
+            (patch) => patch.start <= s + 0.001 && patch.end >= s - 0.001,
+          ),
+          "the apron stays continuous along the approach/receiving deck",
         );
+    }
+    for (const patch of layout) {
       assert(
         Math.abs(
           deckDistance(track, patch.anchor, patch.station) -
             Math.abs(patch.distance),
         ) < 0.04,
-        "paint spacing must measure the real sloping deck, not a fixed percentage of the lap",
+        "paint spacing measures real sloping deck metres",
       );
       const u0 = patch.start / track.length,
         u1 = patch.end / track.length;
@@ -70,90 +85,66 @@ for (const [index, config] of TRACKS.entries()) {
         assert(patch.start > (config.jump + config.gapLength) * track.length);
       assert(
         u0 >= config.sections.runway[0] && u1 <= config.sections.runway[1],
-        "markings belong to the actual launch/receiving straight, not an unrelated corner",
+        "markings belong to the physical launch/receiving deck",
       );
-      assert(
-        patch.right < 0 || patch.left > 0,
-        "the central racing line must not become an arrow or socket",
-      );
+      const width = track.frame(patch.station).width;
+      for (const station of [patch.start, patch.end])
+        assert.equal(
+          track.frame(station).width,
+          width,
+          "road-UV rectangles fit this constant-width runway",
+        );
       for (const pad of pads) {
         if (
           pad.s + pad.length / 2 < patch.start ||
           pad.s - pad.length / 2 > patch.end
         )
           continue;
-        const f = track.frame(patch.station);
         assert(
-          patch.right * f.width < pad.lateral - pad.width / 2 ||
-            patch.left * f.width > pad.lateral + pad.width / 2,
-          "runway graphics cannot overprint a real boost or weapon field",
+          patch.right * width < pad.lateral - pad.width / 2 ||
+            patch.left * width > pad.lateral + pad.width / 2,
+          "aprons cannot overprint a real boost or weapon field",
         );
       }
     }
   });
 
-  test(`${config.name}: reflective jump ink is batched and follows the curved deck without raised pads`, () => {
-    const track = makeTrack(index),
-      scene = new THREE.Scene();
-    const { mesh, layout } = buildJumpMarkings(scene, track, {
-      shade: (_p, color) => color,
-    });
+  test(`${config.name}: jump ink uses the existing opaque road, without overlay geometry or cutout texture`, () => {
+    const track = makeTrack(index);
+    const material = new THREE.MeshLambertMaterial();
+    const ink = applyJumpMarkings(material, track);
+    assert.equal(material.map, null, "no noisy/repeating paint texture");
+    assert.equal(material.transparent, false);
     assert.equal(
-      scene.children.length,
-      1,
-      "runway paint should add one batched draw, not per-stripe objects",
+      material.alphaTest,
+      0,
+      "distant coverage must not become binary alpha-test holes",
+    );
+    assert.equal(
+      material.polygonOffset,
+      false,
+      "paint has no second depth surface",
     );
     assert(
-      mesh.material.isMeshBasicMaterial,
-      "reflective ink stays legible at night without lights or bloom",
+      ink.rectangles.every(
+        (rectangle) => rectangle.y > rectangle.x && rectangle.w > rectangle.z,
+      ),
     );
+    const shader = {
+      uniforms: {},
+      vertexShader: "#include <uv_vertex>",
+      fragmentShader: "#include <opaque_fragment>",
+    };
+    material.onBeforeCompile(shader, null);
+    assert.equal(shader.uniforms.jumpRectangles.value, ink.rectangles);
+    assert.equal(shader.uniforms.jumpColors.value, ink.colors);
+    assert.equal(shader.uniforms.jumpWindow.value, ink.window);
+    assert(shader.vertexShader.includes("vJumpDeck = uv * 32.0"));
     assert(
-      mesh.material.polygonOffset && mesh.material.alphaTest > 0,
-      "worn ink stays flat without z-fighting",
+      shader.fragmentShader.includes("fwidth(vJumpDeck)"),
+      "coverage adapts to actual LOWRES fragment footprint",
     );
-    const positions = mesh.geometry.attributes.position;
-    let vertex = 0;
-    for (const patch of layout) {
-      const slices = Math.ceil((patch.end - patch.start) / 5);
-      for (let slice = 0; slice < slices; slice++) {
-        const start =
-          patch.start + ((patch.end - patch.start) * slice) / slices;
-        const end =
-          patch.start + ((patch.end - patch.start) * (slice + 1)) / slices;
-        for (const [j, station, side] of [
-          [0, start, patch.left],
-          [2, start, patch.right],
-          [1, end, patch.right],
-          [3, start, patch.left],
-          [4, end, patch.left],
-          [5, end, patch.right],
-        ]) {
-          const f = track.frame(station),
-            p = new THREE.Vector3().fromBufferAttribute(positions, vertex + j);
-          const expected = f.p.clone().addScaledVector(f.right, side * f.width);
-          assert(
-            Math.abs(p.clone().sub(expected).dot(f.up) - 0.04) < 0.001 &&
-              p.distanceTo(expected) < 0.041,
-            "only a four-centimetre render bias separates ink from its deck; no raised insert",
-          );
-        }
-        vertex += 6;
-      }
-    }
-    assert.equal(positions.count, vertex);
-    const data = mesh.material.map.image.data;
-    let chipped = 0,
-      painted = 0;
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] === 0) chipped++;
-      else painted++;
-    }
-    assert(
-      chipped > 0 && painted > chipped,
-      "paint has holes revealing the original road texture",
-    );
-    mesh.geometry.dispose();
-    mesh.material.map.dispose();
-    mesh.material.dispose();
+    assert(!shader.fragmentShader.includes("discard"));
+    material.dispose();
   });
 }

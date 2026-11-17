@@ -49,7 +49,7 @@ import { railPoint, railBackDepth, railHeight } from "./rail-geometry.ts";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.ts";
 import { buildTrackPads } from "./track-pads.ts";
 import { tunnelSegment } from "./tunnel-architecture.ts";
-import { buildJumpMarkings } from "./jump-markings.ts";
+import { applyJumpMarkings } from "./jump-markings.ts";
 import { buildStartGantry } from "./start-gantry.ts";
 import { gridApproachBlend } from "./start-sequence.ts";
 import { buildFinishDistrict } from "./finish-district.ts";
@@ -624,6 +624,7 @@ export class World {
                 side: THREE.DoubleSide,
                 flatShading: true,
               });
+      if (kind === "road") applyJumpMarkings(material, track);
       const chunks = new Map<string, SurfaceQuad[]>();
       for (const q of quads.filter((q) => q.kind === kind)) {
         const key = `${Math.floor(q.p[0].x / roadChunkSize)}:${Math.floor(q.p[0].z / roadChunkSize)}`;
@@ -766,7 +767,6 @@ export class World {
     this.scene.add(supports, trusses);
     buildTrackPads(this.scene, track, textures);
     yield;
-    buildJumpMarkings(this.scene, track, this.lighting);
     this.startGantry = buildStartGantry(this.scene, track);
     this.finishDistrict = buildFinishDistrict(
       this.scene,
