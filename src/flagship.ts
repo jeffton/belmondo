@@ -4,6 +4,7 @@ import type { circuitTextures } from "./materials.ts";
 import * as THREE from "three";
 import { createAdvertising } from "./advertising.ts";
 import { getWaterfrontDistricts } from "./course-geography.ts";
+import { retainsCoastGallery } from "./coast-solar-landform.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -479,8 +480,11 @@ export function buildFlagship(
   }
 
   // 01: opposed shopping galleries, then an open-sided transit interchange.
-  for (const spec of getWaterfrontDistricts(track))
+  for (const spec of getWaterfrontDistricts(track)) {
+    // The headland town and shipyard own this shoreline, including its recesses.
+    if (!retainsCoastGallery(spec[0])) continue;
     district(...(spec as [number, number, number, number, number]));
+  }
   for (let u = 0.113; u < 0.187; u += 0.006) {
     const f = frame(u);
     const w = f.width;
@@ -650,34 +654,8 @@ export function buildFlagship(
     mark,
   );
 
-  // The entire straight jump corridor is left open. A paired broken-arch
-  // landmark sits at the CURRENT landing, well outside even a pitched-up flight.
-  const landing = frame(track.config.jump! + 0.075);
-  for (const side of [-1, 1]) {
-    const x = side * (landing.width + 12);
-    pier(landing, x, 0, 24, 3.5);
-    beam(
-      ceramic,
-      point(landing, x, 24),
-      point(landing, side * (landing.width + 6), 34),
-      3,
-      5,
-    );
-    beam(
-      vermilion,
-      point(landing, x, 24),
-      point(landing, side * (landing.width + 5), 33),
-      0.9,
-      5.3,
-    );
-    beam(
-      cyan,
-      point(landing, side * (landing.width + 9.5), 5),
-      point(landing, side * (landing.width + 9.5), 24),
-      0.3,
-      0.4,
-    );
-  }
+  // The receiving mole is part of the shipyard geography, not a freestanding
+  // decorative landing arch. The complete flight corridor remains open.
 
   for (const [material, chunks] of sheets) {
     for (const faces of chunks.values()) {

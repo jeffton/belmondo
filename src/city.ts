@@ -6,6 +6,7 @@ import { buildMetropolis, METROPOLIS_SIGN_ATLAS } from "./metropolis-world.ts";
 import { groundedGeometryOffset } from "./terrain.ts";
 import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
 import { buildRouteDistricts } from "./route-districts.ts";
+import { buildCoastSolarPlaces } from "./coast-solar-places.ts";
 import {
   newCourseRecipe,
   assertKnownEnvironment,
@@ -441,10 +442,14 @@ export function buildCity(
           [0.735, -1, 240, "ferry"],
           [0.927, -1, 185, "city"],
         ];
-  landmarks.forEach(([u, side, offset, kind], i) =>
-    cluster(u, side, offset, kind, i),
-  );
+  landmarks.forEach(([u, side, offset, kind], i) => {
+    // The collector landscape owns Solar's industrial masses. Coast's lower
+    // headland is a connected town and shipyard, not detached skyline clusters.
+    if (desert || (!harbor && u >= 0.47 && u <= 0.9)) return;
+    cluster(u, side, offset, kind, i);
+  });
   buildRouteDistricts(root, track, textures, environment);
+  buildCoastSolarPlaces(root, track, textures, environment);
   if (harbor) cluster(0.085, 1, 135, "harbor-gateway", 32);
   let count = 0;
   for (const batch of batches.values()) {

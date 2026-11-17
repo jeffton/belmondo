@@ -7,6 +7,7 @@ import { buildCity } from "../src/city.ts";
 import { buildFinishDistrict } from "../src/finish-district.ts";
 import { buildFlagship } from "../src/flagship.ts";
 import { getWaterfrontDistricts } from "../src/course-geography.ts";
+import { retainsCoastGallery } from "../src/coast-solar-landform.ts";
 
 for (const [legacyIndex, index] of [
   TRACK_INDEX.COAST,
@@ -49,7 +50,9 @@ for (const [legacyIndex, index] of [
       const basementRay = new THREE.Raycaster();
       basementRay.far = 0.1;
       const down = new THREE.Vector3(0, -1, 0);
-      for (const [start, end, branch, side] of getWaterfrontDistricts(track)) {
+      for (const [start, end, branch, side] of getWaterfrontDistricts(
+        track,
+      ).filter(([start]) => retainsCoastGallery(start))) {
         const bays = Math.ceil(((end - start) * track.length) / 25);
         for (let bay = 0; bay < bays; bay++) {
           const a = track.frame(

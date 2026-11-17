@@ -22,20 +22,6 @@ export const ROUTE_DISTRICTS = [
       style: "berth",
     },
     {
-      name: "HILLSIDE QUARTER",
-      start: 0.472,
-      end: 0.572,
-      side: -1,
-      style: "residential",
-    },
-    {
-      name: "BOATBUILDERS",
-      start: 0.633,
-      end: 0.704,
-      side: -1,
-      style: "hangar",
-    },
-    {
       name: "COASTAL STEPS",
       start: 0.905,
       end: 0.942,
@@ -44,35 +30,13 @@ export const ROUTE_DISTRICTS = [
     },
   ],
   [
-    {
-      name: "COLLECTOR YARD",
-      start: 0.055,
-      end: 0.142,
-      side: 1,
-      style: "switchyard",
-    },
     { name: "RED CUT", start: 0.149, end: 0.193, side: -1, style: "strata" },
-    {
-      name: "EXTRACTION FACE",
-      start: 0.292,
-      end: 0.392,
-      side: -1,
-      branch: -1,
-      style: "strata",
-    },
     {
       name: "MAINTENANCE SETTLEMENT",
       start: 0.476,
       end: 0.574,
       side: 1,
       style: "hangar",
-    },
-    {
-      name: "THERMAL EXCHANGE",
-      start: 0.745,
-      end: 0.826,
-      side: -1,
-      style: "silos",
     },
     {
       name: "BASALT SHELVES",
