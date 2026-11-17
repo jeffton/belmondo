@@ -162,10 +162,23 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
                 "whiteout-snowbridge-steel",
                 "whiteout-snowbridge-snow",
               ].includes(hit.object.name);
+            const intentionalGate =
+              name === "MONSOON" &&
+              branch === 0 &&
+              [0.326, 0.49].some((gate) => Math.abs(u - gate) < 0.004) &&
+              [
+                "monsoon-pump-chamber-machinery",
+                "monsoon-pump-chamber-cap",
+              ].includes(hit.object.name);
             assert(
-              intentionalGallery,
+              intentionalGallery || intentionalGate,
               `actual scene triangles over route ${u}/${branch}/${x}: ${hit.object.name}`,
             );
+            if (intentionalGate)
+              assert(
+                hit.distance >= 39,
+                "operational gate carriage clears the complete racing envelope",
+              );
             // Match the emitted gallery's existing soffit-clearance contract.
             assert(
               hit.distance >= 26,
@@ -326,13 +339,32 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
             );
           }
       }
-      const island = root.userData.footprints.find(
-        (f) => f.kind === "pump-island",
-      );
-      assert(
-        island && island.deck > data.waterLevel,
-        "pump island has an above-water foundation",
-      );
+      const chamber = root.getObjectByName("monsoon-pump-chamber");
+      assert(chamber, "one connected pump hall replaces the separate island");
+      for (const footing of chamber.userData.foundations)
+        for (const p of footing.contacts)
+          assert(p.y > footing.bottom && p.y < footing.top);
+      const raceWater = chamber.getObjectByName("monsoon-pump-chamber-water");
+      assert(raceWater, "low water race and overflow faces are rendered");
+      for (const { point, bottom, road } of chamber.userData.waterContacts) {
+        assert(
+          point.y > bottom + 0.5,
+          "race-side water never hides under terrain",
+        );
+        assert(
+          point.y < road + 7,
+          "low race remains visible above its road-side parapet",
+        );
+        ray.set(
+          point.clone().add(new THREE.Vector3(0, 1, 0)),
+          new THREE.Vector3(0, -1, 0),
+        );
+        ray.far = 2;
+        assert(
+          ray.intersectObject(raceWater).length > 0,
+          "water metadata belongs to actual rendered channel triangles",
+        );
+      }
       for (let i = 0; i <= 10; i++) {
         const u = data.range[0] + ((data.range[1] - data.range[0]) * i) / 10;
         assert(

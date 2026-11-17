@@ -10,6 +10,7 @@ import { groundedGeometryOffset } from "./terrain.ts";
 import { biomeGroundTexture } from "./biome-ground-texture.ts";
 import { buildCinderVolcanoes } from "./cinder-volcanoes.ts";
 import { buildWhiteoutFork } from "./whiteout-fork.ts";
+import { buildWhiteoutObservatory } from "./whiteout-observatory.ts";
 
 /** One visible heightfield is also the collision/foundation surface. */
 export function buildNewTerrainSurface(
@@ -58,8 +59,10 @@ export function buildNewCourseDistricts(
     buildHydraulicLock(root, track, textures, environment);
   if (recipe.biome === "volcanic")
     buildCinderVolcanoes(root, track, environment);
-  if (track.config.name === "WHITEOUT")
+  if (track.config.name === "WHITEOUT") {
     buildWhiteoutFork(root, track, environment);
+    buildWhiteoutObservatory(root, track, textures, environment);
+  }
   const materials: Record<string, THREE.MeshLambertMaterial> =
     Object.fromEntries(
       [
@@ -434,6 +437,13 @@ export function buildNewCourseDistricts(
     }
   }
   for (const d of [...recipe.districts, ...recipe.approaches]) {
+    // The basin is one installation; the lock's pump hall replaces its island.
+    if (
+      (track.config.name === "WHITEOUT" &&
+        ["observatory", "survey"].includes(d.kind)) ||
+      (track.config.name === "MONSOON" && d.kind === "pump-island")
+    )
+      continue;
     const widths: Record<string, number> = {
       observatory: 84,
       survey: 66,
