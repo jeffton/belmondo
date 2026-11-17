@@ -56,7 +56,7 @@ export function getJumpMarkingLayout(track: Track) {
   }
   // Full-width red asphalt meets each physical gap edge. These short road
   // sections share one pigment, without thresholds, shoulder trim or symbols.
-  patch("approach", launch, -32, -1, 1, 64, 0xe84228);
+  patch("approach", launch, -40, -1, 1, 80, 0xe84228);
   patch("landing", landing, 22, -1, 1, 44, 0xe84228);
   return patches;
 }

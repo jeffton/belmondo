@@ -73,7 +73,7 @@ for (const [index, config] of TRACKS.entries()) {
       assert(
         Math.abs(
           deckDistance(track, patch.start, patch.end) -
-            (patch.kind === "approach" ? 64 : 44),
+            (patch.kind === "approach" ? 80 : 44),
         ) < 0.04,
         "red asphalt is a compact physical road section, not a long runway",
       );

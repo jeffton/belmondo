@@ -101,8 +101,8 @@ export function buildTrackPads(
         // Two continuous icy guide rails lead only to the long induction lane.
         mark(
           [
-            [x - 0.18, -45],
-            [x + 0.18, -45],
+            [x - 0.18, -32],
+            [x + 0.18, -32],
             [x + 0.18, -14],
             [x - 0.18, -14],
           ],
@@ -120,7 +120,7 @@ export function buildTrackPads(
       } else {
         // Short amber lane dashes bracket the approach to the socket.
         // Keep these quieter than the pad, not separate collectible-like symbols.
-        for (const z of [-36, -25, -14])
+        for (const z of [-28, -21, -14])
           mark(
             [
               [x - 0.18, z - 1.5],
