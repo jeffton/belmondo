@@ -80,6 +80,11 @@ for (const [name, build] of [
               assert(p.y < NIGHT_HARBOR_SEA, "hull keel remains in the water");
             }
         }
+        const apron = root.userData.foundations[4];
+        assert(
+          apron.bottom < NIGHT_HARBOR_QUAY && NIGHT_HARBOR_QUAY < apron.deck,
+          "retained apron has positive sea-footing and occupied upper-terrace heights",
+        );
         for (const [i, j] of [
           [1, 2],
           [2, 3],
@@ -109,7 +114,7 @@ for (const [name, build] of [
       } else {
         const works = root.userData.foundations[0];
         assert(
-          works.deck + 42 < track.frame(0.818 * track.length, 1).p.y,
+          works.deck + 42 < track.frame(0.835 * track.length, 1).p.y,
           "low plant stays below the exposed upper rim",
         );
       }
@@ -135,8 +140,30 @@ for (const [name, build] of [
         }
       }
       root.traverse((object) => {
-        if (object.isMesh)
-          assert(object.isInstancedMesh && !object.material.transparent);
+        if (!object.isMesh) return;
+        assert(object.isInstancedMesh && !object.material.transparent);
+        const sizes = object.geometry.getAttribute("architectureDimensions");
+        assert.equal(
+          sizes.count,
+          object.count,
+          "each building receives physical atlas scale, including long cargo aprons",
+        );
+        for (let i = 0; i < object.count; i++) {
+          const matrix = new THREE.Matrix4();
+          object.getMatrixAt(i, matrix);
+          const scale = new THREE.Vector3().setFromMatrixScale(matrix);
+          assert(Math.abs(sizes.getX(i) - scale.x) < 0.001);
+          assert(Math.abs(sizes.getY(i) - scale.y) < 0.001);
+          assert(Math.abs(sizes.getZ(i) - scale.z) < 0.001);
+        }
+        const atlas =
+          object.name.split(":")[0] === "dark" ? "paint" : "concrete";
+        assert(
+          object.material
+            .customProgramCacheKey()
+            .endsWith(`:architecture-uv:${atlas}`),
+          "UV variant follows the actual assigned material map",
+        );
       });
     } finally {
       const geometries = new Set(terrain.geometries),

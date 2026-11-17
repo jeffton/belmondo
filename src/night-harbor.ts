@@ -18,6 +18,13 @@ export function createNightHarborBasin(track: Track) {
     reachFrame.tangent.z,
   ).normalize();
   const reachRight = new THREE.Vector3(reachForward.z, 0, -reachForward.x);
+  const apronFrame = track.frame(0.905 * track.length);
+  const apronForward = new THREE.Vector3(
+    apronFrame.tangent.x,
+    0,
+    apronFrame.tangent.z,
+  ).normalize();
+  const apronRight = new THREE.Vector3(apronForward.z, 0, -apronForward.x);
   return {
     center: f.p.clone().addScaledVector(right, -160),
     right,
@@ -30,6 +37,13 @@ export function createNightHarborBasin(track: Track) {
       forward: reachForward,
       width: 340,
       depth: 1660,
+    },
+    apron: {
+      center: apronFrame.p.clone().addScaledVector(apronRight, -150),
+      right: apronRight,
+      forward: apronForward,
+      width: 330,
+      depth: 560,
     },
   };
 }
@@ -54,8 +68,17 @@ export function nightHarborBaseHeight(
     Math.abs(rdx * basin.reach.forward.x + rdz * basin.reach.forward.z) -
       basin.reach.depth / 2,
   );
+  const adx = x - basin.apron.center.x,
+    adz = z - basin.apron.center.z;
+  const apronEdge = Math.max(
+    Math.abs(adx * basin.apron.right.x + adz * basin.apron.right.z) -
+      basin.apron.width / 2,
+    Math.abs(adx * basin.apron.forward.x + adz * basin.apron.forward.z) -
+      basin.apron.depth / 2,
+  );
   const weight =
-    1 - THREE.MathUtils.smoothstep(Math.min(shore, reachEdge), -80, 80);
+    1 -
+    THREE.MathUtils.smoothstep(Math.min(shore, reachEdge, apronEdge), -80, 80);
   return THREE.MathUtils.lerp(
     base,
     Math.min(base, NIGHT_HARBOR_SEA - 9),
@@ -124,6 +147,17 @@ export function buildNightHarbor(
       500,
       0,
       NIGHT_HARBOR_QUAY,
+    ),
+    industrialSite(
+      track,
+      environment,
+      0.905,
+      -1,
+      150,
+      170,
+      400,
+      0,
+      track.frame(0.905 * track.length).p.y - 1,
     ),
   ];
   for (const [i, site] of sites.entries()) {
@@ -321,6 +355,60 @@ export function buildNightHarbor(
           64,
           18,
           170,
+        );
+      }
+    } else if (i === 4) {
+      // The descending camera sees the marshalling apron, quay edge and
+      // terminal base together. Retained terraces bear on the actual sea bed;
+      // this is occupied terminal ground, not a floating upper-deck wing.
+      const low = NIGHT_HARBOR_QUAY;
+      const middle = (low + deck) / 2;
+      box("apron-seawall-low", "quay", site, 0, bottom, 0, w, low - bottom, d);
+      box(
+        "apron-seawall-middle",
+        "pale",
+        site,
+        15,
+        low,
+        0,
+        140,
+        middle - low,
+        d,
+      );
+      box(
+        "apron-seawall-upper",
+        "quay",
+        site,
+        30,
+        middle,
+        0,
+        110,
+        deck - middle,
+        d,
+      );
+      box(
+        "freight-marshalling-apron",
+        "dark",
+        site,
+        30,
+        deck,
+        0,
+        108,
+        0.8,
+        d - 4,
+      );
+      for (const z of [-140, -70, 0, 70, 140]) {
+        box("marshalling-cargo", "cargo", site, 30, deck + 0.8, z, 32, 12, 54);
+        box(
+          "marshalling-service-header",
+          "pale",
+          site,
+          65,
+          deck + 0.8,
+          z,
+          14,
+          5,
+          54,
         );
       }
     } else {

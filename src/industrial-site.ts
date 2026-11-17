@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { Track } from "./track.ts";
 import type { CircuitTextures, EnvironmentSurface } from "./environment.ts";
 import { terrainFootprint } from "./terrain-footprint.ts";
+import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
 
 /** A surveyed, terrain-rooted industrial foundation, shared by the two works. */
 export function industrialSite(
@@ -106,10 +107,18 @@ export function industrialMeshes(
         batch.matrices.length,
       );
       batch.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+      applyArchitectureInstanceUV(
+        mesh,
+        name.split(":")[0] === "dark" ? "paint" : "concrete",
+      );
       mesh.name = name;
       mesh.computeBoundingSphere();
       root.add(mesh);
     }
+    // Architecture UVs clone the primitive and source materials per batch;
+    // only those attached variants belong to scene disposal.
+    geometry.dispose();
+    for (const batch of batches.values()) batch.material.dispose();
     root.userData.bodies = bodies;
   }
   return { box, finish };
