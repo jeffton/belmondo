@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { CraftShadow } from "./craft-shadow.ts";
+import { CRAFT_SHADOW_MASKS } from "./craft-shadow-masks.ts";
 
 // One resource set per world: no per-racer texture loads or geometry allocations.
 // The world owns disposal, so a rebuilt scene receives a fresh set.
@@ -23,7 +25,8 @@ type Airframe = {
 export interface CraftUserData {
   variant?: number;
   shield: THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhongMaterial>;
-  shadow: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
+  shadow: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  shadowProjection: CraftShadow;
   steeringBank?: number;
   updateExhaust(speed: number, boost: number | boolean, time: number): void;
 }
@@ -40,8 +43,8 @@ type CraftResources = {
   glowGeometry: THREE.PlaneGeometry;
   shieldGeometry: THREE.SphereGeometry;
   shieldMaterial: THREE.MeshPhongMaterial;
-  shadowGeometry: THREE.CircleGeometry;
-  shadowMaterial: THREE.MeshBasicMaterial;
+  shadowMasks: THREE.Texture[];
+  shadows: Set<CraftShadow>;
   liveries: Map<THREE.ColorRepresentation, THREE.MeshLambertMaterial>;
 };
 
@@ -674,12 +677,12 @@ function buildResources(): CraftResources {
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  const shadowGeometry = new THREE.CircleGeometry(3.7, 12);
-  const shadowMaterial = new THREE.MeshBasicMaterial({
-    color: 0x10202b,
-    transparent: true,
-    opacity: 0.36,
-    depthWrite: false,
+  const shadowMasks = CRAFT_SHADOW_MASKS.map(({ path }) => {
+    const texture = loader.load(path);
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = true;
+    return texture;
   });
   return {
     hulls: new Map(),
@@ -690,8 +693,8 @@ function buildResources(): CraftResources {
     glowGeometry,
     shieldGeometry,
     shieldMaterial,
-    shadowGeometry,
-    shadowMaterial,
+    shadowMasks,
+    shadows: new Set(),
     liveries: new Map(),
   };
 }
@@ -720,7 +723,6 @@ export function collectCraftResources(
     shared.flameGeometry,
     shared.glowGeometry,
     shared.shieldGeometry,
-    shared.shadowGeometry,
   ])
     geometries.add(geometry);
   for (const material of [
@@ -728,13 +730,24 @@ export function collectCraftResources(
     shared.flameMaterial,
     shared.glowMaterial,
     shared.shieldMaterial,
-    shared.shadowMaterial,
     ...shared.liveries.values(),
   ]) {
     materials.add(material);
     if (material.map) textures.add(material.map);
   }
+  for (const shadow of shared.shadows) {
+    geometries.add(shadow.mesh.geometry);
+    materials.add(shadow.mesh.material);
+  }
+  for (const texture of shared.shadowMasks) textures.add(texture);
   resources.delete(scene);
+}
+
+/** Grid switches retire per-racer projection buffers, retaining shared masks. */
+export function releaseCraftShadow(scene: THREE.Object3D, craft: Craft): void {
+  const projection = craft.userData.shadowProjection;
+  resources.get(scene)!.shadows.delete(projection);
+  projection.dispose();
 }
 
 export function createCraft(
@@ -785,10 +798,17 @@ export function createCraft(
   shield.visible = false;
   scene.add(shield);
   craft.userData.shield = shield;
-  const shadow = new THREE.Mesh(shared.shadowGeometry, shared.shadowMaterial);
-  shadow.rotation.x = -Math.PI / 2;
-  scene.add(shadow, craft);
-  craft.userData.shadow = shadow;
+  const bounds = CRAFT_SHADOW_MASKS[variant];
+  const shadowProjection = new CraftShadow(shared.shadowMasks[variant], [
+    bounds.minX,
+    bounds.maxX,
+    bounds.minZ,
+    bounds.maxZ,
+  ]);
+  shared.shadows.add(shadowProjection);
+  scene.add(shadowProjection.mesh, craft);
+  craft.userData.shadow = shadowProjection.mesh;
+  craft.userData.shadowProjection = shadowProjection;
   craft.userData.updateExhaust = (
     speed: number,
     boost: number | boolean,

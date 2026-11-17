@@ -70,7 +70,12 @@ import { buildRacingInfrastructure } from "./racing-infrastructure.ts";
 import { buildCity } from "./city.ts";
 import { buildVegetation } from "./vegetation.ts";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.ts";
-import { createCraft, collectCraftResources } from "./craft.ts";
+import {
+  createCraft,
+  collectCraftResources,
+  releaseCraftShadow,
+} from "./craft.ts";
+import { getRoadSurface } from "./road-surface.ts";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -778,8 +783,10 @@ export class World {
   ) {
     this.weaponEffects.reset();
     this.impactSparks.reset();
-    for (const ship of this.ships)
+    for (const ship of this.ships) {
       this.scene.remove(ship, ship.userData.shadow, ship.userData.shield);
+      releaseCraftShadow(this.scene, ship);
+    }
     for (const particle of this.sparkData) particle.life = 0;
     this.cameraForward = null;
     this.cameraReady = false;
@@ -898,17 +905,17 @@ export class World {
       shield.quaternion.copy(ship.quaternion);
       shield.visible = (demo || !r.eliminated) && r.protect > 0;
       ship.userData.updateExhaust(r.speed, r.boost, this.time);
-      const shadow = ship.userData.shadow;
-      shadow.position.copy(r.position);
-      shadow.position.y =
-        rf.p.y -
-        (rf.up.x * (r.position.x - rf.p.x) +
-          rf.up.z * (r.position.z - rf.p.z)) /
-          rf.up.y +
-        0.12;
-      shadow.quaternion.setFromUnitVectors(UP, rf.up);
-      shadow.rotateX(-Math.PI / 2);
-      shadow.visible = r.h < 15 && ship.visible && !track.gap(rf.u);
+      const projection = ship.userData.shadowProjection;
+      if (ship.visible) {
+        projection.update(
+          getRoadSurface(track),
+          r.position,
+          r.yaw,
+          track.length,
+        );
+      } else {
+        projection.mesh.visible = false;
+      }
     }
     if (!demo && this.view === "first-person") {
       const ship = this.ships[player.id];

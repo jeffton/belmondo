@@ -18,7 +18,10 @@ function attachedResources(scene) {
   return { geometries, materials, textures };
 }
 
-test("grid/trial switches retain craft caches; course teardown releases detached variants once", (t) => {
+const values = (resources) =>
+  Object.values(resources).flatMap((set) => [...set]);
+
+test("grid switches retire projection buffers but retain hulls and masks until course teardown", (t) => {
   t.mock.method(
     THREE.TextureLoader.prototype,
     "load",
@@ -41,56 +44,73 @@ test("grid/trial switches retain craft caches; course teardown releases detached
   for (let course = 0; course < 4; course++) {
     world.scene = new THREE.Scene();
     world.ships = [];
-    world.setupRacers(grid, specs);
-    const allocated = attachedResources(world.scene);
-    assert.deepEqual(
-      Object.values(allocated).map((set) => set.size),
-      [16, 8, 2],
-    );
     const disposalCounts = new Map();
-    for (const resource of Object.values(allocated).flatMap((set) => [
-      ...set,
-    ])) {
-      assert(
-        !previouslyDisposed.has(resource),
-        "rebuilt courses need fresh resources",
-      );
-      disposalCounts.set(resource, 0);
-      resource.addEventListener("dispose", () => {
-        disposalCounts.set(resource, disposalCounts.get(resource) + 1);
-      });
-    }
+    const observe = () => {
+      for (const resource of values(attachedResources(world.scene))) {
+        if (disposalCounts.has(resource)) continue;
+        assert(
+          !previouslyDisposed.has(resource),
+          "new course needs fresh resources",
+        );
+        disposalCounts.set(resource, 0);
+        resource.addEventListener("dispose", () => {
+          disposalCounts.set(resource, disposalCounts.get(resource) + 1);
+        });
+      }
+    };
+    world.setupRacers(grid, specs);
+    observe();
     const hulls = world.ships
       .slice(0, 3)
       .map((ship) => ship.children[0].geometry);
+    const masks = world.ships
+      .slice(0, 3)
+      .map((ship) => ship.userData.shadow.material.map);
+    assert.equal(
+      new Set(masks).size,
+      3,
+      "each airframe has its own shared mask",
+    );
+    const retired = world.ships.flatMap((ship) => [
+      ship.userData.shadow.geometry,
+      ship.userData.shadow.material,
+    ]);
     world.setupRacers(trial, specs);
-    assert.equal(attachedResources(world.scene).geometries.size, 8);
+    observe();
+    for (const resource of retired)
+      assert.equal(disposalCounts.get(resource), 1);
+    for (const resource of [...hulls, ...masks])
+      assert.equal(disposalCounts.get(resource), 0);
     world.setupRacers(grid, specs);
+    observe();
     for (let variant = 0; variant < 3; variant++) {
       assert.equal(world.ships[variant].children[0].geometry, hulls[variant]);
+      assert.equal(
+        world.ships[variant].userData.shadow.material.map,
+        masks[variant],
+      );
     }
-    assert([...disposalCounts.values()].every((count) => count === 0));
     world.setupRacers(trial, specs);
-
-    // The world traversal sees only the trial's hull. The cache contributes the
-    // other airframes and liveries to the same deduplicated disposal sets.
+    observe();
     const disposal = attachedResources(world.scene);
     collectCraftResources(world.scene, disposal);
-    assert.deepEqual(
-      Object.values(disposal).map((set) => set.size),
-      [16, 8, 2],
-    );
-    for (const resource of Object.values(disposal).flatMap((set) => [...set])) {
+    for (const resource of values(disposal)) {
+      assert.equal(
+        disposalCounts.get(resource),
+        0,
+        "retired projections are not disposed twice",
+      );
       resource.dispose();
-      previouslyDisposed.add(resource);
     }
     assert([...disposalCounts.values()].every((count) => count === 1));
+    for (const resource of disposalCounts.keys())
+      previouslyDisposed.add(resource);
     const released = {
       geometries: new Set(),
       materials: new Set(),
       textures: new Set(),
     };
     collectCraftResources(world.scene, released);
-    assert(Object.values(released).every((set) => set.size === 0));
+    assert(values(released).length === 0);
   }
 });
