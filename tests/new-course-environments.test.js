@@ -16,10 +16,13 @@ function dispose(scene) {
     maps = new Set();
   scene.traverse((o) => {
     if (o.geometry) geometries.add(o.geometry);
-    if (o.material) {
-      materials.add(o.material);
-      if (o.material.map) maps.add(o.material.map);
-    }
+    if (o.material)
+      for (const material of Array.isArray(o.material)
+        ? o.material
+        : [o.material]) {
+        materials.add(material);
+        if (material.map) maps.add(material.map);
+      }
   });
   geometries.forEach((g) => g.dispose());
   materials.forEach((m) => m.dispose());
@@ -237,7 +240,10 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           : mesh.geometry.attributes.position.count) /
           3) *
         (mesh.isInstancedMesh ? mesh.count : 1);
-      assert.equal(mesh.material.transparent, false);
+      for (const material of Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material])
+        assert.equal(material.transparent, false);
       assert(mesh.geometry.boundingSphere, "spatial culling bounds exist");
     }
     assert(Number.isFinite(triangles));

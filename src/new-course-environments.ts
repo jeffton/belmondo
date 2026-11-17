@@ -10,6 +10,7 @@ import { groundedGeometryOffset } from "./terrain.ts";
 import { biomeGroundTexture } from "./biome-ground-texture.ts";
 import { buildCinderVolcanoes } from "./cinder-volcanoes.ts";
 import { buildWhiteoutFork } from "./whiteout-fork.ts";
+import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
 
 /** One visible heightfield is also the collision/foundation surface. */
 export function buildNewTerrainSurface(
@@ -466,6 +467,8 @@ export function buildNewCourseDistricts(
       batch.matrices.length,
     );
     batch.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+    if (batch.shape === "box" && batch.mat === "water")
+      applyArchitectureInstanceUV(mesh, "water");
     mesh.computeBoundingSphere();
     root.add(mesh);
   }

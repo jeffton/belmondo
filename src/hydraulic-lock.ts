@@ -22,6 +22,9 @@ export function buildHydraulicLock(
   const positions: number[] = [],
     colors: number[] = [],
     uv: number[] = [];
+  const waterPositions: number[] = [],
+    waterColors: number[] = [],
+    waterUV: number[] = [];
   const groundingContacts = [];
   const waterContacts = [];
   const triangle = (
@@ -29,12 +32,14 @@ export function buildHydraulicLock(
     b: THREE.Vector3,
     c: THREE.Vector3,
     color: THREE.ColorRepresentation,
+    water: boolean,
   ) => {
     const tint = new THREE.Color(color);
     for (const p of [a, b, c]) {
-      positions.push(p.x, p.y, p.z);
-      colors.push(tint.r, tint.g, tint.b);
-      uv.push((p.x + p.z * 0.3) / 24, p.y / 18);
+      (water ? waterPositions : positions).push(p.x, p.y, p.z);
+      (water ? waterColors : colors).push(tint.r, tint.g, tint.b);
+      if (water) waterUV.push(p.x / 32, p.z / 32);
+      else uv.push((p.x + p.z * 0.3) / 24, p.y / 18);
     }
   };
   const quad = (
@@ -43,9 +48,10 @@ export function buildHydraulicLock(
     c: THREE.Vector3,
     d: THREE.Vector3,
     color: THREE.ColorRepresentation,
+    water = false,
   ) => {
-    triangle(a, b, c, color);
-    triangle(a, c, d, color);
+    triangle(a, b, c, color, water);
+    triangle(a, c, d, color, water);
   };
   // One retained reservoir leaves the opposite side open to the valley;
   // the racing plunge and water remain visible instead of becoming a corridor.
@@ -116,6 +122,7 @@ export function buildHydraulicLock(
           b[j + 1],
           a[j + 1],
           j === 3 ? 0x34766f : j === 1 || j === 5 ? 0xd0ccbf : 0x88877e,
+          j === 3,
         );
     }
     // Solid transverse retaining dams close both ends; no open water curtains.
@@ -131,20 +138,32 @@ export function buildHydraulicLock(
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
-    new THREE.Float32BufferAttribute(positions, 3),
+    new THREE.Float32BufferAttribute([...positions, ...waterPositions], 3),
   );
-  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setAttribute(
+    "color",
+    new THREE.Float32BufferAttribute([...colors, ...waterColors], 3),
+  );
+  geometry.setAttribute(
+    "uv",
+    new THREE.Float32BufferAttribute([...uv, ...waterUV], 2),
+  );
+  // Two contiguous opaque groups, not one draw for every reservoir segment.
+  geometry.addGroup(0, positions.length / 3, 0);
+  geometry.addGroup(positions.length / 3, waterPositions.length / 3, 1);
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
   const mesh = new THREE.Mesh(
     geometry,
-    new THREE.MeshLambertMaterial({
-      vertexColors: true,
-      map: textures.concrete,
-      flatShading: true,
-      side: THREE.DoubleSide,
-    }),
+    [textures.concrete, textures.water].map(
+      (map) =>
+        new THREE.MeshLambertMaterial({
+          vertexColors: true,
+          map,
+          flatShading: true,
+          side: THREE.DoubleSide,
+        }),
+    ),
   );
   mesh.name = "curved-dry-lock-reservoirs";
   mesh.userData = {
