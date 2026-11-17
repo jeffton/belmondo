@@ -54,7 +54,9 @@ test("FAULTLINE return sustains technical corners rather than isolated curvature
 });
 
 test("curvature reports physical turning radius when authored stations are compressed", () => {
-  for (const u of [0.57, 0.62, 0.67, 0.765, 0.81]) {
+  // The return route's first bend is now a 260m sweep; these stations remain
+  // on authored 175m arcs. Keep the physical-radius check off the broadened turn.
+  for (const u of [0.65, 0.81]) {
     const s = u * track.length;
     const a = track.frame(s - 6).p;
     const b = track.frame(s).p;

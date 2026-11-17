@@ -25,9 +25,13 @@ function dispose(scene) {
   scene.traverse((o) => {
     if (o.isInstancedMesh) o.dispose();
     if (o.geometry) geometries.add(o.geometry);
-    if (o.material) {
-      materials.add(o.material);
-      if (o.material.map) maps.add(o.material.map);
+    for (const material of o.material
+      ? Array.isArray(o.material)
+        ? o.material
+        : [o.material]
+      : []) {
+      materials.add(material);
+      if (material.map) maps.add(material.map);
     }
   });
   geometries.forEach((g) => g.dispose());
