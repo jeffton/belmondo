@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { placeStations } from "./coast-solar-landform.ts";
+import { buildSolarCollectorHillside } from "./solar-collector-hillside.ts";
+import { buildCoastInstituteSlipway } from "./coast-institute-slipway.ts";
 import type { Track } from "./track.ts";
 import type { CircuitTextures, EnvironmentSurface } from "./environment.ts";
 
@@ -75,6 +77,7 @@ export function buildCoastSolarPlaces(
     depth: number,
     branch = 0,
     marine = false,
+    openCourt = false,
   ) {
     const f = track.frame(u * track.length, branch);
     const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
@@ -141,14 +144,13 @@ export function buildCoastSolarPlaces(
       h: number,
       d: number,
       material: Material,
-      tilt = 0,
     ) => {
       transform.position
         .copy(center)
         .addScaledVector(right, x)
         .addScaledVector(forward, z)
         .setY(floor + y);
-      transform.rotation.set(tilt, yaw, 0);
+      transform.rotation.set(0, yaw, 0);
       transform.scale.set(w, h, d);
       transform.updateMatrix();
       const family = material === "base" ? "concrete" : "paint";
@@ -164,56 +166,100 @@ export function buildCoastSolarPlaces(
         for (const z of [-depth * 0.35, depth * 0.35])
           box(x, (bottom - floor) / 2, z, 7, floor - bottom, 9, "base");
       box(0, -2, 0, width, 4, depth, "wall");
-    } else {
+    } else if (!openCourt) {
       // Filled retaining volume, not a plate floating above a slope.
       box(0, (bottom - floor) / 2, 0, width, floor - bottom, depth, "base");
     }
-    return { box, floor, near: -side, width, depth };
+    return { box, floor, bottom, near: -side, width, depth };
   }
 
   if (coast) {
     // Three connected-length terraces make a hillside town, with an inhabited
     // lower gallery and receding quiet masses rather than a parade of roofs.
     for (const [i, u] of placeStations(0.477, 0.685, 0.008).entries()) {
-      const s = site(`HEADLAND ${i}`, u, -1, i >= 23 ? 30 : 15, 84, 102);
+      const precinct = u > 0.545 && u < 0.642;
+      const s = site(
+        `HEADLAND ${i}`,
+        u,
+        -1,
+        precinct ? 20 : i >= 23 ? 30 : 15,
+        precinct ? 142 : 84,
+        102,
+        0,
+        false,
+        precinct,
+      );
       if (!s) continue;
       const { box } = s;
+      if (precinct) {
+        if (u > 0.57 && u < 0.61) {
+          box(
+            -43,
+            (s.bottom - s.floor) / 2,
+            0,
+            50,
+            s.floor - s.bottom,
+            82,
+            "base",
+          );
+          box(-43, 18, 0, 50, 36, 82, "wall");
+          box(-43, 37, 0, 56, 2, 88, "roof");
+          box(-17.5, 20, 0, 1, 12, 70, "glass");
+          box(-9, 9, 0, 18, 2, 86, "accent");
+          for (const z of [-33, 0, 33]) box(-1, 4, z, 3, 8, 4, "wall");
+        }
+        if (i === 20) {
+          box(
+            25,
+            (s.bottom - s.floor) / 2,
+            0,
+            52,
+            s.floor - s.bottom,
+            38,
+            "base",
+          );
+          for (const x of [8, 42]) box(x, 29, 0, 6, 58, 16, "wall");
+          box(25, 60, 0, 52, 4, 34, "accent");
+          box(25, 66, 0, 32, 8, 24, "glass");
+          box(25, 72, 0, 56, 3, 38, "roof");
+        }
+        continue;
+      }
       box(0, 2, 0, 84, 4, s.depth, "wall");
       box(21, 6, 0, 39, 8, s.depth - 5, "roof");
       box(39, 6, 0, 1.2, 4, s.depth - 9, "glass");
-      const institute = i >= 10 && i < 18;
-      const court = i >= 13 && i <= 15;
-      const rearHeight = court ? 4 : institute ? 16 : 26;
-      box(-20, 2 + rearHeight / 2, 0, 39, rearHeight, s.depth - 16, "wall");
-      box(-20, rearHeight + 3, 0, 44, 2, s.depth - 10, court ? "base" : "roof");
-      if (!court)
-        box(
-          -1,
-          institute ? 12 : 18,
-          0,
-          1.2,
-          institute ? 4 : 6,
-          s.depth - 23,
-          "glass",
-        );
+      box(-20, 15, 0, 39, 26, s.depth - 16, "wall");
+      box(-20, 29, 0, 44, 2, s.depth - 10, "roof");
+      box(-1, 18, 0, 1.2, 6, s.depth - 23, "glass");
       // Deep loggia with roof slab and real piers.
       box(20, 11, 0, 42, 2, s.depth - 5, "wall");
       for (const z of [-s.depth * 0.39, 0, s.depth * 0.39])
         box(37, 5, z, 3, 10, 3, "wall");
-      if (i === 20) {
-        // One transit belvedere terminates the residential sequence.
-        box(-12, 40, 0, 34, 20, 24, "wall");
-        box(8, 32, 0, 25, 3, 45, "accent");
-        box(17, 39, 0, 4, 17, 5, "accent");
-        box(17, 45, 0, 4.4, 3, 13, "glass");
-      }
     }
     // A working slipway at the cliff edge leads to a grounded sea wall. The
     // race jump stays entirely open; dock ribs flank, never overlay, its deck.
-    for (const [i, u] of placeStations(0.699, 0.895, 0.006).entries()) {
-      const hall = (u > 0.711 && u < 0.73) || (u > 0.751 && u < 0.769);
+    const yardStations = placeStations(0.699, 0.895, 0.006);
+    const slipU = yardStations.reduce((a, b) =>
+      Math.abs(a - 0.735) < Math.abs(b - 0.735) ? a : b,
+    );
+    const gantryU = yardStations.reduce((a, b) =>
+      Math.abs(a - 0.723) < Math.abs(b - 0.723) ? a : b,
+    );
+    for (const [i, u] of yardStations.entries()) {
+      const mouth = Math.abs(u - slipU) < 0.008;
+      const hall =
+        !mouth && ((u > 0.711 && u < 0.73) || (u > 0.751 && u < 0.769));
       const marine = u >= 0.785;
-      const s = site(`SHIPYARD ${i}`, u, 1, 17, hall ? 68 : 36, 78, 0, marine);
+      const s = site(
+        `SHIPYARD ${i}`,
+        u,
+        1,
+        17,
+        mouth && u !== slipU ? 26 : hall ? 68 : 36,
+        78,
+        0,
+        marine,
+      );
       if (!s) continue;
       const { box, near } = s;
       box(0, 1, 0, s.width, 2, 78, "roof");
@@ -221,49 +267,29 @@ export function buildCoastSolarPlaces(
         box(-near * 14, 15, 0, 33, 28, 66, "wall");
         box(-near * 14, 30, 0, 39, 3, 72, "roof");
         box(near * 4, 12, 0, 1, 20, 46, "glass");
-        for (const z of [-29, 29]) {
-          box(near * 25, 24, z, 4, 46, 5, "accent");
-          box(near * 10, 47, z, 33, 4, 5, "accent");
+        if (u === gantryU) {
+          for (const x of [-25, 25]) box(x, 24, 0, 4, 46, 5, "accent");
+          box(0, 47, 0, 54, 4, 5, "accent");
+          box(0, 35, 0, 0.8, 20, 0.8, "roof");
+          box(0, 24, 0, 9, 3, 6, "roof");
         }
       } else {
-        box(-near * 12, 6, 0, 6, 10, 78, "wall");
-        box(-near * 12, 12, 0, 8, 2, 78, "accent");
+        if (Math.abs(u - slipU) >= 0.012) {
+          box(-near * 12, 6, 0, 6, 10, 78, "wall");
+          box(-near * 12, 12, 0, 8, 2, 78, "accent");
+        }
         for (const z of [-29, 0, 29]) box(near * 11, 5, z, 5, 8, 9, "wall");
       }
     }
+    const slipSite = sites.find(
+      (site) => site.name.startsWith("SHIPYARD") && site.u === slipU,
+    )!;
+    buildCoastInstituteSlipway(root, track, textures, environment, {
+      u: slipSite.u,
+      height: slipSite.floor + 2,
+    });
   } else {
-    // Long paired collector terraces reappear beyond the tunnel. Each plate
-    // has a bearing rack, shared retaining shelf and service spine.
-    for (const [i, u] of [
-      ...placeStations(0.059, 0.185, 0.007),
-      ...placeStations(0.291, 0.451, 0.007),
-    ].entries()) {
-      const s = site(
-        `COLLECTOR TERRACE ${i}`,
-        u,
-        1,
-        26,
-        118,
-        90,
-        u > 0.2 ? 1 : 0,
-      );
-      if (!s) continue;
-      const { box } = s;
-      box(-49, 3, 0, 12, 6, 90, "wall");
-      box(-49, 7, 0, 5, 2, 90, "accent");
-      for (let row = 0; row < 3; row++) {
-        const x = -28 + row * 31;
-        box(x, 3 + row * 3, 0, 28, 6 + row * 6, 86, "base");
-        // Service courts at terrace risers keep the next retaining volume
-        // from burying collector plates on the lower grade.
-        for (const z of [-18, 0, 18]) {
-          const y = 7 + row * 6;
-          box(x, y, z, 3, 4, 13, "roof");
-          box(x, y + 3, z, 27, 1.2, 15, "panel", -0.22);
-          box(x, y + 3.5, z - 6, 27, 0.6, 1, "wall", -0.22);
-        }
-      }
-    }
+    buildSolarCollectorHillside(root, track, textures, environment);
     // Readable connected process volumes: low exchanger plinth, tall pressure
     // house, transfer gallery and grounded transmission shoulders.
     const processStations = [

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { buildEnvironment } from "../src/environment.ts";
+import { buildCity } from "../src/city.ts";
 
 const textures = Object.fromEntries(
   ["concrete", "road", "paint", "facade", "edge", "water"].map((name) => [
@@ -16,10 +17,12 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
     const track = makeTrack(index);
     const scene = new THREE.Scene();
     const environment = buildEnvironment(scene, track, textures);
+    if (index === TRACK_INDEX.SOLAR)
+      buildCity(scene, track, textures, environment);
     const root = scene.getObjectByName(
       index === TRACK_INDEX.COAST
         ? "coastal-fork-geography"
-        : "solar-fork-infrastructure",
+        : "collector-landscape",
     );
     scene.updateMatrixWorld(true);
     const ray = new THREE.Raycaster();
@@ -62,10 +65,23 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
         }
       }
     }
-    assert(
-      sheltered > 35,
-      "a substantial run of the inward lane has actual overhead shelter",
-    );
+    if (index === TRACK_INDEX.COAST) {
+      assert(
+        sheltered > 35,
+        "a substantial run of the inward lane has actual overhead shelter",
+      );
+    } else {
+      assert.equal(
+        scene.getObjectByName("solar-fork-infrastructure"),
+        undefined,
+        "the superseded arcade must not be layered over the new plant",
+      );
+      assert.equal(
+        sheltered,
+        0,
+        "Solar's service lane sees the plant beside it, not a generic roof parade",
+      );
+    }
     assert.equal(exposed, 0, "outward lane retains open sky");
     // Each emitted solid's lower footprint intersects real ground; roofs/ducts
     // are supported by the same emitted arcade, not floating distant set pieces.
@@ -92,7 +108,10 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
           );
         }
         if (foot.y < environment.heightAt(foot.x, foot.z)) {
-          ray.set(new THREE.Vector3(center.x, center.y + 0.01, center.z), down);
+          // Filled retaining foundations legitimately have their centers below
+          // the land. Start above the emitted top, not inside the earth.
+          const head = new THREE.Vector3(0, 0.5, 0).applyMatrix4(matrix);
+          ray.set(head.addScaledVector(up, 0.01), down);
           ray.far = 2000;
           assert(
             ray.intersectObject(

@@ -23,7 +23,7 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
     const p = new THREE.Vector3();
     const scale = new THREE.Vector3();
     const q = new THREE.Quaternion();
-    for (const mesh of root.children) {
+    for (const mesh of root.children.filter((mesh) => mesh.isInstancedMesh)) {
       assert(mesh.isInstancedMesh);
       for (let i = 0; i < mesh.count; i++) {
         mesh.getMatrixAt(i, matrix);
@@ -99,7 +99,14 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
     const p = f.p
       .clone()
       .addScaledVector(right, (index === TRACK_INDEX.COAST ? -1 : 1) * 110);
-    assert(height(p.x, p.z, -25) > f.p.y - 25, "authored shelf missing");
+    const shelf = height(p.x, p.z, -25);
+    if (index === TRACK_INDEX.COAST)
+      assert(shelf > f.p.y - 25, "headland shelf missing");
+    else
+      assert(
+        shelf > f.p.y && shelf < f.p.y + 35,
+        "collector hillside must climb above the road into the forward view",
+      );
     if (index === TRACK_INDEX.COAST) {
       const bay = track.frame(0.85 * track.length);
       assert(

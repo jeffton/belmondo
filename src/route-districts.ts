@@ -30,20 +30,12 @@ export const ROUTE_DISTRICTS = [
     },
   ],
   [
-    { name: "RED CUT", start: 0.149, end: 0.193, side: -1, style: "strata" },
     {
       name: "MAINTENANCE SETTLEMENT",
       start: 0.476,
       end: 0.574,
       side: 1,
       style: "hangar",
-    },
-    {
-      name: "BASALT SHELVES",
-      start: 0.862,
-      end: 0.931,
-      side: 1,
-      style: "strata",
     },
   ],
   [
