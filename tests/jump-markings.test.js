@@ -90,10 +90,16 @@ for (const [index, config] of TRACKS.entries()) {
         !track.gap(u0) && !track.gap(u1),
         "paint cannot bridge missing track",
       );
-      if (patch.kind === "approach")
-        assert(patch.end < config.jump * track.length);
-      else
-        assert(patch.start > (config.jump + config.gapLength) * track.length);
+      const edge =
+        (config.jump + (patch.kind === "landing" ? config.gapLength : 0)) *
+        track.length;
+      const paintedEdge = patch.kind === "approach" ? patch.end : patch.start;
+      assert(
+        Math.abs(paintedEdge - edge) < 0.00001,
+        "red asphalt meets the gap edge",
+      );
+      if (patch.kind === "approach") assert(paintedEdge < edge);
+      else assert(paintedEdge > edge);
       assert(
         u0 >= config.sections.runway[0] && u1 <= config.sections.runway[1],
         "markings belong to the physical launch/receiving deck",
