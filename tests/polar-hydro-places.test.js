@@ -1,10 +1,41 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
 import { createTerrain } from "../src/terrain.ts";
 import { buildWhiteoutObservatory } from "../src/whiteout-observatory.ts";
 import { buildMonsoonPumpChamber } from "../src/monsoon-pump-chamber.ts";
+
+test("WHITEOUT inner-basin rewrite retains introduction, valley and both ridge centrelines exactly", () => {
+  const index = TRACK_INDEX.WHITEOUT;
+  const config = TRACKS[index];
+  const track = makeTrack(index);
+  let baseline;
+  try {
+    TRACKS[index] = { ...config, returnRoute: undefined };
+    baseline = makeTrack(index);
+  } finally {
+    TRACKS[index] = config;
+  }
+  let moved = 0;
+  for (let i = 0; i < 1000; i++) {
+    const u = i / 1000;
+    for (const branch of [-1, 0, 1]) {
+      const f = track.frame(u * track.length, branch);
+      const old = baseline.frame(u * baseline.length, branch);
+      if (u < 0.309 || u > 0.491) {
+        assert(
+          f.p.distanceTo(old.p) < 1e-8,
+          "local route cannot reparameterise the rest of the course",
+        );
+      } else moved = Math.max(moved, f.p.distanceTo(old.p));
+    }
+  }
+  assert(
+    moved > track.config.width * 2,
+    "inner basin changes actual line, not cosmetic sub-road nudges",
+  );
+});
 
 const textures = {
   concrete: new THREE.Texture(),

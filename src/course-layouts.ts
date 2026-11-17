@@ -13,18 +13,16 @@ const whiteoutPoints = [
   [325, 190, 0],
   [300, 180, -124],
   [224, 170, -224],
-  // The fast outer entry winds onto a tighter, descending inner basin.
-  // The narrowing radius commits the line before the open valley release.
-  [108, 158, -274],
-  [0, 145, -272],
-  [-101, 132, -247],
-  [-177, 119, -186],
-  [-224, 108, -96],
-  [-238, 99, 0],
-  [-216, 94, 99],
-  [-164, 90, 179],
-  [-87, 90, 227],
-  [0, 90, 242],
+  [120, 160, -290],
+  [0, 150, -312],
+  [-118, 140, -284],
+  [-215, 130, -215],
+  [-278, 120, -115],
+  [-300, 110, 0],
+  [-275, 105, 114],
+  [-208, 100, 208],
+  [-111, 95, 269],
+  [0, 90, 287],
   [120, 90, 280],
   [350, 95, 350],
   [650, 115, 800],
@@ -120,6 +118,22 @@ export const NEW_COURSES: TrackConfig[] = [
     points: whiteoutPoints,
     // The basin release feeds a climbing counterturn before the ridge decision.
     rhythm: [{ start: 0.54, end: 0.66, offset: 40 }],
+    // A local inner-basin route preserves the introduction and ridge exactly.
+    // Fast outer entry commits to sustained tighter turns before the release.
+    returnRoute: {
+      start: 0.31,
+      end: 0.49,
+      radii: [230, 220, 190, 180, 180, 230, 230],
+      knots: [
+        [105, 160, -310],
+        [-130, 140, -310],
+        [-260, 118, -150],
+        [-245, 100, 120],
+        [-80, 95, 280],
+        [80, 90, 285],
+        [180, 91, 287],
+      ],
+    },
     split: [0.74, 0.87],
     fork: {
       offsets: [-100, 100],
