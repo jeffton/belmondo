@@ -5,8 +5,15 @@ import { Race } from "../src/race.ts";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { World } from "../src/world.ts";
 import { createTerrain } from "../src/terrain.ts";
+import { createCraft } from "../src/craft.ts";
 
-test("returning an all-DNF field to the menu restores demo hulls without resurrecting racers", () => {
+test("returning an all-DNF field to the menu restores demo hulls without resurrecting racers", (t) => {
+  t.mock.method(
+    THREE.TextureLoader.prototype,
+    "load",
+    () => new THREE.Texture(),
+  );
+  const scene = new THREE.Scene();
   const track = makeTrack(TRACK_INDEX.COAST);
   const race = new Race(track);
   race.countdown = 0;
@@ -19,7 +26,7 @@ test("returning an all-DNF field to the menu restores demo hulls without resurre
     environment: { terrain: createTerrain(track) },
     time: 0,
     view: "chase",
-    scene: new THREE.Scene(),
+    scene,
     camera: new THREE.PerspectiveCamera(),
     city: { update() {} },
     startGantry: { update() {} },
@@ -33,15 +40,9 @@ test("returning an all-DNF field to the menu restores demo hulls without resurre
       instanceMatrix: {},
       computeBoundingSphere() {},
     },
-    ships: race.racers.map(() => {
-      const ship = new THREE.Object3D();
-      ship.userData = {
-        shield: new THREE.Object3D(),
-        shadow: new THREE.Object3D(),
-        updateExhaust() {},
-      };
-      return ship;
-    }),
+    ships: race.racers.map((racer) =>
+      createCraft(scene, 0xffffff, racer.craft),
+    ),
   });
 
   world.draw(race, 1 / 60);
