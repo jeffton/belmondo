@@ -58,8 +58,8 @@ const RENDER_FIXTURES = [
   [
     "VESPER CIRCUIT",
     "d1b2bc67d2a2e51024c91b5456c87f0335f24ef74e0f194835897e8abe22488c",
-    "a8cf36908959a4bfc95aba7431b92c2efe56d84d5fe08f3a223f34e4ead3f3d4",
-    "c0c9f939d84138c0636f78377866ffb459a5379a5d8db10f2d380507420e6bf4",
+    "0d82c47d97293b55db4ff1f7fbb987791e94eb0c6ee3e237c121afa7ff5be360",
+    "d9fd8904964f956dbee0b85537cbf7ea890313dacdf32d3b2e3586af2a9f8637",
   ],
 ];
 const tracks = RENDER_FIXTURES.map((_, i) => makeTrack(i));
