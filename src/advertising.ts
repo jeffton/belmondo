@@ -192,7 +192,7 @@ export function getTrackAdvertisingLayout(track: Track) {
     ],
     "VESPER CIRCUIT": [
       [0.12, -1, 3, 54],
-      [0.32, 1, 4, 60],
+      [0.365, 1, 4, 60],
       [0.69, -1, 5, 52, 0, -4],
       [0.965, -1, -1, 50],
     ],

@@ -165,6 +165,7 @@ export function buildVesperInterchange(
     const a = p[i],
       b = p[i + 1];
     const court = i >= 2 && i <= 5;
+    const terminalHall = i === 6;
     const body = (
       lowA: number,
       lowB: number,
@@ -172,30 +173,85 @@ export function buildVesperInterchange(
       highB: number,
       recessA: number,
       recessB: number,
+      backA = 0,
+      backB = 0,
     ) => [
       new THREE.Vector3(a.center.x, lowA, a.center.z - a.halfWidth + recessA),
       new THREE.Vector3(b.center.x, lowB, b.center.z - b.halfWidth + recessB),
-      new THREE.Vector3(b.center.x, lowB, b.center.z + b.halfWidth),
-      new THREE.Vector3(a.center.x, lowA, a.center.z + a.halfWidth),
+      new THREE.Vector3(b.center.x, lowB, b.center.z + b.halfWidth - backB),
+      new THREE.Vector3(a.center.x, lowA, a.center.z + a.halfWidth - backA),
       new THREE.Vector3(a.center.x, highA, a.center.z - a.halfWidth + recessA),
       new THREE.Vector3(b.center.x, highB, b.center.z - b.halfWidth + recessB),
-      new THREE.Vector3(b.center.x, highB, b.center.z + b.halfWidth),
-      new THREE.Vector3(a.center.x, highA, a.center.z + a.halfWidth),
+      new THREE.Vector3(b.center.x, highB, b.center.z + b.halfWidth - backB),
+      new THREE.Vector3(a.center.x, highA, a.center.z + a.halfWidth - backA),
     ];
     prism("podium", body(a.bottom, b.bottom, a.podium, b.podium, 0, 0));
-    // The central court reaches the racing side, not an atrium hidden behind
-    // its facade. The upper service spine joins both occupied end wings.
-    prism(
-      "ceramic",
-      body(
-        a.podium,
-        b.podium,
-        a.roof,
-        b.roof,
-        court ? a.halfWidth * 2 - 10 : 12,
-        court ? b.halfWidth * 2 - 10 : 12,
-      ),
-    );
+    // The court opens into a real structural bay, not a panel painted on
+    // its end wall. Both levels share the same room and roof profile.
+    if (terminalHall) {
+      prism(
+        "steel",
+        body(
+          a.podium,
+          b.podium,
+          a.roof - 2,
+          b.roof - 2,
+          12,
+          12,
+          a.halfWidth * 2 - 16,
+          b.halfWidth * 2 - 16,
+        ),
+      );
+      prism(
+        "ceramic",
+        body(
+          a.podium,
+          b.podium,
+          a.upper.p.y - 4.5,
+          b.upper.p.y - 4.5,
+          a.halfWidth * 2 - 4,
+          b.halfWidth * 2 - 4,
+        ),
+      );
+      prism(
+        "ceramic",
+        body(
+          a.upper.p.y + 3,
+          b.upper.p.y + 3,
+          a.roof - 2,
+          b.roof - 2,
+          a.halfWidth * 2 - 4,
+          b.halfWidth * 2 - 4,
+        ),
+      );
+      prism(
+        "steel",
+        body(
+          a.upper.p.y - 5.5,
+          b.upper.p.y - 5.5,
+          a.upper.p.y - 4.5,
+          b.upper.p.y - 4.5,
+          16,
+          16,
+          4,
+          4,
+        ),
+      );
+    } else {
+      // The central court reaches the racing side; its recessed service
+      // spine joins the occupied arrival and departure wings.
+      prism(
+        "ceramic",
+        body(
+          a.podium,
+          b.podium,
+          a.roof,
+          b.roof,
+          court ? a.halfWidth * 2 - 10 : 12,
+          court ? b.halfWidth * 2 - 10 : 12,
+        ),
+      );
+    }
     if (!court) {
       prism(
         "ceramic",
@@ -261,16 +317,23 @@ export function buildVesperInterchange(
         0,
       ),
     );
-    if (!court) glazing(i % 3 === 0 ? "warm" : "glass", a, b, false);
-    glazing("glass", a, b, true);
-    // The occupied departure wing faces the court; its end is a destination,
-    // rather than another longitudinal panel beside the driving camera.
-    if (i === 6)
+    if (!court && !terminalHall)
+      glazing(i % 3 === 0 ? "warm" : "glass", a, b, false);
+    if (!terminalHall) glazing("glass", a, b, true);
+    if (terminalHall) {
+      // Lit rooms are one full bay behind the entrance. The upper gallery
+      // is seen through its open side aperture, not an opaque window decal.
       arch.box(
         "warm",
-        new THREE.Vector3(a.center.x + 0.3, a.lower.p.y + 10, a.center.z + 6),
-        [0.5, 9, a.halfWidth * 2 - 20],
+        new THREE.Vector3(b.center.x + 0.3, b.lower.p.y + 12, b.center.z + 6),
+        [0.5, 14, b.halfWidth * 2 - 20],
       );
+      arch.box(
+        "warm",
+        new THREE.Vector3(b.center.x + 0.3, b.upper.p.y - 0.5, b.center.z + 6),
+        [0.5, 7, b.halfWidth * 2 - 20],
+      );
+    }
     if (!court && i % 2 === 0) {
       const column = a.lower.p
         .clone()
@@ -301,7 +364,7 @@ export function buildVesperInterchange(
     THREE.BufferGeometry,
     THREE.MeshLambertMaterial
   >;
-  warm.material.emissive.setHex(0x342619);
+  warm.material.emissive.setHex(0x765439);
   root.userData.profiles = p;
   root.userData.arcadeParts = arcadeParts;
   root.userData.program = program;

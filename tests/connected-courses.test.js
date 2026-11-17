@@ -123,6 +123,30 @@ test("VESPER's connected terminal canopy stays outside both fork driving volumes
   }
   clearDrivingVolume(root, f.track, 0.28, 0.36);
   f.scene.updateMatrixWorld(true);
+  const a = root.userData.profiles[6],
+    b = root.userData.profiles[7];
+  const entrance = new THREE.Vector3(
+    a.center.x + 1,
+    a.lower.p.y + 12,
+    a.center.z + 6,
+  );
+  const hallRay = new THREE.Raycaster(entrance, new THREE.Vector3(-1, 0, 0));
+  const hallBack = hallRay.intersectObject(root, true)[0];
+  assert(
+    hallBack.point.x < (a.center.x + b.center.x) / 2,
+    "the arrival view enters a genuinely deep room, not a facade decal",
+  );
+  const upper = f.track.frame(((a.u + b.u) / 2) * f.track.length, 1);
+  hallRay.set(
+    upper.p.clone().add(new THREE.Vector3(0, 0.5, 0)),
+    new THREE.Vector3(0, 0, -1),
+  );
+  const acrossHall = hallRay.intersectObject(root, true)[0];
+  assert(
+    acrossHall.point.z <
+      (a.center.z - a.halfWidth + (b.center.z - b.halfWidth)) / 2 + 17,
+    "the upper side aperture looks into the same hall rather than an opaque window plane",
+  );
   const sky = new THREE.Vector3(0, 1, 0);
   for (const [u, covered] of [
     [0.31, true],
