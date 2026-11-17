@@ -117,8 +117,35 @@ for (let course = 0; course < TRACKS.length; course++) {
                 new THREE.Vector3()
                   .fromBufferAttribute(p, i)
                   .distanceTo(expected) < 0.001
-              )
+              ) {
+                const uv = m.geometry.getAttribute("uv");
+                // Check actual rendered UVs against an independent chase camera:
+                // an image's right/down axes must remain right/down on screen.
+                const frame = track.frame(pad.s + z, pad.branch);
+                const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+                const origin = pickupPoint(track, pad, 0, z, 0.14);
+                camera.up.copy(frame.up);
+                camera.position
+                  .copy(origin)
+                  .addScaledVector(frame.tangent, -20)
+                  .addScaledVector(frame.up, 12);
+                camera.lookAt(origin);
+                camera.updateMatrixWorld();
+                const horizontal = expected.clone().project(camera).x;
+                assert.equal(
+                  Math.sign(uv.getX(i) - 0.5),
+                  Math.sign(horizontal),
+                );
+                const ahead = pickupPoint(track, pad, x, z + 0.1, 0.14);
+                const vertical =
+                  ahead.project(camera).y - expected.clone().project(camera).y;
+                // CanvasTexture.flipY: canvas y=1-v. Forward is screen up.
+                assert.equal(
+                  Math.sign(1 - uv.getY(i) - 0.5),
+                  -Math.sign(z * vertical),
+                );
                 return true;
+              }
             return false;
           }),
         );

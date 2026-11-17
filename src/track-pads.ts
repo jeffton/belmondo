@@ -44,7 +44,7 @@ export function buildTrackPads(
       pickupPoint(track, pad, ...xz, height);
     const uv = ([x, z]: [number, number]) => [
       0.5 - x / pad.width,
-      0.5 - z / pad.length,
+      0.5 + z / pad.length,
     ];
     const perimeter = pickupOutline(pad);
     const center = point([0, 0], 0.14);

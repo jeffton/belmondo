@@ -263,118 +263,84 @@ export function circuitTextures(accent: string) {
     }
   });
   const pad = (boost: boolean) =>
-    raster(256, 128, (ctx, random, noise, chips) => {
-      // A readable silhouette first; service detail stays inside the dark frame.
-      const ice = boost ? "#b4ffff" : "#ffe2a5";
-      const signal = boost ? "#23dae8" : "#ffb34a";
-      const secondary = boost ? "#125568" : "#ff398d";
-      noise(26, 9);
-      const panel = (inset: number, cut: number, fill: string) => {
+    raster(256, 128, (ctx) => {
+      // Quiet graphite inserts, one signal colour and broad unlettered symbols.
+      // Canvas up is forward; UVs preserve both image axes from chase view.
+      const signal = boost ? "#74e5ec" : "#f1b865";
+      const bed = boost ? "#173740" : "#3b2d30";
+      const polygon = (points: [number, number][], fill: string) => {
         ctx.fillStyle = fill;
         ctx.beginPath();
-        ctx.moveTo(inset + cut, inset);
-        ctx.lineTo(256 - inset - cut, inset);
-        ctx.lineTo(256 - inset, inset + cut);
-        ctx.lineTo(256 - inset, 128 - inset - cut);
-        ctx.lineTo(256 - inset - cut, 128 - inset);
-        ctx.lineTo(inset + cut, 128 - inset);
-        ctx.lineTo(inset, 128 - inset - cut);
-        ctx.lineTo(inset, inset + cut);
+        points.forEach(([x, authoredY], i) => {
+          const y = 128 - authoredY;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
         ctx.closePath();
         ctx.fill();
       };
-      panel(0, 14, "#74808b");
-      panel(3, 13, "#111e2c");
-      panel(9, 11, secondary);
-      panel(12, 10, boost ? "#127e91" : "#841b60");
-      // Paired cyan rails confine the directional motif to the induction pad.
-      ctx.fillStyle = signal;
-      for (const x of [15, 231]) ctx.fillRect(x, 22, 10, 83);
-      ctx.fillStyle = ice;
-      for (const x of [17, 233]) ctx.fillRect(x, 25, 3, 76);
+      const panel = (inset: number, cut: number, fill: string) =>
+        polygon(
+          [
+            [inset + cut, inset],
+            [256 - inset - cut, inset],
+            [256 - inset, inset + cut],
+            [256 - inset, 128 - inset - cut],
+            [256 - inset - cut, 128 - inset],
+            [inset + cut, 128 - inset],
+            [inset, 128 - inset - cut],
+            [inset, inset + cut],
+          ],
+          fill,
+        );
+      panel(0, 14, "#65747b");
+      panel(3, 13, "#101d25");
+      panel(11, 10, bed);
       if (boost) {
-        // Three broad induction chevrons point forward (+local Z maps down
-        // this canvas through the pad mesh UVs). Never painted on bare road.
-        for (const y of [17, 45, 73]) {
-          ctx.fillStyle = secondary;
-          ctx.fillRect(32, y, 192, 26);
-          ctx.fillStyle = signal;
-          ctx.beginPath();
-          ctx.moveTo(37, y);
-          ctx.lineTo(128, y + 12);
-          ctx.lineTo(219, y);
-          ctx.lineTo(219, y + 12);
-          ctx.lineTo(128, y + 25);
-          ctx.lineTo(37, y + 12);
-          ctx.closePath();
-          ctx.fill();
-          ctx.strokeStyle = ice;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(45, y + 10);
-          ctx.lineTo(128, y + 22);
-          ctx.lineTo(211, y + 10);
-          ctx.stroke();
-        }
-        ctx.fillStyle = signal;
-        for (const x of [37, 82, 127, 172]) ctx.fillRect(x, 105, 35, 6);
+        // Two solid induction vanes: their points face the direction of travel.
+        for (const y of [27, 69])
+          polygon(
+            [
+              [43, y],
+              [128, y + 17],
+              [213, y],
+              [213, y + 16],
+              [128, y + 34],
+              [43, y + 16],
+            ],
+            signal,
+          );
       } else {
-        // Split hexagonal armament socket: no medical cross or boost chevrons.
-        ctx.strokeStyle = secondary;
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.moveTo(107, 17);
-        ctx.lineTo(78, 32);
-        ctx.lineTo(78, 56);
-        ctx.lineTo(107, 70);
-        ctx.moveTo(149, 17);
-        ctx.lineTo(178, 32);
-        ctx.lineTo(178, 56);
-        ctx.lineTo(149, 70);
-        ctx.stroke();
-        ctx.fillStyle = ice;
-        ctx.beginPath();
-        for (const [i, [x, y]] of [
-          [128, 17],
-          [143, 36],
-          [137, 36],
-          [137, 59],
-          [119, 59],
-          [119, 36],
-          [113, 36],
-        ].entries()) {
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = signal;
-        for (const x of [40, 199]) {
-          ctx.fillRect(x, 23, 17, 8);
-          ctx.fillRect(x, 42, 17, 8);
-          ctx.fillRect(x, 61, 17, 8);
-        }
-        ctx.fillStyle = "#0b1421";
-        ctx.fillRect(32, 78, 192, 34);
-        ctx.fillStyle = ice;
-        ctx.font = "900 30px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("WEAPON", 128, 104);
+        // A split armament socket, not a bolt, cross or second boost arrow.
+        // The long forward point and open rear identify its approach direction.
+        polygon(
+          [
+            [116, 24],
+            [116, 44],
+            [86, 59],
+            [116, 77],
+            [116, 101],
+            [53, 62],
+          ],
+          signal,
+        );
+        polygon(
+          [
+            [140, 24],
+            [203, 62],
+            [140, 101],
+            [140, 77],
+            [170, 59],
+            [140, 44],
+          ],
+          signal,
+        );
       }
-      // Edge-only wear keeps the induction symbol and socket lettering intact.
-      ctx.fillStyle = "#9299a0";
-      for (let i = 0; i < 65; i++) {
-        const x = 25 + random() * 205;
-        const y = random() > 0.5 ? 4 : 120;
-        ctx.fillRect(x, y, 1 + random() * 4, 1);
-      }
-      for (const x of [8, 245])
-        for (const y of [18, 107]) {
-          ctx.fillStyle = "#020913";
-          ctx.fillRect(x, y, 4, 4);
-          ctx.fillStyle = "#a6b5bd";
-          ctx.fillRect(x + 1, y, 2, 1);
-        }
+      // Recessed side channels; no lettering, bolts, chips or thin scanlines.
+      ctx.fillStyle = "#101d25";
+      for (const x of [19, 225]) ctx.fillRect(x, 30, 12, 68);
+      ctx.fillStyle = signal;
+      for (const x of [20, 226]) ctx.fillRect(x, 30, 10, 14);
     });
   return {
     concrete,
