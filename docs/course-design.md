@@ -44,7 +44,7 @@ BELMONDO is precision-built anti-gravity racing in inhabited landscapes. Learn f
 
 ## Verification
 
-Use the actual `Track`, `Race`, terrain, `World` and chase camera. Static plan views help diagnose geometry; they do not establish driving feel or visual quality.
+Use the actual `Track`, `Race`, terrain, `World` and chase camera. Run the changed circuit's existing radius, bank, fork and preserved-region guards before expensive captures. A clean sector in one craft/class does not replace those checks. Static plan views help diagnose geometry; they do not establish driving feel or visual quality.
 
 Compare matched LOWRES desktop and portrait/mobile views through approaches, commitment points and exits. Run continuous legal-input sequences to check turn preparation, pickup choices, flight and landing; distinguish scenario initialization from subsequent driving. Review consecutive frames for shimmer, clipping, hidden decisions and competing silhouettes. Obtain an independent code and visual/motion review. Transfer the capture slot only after its owner explicitly confirms browser closure; queued steering does not interrupt an in-flight tool.
 
