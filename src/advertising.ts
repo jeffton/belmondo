@@ -164,7 +164,7 @@ export function getTrackAdvertisingLayout(track: Track) {
       [0.12, -1, 7, 56],
       [0.51, 1, 2, 54],
       [0.77, 1, 5, 60],
-      [0.87, 1, -1, 48],
+      [0.865, 1, -1, 48],
     ],
     "KAISEKI COAST": [
       [0.195, 1, 0, 56],
