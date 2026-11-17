@@ -122,5 +122,31 @@ test("VESPER's connected terminal canopy stays outside both fork driving volumes
     );
   }
   clearDrivingVolume(root, f.track, 0.28, 0.36);
+  f.scene.updateMatrixWorld(true);
+  const sky = new THREE.Vector3(0, 1, 0);
+  for (const [u, covered] of [
+    [0.31, true],
+    [0.32, false],
+    [0.33, true],
+  ]) {
+    const frame = f.track.frame(u * f.track.length, -1);
+    const ray = new THREE.Raycaster(
+      frame.p.clone().addScaledVector(sky, 3),
+      sky,
+    );
+    const hits = ray.intersectObject(root, true);
+    assert.equal(
+      hits.length > 0,
+      covered,
+      "arrival enclosure → open court → departure enclosure is actual geometry",
+    );
+    const upper = f.track.frame(u * f.track.length, 1);
+    ray.set(upper.p.clone().addScaledVector(sky, 3), sky);
+    assert.equal(
+      ray.intersectObject(root, true).length,
+      0,
+      "the roof route keeps open sky",
+    );
+  }
   f.terrain.geometries.forEach((g) => g.dispose());
 });

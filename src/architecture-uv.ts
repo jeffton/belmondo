@@ -3,9 +3,9 @@ import * as THREE from "three";
 export type ArchitectureMap =
   "concrete" | "facade" | "paint" | "water" | "rock";
 
-// One complete atlas repeat in metres. Concrete has 2×4 cast bays; facade
-// has 2×4 glazing bays. Their proportions remain stable on every box face.
-export const ARCHITECTURE_TILE_METRES: Record<
+// One complete atlas repeat in world units. Concrete has 2×4 cast bays;
+// facade has 2×4 glazing bays. Render units are not metres.
+export const ARCHITECTURE_TILE_WORLD_UNITS: Record<
   ArchitectureMap,
   [number, number]
 > = {
@@ -24,7 +24,7 @@ export function scaleArchitectureBoxUV(
 ) {
   const uv = geometry.attributes.uv;
   const normal = geometry.attributes.normal;
-  const [tileU, tileV] = ARCHITECTURE_TILE_METRES[map];
+  const [tileU, tileV] = ARCHITECTURE_TILE_WORLD_UNITS[map];
   const [x, y, z] = dimensions;
   for (let i = 0; i < uv.count; i++) {
     const nx = Math.abs(normal.getX(i));
@@ -56,7 +56,7 @@ function instanceMaterial(source: THREE.Material, map: ArchitectureMap) {
     material = source.clone();
     const previousCompile = source.onBeforeCompile;
     const previousKey = source.customProgramCacheKey();
-    const [tileU, tileV] = ARCHITECTURE_TILE_METRES[map];
+    const [tileU, tileV] = ARCHITECTURE_TILE_WORLD_UNITS[map];
     material.onBeforeCompile = (shader, renderer) => {
       previousCompile.call(material, shader, renderer);
       shader.vertexShader =

@@ -88,7 +88,7 @@ export function buildMetropolis(
   const { volumes } = architecture;
   const traffic = buildVesperTraffic(root, architecture, box);
 
-  const { arcadeParts } = buildVesperInterchange(
+  const { arcadeParts, program } = buildVesperInterchange(
     root,
     track,
     textures,
@@ -313,6 +313,7 @@ export function buildMetropolis(
   root.userData.advertisingReservations = architecture.reservations;
   root.userData.trafficLanes = traffic.lanes;
   root.userData.arcadeParts = arcadeParts;
+  root.userData.interchangeProgram = program;
   root.userData.supports = supports;
   root.userData.sceneryInstances = [...batches.values()].reduce(
     (n, b) => n + b.parts.length,

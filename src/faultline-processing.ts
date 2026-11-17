@@ -10,7 +10,7 @@ export function faultlineProcessingSites(track: Track) {
   return (
     [
       [0.585, 1],
-      [0.625, -1],
+      [0.635, 1],
     ] as const
   ).map(([u, side]) => {
     const f = track.frame(u * track.length);

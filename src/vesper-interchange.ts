@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { ARCHITECTURE_TILE_WORLD_UNITS } from "./architecture-uv.ts";
 import type { Track } from "./track.ts";
 import type { CircuitTextures, EnvironmentSurface } from "./environment.ts";
 import type { VesperVolume } from "./vesper-districts.ts";
@@ -67,16 +68,43 @@ export function buildVesperInterchange(
   const p = profiles(track, environment.heightAt);
   const arcadeParts: (VesperVolume & { branch: number; depth: number })[] = [];
   const identity = new THREE.Matrix4();
-  function prism(kind: string, corners: THREE.Vector3[]) {
-    const indices = [
-      0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0,
-      4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5,
+  const program: {
+    start: number;
+    end: number;
+    depth: number;
+    covered: boolean;
+  }[] = [];
+  function prism(
+    kind: "podium" | "ceramic" | "soffit" | "steel",
+    corners: THREE.Vector3[],
+  ) {
+    const [tileU, tileV] =
+      ARCHITECTURE_TILE_WORLD_UNITS[
+        kind === "podium" || kind === "steel" ? "paint" : "concrete"
+      ];
+    const faces = [
+      [1, 0, 3, 2],
+      [4, 5, 6, 7],
+      [0, 1, 5, 4],
+      [2, 3, 7, 6],
+      [3, 0, 4, 7],
+      [1, 2, 6, 5],
     ];
     const vertices: number[] = [],
       uv: number[] = [];
-    for (const i of indices) {
-      vertices.push(...corners[i].toArray());
-      uv.push((corners[i].x + corners[i].z) / 36, corners[i].y / 24);
+    for (const face of faces) {
+      const width = corners[face[0]].distanceTo(corners[face[1]]) / tileU;
+      const height = corners[face[1]].distanceTo(corners[face[2]]) / tileV;
+      const quadUV = [
+        [0, 0],
+        [width, 0],
+        [width, height],
+        [0, height],
+      ];
+      for (const j of [0, 1, 2, 0, 2, 3]) {
+        vertices.push(...corners[face[j]].toArray());
+        uv.push(...quadUV[j]);
+      }
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
@@ -87,101 +115,163 @@ export function buildVesperInterchange(
     geometry.computeVertexNormals();
     arch.add(kind, geometry, identity);
   }
+  function glazing(
+    kind: "glass" | "warm",
+    a: ReturnType<typeof profiles>[number],
+    b: ReturnType<typeof profiles>[number],
+    upper: boolean,
+  ) {
+    const corners = [a, b].map(
+      (f) =>
+        new THREE.Vector3(
+          f.center.x,
+          upper ? f.upper.p.y + 1 : f.lower.p.y + 3,
+          f.center.z + (upper ? f.halfWidth + 0.25 : -f.halfWidth + 11.75),
+        ),
+    );
+    corners.push(
+      corners[1].clone().add(new THREE.Vector3(0, upper ? 4 : 7, 0)),
+      corners[0].clone().add(new THREE.Vector3(0, upper ? 4 : 7, 0)),
+    );
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(
+        corners.flatMap((v) => v.toArray()),
+        3,
+      ),
+    );
+    geometry.setAttribute(
+      "uv",
+      new THREE.Float32BufferAttribute(
+        [
+          0,
+          0,
+          a.center.distanceTo(b.center) / 12,
+          0,
+          a.center.distanceTo(b.center) / 12,
+          (upper ? 4 : 7) / 24,
+          0,
+          (upper ? 4 : 7) / 24,
+        ],
+        2,
+      ),
+    );
+    geometry.setIndex(upper ? [0, 2, 1, 0, 3, 2] : [0, 1, 2, 0, 2, 3]);
+    geometry.computeVertexNormals();
+    arch.add(kind, geometry, identity);
+  }
   for (let i = 0; i < p.length - 1; i++) {
     const a = p[i],
       b = p[i + 1];
+    const court = i >= 2 && i <= 5;
     const body = (
       lowA: number,
       lowB: number,
       highA: number,
       highB: number,
-      recess: number,
+      recessA: number,
+      recessB: number,
     ) => [
-      new THREE.Vector3(a.center.x, lowA, a.center.z - a.halfWidth + recess),
-      new THREE.Vector3(b.center.x, lowB, b.center.z - b.halfWidth + recess),
+      new THREE.Vector3(a.center.x, lowA, a.center.z - a.halfWidth + recessA),
+      new THREE.Vector3(b.center.x, lowB, b.center.z - b.halfWidth + recessB),
       new THREE.Vector3(b.center.x, lowB, b.center.z + b.halfWidth),
       new THREE.Vector3(a.center.x, lowA, a.center.z + a.halfWidth),
-      new THREE.Vector3(a.center.x, highA, a.center.z - a.halfWidth + recess),
-      new THREE.Vector3(b.center.x, highB, b.center.z - b.halfWidth + recess),
+      new THREE.Vector3(a.center.x, highA, a.center.z - a.halfWidth + recessA),
+      new THREE.Vector3(b.center.x, highB, b.center.z - b.halfWidth + recessB),
       new THREE.Vector3(b.center.x, highB, b.center.z + b.halfWidth),
       new THREE.Vector3(a.center.x, highA, a.center.z + a.halfWidth),
     ];
-    prism("podium", body(a.bottom, b.bottom, a.podium, b.podium, 0));
-    // A real recessed platform sits behind load-bearing piers. The glazed
-    // rooms are not painted onto a single flat terminal wall.
-    prism("ceramic", body(a.podium, b.podium, a.roof, b.roof, 12));
-    prism("ceramic", body(a.roof - 2, b.roof - 2, a.roof + 1, b.roof + 1, 0));
-    arch.box(
+    prism("podium", body(a.bottom, b.bottom, a.podium, b.podium, 0, 0));
+    // The central court reaches the racing side, not an atrium hidden behind
+    // its facade. The upper service spine joins both occupied end wings.
+    prism(
       "ceramic",
-      new THREE.Vector3(
-        a.center.x,
-        (a.podium + a.roof) / 2,
-        a.center.z - a.halfWidth + 2,
+      body(
+        a.podium,
+        b.podium,
+        a.roof,
+        b.roof,
+        court ? a.halfWidth * 2 - 10 : 12,
+        court ? b.halfWidth * 2 - 10 : 12,
       ),
-      [4, a.roof - a.podium, 4],
     );
-    // The concourse ceiling is continuous and follows the descending deck;
-    // it is not a repeated row of disconnected horizontal slabs.
+    if (!court) {
+      prism(
+        "ceramic",
+        body(a.roof - 2, b.roof - 2, a.roof + 1, b.roof + 1, 0, 0),
+      );
+      arch.box(
+        "ceramic",
+        new THREE.Vector3(
+          a.center.x,
+          (a.podium + a.roof) / 2,
+          a.center.z - a.halfWidth + 2,
+        ),
+        [4, a.roof - a.podium, 4],
+      );
+    }
+    program.push({
+      start: a.u,
+      end: b.u,
+      depth: a.lower.p.distanceTo(b.lower.p),
+      covered: !court,
+    });
+    // Arrival and departure roofs follow the descending deck. The central
+    // court cuts through the ceiling and facade into the driving view.
     const canopy = (f: typeof a, y: number, side: number) =>
       f.lower.p
         .clone()
         .addScaledVector(f.lower.right, side * (f.lower.width + 16))
         .setY(f.lower.p.y + y);
-    prism("soffit", [
-      canopy(a, 40, -1),
-      canopy(b, 40, -1),
-      canopy(b, 40, 1),
-      canopy(a, 40, 1),
-      canopy(a, 44, -1),
-      canopy(b, 44, -1),
-      canopy(b, 44, 1),
-      canopy(a, 44, 1),
-    ]);
     const mid = a.lower.p.clone().add(b.lower.p).multiplyScalar(0.5);
     const forward = b.lower.p.clone().sub(a.lower.p).setY(0).normalize();
     const right = new THREE.Vector3(forward.z, 0, -forward.x);
-    arcadeParts.push({
-      center: mid,
-      right,
-      forward,
-      width: Math.max(a.lower.width, b.lower.width) * 2 + 32,
-      depth: a.lower.p.distanceTo(b.lower.p),
-      bottom: Math.min(a.lower.p.y, b.lower.p.y) + 40,
-      top: Math.max(a.lower.p.y, b.lower.p.y) + 44,
-      branch: -1,
-      kind: "market-roof",
-    });
-    const center = a.center.clone().add(b.center).multiplyScalar(0.5);
-    const lowerY = (a.lower.p.y + b.lower.p.y) / 2;
-    const upperY = (a.upper.p.y + b.upper.p.y) / 2;
-    const half = (a.halfWidth + b.halfWidth) / 2;
-    const depth = Math.abs(a.center.x - b.center.x);
-    arch.box(
+    if (!court) {
+      prism("soffit", [
+        canopy(a, 40, -1),
+        canopy(b, 40, -1),
+        canopy(b, 40, 1),
+        canopy(a, 40, 1),
+        canopy(a, 44, -1),
+        canopy(b, 44, -1),
+        canopy(b, 44, 1),
+        canopy(a, 44, 1),
+      ]);
+      arcadeParts.push({
+        center: mid,
+        right,
+        forward,
+        width: Math.max(a.lower.width, b.lower.width) * 2 + 32,
+        depth: a.lower.p.distanceTo(b.lower.p),
+        bottom: Math.min(a.lower.p.y, b.lower.p.y) + 40,
+        top: Math.max(a.lower.p.y, b.lower.p.y) + 44,
+        branch: -1,
+        kind: "market-roof",
+      });
+    }
+    prism(
       "steel",
-      center
-        .clone()
-        .setY(lowerY - 2)
-        .add(new THREE.Vector3(0, 0, -half + 6)),
-      [depth, 1.5, 12],
+      body(
+        a.lower.p.y - 3.5,
+        b.lower.p.y - 3.5,
+        a.lower.p.y - 2,
+        b.lower.p.y - 2,
+        0,
+        0,
+      ),
     );
-    // Broad occupied rooms reveal a single building at two floor levels.
-    arch.box(
-      i % 3 === 0 ? "warm" : "glass",
-      center
-        .clone()
-        .setY(lowerY + 6)
-        .add(new THREE.Vector3(0, 0, -half + 11.75)),
-      [depth * 0.72, 6, 0.5],
-    );
-    arch.box(
-      "glass",
-      center
-        .clone()
-        .setY(upperY + 1)
-        .add(new THREE.Vector3(0, 0, half + 0.25)),
-      [depth * 0.62, 4, 0.5],
-    );
-    if (i % 2 === 0) {
+    if (!court) glazing(i % 3 === 0 ? "warm" : "glass", a, b, false);
+    glazing("glass", a, b, true);
+    // The occupied departure wing faces the court; its end is a destination,
+    // rather than another longitudinal panel beside the driving camera.
+    if (i === 6)
+      arch.box(
+        "warm",
+        new THREE.Vector3(a.center.x + 0.3, a.lower.p.y + 10, a.center.z + 6),
+        [0.5, 9, a.halfWidth * 2 - 20],
+      );
+    if (!court && i % 2 === 0) {
       const column = a.lower.p
         .clone()
         .addScaledVector(a.lower.right, -a.lower.width - 13);
@@ -214,9 +304,10 @@ export function buildVesperInterchange(
   warm.material.emissive.setHex(0x342619);
   root.userData.profiles = p;
   root.userData.arcadeParts = arcadeParts;
+  root.userData.program = program;
   root.userData.reservations = vesperInterchangeReservations(
     track,
     environment.heightAt,
   );
-  return { root, arcadeParts };
+  return { root, arcadeParts, program };
 }
