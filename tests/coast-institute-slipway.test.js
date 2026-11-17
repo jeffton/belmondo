@@ -96,6 +96,26 @@ test("Coast's open precinct and marine railway occupy the same grounded landscap
       "adjacent workshop/apron blocks the working railway mouth",
     );
   }
+  const gantry =
+    root.getObjectByName("coast-rail").geometry.attributes.position;
+  const gantryVertices = Array.from({ length: gantry.count }, (_, i) =>
+    new THREE.Vector3().fromBufferAttribute(gantry, i),
+  );
+  for (const footprint of precinct.userData.gantryPierFootprints) {
+    const across = footprint.map((p) => {
+      const delta = p.clone().sub(frame.p);
+      const distance = delta.dot(right) - frame.width;
+      assert(
+        gantryVertices.some((vertex) => vertex.distanceTo(p) < 0.001),
+        "gantry footprint has no actual emitted pier",
+      );
+      return delta.dot(forward) - ((distance - 53) / (420 - 53)) * 300;
+    });
+    assert(
+      Math.min(...across) >= 36 || Math.max(...across) <= -36,
+      "gantry pier footprint enters the diagonal railway, despite its center being outside",
+    );
+  }
   const geoms = new Set(),
     mats = new Set();
   root.traverse((m) => {

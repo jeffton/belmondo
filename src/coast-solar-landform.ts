@@ -14,6 +14,16 @@ export function placeStations(start: number, end: number, step: number) {
   );
 }
 
+export function coastYardStations() {
+  return placeStations(0.699, 0.895, 0.006);
+}
+
+export function coastSlipwayStation() {
+  return coastYardStations().reduce((a, b) =>
+    Math.abs(a - 0.735) < Math.abs(b - 0.735) ? a : b,
+  );
+}
+
 /** Bake once beside terrain samples. Apply to landHeight before grid sampling,
  * road grading, terrain meshes and collision queries are derived from that grid. */
 export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
@@ -144,7 +154,9 @@ export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
       };
     }),
   );
-  const dockFrame = coast ? track.frame(0.735 * track.length) : null;
+  const dockFrame = coast
+    ? track.frame(coastSlipwayStation() * track.length)
+    : null;
   const dockForward = dockFrame
     ? new THREE.Vector3(dockFrame.tangent.x, 0, dockFrame.tangent.z).normalize()
     : null;
@@ -201,9 +213,12 @@ export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
     if (dockFrame && dockRight && dockForward) {
       const dx = x - dockFrame.p.x,
         dz = z - dockFrame.p.z;
-      const across =
-        dx * dockRight.x + dz * dockRight.z - dockFrame.width - 234;
-      const along = dx * dockForward.x + dz * dockForward.z;
+      const distance = dx * dockRight.x + dz * dockRight.z - dockFrame.width;
+      const across = distance - 236.5;
+      const along =
+        dx * dockForward.x +
+        dz * dockForward.z -
+        ((distance - 53) / (420 - 53)) * 300;
       const basin =
         (1 - THREE.MathUtils.smoothstep(Math.abs(across), 190, 235)) *
         (1 - THREE.MathUtils.smoothstep(Math.abs(along), 40, 90)) *

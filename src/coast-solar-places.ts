@@ -1,5 +1,10 @@
 import * as THREE from "three";
-import { placeStations } from "./coast-solar-landform.ts";
+import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
+import {
+  placeStations,
+  coastYardStations,
+  coastSlipwayStation,
+} from "./coast-solar-landform.ts";
 import { buildSolarCollectorHillside } from "./solar-collector-hillside.ts";
 import { buildCoastInstituteSlipway } from "./coast-institute-slipway.ts";
 import type { Track } from "./track.ts";
@@ -208,20 +213,24 @@ export function buildCoastSolarPlaces(
           box(-9, 9, 0, 18, 2, 86, "accent");
           for (const z of [-33, 0, 33]) box(-1, 4, z, 3, 8, 4, "wall");
         }
-        if (i === 20) {
+        if (i === 19) {
           box(
-            25,
+            45,
             (s.bottom - s.floor) / 2,
             0,
             52,
             s.floor - s.bottom,
-            38,
+            48,
             "base",
           );
-          for (const x of [8, 42]) box(x, 29, 0, 6, 58, 16, "wall");
-          box(25, 60, 0, 52, 4, 34, "accent");
-          box(25, 66, 0, 32, 8, 24, "glass");
-          box(25, 72, 0, 56, 3, 38, "roof");
+          // One lift core and a sea-facing cantilevered balcony, not a roofed gate.
+          box(28, 20, 0, 18, 40, 26, "wall");
+          box(62, 20, 0, 4, 40, 12, "wall");
+          box(45, 42, 0, 52, 4, 48, "accent");
+          box(29, 50, 0, 26, 12, 32, "glass");
+          box(29, 57, 0, 32, 2, 38, "roof");
+          box(69, 46, 0, 2, 2, 48, "wall");
+          for (const z of [-23, 23]) box(45, 46, z, 52, 2, 1, "glass");
         }
         continue;
       }
@@ -238,17 +247,11 @@ export function buildCoastSolarPlaces(
     }
     // A working slipway at the cliff edge leads to a grounded sea wall. The
     // race jump stays entirely open; dock ribs flank, never overlay, its deck.
-    const yardStations = placeStations(0.699, 0.895, 0.006);
-    const slipU = yardStations.reduce((a, b) =>
-      Math.abs(a - 0.735) < Math.abs(b - 0.735) ? a : b,
-    );
-    const gantryU = yardStations.reduce((a, b) =>
-      Math.abs(a - 0.723) < Math.abs(b - 0.723) ? a : b,
-    );
+    const yardStations = coastYardStations();
+    const slipU = coastSlipwayStation();
     for (const [i, u] of yardStations.entries()) {
       const mouth = Math.abs(u - slipU) < 0.008;
-      const hall =
-        !mouth && ((u > 0.711 && u < 0.73) || (u > 0.751 && u < 0.769));
+      const hall = !mouth && (u < 0.711 || (u > 0.751 && u < 0.769));
       const marine = u >= 0.785;
       const s = site(
         `SHIPYARD ${i}`,
@@ -267,14 +270,8 @@ export function buildCoastSolarPlaces(
         box(-near * 14, 15, 0, 33, 28, 66, "wall");
         box(-near * 14, 30, 0, 39, 3, 72, "roof");
         box(near * 4, 12, 0, 1, 20, 46, "glass");
-        if (u === gantryU) {
-          for (const x of [-25, 25]) box(x, 24, 0, 4, 46, 5, "accent");
-          box(0, 47, 0, 54, 4, 5, "accent");
-          box(0, 35, 0, 0.8, 20, 0.8, "roof");
-          box(0, 24, 0, 9, 3, 6, "roof");
-        }
       } else {
-        if (Math.abs(u - slipU) >= 0.012) {
+        if (u < 0.711 || u > 0.751) {
           box(-near * 12, 6, 0, 6, 10, 78, "wall");
           box(-near * 12, 12, 0, 8, 2, 78, "accent");
         }
@@ -351,9 +348,11 @@ export function buildCoastSolarPlaces(
       mesh.setMatrixAt(i, matrix);
       mesh.setColorAt(i, colors[i]);
     });
+    applyArchitectureInstanceUV(mesh, material);
     mesh.computeBoundingSphere();
     root.add(mesh);
   }
+  cube.dispose();
   root.userData.sites = sites;
   root.userData.rejectedSites = rejected;
   return root;
