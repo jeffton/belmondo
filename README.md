@@ -43,7 +43,7 @@ Menu selection, confirmation and back actions use original short synthesized ton
 
 ## Development
 
-Repository: https://github.com/jeffton/belmondo. Local checkout: `/home/roy/github/belmondo`.
+Repository: https://github.com/jeffton/belmondo. Local checkout: `/home/roy/github/belmondo`. Follow the [development workflow](AGENTS.md) for focused tests, final verification and capture evidence.
 
 ```sh
 npm ci
