@@ -82,6 +82,7 @@ export interface Racer {
   boost: number;
   stun: number;
   pulseHit: number;
+  weaponHit: number;
   weapon: Weapon | null;
   collectedPickups: Set<string>;
   lap: number;
@@ -317,6 +318,7 @@ export class Race {
           boost: 0,
           stun: 0,
           pulseHit: 0,
+          weaponHit: 0,
           weapon: null,
           collectedPickups: new Set(),
           lap: 1,
@@ -383,7 +385,7 @@ export class Race {
     this.eliminations.push(r);
     r.shield = 0;
     r.weapon = null;
-    r.protect = r.boost = r.surge = r.pulseHit = r.speed = 0;
+    r.protect = r.boost = r.surge = r.pulseHit = r.weaponHit = r.speed = 0;
     r.velocity.set(0, 0, 0);
     this.complete = this.racers.every(
       (racer) => racer.eliminated || racer.finished,
@@ -393,6 +395,8 @@ export class Race {
   damage(r: Racer, amount: number, weapon: Weapon | null = null) {
     if (r.eliminated || r.finished || r.protect > 0) return;
     if (weapon === "PULSE") r.pulseHit = 0.65;
+    if (weapon === "PULSE" || weapon === "MISSILE" || weapon === "MINE")
+      r.weaponHit = 0.42;
     r.shield -= amount / CRAFT[r.craft].armor;
     r.velocity.multiplyScalar(0.78);
     r.speed = Math.hypot(r.velocity.x, r.velocity.z);
@@ -424,7 +428,7 @@ export class Race {
     r.speed = r.x = r.vx = r.h = r.vy = r.offroad = 0;
     r.grounded = true;
     r.flight = false;
-    r.boost = r.surge = r.pulseHit = 0;
+    r.boost = r.surge = r.pulseHit = r.weaponHit = 0;
     r.recoveredThisStep = true;
   }
   pulsePathClear(source: Racer, target: Racer) {
@@ -808,6 +812,7 @@ export class Race {
       r.surge = Math.max(0, r.surge - classDt);
       r.stun = Math.max(0, r.stun - classDt);
       r.pulseHit = Math.max(0, r.pulseHit - classDt);
+      r.weaponHit = Math.max(0, r.weaponHit - dt);
       const left = controls.airLeft ?? Math.max(0, controls.air || 0);
       const right = controls.airRight ?? Math.max(0, -(controls.air || 0));
       const air = controls.air ?? left - right;
@@ -1378,7 +1383,7 @@ export class Race {
         );
         const closest = previous.addScaledVector(segment, t);
         if (closest.distanceTo(target.position) < 5) {
-          this.damage(target, 28);
+          this.damage(target, 28, "MISSILE");
           shot.life = 0;
         }
       }
@@ -1393,7 +1398,7 @@ export class Race {
           r.id !== mine.owner &&
           r.position.distanceTo(mine.position) < 5
         ) {
-          this.damage(r, 24);
+          this.damage(r, 24, "MINE");
           mine.life = 0;
           break;
         }
@@ -1405,6 +1410,7 @@ export class Race {
     for (const { r, fraction } of finishCrossings) {
       if (r.eliminated) continue;
       r.finished = true;
+      r.weaponHit = 0;
       r.finishTime = this.time - dt + fraction * dt;
       r.finalPosition = this.finishers.length + 1;
       this.finishers.push(r);

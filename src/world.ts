@@ -63,6 +63,7 @@ import { gridApproachBlend } from "./start-sequence.ts";
 import { buildFinishDistrict } from "./finish-district.ts";
 import { WeaponEffects } from "./weapon-effects.ts";
 import { ImpactSparks } from "./impact-sparks.ts";
+import { shakeHitShip, shakeHitCockpit } from "./weapon-hit.ts";
 import { circuitTextures } from "./materials.ts";
 import { buildTrackLighting } from "./track-lighting.ts";
 import { createSky } from "./sky.ts";
@@ -927,6 +928,14 @@ export class World {
       this.camera.position.copy(cockpit).lerp(desired, approach);
       this.camera.up.copy(up).lerp(UP, approach).normalize();
       this.camera.lookAt(cockpit.clone().add(gaze).lerp(focus, approach));
+    }
+    if (!demo) {
+      for (const r of race.racers) {
+        const ship = this.ships[r.id];
+        if (ship?.visible) shakeHitShip(ship, r.weaponHit);
+      }
+      if (this.view === "first-person" && approach === 0)
+        shakeHitCockpit(this.camera, player.weaponHit);
     }
     this.weaponEffects.update(race, dt, this.time);
     this.impactSparks.update(dt);
