@@ -2,6 +2,9 @@ import * as THREE from "three";
 
 export type ShadowBounds = readonly [number, number, number, number];
 
+/** Render-only clearance above the tallest inlaid pickup faces (normal +0.14). */
+export const SHADOW_SURFACE_OFFSET = 0.16;
+
 /** Structural view of RoadSurface's read-only BVH query. */
 export interface ShadowTriangle {
   readonly a: THREE.Vector3Like;
@@ -29,6 +32,7 @@ export interface ShadowSurface {
 
 interface TriangleTopology {
   trackLength: number;
+  up: THREE.Vector3;
   edges: string[];
   transverse: {
     station: number;
@@ -56,7 +60,13 @@ function triangleTopology(
     const b = vertices[(i + 1) % 3];
     return a < b ? `${a}/${b}` : `${b}/${a}`;
   });
-  const result: TriangleTopology = { trackLength, edges, transverse: [] };
+  const up = new THREE.Vector3()
+    .crossVectors(
+      new THREE.Vector3().copy(triangle.b).sub(triangle.a),
+      new THREE.Vector3().copy(triangle.c).sub(triangle.a),
+    )
+    .normalize();
+  const result: TriangleTopology = { trackLength, up, edges, transverse: [] };
   for (let i = 0; i < 3; i++) {
     const j = (i + 1) % 3;
     if (stations[i] === stations[j])
@@ -150,7 +160,7 @@ export class CraftShadow {
         polygonOffset: true,
         polygonOffsetFactor: -1,
         polygonOffsetUnits: -1,
-        side: THREE.DoubleSide,
+        side: THREE.FrontSide,
         toneMapped: false,
       }),
     );
@@ -320,10 +330,30 @@ export class CraftShadow {
         (v: Vertex) => position.y - v.y,
       ])
         polygon = clip(polygon, distance);
+      const up = triangleTopology(t, trackLength).up;
       for (let j = 1; j + 1 < polygon.length; j++) {
-        for (const v of [polygon[0], polygon[j], polygon[j + 1]]) {
-          positions.push(v.x, v.y, v.z);
-          uvs.push(v.u, v.v);
+        const face = [polygon[0], polygon[j], polygon[j + 1]];
+        // Projection and UVs use the exact physical plane. This final normal
+        // render bias clears road decals/pickup inlays, never alters physics.
+        const rendered = face.map((v) => [
+          Math.fround(v.x + up.x * SHADOW_SURFACE_OFFSET),
+          Math.fround(v.y + up.y * SHADOW_SURFACE_OFFSET),
+          Math.fround(v.z + up.z * SHADOW_SURFACE_OFFSET),
+        ]);
+        const [a, b, c] = rendered;
+        const bx = b[0] - a[0],
+          by = b[1] - a[1],
+          bz = b[2] - a[2];
+        const cx = c[0] - a[0],
+          cy = c[1] - a[1],
+          cz = c[2] - a[2];
+        // Clipping on a footprint boundary can produce zero-area fan faces.
+        // Do not upload triangles that collapse at the renderer's precision.
+        if (by * cz === bz * cy && bz * cx === bx * cz && bx * cy === by * cx)
+          continue;
+        for (let k = 0; k < 3; k++) {
+          positions.push(...rendered[k]);
+          uvs.push(face[k].u, face[k].v);
         }
       }
     }

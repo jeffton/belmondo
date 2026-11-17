@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { CraftShadow } from "../src/craft-shadow.ts";
+import { CraftShadow, SHADOW_SURFACE_OFFSET } from "../src/craft-shadow.ts";
 import { makeTrack, TRACKS } from "../src/track.ts";
 import { getRoadSurface } from "../src/road-surface.ts";
 
@@ -113,12 +113,24 @@ function surface(triangles, contact) {
 }
 function vertices(shadow) {
   const geometry = shadow.mesh.geometry;
-  return Array.from({ length: geometry.drawRange.count }, (_, i) =>
+  const points = Array.from({ length: geometry.drawRange.count }, (_, i) =>
     new THREE.Vector3().fromBufferAttribute(
       geometry.getAttribute("position"),
       i,
     ),
   );
+  // Undo only the render-only decal clearance to inspect physical projection.
+  for (let i = 0; i < points.length; i += 3) {
+    const normal = new THREE.Vector3()
+      .crossVectors(
+        points[i + 1].clone().sub(points[i]),
+        points[i + 2].clone().sub(points[i]),
+      )
+      .normalize();
+    for (let j = i; j < i + 3; j++)
+      points[j].addScaledVector(normal, -SHADOW_SURFACE_OFFSET);
+  }
+  return points;
 }
 function area(shadow) {
   const points = vertices(shadow);
@@ -170,7 +182,7 @@ test("road edge cuts silhouette corners instead of casting onto void", () => {
     1000,
   );
   assert(Math.abs(area(shadow) - 32) < 1e-6);
-  assert(vertices(shadow).every((p) => p.x >= -1 && p.y === 0));
+  assert(vertices(shadow).every((p) => p.x >= -1 && Math.abs(p.y) < 1e-6));
 });
 
 test("gap clips the connected launch deck and never bridges to a receiver", () => {
@@ -208,7 +220,7 @@ test("crossing selects the physical receiving deck, never an unrelated higher/lo
       1000,
     );
     assert(Math.abs(area(shadow) - 48) < 1e-6);
-    assert(vertices(shadow).every((p) => p.y === height));
+    assert(vertices(shadow).every((p) => Math.abs(p.y - height) < 1e-6));
   }
 });
 
@@ -242,6 +254,25 @@ test("fork tip connects whole transverse edge to both outgoing half-edges", () =
   assert(Math.abs(area(shadow) - 48) < 1e-5);
   assert(vertices(shadow).some((p) => p.z > 0 && p.x < 0));
   assert(vertices(shadow).some((p) => p.z > 0 && p.x > 0));
+});
+
+test("normal render bias clears actual +0.14 inlays in one front-face pass", () => {
+  const shadow = create();
+  shadow.update(
+    surface(deck(-20, 20, -20, 20), {
+      point: new THREE.Vector3(),
+      s: 20,
+    }),
+    new THREE.Vector3(0, 3, 0),
+    0,
+    1000,
+  );
+  const positions = shadow.mesh.geometry.getAttribute("position");
+  for (let i = 0; i < shadow.mesh.geometry.drawRange.count; i++) {
+    assert(Math.abs(positions.getY(i) - SHADOW_SURFACE_OFFSET) < 1e-7);
+    assert(positions.getY(i) > 0.14);
+  }
+  assert.equal(shadow.mesh.material.side, THREE.FrontSide);
 });
 
 test("capacity growth releases previous GPU attribute buffers before replacing them", () => {
@@ -296,7 +327,7 @@ test("asymmetric hull bounds keep the +Z nose at texture top at world coordinate
   for (const [i, p] of vertices(shadow).entries()) {
     // +Z nose rotates towards world +X at yaw PI/2.
     assert(Math.abs(uv.getY(i) - (p.x - origin.x + 3) / 9) < 1e-5);
-    assert.equal(p.y, origin.y);
+    assert(Math.abs(p.y - origin.y) < 1e-5);
   }
 });
 
@@ -314,8 +345,10 @@ test("projection clips any receiving incline above the hull instead of painting 
     0,
     1000,
   );
-  assert(Math.abs(area(shadow) - 30) < 1e-6);
-  assert(vertices(shadow).every((p) => p.y <= 1));
+  // A 6-wide footprint spanning five units accumulates up to 6 * 2^-21
+  // area error from Float32 render coordinates after undoing normal bias.
+  assert(Math.abs(area(shadow) - 30) < 6 * 2 ** -21);
+  assert(vertices(shadow).every((p) => p.y <= 1 + 1e-6));
 });
 
 test("height fade stays continuous past old cutoff; geometry and materials are reused", () => {
