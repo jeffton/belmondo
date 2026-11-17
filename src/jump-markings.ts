@@ -78,7 +78,7 @@ export function getJumpMarkingLayout(track: Track) {
       side < 0 ? -outer : outer - 0.2,
       side < 0 ? -(outer - 0.2) : outer,
       28,
-      new THREE.Color(3.6, 0.85, 0.45),
+      0xb85d3b,
     );
   return patches;
 }
@@ -101,7 +101,6 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
     );
   });
   const colors = layout.map((patch) => new THREE.Color(patch.color));
-  const asphalt = layout.map((patch) => Number(patch.kind === "landing"));
   const window = new THREE.Vector2(
     Math.min(...layout.map((patch) => patch.start)),
     Math.max(...layout.map((patch) => patch.end)),
@@ -109,7 +108,8 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.jumpRectangles = { value: rectangles };
     shader.uniforms.jumpColors = { value: colors };
-    shader.uniforms.jumpAsphalt = { value: asphalt };
+    // Translucent pigment leaves the existing asphalt map visible underneath.
+    shader.uniforms.jumpPaintOpacity = { value: 0.6 };
     shader.uniforms.jumpWindow = { value: window };
     shader.vertexShader =
       `varying vec2 vJumpDeck;\n${shader.vertexShader}`.replace(
@@ -120,7 +120,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
       varying vec2 vJumpDeck;
       uniform vec4 jumpRectangles[${layout.length}];
       uniform vec3 jumpColors[${layout.length}];
-      uniform float jumpAsphalt[${layout.length}];
+      uniform float jumpPaintOpacity;
       uniform vec2 jumpWindow;
       float jumpCoverage(vec2 point, vec4 rectangle, vec2 footprint) {
         vec2 low = vec2(rectangle.x, rectangle.z);
@@ -130,7 +130,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
         return coverage.x * coverage.y;
       }
       ${shader.fragmentShader}`.replace(
-      "#include <opaque_fragment>",
+      "#include <color_fragment>",
       `
         // Derivatives must be evaluated outside the non-uniform range branch.
         // The epsilon only protects a numerically zero derivative; it is not LOD.
@@ -139,22 +139,20 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
             vJumpDeck.y - jumpFootprint.y * 0.5 <= jumpWindow.y) {
           float jumpInk = 0.0;
           vec3 jumpColor = vec3(0.0);
-          float asphaltLight = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
           for (int i = 0; i < ${layout.length}; i++) {
             float coverage = jumpCoverage(vJumpDeck, jumpRectangles[i], jumpFootprint);
             jumpInk += coverage;
-            // Pigment follows the lit asphalt's grain and light/shade, rather
-            // than replacing it with a blank uniformly coloured rectangle.
-            vec3 finish = mix(jumpColors[i], asphaltLight * jumpColors[i], jumpAsphalt[i]);
-            jumpColor += finish * coverage;
+            jumpColor += jumpColors[i] * coverage;
           }
           if (jumpInk > 0.0)
-            outgoingLight = mix(outgoingLight, jumpColor / jumpInk, min(jumpInk, 1.0));
+            diffuseColor.rgb = mix(diffuseColor.rgb, jumpColor / jumpInk,
+                                   min(jumpInk, 1.0) * jumpPaintOpacity);
         }
-        #include <opaque_fragment>
+        // Paint and asphalt share the road's vertex shading, lighting and shadows.
+        #include <color_fragment>
       `,
     );
   };
-  material.customProgramCacheKey = () => "jump-apron-coverage-v1";
-  return { layout, rectangles, colors, asphalt, window };
+  material.customProgramCacheKey = () => "jump-apron-paint-v2";
+  return { layout, rectangles, colors, window };
 }

@@ -111,9 +111,14 @@ for (const [index, config] of TRACKS.entries()) {
 
   test(`${config.name}: jump ink uses the existing opaque road, without overlay geometry or cutout texture`, () => {
     const track = makeTrack(index);
-    const material = new THREE.MeshLambertMaterial();
+    const roadTexture = new THREE.Texture();
+    const material = new THREE.MeshLambertMaterial({ map: roadTexture });
     const ink = applyJumpMarkings(material, track);
-    assert.equal(material.map, null, "no noisy/repeating paint texture");
+    assert.equal(
+      material.map,
+      roadTexture,
+      "the existing asphalt map stays in place beneath the pigment",
+    );
     assert.equal(material.transparent, false);
     assert.equal(
       material.alphaTest,
@@ -133,18 +138,27 @@ for (const [index, config] of TRACKS.entries()) {
     const shader = {
       uniforms: {},
       vertexShader: "#include <uv_vertex>",
-      fragmentShader: "#include <opaque_fragment>",
+      fragmentShader:
+        "#include <map_fragment>\n#include <color_fragment>\n#include <opaque_fragment>",
     };
     material.onBeforeCompile(shader, null);
     assert.equal(shader.uniforms.jumpRectangles.value, ink.rectangles);
     assert.equal(shader.uniforms.jumpColors.value, ink.colors);
-    assert.equal(shader.uniforms.jumpAsphalt.value, ink.asphalt);
-    for (const [i, patch] of ink.layout.entries())
-      assert.equal(
-        ink.asphalt[i],
-        Number(patch.kind === "landing"),
-        "receiving finishes preserve road texture and lighting; launch remains unchanged",
-      );
+    const opacity = shader.uniforms.jumpPaintOpacity.value;
+    assert(
+      opacity > 0 && opacity < 1,
+      "both launch and landing pigment let the original asphalt show through",
+    );
+    const paint = shader.fragmentShader.indexOf("diffuseColor.rgb = mix");
+    assert(paint > shader.fragmentShader.indexOf("#include <map_fragment>"));
+    assert(
+      paint < shader.fragmentShader.indexOf("#include <color_fragment>"),
+      "paint inherits vertex shading and subsequent scene lighting",
+    );
+    assert(
+      !shader.fragmentShader.includes("outgoingLight ="),
+      "paint must not override the lit road with a flat output colour",
+    );
     assert.equal(shader.uniforms.jumpWindow.value, ink.window);
     assert(shader.vertexShader.includes("vJumpDeck = uv * 32.0"));
     assert(
@@ -153,5 +167,6 @@ for (const [index, config] of TRACKS.entries()) {
     );
     assert(!shader.fragmentShader.includes("discard"));
     material.dispose();
+    roadTexture.dispose();
   });
 }
