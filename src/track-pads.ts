@@ -118,16 +118,17 @@ export function buildTrackPads(
           0xdcffff,
         );
       } else {
-        // Discrete amber diamonds sit beside the socket, never in the racing line.
+        // Short amber lane dashes bracket the approach to the socket.
+        // Keep these quieter than the pad, not separate collectible-like symbols.
         for (const z of [-36, -25, -14])
           mark(
             [
-              [x, z - 1.5],
-              [x + 0.7, z],
-              [x, z + 1.5],
-              [x - 0.7, z],
+              [x - 0.18, z - 1.5],
+              [x + 0.18, z - 1.5],
+              [x + 0.18, z + 1.5],
+              [x - 0.18, z + 1.5],
             ],
-            0xffac3d,
+            0xd3a35a,
           );
       }
     }
