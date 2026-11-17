@@ -58,7 +58,7 @@ export interface TrackConfig {
   returnRoute?: {
     start: number;
     end: number;
-    radius: number;
+    radii: number[];
     knots: number[][];
   };
   runwayEntryFade?: number;
@@ -578,8 +578,9 @@ export function makeTrack(index: number): Track {
       const angle = Math.acos(
         clamp(incoming.x * outgoing.x + incoming.z * outgoing.z, -1, 1),
       );
-      const trim = returnRoute.radius * Math.tan(angle / 2);
-      const handle = (4 / 3) * returnRoute.radius * Math.tan(angle / 4);
+      const radius = returnRoute.radii[i - 1];
+      const trim = radius * Math.tan(angle / 2);
+      const handle = (4 / 3) * radius * Math.tan(angle / 4);
       const leg = points[i].clone().sub(points[i - 1]);
       if (previousTrim + trim >= Math.hypot(leg.x, leg.z))
         throw new Error(`${config.name}: return corners overlap at knot ${i}`);

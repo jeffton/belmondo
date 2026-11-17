@@ -65,12 +65,15 @@ export const FAULTLINE_COURSE: TrackConfig = {
   returnRoute: {
     start: 0.515,
     end: 0.94,
-    radius: 175,
+    // Broad descending commitment feeds the tighter opposing bend before
+    // the driver can reset to an independent entry. The later uphill pair
+    // opens progressively onto the reclamation climb.
+    radii: [260, 190, 175, 175, 175, 175, 240],
     knots: [
       [150, 70, -1185],
-      [550, 90, -1800],
-      [-150, 120, -2150],
-      [250, 100, -2650],
+      [520, 90, -1720],
+      [-35, 105, -2030],
+      [250, 82, -2650],
       [-450, 170, -3000],
       [-750, 220, -2400],
       [450, 190, -2310],

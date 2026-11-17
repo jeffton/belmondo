@@ -14,8 +14,10 @@ const blocks = [
   [-100, 70, 1800, 130],
   [-100, 45, 1250, 110],
   [-750, 45, 1250, 110],
-  [-750, 85, 1850, 135],
-  [-1450, 115, 1850, 150],
+  // A short climbing transfer links the market's right/left pair: the
+  // first exit must prepare the next corner, not a separate city block.
+  [-750, 65, 1645, 135],
+  [-1450, 115, 1645, 150],
   [-1450, 115, 850, 140],
   [-800, 75, 850, 110],
   [-800, 45, 350, 110],

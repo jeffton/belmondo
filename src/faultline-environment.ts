@@ -12,6 +12,7 @@ import {
   faultlineFloodedCut,
 } from "./faultline-landform.ts";
 import { buildFaultlineMachinery } from "./faultline-machinery.ts";
+import { buildFaultlineProcessing } from "./faultline-processing.ts";
 
 /** Authored working quarry: road-scale infrastructure and a pit-scale landmark. */
 export function buildFaultlineEnvironment(
@@ -182,8 +183,6 @@ export function buildFaultlineEnvironment(
   district(0.165, -1, "HIGHLAND SEED BANK", "reclaim");
   district(0.285, 1, "WEST AGGREGATE", "crushing");
   district(0.38, -1, "TRANSFER STORES", "depot");
-  district(0.57, 1, "EAST GRADING WORKS", "crushing");
-  district(0.675, -1, "LOWER EXTRACTION", "depot");
   district(0.77, 1, "DRAINAGE CONTROL", "control");
   district(0.87, 1, "RECLAMATION NURSERY", "reclaim");
   district(0.94, -1, "RIDGE MAINTENANCE", "depot");
@@ -533,6 +532,14 @@ export function buildFaultlineEnvironment(
     mesh.computeBoundingSphere();
     root.add(mesh);
   }
+  buildFaultlineProcessing(root, track, textures, {
+    group: root,
+    naturalMap,
+    terrain,
+    heightAt: terrain.heightAt,
+    bridgeAt: terrain.bridgeAt,
+    supportClearAt: terrain.supportClearAt,
+  });
   root.userData.districts = districts;
   root.userData.pit = FAULTLINE_PIT;
   let drawBatches = 0,

@@ -3,6 +3,7 @@ import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { getTrackAdvertisingLayout } from "./advertising.ts";
+import { vesperInterchangeReservations } from "./vesper-interchange.ts";
 
 export interface VesperVolume {
   center: THREE.Vector3;
@@ -122,10 +123,10 @@ export function buildVesperDistricts(
   const volumes: VesperVolume[] = [];
   const solids: VesperVolume[] = [];
   const inhabitants = [];
-  const reservations = vesperAdvertisingReservations(
-    track,
-    environment.heightAt,
-  );
+  const reservations = [
+    ...vesperAdvertisingReservations(track, environment.heightAt),
+    ...vesperInterchangeReservations(track, environment.heightAt),
+  ];
   const activity = planVesperTraffic(
     track,
     environment,

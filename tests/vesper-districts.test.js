@@ -90,7 +90,7 @@ test("Vesper commuter movement stays inside checked lanes and all tram piers cle
   const city = buildMetropolis(
     scene,
     track,
-    { concrete: null },
+    { concrete: null, paint: null, facade: null },
     { terrain, heightAt: terrain.heightAt },
   );
   const root = scene.getObjectByName("metropolis-districts");
