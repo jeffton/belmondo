@@ -130,7 +130,11 @@ test("Monsoon's visible spillway and sluice machinery keep the real driving corr
   scene.traverse((object) => {
     if (object.isInstancedMesh) object.dispose();
     if (object.geometry) geometries.add(object.geometry);
-    if (object.material) materials.add(object.material);
+    if (object.material)
+      for (const material of Array.isArray(object.material)
+        ? object.material
+        : [object.material])
+        materials.add(material);
   });
   for (const material of materials) {
     if (material.map) maps.add(material.map);

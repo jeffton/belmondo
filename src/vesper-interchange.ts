@@ -165,6 +165,7 @@ export function buildVesperInterchange(
     const a = p[i],
       b = p[i + 1];
     const court = i >= 2 && i <= 5;
+    const recessed = court || i === 1;
     const terminalHall = i === 6;
     const body = (
       lowA: number,
@@ -189,19 +190,6 @@ export function buildVesperInterchange(
     // The court opens into a real structural bay, not a panel painted on
     // its end wall. Both levels share the same room and roof profile.
     if (terminalHall) {
-      prism(
-        "steel",
-        body(
-          a.podium,
-          b.podium,
-          a.roof - 2,
-          b.roof - 2,
-          12,
-          12,
-          a.halfWidth * 2 - 16,
-          b.halfWidth * 2 - 16,
-        ),
-      );
       prism(
         "ceramic",
         body(
@@ -247,25 +235,40 @@ export function buildVesperInterchange(
           b.podium,
           a.roof,
           b.roof,
-          court ? a.halfWidth * 2 - 10 : 12,
-          court ? b.halfWidth * 2 - 10 : 12,
+          recessed ? a.halfWidth * 2 - 10 : 12,
+          recessed ? b.halfWidth * 2 - 10 : 12,
         ),
       );
     }
+    if (i === 7)
+      prism(
+        "ceramic",
+        body(
+          a.podium,
+          b.podium,
+          a.lower.p.y + 24,
+          b.lower.p.y + 24,
+          0,
+          0,
+          a.halfWidth * 2 - 12,
+          b.halfWidth * 2 - 12,
+        ),
+      );
     if (!court) {
       prism(
         "ceramic",
         body(a.roof - 2, b.roof - 2, a.roof + 1, b.roof + 1, 0, 0),
       );
-      arch.box(
-        "ceramic",
-        new THREE.Vector3(
-          a.center.x,
-          (a.podium + a.roof) / 2,
-          a.center.z - a.halfWidth + 2,
-        ),
-        [4, a.roof - a.podium, 4],
-      );
+      if (!terminalHall)
+        arch.box(
+          "ceramic",
+          new THREE.Vector3(
+            a.center.x,
+            (a.podium + a.roof) / 2,
+            a.center.z - a.halfWidth + 2,
+          ),
+          [4, a.roof - a.podium, 4],
+        );
     }
     program.push({
       start: a.u,
@@ -313,11 +316,11 @@ export function buildVesperInterchange(
         b.lower.p.y - 3.5,
         a.lower.p.y - 2,
         b.lower.p.y - 2,
-        0,
-        0,
+        terminalHall ? -8 : 0,
+        terminalHall ? -8 : 0,
       ),
     );
-    if (!court && !terminalHall)
+    if (!recessed && !terminalHall)
       glazing(i % 3 === 0 ? "warm" : "glass", a, b, false);
     if (!terminalHall) glazing("glass", a, b, true);
     if (terminalHall) {
@@ -325,8 +328,8 @@ export function buildVesperInterchange(
       // is seen through its open side aperture, not an opaque window decal.
       arch.box(
         "warm",
-        new THREE.Vector3(b.center.x + 0.3, b.lower.p.y + 12, b.center.z + 6),
-        [0.5, 14, b.halfWidth * 2 - 20],
+        new THREE.Vector3(b.center.x + 0.3, b.lower.p.y + 12, b.lower.p.z + 42),
+        [0.5, 14, 24],
       );
       arch.box(
         "warm",

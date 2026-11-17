@@ -25,7 +25,11 @@ function districtFixture(t, name) {
     const materials = new Set();
     scene.traverse((object) => {
       if (object.geometry) geometries.add(object.geometry);
-      if (object.material) materials.add(object.material);
+      if (object.material)
+        for (const material of Array.isArray(object.material)
+          ? object.material
+          : [object.material])
+          materials.add(material);
       if (object.isInstancedMesh) object.dispose();
     });
     geometries.forEach((geometry) => geometry.dispose());
