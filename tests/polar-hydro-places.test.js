@@ -100,12 +100,13 @@ test("WHITEOUT observatory is grounded as one basin installation and clears the 
   // merely a centrepoint tagged as an observatory that the driver never sees.
   for (const u of [0.3, 0.34, 0.38, 0.42, 0.445]) {
     const f = track.frame(u * track.length);
-    const p = f.p.clone().addScaledVector(f.right, 67);
+    const p = f.p.clone().addScaledVector(f.right, 44);
     ray.set(p.clone().setY(p.y + 40), new THREE.Vector3(0, -1, 0));
     ray.far = 35;
+    const hit = ray.intersectObjects(meshes)[0];
     assert(
-      ray.intersectObjects(meshes).length > 0,
-      `connected gallery surface at ${u}`,
+      hit && hit.point.y > f.p.y + 30,
+      `exterior optical vault, not its flat substrate, is rendered at ${u}`,
     );
   }
   dispose(root, terrain);
@@ -136,6 +137,31 @@ test("MONSOON visible low water race, retained depth and gate carriage are actua
     ray.far = 2;
     assert(ray.intersectObject(water).length > 0);
   }
+  // The full visible pool, including both shoulders, occupies real excavated
+  // terrain; centreline-only samples cannot detect shoreline ridges through it.
+  for (let u = 0.27; u < 0.545; u += 0.003) {
+    const f = track.frame(u * track.length);
+    const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
+    for (const offset of [5, 20, 40, 60, 80, 109]) {
+      const p = f.p
+        .clone()
+        .addScaledVector(right, f.width + offset)
+        .setY(f.p.y - 7);
+      assert(
+        terrain.heightAt(p.x, p.z) < p.y - 1,
+        "complete low race is excavated below its waterline",
+      );
+      ray.set(
+        p.clone().add(new THREE.Vector3(0, 1, 0)),
+        new THREE.Vector3(0, -1, 0),
+      );
+      ray.far = 2;
+      assert(
+        ray.intersectObject(water).length > 0,
+        "full-width water is actual shared strip geometry",
+      );
+    }
+  }
   for (const u of root.userData.gateStations) {
     const f = track.frame(u * track.length);
     for (const x of [-f.width, 0, f.width]) {
@@ -151,13 +177,42 @@ test("MONSOON visible low water race, retained depth and gate carriage are actua
       );
     }
   }
-  // Overflow faces carry the same 42m reservoir head down to the 16m race.
+  const groundMaterial = new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide,
+  });
+  const groundMeshes = terrain.geometries.map(
+    (g) => new THREE.Mesh(g, groundMaterial),
+  );
+  groundMeshes.forEach((m) => m.updateMatrixWorld());
+  for (const u of [0.29, 0.414, 0.535]) {
+    const f = track.frame(u * track.length);
+    const p = f.p
+      .clone()
+      .addScaledVector(
+        new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize(),
+        f.width + 70,
+      );
+    const from = p.clone().setY(80),
+      to = p.clone().setY(-80);
+    ray.set(from, new THREE.Vector3(0, -1, 0));
+    ray.far = 160;
+    const rendered = ray.intersectObjects(groundMeshes)[0];
+    const collision = terrain.sweepSurface(from, to);
+    assert(rendered && collision);
+    assert(Math.abs(rendered.point.y - terrain.heightAt(p.x, p.z)) < 0.001);
+    assert(
+      Math.abs(rendered.point.y - collision.point.y) < 0.001,
+      "excavated visual ground and physical terrain are the same surface",
+    );
+  }
+  groundMaterial.dispose();
+  // Overflow faces expose the 42m reservoir head above the excavated 3m race.
   for (const u of [0.342, 0.414, 0.491]) {
     const f = track.frame(u * track.length);
     const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
     const from = f.p
       .clone()
-      .addScaledVector(right, f.width + 11)
+      .addScaledVector(right, f.width + 109)
       .setY(30);
     ray.set(from, right);
     ray.far = 4;

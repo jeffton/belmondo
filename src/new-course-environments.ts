@@ -441,7 +441,8 @@ export function buildNewCourseDistricts(
     if (
       (track.config.name === "WHITEOUT" &&
         ["observatory", "survey"].includes(d.kind)) ||
-      (track.config.name === "MONSOON" && d.kind === "pump-island")
+      (track.config.name === "MONSOON" &&
+        ["pump-island", "pumps"].includes(d.kind))
     )
       continue;
     const widths: Record<string, number> = {

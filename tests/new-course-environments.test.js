@@ -99,7 +99,10 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
     const env = buildEnvironment(scene, track, textures);
     buildCity(scene, track, textures, env);
     const root = scene.getObjectByName(`${track.config.biome}-districts`);
-    assert(root && root.userData.footprints.length >= 6);
+    assert(
+      root && root.userData.footprints.some((f) => f.foundation),
+      "purposeful grounded districts remain alongside the principal installation",
+    );
     const ground = scene.getObjectByName("terrain-surface");
     assert(
       ground.children.every((mesh) => mesh.material.map === env.naturalMap),
@@ -324,11 +327,12 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           -f.tangent.x,
         ).normalize();
         for (const side of data.reservoirSides)
-          for (const wallOffset of [14, 98]) {
+          for (const wallOffset of data.wallOffsets) {
             const wall = f.p
               .clone()
               .addScaledVector(right, side * (f.width + wallOffset));
-            const direction = side * (wallOffset === 14 ? 1 : -1);
+            const direction =
+              side * (wallOffset === data.wallOffsets[0] ? 1 : -1);
             const from = wall.clone().addScaledVector(right, -direction * 2);
             from.y = env.heightAt(wall.x, wall.z) + 0.5;
             ray.set(from, right.clone().multiplyScalar(direction));
@@ -352,8 +356,8 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
           "race-side water never hides under terrain",
         );
         assert(
-          point.y < road + 7,
-          "low race remains visible above its road-side parapet",
+          point.y < road - 6,
+          "excavated race is below the road, exposing the retained head difference",
         );
         ray.set(
           point.clone().add(new THREE.Vector3(0, 1, 0)),

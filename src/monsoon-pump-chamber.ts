@@ -32,6 +32,8 @@ export function buildMonsoonPumpChamber(
       const p = a.p.clone().lerp(b.p, 0.5);
       const d = b.p.clone().sub(a.p);
       return {
+        a,
+        b,
         p,
         yaw: Math.atan2(d.x, d.z),
         length: Math.hypot(d.x, d.z) + 0.6,
@@ -41,19 +43,32 @@ export function buildMonsoonPumpChamber(
   }
   // The existing high retained reservoir is joined to a lower, visible race.
   // This occupies the already excavated shoulder, not uncut green upland.
+  const waterVertices: number[] = [];
   for (const s of segment(0.265, 0.55, 10)) {
     const right = new THREE.Vector3(Math.cos(s.yaw), 0, -Math.sin(s.yaw));
     const local = (offset: number, y: number) =>
       s.p.clone().addScaledVector(right, offset).setY(y);
-    const water = s.p.y + 6;
-    const channel = local(s.width + 8, water);
-    site.box("water", channel, [8, 0.6, s.length], s.yaw);
+    const water = s.p.y - 7;
+    const channel = local(s.width + 57, water);
+    const edge = (f: typeof s.a, offset: number) =>
+      f.p
+        .clone()
+        .addScaledVector(
+          new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize(),
+          f.width + offset,
+        )
+        .setY(f.p.y - 7);
+    const a = edge(s.a, 4),
+      b = edge(s.b, 4),
+      c = edge(s.b, 110),
+      d = edge(s.a, 110);
+    for (const p of [a, b, c, a, c, d]) waterVertices.push(...p.toArray());
     waters.push({
       point: channel,
       bottom: environment.heightAt(channel.x, channel.z),
       road: s.p.y,
     });
-    for (const offset of [s.width + 3, s.width + 13]) {
+    for (const offset of [s.width + 3, s.width + 111]) {
       const p = local(offset, 0);
       const foot = architecturalFooting(environment, p, 2, s.length, s.yaw);
       site.box(
@@ -65,6 +80,38 @@ export function buildMonsoonPumpChamber(
       site.box("cap", p.clone().setY(water + 1.3), [2.4, 0.6, s.length], s.yaw);
     }
   }
+  const waterGeometry = new THREE.BufferGeometry();
+  waterGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(waterVertices, 3),
+  );
+  const waterUV: number[] = [];
+  for (let i = 0; i < waterVertices.length; i += 3)
+    waterUV.push(waterVertices[i] / 32, waterVertices[i + 2] / 32);
+  waterGeometry.setAttribute(
+    "uv",
+    new THREE.Float32BufferAttribute(waterUV, 2),
+  );
+  waterGeometry.setIndex(
+    Array.from({ length: waterVertices.length / 3 }, (_, i) => i),
+  );
+  waterGeometry.computeVertexNormals();
+  site.add("water", waterGeometry, new THREE.Matrix4());
+  for (const u of [0.265, 0.55]) {
+    const f = track.frame(u * track.length);
+    const yaw = Math.atan2(f.tangent.x, f.tangent.z);
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const p = f.p.clone().addScaledVector(right, f.width + 57);
+    const foot = architecturalFooting(environment, p, 108, 4, yaw);
+    const top = f.p.y - 6;
+    site.box(
+      "concrete",
+      p.clone().setY((foot.bottom + top) / 2),
+      [108, top - foot.bottom, 4],
+      yaw,
+    );
+    site.box("cap", p.clone().setY(top + 0.3), [108, 0.6, 4], yaw);
+  }
   // Controlled overflow faces expose the head difference from the raceway.
   // The water runs down the retained wall into the low race, with concrete
   // cheeks tying it to the reservoir rather than floating coloured panels.
@@ -73,11 +120,11 @@ export function buildMonsoonPumpChamber(
     const yaw = Math.atan2(f.tangent.x, f.tangent.z);
     const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
     const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-    const p = f.p.clone().addScaledVector(right, f.width + 13.7);
+    const p = f.p.clone().addScaledVector(right, f.width + 111.7);
     site.box(
       "water",
-      p.clone().setY((42 + f.p.y + 6) / 2),
-      [0.5, 42 - f.p.y - 6, 24],
+      p.clone().setY((42 + f.p.y - 7) / 2),
+      [0.5, 42 - f.p.y + 7, 24],
       yaw,
     );
     for (const side of [-1, 1])
@@ -86,8 +133,8 @@ export function buildMonsoonPumpChamber(
         p
           .clone()
           .addScaledVector(forward, side * 13)
-          .setY((44 + f.p.y + 5) / 2),
-        [3, 44 - f.p.y - 5, 2],
+          .setY((44 + f.p.y - 8) / 2),
+        [3, 44 - f.p.y + 8, 2],
         yaw,
       );
     site.box("gate", p.clone().setY(43), [3, 2, 28], yaw);
@@ -116,8 +163,8 @@ export function buildMonsoonPumpChamber(
     const f = track.frame(u * track.length);
     const yaw = Math.atan2(f.tangent.x, f.tangent.z);
     const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-    for (const side of [-1, 1]) {
-      const p = f.p.clone().addScaledVector(right, side * (f.width + 19));
+    for (const offset of [-(f.width + 19), f.width + 121]) {
+      const p = f.p.clone().addScaledVector(right, offset);
       const foot = architecturalFooting(environment, p, 12, 22, yaw);
       const top = f.p.y + 64;
       site.box(
@@ -130,14 +177,20 @@ export function buildMonsoonPumpChamber(
     }
     site.box(
       "machinery",
-      f.p.clone().setY(f.p.y + 52),
-      [2 * (f.width + 25), 10, 17],
+      f.p
+        .clone()
+        .addScaledVector(right, 51)
+        .setY(f.p.y + 52),
+      [2 * (f.width + 76), 10, 17],
       yaw,
     );
     site.box(
       "cap",
-      f.p.clone().setY(f.p.y + 58),
-      [2 * (f.width + 27), 2, 20],
+      f.p
+        .clone()
+        .addScaledVector(right, 51)
+        .setY(f.p.y + 58),
+      [2 * (f.width + 78), 2, 20],
       yaw,
     );
   }

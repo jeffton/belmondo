@@ -62,22 +62,22 @@ export function buildHydraulicLock(
           .addScaledVector(right, side * offset)
           .setY(y);
       const point = (offset: number, y: number) => at(f.width + offset, y);
-      const inner = point(14, 0),
-        outer = point(98, 0);
+      const inner = point(112, 0),
+        outer = point(198, 0);
       inner.y = environment.heightAt(inner.x, inner.z) - 1;
       outer.y = environment.heightAt(outer.x, outer.z) - 1;
       groundingContacts.push(inner, outer);
-      const waterA = point(22, waterLevel),
-        waterB = point(90, waterLevel);
+      const waterA = point(120, waterLevel),
+        waterB = point(190, waterLevel);
       waterContacts.push(waterA, waterB);
       profiles.push([
         inner,
-        point(14, wallTop),
-        point(22, wallTop),
+        point(112, wallTop),
+        point(120, wallTop),
         waterA,
         waterB,
-        point(90, wallTop),
-        point(98, wallTop),
+        point(190, wallTop),
+        point(198, wallTop),
         outer,
       ]);
     }
@@ -153,6 +153,7 @@ export function buildHydraulicLock(
     waterContacts,
     waterLevel,
     reservoirSides: [1],
+    wallOffsets: [112, 198],
     range: [start + 0.01, end - 0.01],
   };
   parent.add(mesh);
