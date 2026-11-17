@@ -3,6 +3,7 @@ import type { CircuitTextures } from "./environment.ts";
 import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
 import { buildVesperInterchange } from "./vesper-interchange.ts";
+import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
 import {
   buildVesperDistricts,
   buildVesperTraffic,
@@ -251,6 +252,8 @@ export function buildMetropolis(
       mesh.setMatrixAt(i, p.matrix);
       mesh.setColorAt(i, tint.setHex(p.color));
     });
+    if (shape === "box" && material !== "neon")
+      applyArchitectureInstanceUV(mesh, "concrete");
     mesh.computeBoundingSphere();
     root.add(mesh);
   }

@@ -4,6 +4,7 @@ import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
 import { buildMetropolis, METROPOLIS_SIGN_ATLAS } from "./metropolis-world.ts";
 import { groundedGeometryOffset } from "./terrain.ts";
+import { applyArchitectureInstanceUV } from "./architecture-uv.ts";
 import { buildRouteDistricts } from "./route-districts.ts";
 import {
   newCourseRecipe,
@@ -83,7 +84,7 @@ export function buildCity(
   const batches = new Map<
     string,
     {
-      material: THREE.Material;
+      material: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
       geometry: THREE.BufferGeometry;
       matrices: THREE.Matrix4[];
     }
@@ -453,6 +454,17 @@ export function buildCity(
       batch.matrices.length,
     );
     batch.matrices.forEach((matrix, i) => mesh.setMatrixAt(i, matrix));
+    if (batch.geometry === geometries.box && batch.material.map)
+      applyArchitectureInstanceUV(
+        mesh,
+        batch.material.map === textures.concrete
+          ? "concrete"
+          : batch.material.map === textures.facade
+            ? "facade"
+            : batch.material.map === textures.rock
+              ? "rock"
+              : "paint",
+      );
     mesh.computeBoundingSphere();
     root.add(mesh);
     count += batch.matrices.length;
