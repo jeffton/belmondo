@@ -102,6 +102,21 @@ export const METROPOLIS_COURSE: TrackConfig = {
   width: 20,
   branchWidths: [18, 18],
   points: cityRibbon(),
+  // Keep the rooftop/fork stationing intact. Only the market ribbon takes
+  // the shorter climbing transfer; rescaling the whole lap moves A into B.
+  returnRoute: {
+    start: 0.43,
+    end: 0.65,
+    radii: [110, 110, 135, 150, 140, 110],
+    knots: [
+      [-600, 45, 1250],
+      [-750, 45, 1250],
+      [-750, 65, 1645],
+      [-1450, 115, 1645],
+      [-1450, 115, 850],
+      [-1200, 100, 850],
+    ],
+  },
   split: [0.285, 0.355],
   fork: {
     offsets: [-55, 80],
