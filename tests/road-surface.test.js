@@ -22,8 +22,8 @@ const RENDER_FIXTURES = [
   [
     "MONSOON",
     "35c8fea77a3365eb6cfbec26ee550c001e32ee2cbaaabac32dc2d300330a7ebf",
-    "93efeaf9711675019d5e0f69ad504fc40e16f7fcfdf5bcd2f9acd1bfaeb1eefa",
-    "31d8526f6472af4b217632d56a80b989c95a51d8977c3ab87f831763dc16f0a6",
+    "af76753e285301d20f615cc43c0f5cd0e297e7a5f14dae8bf43206526c0675d5",
+    "9e848441fa9c431223ed3ff310309585d20cbce59f48600d2c56a87050befd3e",
   ],
   [
     "KAISEKI COAST",
