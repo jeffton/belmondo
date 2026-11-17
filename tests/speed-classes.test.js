@@ -230,10 +230,10 @@ for (const trackIndex of [
   TRACK_INDEX.SOLAR,
   TRACK_INDEX.NOCTILUCENT,
 ]) {
-  test(`all physical AI craft earn laps with real terrain on production track ${trackIndex} in every class`, () => {
-    const track = makeTrack(trackIndex),
-      terrain = createTerrain(track);
-    for (let c = 0; c < 3; c++) {
+  for (let c = 0; c < SPEED_CLASSES.length; c++) {
+    test(`all physical AI craft earn laps with real terrain on production track ${trackIndex} in class ${c}`, () => {
+      const track = makeTrack(trackIndex),
+        terrain = createTerrain(track);
       const race = setup(c, track, 0, "race");
       race.terrain = terrain;
       const visits = new Map(race.racers.slice(1).map((r) => [r.id, 0]));
@@ -294,8 +294,8 @@ for (const trackIndex of [
             Number.isFinite(r.velocity.length()),
         );
       }
-    }
-  });
+    });
+  }
 }
 
 for (const trackIndex of [
