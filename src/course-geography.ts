@@ -239,7 +239,7 @@ export function buildCourseGeography(
   for (const { range: bridge, branch, name } of bridges) {
     const material = new THREE.MeshLambertMaterial({
       color: 0x687d85,
-      map: textures.edge,
+      map: textures.paint,
       flatShading: true,
     });
     const matrices: THREE.Matrix4[] = [],

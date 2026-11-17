@@ -13,7 +13,10 @@ import {
 } from "../src/vegetation.ts";
 
 const textures = Object.fromEntries(
-  ["concrete", "road", "facade", "paint", "edge"].map((name) => [name, null]),
+  ["concrete", "road", "facade", "paint", "edge", "water"].map((name) => [
+    name,
+    null,
+  ]),
 );
 function dispose(scene) {
   const geometries = new Set(),

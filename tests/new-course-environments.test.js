@@ -91,6 +91,7 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
     const textures = {
       concrete: null,
       paint: null,
+      water: null,
       facade: null,
       road: null,
       edge: null,

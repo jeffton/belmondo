@@ -116,6 +116,8 @@ export const NEW_COURSES: TrackConfig[] = [
     width: 20,
     branchWidths: [20, 17],
     points: whiteoutPoints,
+    // The basin release feeds a climbing counterturn before the ridge decision.
+    rhythm: [{ start: 0.54, end: 0.66, offset: 40 }],
     split: [0.74, 0.87],
     fork: {
       offsets: [-100, 100],

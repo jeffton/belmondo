@@ -78,7 +78,11 @@ export function buildNewCourseDistricts(
           map:
             name === "rock" || name === "frost"
               ? environment.naturalMap
-              : textures.concrete,
+              : name === "water"
+                ? textures.water
+                : name === "dark"
+                  ? textures.paint
+                  : textures.concrete,
           flatShading: true,
         }),
       ]),
@@ -225,8 +229,9 @@ export function buildNewCourseDistricts(
       foundation: !geology,
     });
     if (kind === "weather") {
-      put("accent", 0, deck + 5, 12, 18, 10, 22);
-      put("pale", 0, deck + 10.5, 12, 22, 1, 24);
+      // Orange identifies the weather instrument and roof cap, not the cabin.
+      put("wall", 0, deck + 5, 12, 18, 10, 22);
+      put("accent", 0, deck + 10.5, 12, 22, 1, 24);
       put("dark", 0, deck + 6, 0.8, 12, 3, 0.3);
       put("pale", 0, deck + 14, -20, 1.5, 28, 1.5);
       put("accent", 0, deck + 27, -20, 9, 1, 2);
@@ -241,10 +246,11 @@ export function buildNewCourseDistricts(
             ]
           : [[8, 6, 28, 9, 30]];
       for (const [x, z, w, h, d] of labs) {
-        put("accent", x, deck + h / 2, z, w, h, d);
+        put("wall", x, deck + h / 2, z, w, h, d);
         put("pale", x, deck + h + 0.5, z, w + 2, 1, d + 2);
         put("dark", x, deck + h * 0.6, z - d / 2 - 0.1, w - 5, 3, 0.3);
-        put("pale", x + w / 2 - 2, deck + 2, z - d / 2 - 2, 3, 4, 4);
+        // A coloured entrance remains legible against the quieter lab shell.
+        put("accent", x + w / 2 - 2, deck + 2, z - d / 2 - 2, 3, 4, 4);
       }
       if (kind === "observatory") {
         put("pale", 0, deck + 17, 12, 18, 14, 18, "cylinder");

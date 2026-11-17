@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
 
 // V4's bends are authored in the control polygon. Measure the real connected
 // counterturn sectors, independently of how each course authors its deck.
@@ -66,6 +66,53 @@ for (const [index, range] of [
     }
   });
 }
+
+test("Whiteout's climbing valley links opposed turns without disturbing its signatures", () => {
+  const track = makeTrack(TRACK_INDEX.WHITEOUT);
+  const config = TRACKS[TRACK_INDEX.WHITEOUT];
+  let reference;
+  try {
+    TRACKS[TRACK_INDEX.WHITEOUT] = { ...config, rhythm: [] };
+    reference = makeTrack(TRACK_INDEX.WHITEOUT);
+  } finally {
+    TRACKS[TRACK_INDEX.WHITEOUT] = config;
+  }
+  let left = 0;
+  let right = 0;
+  let minShift = 0;
+  let maxShift = 0;
+  for (let i = 0; i <= 1000; i++) {
+    const u = i / 1000;
+    const f = track.frame(u * track.length);
+    const original = reference.frame(u * reference.length);
+    if (u < 0.54 || u > 0.66) {
+      assert(
+        f.p.distanceTo(original.p) < 1e-7,
+        "finish, basin and ridge remain fixed",
+      );
+    } else {
+      const shift = f.p.clone().sub(original.p).dot(original.right);
+      minShift = Math.min(minShift, shift);
+      maxShift = Math.max(maxShift, shift);
+      const next = track.frame((u + 0.001) * track.length);
+      const angle = Math.atan2(
+        f.tangent.z * next.tangent.x - f.tangent.x * next.tangent.z,
+        f.tangent.dot(next.tangent),
+      );
+      if (angle > 0) right += angle;
+      else left -= angle;
+      assert(next.p.y > f.p.y, "the opposed turns remain a physical climb");
+    }
+  }
+  assert(
+    left > Math.PI / 12 && right > Math.PI / 12,
+    "both directions carry a readable turn, not only an apex wiggle",
+  );
+  assert(
+    maxShift - minShift > 2 * track.config.width,
+    "opposed road displacement exceeds the full deck width",
+  );
+});
 
 test("FAULTLINE extraction shelves require substantial linked counterturns", () => {
   const track = makeTrack(TRACK_INDEX.FAULTLINE);

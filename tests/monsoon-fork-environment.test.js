@@ -27,7 +27,7 @@ function fixture() {
     scene = new THREE.Scene();
   TRACKS[TRACK_INDEX.MONSOON] = original;
   const textures = Object.fromEntries(
-    ["concrete", "road", "paint", "edge", "facade"].map((name) => [
+    ["concrete", "road", "paint", "edge", "facade", "water"].map((name) => [
       name,
       new THREE.Texture(),
     ]),

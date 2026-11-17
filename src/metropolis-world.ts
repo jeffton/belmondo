@@ -137,7 +137,9 @@ export function buildMetropolis(
       f.p.clone().setY(top - 2),
       yaw,
       [roof.width, 4, depth],
-      0x34465c,
+      // Pale cast soffits retain construction depth under the night key/fill;
+      // the joints and columns remain dark, without emissive ceiling paint.
+      0x78858f,
     );
     arcadeParts.push(roof);
     for (const [index, column] of columns.entries()) {

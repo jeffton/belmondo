@@ -62,7 +62,7 @@ test("WHITEOUT: branch-specific grounded landmarks and rewards match the two exp
   buildNewCourseDistricts(
     scene,
     track,
-    { concrete: null },
+    { concrete: null, paint: null, water: null },
     {
       terrain,
       heightAt: terrain.heightAt,

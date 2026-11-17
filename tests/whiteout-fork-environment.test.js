@@ -199,7 +199,11 @@ test("Whiteout districts integrate the scenery without requiring a generic tunne
   buildNewCourseDistricts(
     scene,
     track,
-    { concrete: new THREE.Texture() },
+    {
+      concrete: new THREE.Texture(),
+      paint: new THREE.Texture(),
+      water: new THREE.Texture(),
+    },
     environment,
   );
   assert(scene.getObjectByName("whiteout-snowbridge-icecut"));

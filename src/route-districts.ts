@@ -423,7 +423,16 @@ export function buildRouteDistricts(
         facade(15.5, 0.5, palette.light, 0, depth - 5, course === 2);
       } else if (district.style === "hangar") {
         box(0, height / 2, 0, width, height, depth, palette.wall);
-        facade(height * 0.4, height * 0.6, palette.dark, 0, depth * 0.68);
+        // One main hall anchors the Solar settlement. Secondary service
+        // buildings have smaller recessed doors, not identical giant portals.
+        const mainHall = course !== 1 || i === Math.floor(bays / 2);
+        facade(
+          height * 0.4,
+          height * (mainHall ? 0.6 : 0.34),
+          palette.dark,
+          0,
+          depth * (mainHall ? 0.68 : 0.4),
+        );
         facade(
           height - 3,
           1.8,

@@ -23,7 +23,7 @@ test("Monsoon's visible spillway and sluice machinery keep the real driving corr
   const track = makeTrack(TRACK_INDEX.MONSOON),
     scene = new THREE.Scene();
   const textures = Object.fromEntries(
-    ["concrete", "road", "paint", "edge", "facade"].map((name) => [
+    ["concrete", "road", "paint", "edge", "facade", "water"].map((name) => [
       name,
       new THREE.Texture(),
     ]),

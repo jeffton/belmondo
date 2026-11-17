@@ -55,7 +55,7 @@ test("Night mountain mesh has grounded feet and a clear genuine lower void benea
   const root = buildCourseGeography(
     scene,
     track,
-    { edge: new THREE.Texture() },
+    { edge: new THREE.Texture(), paint: new THREE.Texture() },
     terrain,
   );
   root.updateMatrixWorld(true);

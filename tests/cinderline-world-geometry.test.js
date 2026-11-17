@@ -279,6 +279,7 @@ test("CINDERLINE emitted world triangles clear the banked hull and elevated flig
     const textures = {
       concrete: null,
       paint: null,
+      water: null,
       facade: null,
       road: null,
       edge: null,

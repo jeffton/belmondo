@@ -33,7 +33,7 @@ Difficulty progression:
 
 Grandstands and road-integrated checkerboard line each complete home straight. Both crossing levels use their actual road surfaces; proximity cannot award progress on another part of the circuit.
 
-Whiteout, Coast and Cinderline's fork choices carry equal weapon rewards and compete through different driving lines rather than boost compensation. Existing records and progression remain stored; historical times use different fork geometry. See [split-route design and verification](docs/split-route-design.md).
+Whiteout, Coast and Cinderline's fork choices carry equal weapon rewards and compete through different driving lines rather than boost compensation. Existing records and progression remain stored; historical times use different fork geometry. See [split-route design and verification](docs/split-route-design.md) and the [course design guide](docs/course-design.md).
 
 ## Sound
 

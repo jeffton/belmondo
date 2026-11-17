@@ -5,7 +5,10 @@ import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { buildEnvironment } from "../src/environment.ts";
 
 const textures = Object.fromEntries(
-  ["concrete", "road", "paint", "facade", "edge"].map((name) => [name, null]),
+  ["concrete", "road", "paint", "facade", "edge", "water"].map((name) => [
+    name,
+    null,
+  ]),
 );
 
 for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {

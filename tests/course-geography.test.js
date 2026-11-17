@@ -9,7 +9,11 @@ function geography(index) {
   const track = makeTrack(index),
     terrain = createTerrain(track),
     scene = new THREE.Scene();
-  const textures = { rock: new THREE.Texture(), edge: new THREE.Texture() };
+  const textures = {
+    rock: new THREE.Texture(),
+    edge: new THREE.Texture(),
+    paint: new THREE.Texture(),
+  };
   const root = buildCourseGeography(scene, track, textures, {
     heightAt: terrain.heightAt,
     supportClearAt: terrain.supportClearAt,
@@ -94,6 +98,23 @@ test("Night's overpass leaves the lower route open and rejects columns through i
     }
   }
   const [start, end] = track.config.sections.upperBridge;
+  // Bridge structure must stay outside the complete upper driving
+  // corridor, not just leave its distant lower crossing clear.
+  ray.far = 30;
+  for (let i = 0; i <= 100; i++) {
+    const f = track.frame((start + ((end - start) * i) / 100) * track.length);
+    for (const x of [-f.width, 0, f.width]) {
+      ray.set(
+        f.p.clone().addScaledVector(f.right, x).addScaledVector(f.up, 0.2),
+        f.up,
+      );
+      assert.equal(
+        ray.intersectObject(truss).length,
+        0,
+        "bridge structure leaves the upper deck and its airborne corridor open",
+      );
+    }
+  }
   let supports = 0;
   for (let i = 0; i <= 50; i++)
     if (terrain.supportClearAt(start + ((end - start) * i) / 50)) supports++;

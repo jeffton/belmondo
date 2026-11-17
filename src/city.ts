@@ -41,6 +41,8 @@ export function buildCity(
     dark: surface(0x263b49, textures.paint),
     metal: surface(desert ? 0xcf623f : 0x358b9b, textures.paint),
     glass: surface(harbor ? 0x315b9a : 0x228eaa, textures.facade),
+    // Collector plates are quiet blue-black machinery, not occupied windows.
+    solar: surface(0x1d3449, textures.paint),
     cream: surface(0xf1dfbe, textures.paint),
     rock: surface(desert ? 0xcb805c : 0x4c8978, textures.rock),
     green: surface(0x32845a),
@@ -298,7 +300,7 @@ export function buildCity(
           const x = -29 + j * 14,
             z = -24 + k * 16;
           support(x, z, deck + 7, 1);
-          put("glass", x, deck + 8, z, 12, 1, 13, "box", -0.3);
+          put("solar", x, deck + 8, z, 12, 1, 13, "box", -0.3);
           put("metal", x, deck + 8.8, z, 0.3, 0.4, 13, "box", -0.3);
         }
       put("cream", 22, deck + 24, 0, 12, 46, 12);
@@ -387,7 +389,15 @@ export function buildCity(
         const x = -24 + j * 24;
         put("glass", x, deck + h / 2, j % 2 ? 15 : -10, 18, h, 28);
         for (let y = 5; y < h; y += 11)
-          put("cream", x, deck + y, j % 2 ? 15 : -10, 20, 1.2, 30);
+          put(
+            y === 5 || y > h - 11 ? "cream" : "dark",
+            x,
+            deck + y,
+            j % 2 ? 15 : -10,
+            20,
+            1.2,
+            30,
+          );
         put("metal", x, deck + h + 5, j % 2 ? 15 : -10, 7, 10, 10);
       }
     }

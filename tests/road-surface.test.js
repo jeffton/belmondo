@@ -9,14 +9,15 @@ import { buildHull } from "../src/craft.ts";
 import { getRoadSurface, roadStations } from "../src/road-surface.ts";
 
 // Renderer/index Float32 hashes include shared authored fork cross-sections.
-// Fourth hashes freeze the original 3f68cac triangles outside the four station
-// intervals touching fork endpoints; every one of those vertices stays exact.
+// Fourth hashes freeze triangles outside the four station intervals touching
+// fork endpoints. WHITEOUT includes its authored valley; a separate baseline
+// hash below also freezes every triangle outside that local working envelope.
 const RENDER_FIXTURES = [
   [
     "WHITEOUT",
     "4c14f4134a87e38c87ba9f309507691d2fdea307fcec4ae1524896ba88592f76",
-    "23af13d42d1196d65344766a731bc6583e033e6627270d97d146e826295c98c4",
-    "c0004ec7b1c38c6841c1faddf579000332630c6f0a8532b18eeee4f112fe0ec4",
+    "6952d61c68e0d766d3932f55a37c5897e066585d135d3363c456380788edefb8",
+    "43acbddcbfbc47bbd65769654fd9673612201b8342f5f97d5fba37c798539697",
   ],
   [
     "MONSOON",
@@ -147,6 +148,31 @@ for (const [
     assert.equal(getRoadSurface(track), surface);
   });
 }
+
+test("WHITEOUT preserves baseline road triangles outside the climbing valley and its bank transitions", () => {
+  const track = tracks[0];
+  // Track uses a 45-station-unit bank kernel, six neighbouring tangents and
+  // local tangent/interpolation samples. Include their finite reach, not an
+  // arbitrary whole-sector exemption. The expected hash is from f6f2a7d.
+  const frameStep = track.length / Math.ceil(track.length / 3);
+  const reach = 45 + 9 * frameStep;
+  const outside = triangles(getRoadSurface(track)).filter(
+    (face) =>
+      Math.max(face.sa, face.sb, face.sc) < 0.54 * track.length - reach ||
+      Math.min(face.sa, face.sb, face.sc) > 0.66 * track.length + reach,
+  );
+  assert.equal(outside.length, 2988);
+  assert.equal(
+    digest(
+      outside
+        .map((t) =>
+          [...t.a.toArray(), ...t.b.toArray(), ...t.c.toArray()].join(","),
+        )
+        .sort(),
+    ),
+    "ddfe51f9f5fbd63e90359d376285511062a278d1d2e6ad57ab041fa888dd7956",
+  );
+});
 
 const pointHull = { faces: [], radius: 1.1 };
 const pointVertices = () => [new THREE.Vector3(0, -1.1, 0)];

@@ -309,7 +309,18 @@ export function buildVesperDistricts(
             "neon",
           );
           occupied(Math.min(roof - 9, f.p.y + 5), depth * 0.65);
-          part(face, roof - 2, 0, 1, 2.8, depth * 0.5, light, "neon");
+          // The principal terminal carries the cyan sign; neighbouring bays
+          // keep shorter, subdued windows rather than a continuous light ribbon.
+          part(
+            face,
+            roof - 2,
+            0,
+            1,
+            2.8,
+            depth * (variant % 3 === 0 ? 0.5 : 0.32),
+            variant % 3 === 0 ? light : 0x567f87,
+            "neon",
+          );
           // Ground-rooted loading buttresses give the roof deck a purpose.
           for (const z of [-0.36, 0.36])
             mass(
