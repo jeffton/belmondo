@@ -19,7 +19,8 @@ export function offsetAlongDeck(track: Track, station: number, metres: number) {
 export function getJumpMarkingLayout(track: Track) {
   if (track.config.jump === null) return [];
   const launch = track.config.jump * track.length - 0.000001;
-  const landing = (track.config.jump + track.config.gapLength!) * track.length;
+  const landing =
+    (track.config.jump + track.config.gapLength!) * track.length + 0.000001;
   const patches: {
     kind: string;
     distance: number;
@@ -49,37 +50,14 @@ export function getJumpMarkingLayout(track: Track) {
       left,
       right,
       color,
-      start: offsetAlongDeck(track, station, -length / 2),
-      end: offsetAlongDeck(track, station, length / 2),
+      start: offsetAlongDeck(track, anchor, distance - length / 2),
+      end: offsetAlongDeck(track, anchor, distance + length / 2),
     });
   }
-  // The connected launch apron leads to the physical lip, not a sequence of
-  // floating countdown stamps. No arrows, chips or thin trim lines.
-  for (const side of [-1, 1])
-    patch(
-      "approach",
-      launch,
-      -80,
-      side < 0 ? -0.9 : 0.6,
-      side < 0 ? -0.6 : 0.9,
-      96,
-      0xe84228,
-    );
-  patch("approach", launch, -22, -0.9, 0.9, 20, 0xe84228);
-  patch("approach", launch, -7, -0.9, 0.9, 10, 0xffedd2);
-  // Oxide-finished receiving shoulders meet the existing 1.65m service edge.
-  // They are a material change at the lip, not a stripe across the racing deck.
-  const outer = 1 - 1.65 / track.frame(landing).width;
-  for (const side of [-1, 1])
-    patch(
-      "landing",
-      landing,
-      16,
-      side < 0 ? -outer : outer - 0.2,
-      side < 0 ? -(outer - 0.2) : outer,
-      28,
-      0xb85d3b,
-    );
+  // Full-width red asphalt meets each physical gap edge. These short road
+  // sections share one pigment, without thresholds, shoulder trim or symbols.
+  patch("approach", launch, -32, -1, 1, 64, 0xe84228);
+  patch("landing", landing, 22, -1, 1, 44, 0xe84228);
   return patches;
 }
 
@@ -153,6 +131,6 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
       `,
     );
   };
-  material.customProgramCacheKey = () => "jump-apron-paint-v2";
+  material.customProgramCacheKey = () => "jump-red-asphalt-v3";
   return { layout, rectangles, colors, window };
 }

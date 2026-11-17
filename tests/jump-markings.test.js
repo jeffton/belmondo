@@ -46,13 +46,13 @@ for (const [index, config] of TRACKS.entries()) {
       );
       assert.equal(
         crossbars.length,
-        kind === "approach" ? 2 : 0,
-        "launch has a threshold; the receiving racing surface stays unpainted",
+        1,
+        "each gap edge has one continuous red-asphalt section",
       );
       assert.equal(
         apron.filter((patch) => patch.right < 0 || patch.left > 0).length,
-        2,
-        "paired shoulder finishes, without floating fragments or a connected landing frame",
+        0,
+        "no separate shoulders, U-frame or threshold stripes",
       );
       const ends = apron
         .flatMap((patch) => [patch.start, patch.end])
@@ -65,7 +65,18 @@ for (const [index, config] of TRACKS.entries()) {
           "the apron stays continuous along the approach/receiving deck",
         );
     }
+    assert.equal(layout.length, 2);
+    assert.equal(layout[0].color, layout[1].color);
     for (const patch of layout) {
+      assert.equal(patch.left, -1, "pigment reaches the left deck edge");
+      assert.equal(patch.right, 1, "pigment reaches the right deck edge");
+      assert(
+        Math.abs(
+          deckDistance(track, patch.start, patch.end) -
+            (patch.kind === "approach" ? 64 : 44),
+        ) < 0.04,
+        "red asphalt is a compact physical road section, not a long runway",
+      );
       assert(
         Math.abs(
           deckDistance(track, patch.anchor, patch.station) -
