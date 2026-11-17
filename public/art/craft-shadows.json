@@ -1,0 +1,80 @@
+{
+  "size": 256,
+  "projection": "orthographic along -Y; hull-local X/Z, +Z is nose",
+  "image": "left=minX, right=maxX, top=maxZ, bottom=minZ; white RGB, coverage alpha",
+  "uv": "u=(x-minX)/width; v=(z-minZ)/length with Three.js Texture.flipY=true",
+  "parts": [
+    "core",
+    "accent",
+    "mechanical",
+    "canopy"
+  ],
+  "shadows": [
+    {
+      "variant": 0,
+      "name": "STRIKER",
+      "file": "craft-shadow-0.png",
+      "hullBounds": {
+        "minX": -3.059999942779541,
+        "maxX": 3.059999942779541,
+        "minZ": -3.2899999618530273,
+        "maxZ": 3.955000162124634
+      },
+      "bounds": {
+        "minX": -3.709999942779541,
+        "maxX": 3.709999942779541,
+        "minZ": -3.9399999618530273,
+        "maxZ": 4.605000162124634
+      },
+      "width": 7.419999885559082,
+      "length": 8.545000123977662,
+      "centerX": 0,
+      "centerZ": 0.33250010013580344,
+      "triangles": 840
+    },
+    {
+      "variant": 1,
+      "name": "RAPTOR",
+      "file": "craft-shadow-1.png",
+      "hullBounds": {
+        "minX": -3.069999933242798,
+        "maxX": 3.069999933242798,
+        "minZ": -3.2899999618530273,
+        "maxZ": 3.569999933242798
+      },
+      "bounds": {
+        "minX": -3.7199999332427978,
+        "maxX": 3.7199999332427978,
+        "minZ": -3.9399999618530273,
+        "maxZ": 4.219999933242798
+      },
+      "width": 7.4399998664855955,
+      "length": 8.159999895095826,
+      "centerX": 0,
+      "centerZ": 0.13999998569488548,
+      "triangles": 820
+    },
+    {
+      "variant": 2,
+      "name": "WRAITH",
+      "file": "craft-shadow-2.png",
+      "hullBounds": {
+        "minX": -3.0950000286102295,
+        "maxX": 3.0950000286102295,
+        "minZ": -3.2899999618530273,
+        "maxZ": 4.199999809265137
+      },
+      "bounds": {
+        "minX": -3.7450000286102294,
+        "maxX": 3.7450000286102294,
+        "minZ": -3.9399999618530273,
+        "maxZ": 4.849999809265137
+      },
+      "width": 7.490000057220459,
+      "length": 8.789999771118165,
+      "centerX": 0,
+      "centerZ": 0.4549999237060549,
+      "triangles": 900
+    }
+  ]
+}
