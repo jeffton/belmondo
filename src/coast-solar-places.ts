@@ -4,6 +4,7 @@ import {
   placeStations,
   coastYardStations,
   coastSlipwayStation,
+  createCoastQuayProfile,
 } from "./coast-solar-landform.ts";
 import { buildSolarCollectorHillside } from "./solar-collector-hillside.ts";
 import { buildCoastInstituteSlipway } from "./coast-institute-slipway.ts";
@@ -19,6 +20,7 @@ export function buildCoastSolarPlaces(
 ) {
   const coast = track.config.name === "KAISEKI COAST";
   if (!coast && track.config.name !== "SOLAR ARRAY") return;
+  const quayHeight = coast ? createCoastQuayProfile(track) : null;
   const root = new THREE.Group();
   root.name = coast ? "headland-and-shipyard" : "collector-landscape";
   parent.add(root);
@@ -121,13 +123,7 @@ export function buildCoastSolarPlaces(
       }
     // A harbour quay follows the shore-to-receiving grade, never the race
     // launch hump. Its thick adjoining segments therefore meet continuously.
-    const floor = marine
-      ? THREE.MathUtils.lerp(
-          track.frame(0.785 * track.length).p.y - 8,
-          track.frame(0.895 * track.length).p.y - 8,
-          (u - 0.785) / (0.895 - 0.785),
-        )
-      : Math.max(...heights) + 0.5;
+    const floor = marine ? quayHeight!(u) : Math.max(...heights) + 0.5;
     const bottom = Math.min(...heights) - 2;
     sites.push({
       name,

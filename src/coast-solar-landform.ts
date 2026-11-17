@@ -24,6 +24,13 @@ export function coastSlipwayStation() {
   );
 }
 
+export function createCoastQuayProfile(track: Track) {
+  const start = track.frame(0.785 * track.length).p.y - 8;
+  const end = track.frame(0.895 * track.length).p.y - 8;
+  return (u: number) =>
+    THREE.MathUtils.lerp(start, end, (u - 0.785) / (0.895 - 0.785));
+}
+
 /** Bake once beside terrain samples. Apply to landHeight before grid sampling,
  * road grading, terrain meshes and collision queries are derived from that grid. */
 export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
@@ -31,6 +38,7 @@ export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
   if (!coast && track.config.name !== "SOLAR ARRAY")
     return (_x: number, _z: number, base: number) => base;
   const nearest = createNearestPointIndex(samples.map((f) => f.p));
+  const quayHeight = coast ? createCoastQuayProfile(track) : null;
   const ranges = coast
     ? [
         {
@@ -233,6 +241,16 @@ export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
         (1 - THREE.MathUtils.smoothstep(f.u, 0.89, 0.915));
       const bay = 1 - THREE.MathUtils.smoothstep(roadDistance, 160, 300);
       height = THREE.MathUtils.lerp(height, Math.min(height, -26), along * bay);
+      if (!track.gap(f.u) && shoulder < 1) {
+        // Retain the filled mole beneath continuous approach/receiving decks.
+        // The bank stays below the existing quay floor; offshore water and the
+        // original ravine remain open, rather than cutting every deck to sea.
+        const supportTop = Math.min(base, quayHeight!(f.u) - 1);
+        height = Math.max(
+          height,
+          Math.min(base, THREE.MathUtils.lerp(-26, supportTop, 1 - shoulder)),
+        );
+      }
     }
     return height;
   };

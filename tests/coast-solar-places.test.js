@@ -82,7 +82,7 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
     }
     const height = createCoastSolarLandform(track, samples);
     for (const f of samples) {
-      if (index === TRACK_INDEX.COAST && f.u > 0.78 && f.u < 0.915) continue;
+      if (index === TRACK_INDEX.COAST && track.gap(f.u)) continue;
       for (const side of [-1, 0, 1]) {
         const p = f.p.clone().addScaledVector(f.right, side * f.width);
         assert.equal(
@@ -108,11 +108,34 @@ for (const index of [TRACK_INDEX.COAST, TRACK_INDEX.SOLAR]) {
         "collector hillside must climb above the road into the forward view",
       );
     if (index === TRACK_INDEX.COAST) {
-      const bay = track.frame(0.85 * track.length);
+      const bay = track.frame(
+        (track.config.jump + track.config.gapLength / 2) * track.length,
+      );
       assert(
         height(bay.p.x, bay.p.z, 100) < -20,
         "jump must cross real sea inlet",
       );
+      const receiving = track.frame(0.85 * track.length);
+      const forward = new THREE.Vector3(
+        receiving.tangent.x,
+        0,
+        receiving.tangent.z,
+      ).normalize();
+      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      const offshore = receiving.p
+        .clone()
+        .addScaledVector(right, receiving.width + 120);
+      assert(
+        height(offshore.x, offshore.z, 100) < -20,
+        "receiving mole must remain surrounded by the sea inlet",
+      );
+      for (const p of [offshore, receiving.p]) {
+        assert.equal(
+          height(p.x, p.z, -40),
+          -40,
+          "mole restoration must not raise an already deeper pre-bay surface",
+        );
+      }
     }
   });
 }

@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
 import { createTerrain, groundedGeometryOffset } from "../src/terrain.ts";
-import { buildCity } from "../src/city.ts";
 
 for (const [index, config] of TRACKS.entries()) {
   test(`${config.name}: land meets the course without entering either real route or its jump`, () => {
@@ -137,6 +136,38 @@ for (const [index, config] of TRACKS.entries()) {
   });
 }
 
+test("Coast's filled receiving mole supports the deck while the real gap and surrounding inlet stay open", () => {
+  const track = makeTrack(TRACK_INDEX.COAST);
+  const terrain = createTerrain(track);
+  for (const u of [0.79, 0.8, 0.85, 0.88, 0.9]) {
+    const f = track.frame(u * track.length);
+    const clearance = f.p.y - terrain.heightAt(f.p.x, f.p.z);
+    assert(
+      clearance > 3.5 && clearance < 12,
+      `continuous mole lost land support at ${u}: ${clearance}`,
+    );
+  }
+  // The middle of the bay is fully excavated; its two ends retain shore transitions.
+  for (const u of [0.85, 0.88]) {
+    const f = track.frame(u * track.length);
+    const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
+    const right = new THREE.Vector3(forward.z, 0, -forward.x);
+    const sea = f.p.clone().addScaledVector(right, f.width + 120);
+    assert(
+      terrain.heightAt(sea.x, sea.z) < -20,
+      `mole support filled the offshore inlet at ${u}`,
+    );
+  }
+  const jump = track.frame(
+    (track.config.jump + track.config.gapLength / 2) * track.length,
+  );
+  assert(
+    jump.p.y - terrain.heightAt(jump.p.x, jump.p.z) > 35,
+    "support bank must not fill the actual jump",
+  );
+  terrain.geometries.forEach((geometry) => geometry.dispose());
+});
+
 test("banked earthworks follow both actual deck edges instead of a flat centreline ceiling", () => {
   for (const bank of [-Math.PI / 18, Math.PI / 18]) {
     const tangent = new THREE.Vector3(0, 0, 1);
@@ -179,54 +210,67 @@ test("banked earthworks follow both actual deck edges instead of a flat centreli
   }
 });
 
-test("Solar's actual instanced outcrops touch final terrain and use distinct authored geometry", () => {
-  const track = makeTrack(TRACK_INDEX.SOLAR),
-    terrain = createTerrain(track),
-    scene = new THREE.Scene();
-  const textures = Object.fromEntries(
-    ["concrete", "paint", "facade"].map((key) => [key, new THREE.Texture()]),
+test("Solar's continuous rock cuttings occupy both approaches in the rendered collision terrain", () => {
+  const track = makeTrack(TRACK_INDEX.SOLAR);
+  const terrain = createTerrain(track);
+  const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+  const meshes = terrain.geometries.map(
+    (geometry) => new THREE.Mesh(geometry, material),
   );
-  buildCity(scene, track, textures, { heightAt: terrain.heightAt, terrain });
-  const variants = new Set();
-  let instances = 0;
-  scene.traverse((mesh) => {
-    if (!mesh.geometry?.name.startsWith("sandstone-outcrop")) return;
-    variants.add(mesh.geometry.name);
-    for (let i = 0; i < mesh.count; i++) {
-      const matrix = new THREE.Matrix4();
-      mesh.getMatrixAt(i, matrix);
-      const positions = mesh.geometry.attributes.position;
-      const points = Array.from({ length: positions.count }, (_, j) =>
-        new THREE.Vector3()
-          .fromBufferAttribute(positions, j)
-          .applyMatrix4(matrix),
-      );
-      const bottom = Math.min(...points.map((p) => p.y)),
-        top = Math.max(...points.map((p) => p.y));
-      const feet = points.filter(
-        (p) => p.y <= bottom + (top - bottom) * 0.2 + 0.0001,
-      );
+  meshes.forEach((mesh) => mesh.updateMatrixWorld());
+  const ray = new THREE.Raycaster();
+  const down = new THREE.Vector3(0, -1, 0);
+  // Independent world-space coverage probes: both passage regions must have
+  // broad relief, not just a surviving instance counter or isolated rock prop.
+  for (const [stations, side] of [
+    [[0.145, 0.165, 0.185], -1],
+    [[0.825, 0.845, 0.865], 1],
+  ]) {
+    for (const u of stations) {
+      const f = track.frame(u * track.length);
+      const forward = new THREE.Vector3(
+        f.tangent.x,
+        0,
+        f.tangent.z,
+      ).normalize();
+      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      for (const offset of [80, 110, 140]) {
+        const p = f.p.clone().addScaledVector(right, side * (f.width + offset));
+        const height = terrain.heightAt(p.x, p.z);
+        assert(
+          height > f.p.y + terrain.step,
+          `continuous rock cutting missing at ${u}/${offset}`,
+        );
+        ray.set(p.clone().setY(height + 100), down);
+        const hit = ray.intersectObjects(meshes)[0];
+        assert(
+          hit && Math.abs(hit.point.y - height) < 0.0001,
+          "authored rock relief must be the actual rendered heightfield",
+        );
+        const sweep = terrain.sweepSurface(
+          p.clone().setY(height + 20),
+          p.clone().setY(height - 20),
+          1.1,
+        );
+        assert(
+          sweep && Math.abs(sweep.point.y - height) < 0.0001,
+          "authored rock relief must also stop physical sweeps",
+        );
+      }
+      const crest = f.p.clone().addScaledVector(right, side * (f.width + 110));
+      const outside = f.p
+        .clone()
+        .addScaledVector(right, side * (f.width + 240));
       assert(
-        feet.every((p) => p.y <= terrain.heightAt(p.x, p.z)),
-        "rendered outcrop lower silhouette is embedded",
+        terrain.heightAt(crest.x, crest.z) -
+          terrain.heightAt(outside.x, outside.z) >
+          terrain.step,
+        "rock cutting must return to lower landscape outside its broad crest",
       );
-      assert(
-        feet.some(
-          (p) => Math.abs(p.y - terrain.heightAt(p.x, p.z) + 1.2) < 0.001,
-        ),
-        "transformed rock really meets land",
-      );
-      instances++;
     }
-  });
-  assert(instances > 0);
-  assert.equal(variants.size, 3);
-  terrain.geometries.forEach((g) => g.dispose());
-  scene.traverse((o) => {
-    o.dispose?.();
-    o.geometry?.dispose();
-    o.material?.dispose();
-  });
+  }
+  terrain.geometries.forEach((geometry) => geometry.dispose());
+  material.dispose();
 });
 
 test("rotated geological geometry embeds its actual lower silhouette into sloping terrain", () => {
