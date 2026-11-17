@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { CircuitTextures, EnvironmentSurface } from "./environment.ts";
 import { terrainFootprint } from "./terrain-footprint.ts";
+import { scaleArchitectureBoxUV } from "./architecture-uv.ts";
 
 export interface ArchitecturalMaterial {
   color: THREE.ColorRepresentation;
@@ -42,7 +43,10 @@ export function courseArchitecture(
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw),
       new THREE.Vector3(...dimensions),
     );
-    add(kind, new THREE.BoxGeometry(1, 1, 1), matrix);
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const map = palette[kind].map;
+    if (map !== null) scaleArchitectureBoxUV(geometry, dimensions, map);
+    add(kind, geometry, matrix);
   }
   function finish() {
     for (const [kind, geometries] of batches) {

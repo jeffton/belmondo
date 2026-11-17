@@ -51,6 +51,7 @@ import { createRailFaceTexture, railFaceUV } from "./rail-face.ts";
 import { buildTrackPads } from "./track-pads.ts";
 import { tunnelSegment } from "./tunnel-architecture.ts";
 import { applyJumpMarkings } from "./jump-markings.ts";
+import { createRoadFinish } from "./road-finish.ts";
 import {
   roadFrame,
   roadPoint,
@@ -568,15 +569,8 @@ export class World {
       "tunnel",
     ] as const) {
       const material =
-        flagship && kind === "road"
-          ? new THREE.MeshPhongMaterial({
-              vertexColors: true,
-              map: textures.road,
-              specular: 0x252630,
-              shininess: 7,
-              side: THREE.DoubleSide,
-              flatShading: true,
-            })
+        kind === "road"
+          ? createRoadFinish(cfg.name, textures.road)
           : kind === "light"
             ? new THREE.MeshBasicMaterial({
                 vertexColors: true,
