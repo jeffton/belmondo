@@ -52,6 +52,7 @@ import { buildTrackPads } from "./track-pads.ts";
 import { tunnelSegment } from "./tunnel-architecture.ts";
 import { applyJumpMarkings } from "./jump-markings.ts";
 import { createRoadFinish } from "./road-finish.ts";
+import { createOceanGeometry } from "./water-surfaces.ts";
 import {
   roadFrame,
   roadPoint,
@@ -295,10 +296,9 @@ export class World {
     );
     this.lighting = buildTrackLighting(this.scene, track);
     const sea = new THREE.Mesh(
-      new THREE.PlaneGeometry(12000, 12000, 1, 1),
+      createOceanGeometry(),
       mat(cfg.sea, { map: textures.water }),
     );
-    textures.water.repeat.set(250, 250);
     sea.rotation.x = -Math.PI / 2;
     sea.position.y = faultline ? -200 : -16;
     this.scene.add(sea);
