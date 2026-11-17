@@ -42,14 +42,19 @@ try {
       const threeModule = source.match(
         /from\s+["']([^"']*\/three\.js[^"']*)["']/,
       )[1];
-      const [{ World }, { Race, CRAFT, WEAPONS }, { makeTrack }, THREE, ui] =
-        await Promise.all([
-          import("/src/world.ts"),
-          import("/src/race.ts"),
-          import("/src/track.ts"),
-          import(threeModule),
-          import("/src/weapon-ui.ts"),
-        ]);
+      const [
+        { World },
+        { Race, CRAFT, WEAPONS },
+        { makeTrack, TRACK_INDEX },
+        THREE,
+        ui,
+      ] = await Promise.all([
+        import("/src/world.ts"),
+        import("/src/race.ts"),
+        import("/src/track.ts"),
+        import(threeModule),
+        import("/src/weapon-ui.ts"),
+      ]);
       const html = new DOMParser().parseFromString(
         await (await fetch("/index.html")).text(),
         "text/html",
@@ -58,6 +63,8 @@ try {
       document.body.append(hud);
       hud.hidden = false;
       document.body.classList.toggle("touch", device === "mobile");
+      document.body.dataset.inputMode =
+        device === "mobile" ? "touch" : "keyboard";
       const updateHUD = ui.createWeaponHUD(
         document.querySelector("#weapon"),
         document.querySelector("#touch-fire"),
@@ -141,6 +148,7 @@ try {
         track,
         THREE,
         WEAPONS,
+        TRACK_INDEX,
         input,
         place,
         setCourse(course) {
@@ -286,18 +294,19 @@ try {
       if (sample.alignment !== null)
         expect(sample.alignment).toBeGreaterThan(0.9999);
       expect(sample.desktop.text).toContain(weapon);
-      expect(sample.mobile.text.trim()).toBe("");
+      expect(sample.mobile.text.trim()).toBe(weapon);
       expect(sample.mobile.glyph).not.toBeNull();
       await page.screenshot({
         path: `test-artifacts/weapons-${device}-${weapon}.png`,
       });
-      await page
-        .locator("#weapon")
-        .evaluate((el) => (el.style.filter = "grayscale(1)"));
-      await page.locator("#weapon").screenshot({
+      const activeHUD = page.locator(
+        device === "mobile" ? "#touch-fire" : "#weapon",
+      );
+      await activeHUD.evaluate((el) => (el.style.filter = "grayscale(1)"));
+      await activeHUD.screenshot({
         path: `test-artifacts/weapons-hud-${device}-${weapon}-gray.png`,
       });
-      await page.locator("#weapon").evaluate((el) => (el.style.filter = ""));
+      await activeHUD.evaluate((el) => (el.style.filter = ""));
       const lifecycle = await page.evaluate(() => {
         const f = window.fixture;
         for (let i = 0; i < 1800; i++) f.race.update(1 / 120, f.input);
@@ -367,7 +376,11 @@ try {
       report.cases.push({ device, ...sample, lifecycle, stable });
     }
     const allPadCases = [];
-    for (const course of [0, 1, 2]) {
+    const courses = await page.evaluate(() => {
+      const { COAST, SOLAR, WHITEOUT } = window.fixture.TRACK_INDEX;
+      return [COAST, SOLAR, WHITEOUT];
+    });
+    for (const course of courses) {
       await page.evaluate((course) => window.fixture.setCourse(course), course);
       const padCases = await page.evaluate(() => {
         const f = window.fixture;
@@ -409,7 +422,13 @@ try {
         }
         return cases;
       });
-      expect(padCases).toHaveLength(8);
+      const authoredIds = await page.evaluate(() =>
+        window.fixture
+          .getTrackPickups(window.fixture.track)
+          .map((pad) => pad.id),
+      );
+      expect(authoredIds.length).toBeGreaterThan(0);
+      expect(padCases.map((pad) => pad.id)).toEqual(authoredIds);
       expect(
         padCases
           .filter((pad) => pad.branch !== 0)
@@ -441,7 +460,13 @@ try {
         const sceneView = await page.evaluate(
           ({ course, view }) => {
             const f = window.fixture;
-            f.place([0.18, 0.15, 0.045][course]);
+            f.place(
+              {
+                [f.TRACK_INDEX.COAST]: 0.18,
+                [f.TRACK_INDEX.SOLAR]: 0.15,
+                [f.TRACK_INDEX.WHITEOUT]: 0.045,
+              }[course],
+            );
             f.world.view = view;
             f.updateHUD("MISSILE");
             f.draw();
@@ -506,7 +531,9 @@ try {
         }
       }
     }
-    await page.evaluate(() => window.fixture.setCourse(0));
+    await page.evaluate(() =>
+      window.fixture.setCourse(window.fixture.TRACK_INDEX.COAST),
+    );
     const perf = padsOnly
       ? null
       : await page.evaluate(() => {
@@ -543,7 +570,11 @@ try {
     const coursePads = await page.evaluate(async () => {
       const f = window.fixture;
       const { buildTrackPads } = await import("/src/track-pads.ts");
-      return [0, 1, 2].map((course) => {
+      return [
+        f.TRACK_INDEX.COAST,
+        f.TRACK_INDEX.SOLAR,
+        f.TRACK_INDEX.WHITEOUT,
+      ].map((course) => {
         const scene = new f.THREE.Scene();
         buildTrackPads(scene, f.makeTrack(course), f.world.textures);
         const meshes = scene.children;

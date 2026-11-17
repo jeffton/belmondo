@@ -1346,14 +1346,31 @@ body.touch[data-input-mode="touch"] #touch-controls {
   box-shadow: inset 0 1px #e4f4f31a;
 }
 .touch-actions #touch-fire {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   height: 44px;
+  padding: 6px 8px;
   background: color-mix(in srgb, var(--weapon-color) 22%, #10242e);
   color: var(--weapon-color);
   border-color: var(--weapon-color);
   box-shadow: inset 0 0 12px
     color-mix(in srgb, var(--weapon-color) 18%, transparent);
   text-shadow: none;
+}
+.touch-actions #touch-fire .weapon-icon {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+  stroke: none;
+}
+.touch-actions #touch-fire .weapon-name {
+  font-size: 18px;
+}
+.touch-actions #touch-fire .weapon-empty {
+  font: 600 11px/1 var(--interface);
+  letter-spacing: 1.5px;
 }
 .touch-actions #touch-fire:disabled {
   background: transparent;
@@ -1802,6 +1819,9 @@ body.touch[data-input-mode="touch"] #pause {
 }
 body.touch #view {
   transform: translateX(-52px);
+}
+body.touch[data-input-mode="touch"] .weapon {
+  display: none;
 }
 body.touch .weapon {
   position: absolute;

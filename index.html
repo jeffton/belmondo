@@ -291,14 +291,10 @@
           <button
             id="touch-fire"
             type="button"
-            aria-label="Fire weapon"
+            aria-label="No weapon equipped"
             disabled
           >
-            <svg viewBox="0 0 32 32" aria-hidden="true">
-              <path
-                d="M12 6H6v6m14-6h6v6M6 20v6h6m14-6v6h-6M16 9v5m0 4v5M9 16h5m4 0h5"
-              />
-            </svg>
+            <span class="weapon-empty" aria-hidden="true">EMPTY</span>
           </button>
           <div
             id="air-pad"
@@ -311,7 +307,6 @@
     </div>
     <dialog id="pause-panel" class="overlay" aria-labelledby="pause-title">
       <div class="panel">
-        <p class="eyebrow">RACE CONTROL</p>
         <h2 id="pause-title">PAUSED</h2>
         <button
           id="resume"

@@ -173,7 +173,7 @@ try {
     await expect(page.locator("#pause-panel")).toBeHidden();
     await page.evaluate(() => {
       window.chordPad.axes = [0.6, -0.75, 0, 0];
-      window.chordPad.buttons = [0, 4, 5];
+      window.chordPad.buttons = [0, 6, 7];
     });
     await controls(page, "gamepad-left-stick-up+steer+both-brakes", {
       throttle: true,
@@ -196,17 +196,21 @@ try {
     await page.waitForFunction(() => window.nullVector.telemetry.pitch < -0.03);
     await page.evaluate(() => {
       window.chordPad.axes = [0.55, -0.7, -0.9, 0.85];
-      window.chordPad.buttons = [1];
-      window.chordPad.values = { 4: 0.4, 5: 0.8, 7: 0.65 };
+      window.chordPad.buttons = [0, 1, 4, 5];
+      window.chordPad.values = { 6: 0.4, 7: 0.8 };
     });
-    await controls(page, "gamepad-two-axis+R2+analog-airbrakes+B", {
-      throttle: true,
-      steer: -0.55,
-      pitch: 0.7,
-      airLeft: 0.4,
-      airRight: 0.8,
-      air: -0.4,
-    });
+    await controls(
+      page,
+      "gamepad-two-axis+A+analog-triggers+unbound-B-bumpers",
+      {
+        throttle: true,
+        steer: -0.55,
+        pitch: 0.7,
+        airLeft: 0.4,
+        airRight: 0.8,
+        air: -0.4,
+      },
+    );
     await page.waitForFunction(() => window.nullVector.telemetry.pitch > 0.03);
     await page.screenshot({
       path: "test-artifacts/gamepad-left-stick-chord.png",
@@ -391,12 +395,12 @@ try {
       isMobile: true,
       hasTouch: true,
     });
-    // Solar's opening pickup reaches the test before the technical fork.
-    const armed = await ready(armedContext, "race", 1);
+    // Use the unlocked opening course and its actual authored pickup line.
+    const armed = await ready(armedContext, "race", TRACK_INDEX.WHITEOUT);
     const armedCdp = await armedContext.newCDPSession(armed);
     const armedPad = await armed.locator("#steer-pad").boundingBox();
     const coastBox = await armed.locator("#air-pad").boundingBox();
-    const track = makeTrack(TRACK_INDEX.SOLAR);
+    const track = makeTrack(TRACK_INDEX.WHITEOUT);
     const authoredPickups = getTrackPickups(track);
     let touching = false,
       thrusting = false,
@@ -472,11 +476,11 @@ try {
       progress: equipped.progress,
       lateralPosition: equipped.lateralPosition,
     });
-    await expect(armed.locator("#weapon")).toBeVisible();
+    await expect(armed.locator("#weapon")).toBeHidden();
     await armed.screenshot({
       path: "test-artifacts/hud-actual-mobile-equipped.png",
     });
-    await expect(armed.locator("#weapon .weapon-name")).toHaveText(
+    await expect(armed.locator("#touch-fire .weapon-name")).toHaveText(
       equipped.weapon,
     );
     await expect(armed.locator("#touch-fire")).toBeEnabled();
@@ -554,7 +558,7 @@ try {
   expect(errors).toEqual([]);
   console.log(
     gamepadOnly
-      ? `Input chords: ${samples.length} keyboard/gamepad observations passed; simultaneous left-stick X/Y, nose response, deadzone, right-stick independence, analog airbrakes, R2 thrust and unbound B/S/Down.`
+      ? `Input chords: ${samples.length} keyboard/gamepad observations passed; simultaneous left-stick X/Y, nose response, deadzone, right-stick independence, analog trigger airbrakes, A thrust and unbound B/bumpers/S/Down.`
       : `Input chords: ${samples.length} raw-controls/body-pitch observations passed; keyboard, both airbrake pairs, standard left-stick X/Y, real CDP two-axis sticks, three-finger chords, analog coast/airbrakes, ownership, release/cancel and blur cleanup.`,
   );
 } finally {

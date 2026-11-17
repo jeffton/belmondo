@@ -61,7 +61,13 @@ export function createWeaponHUD(
     const item = weapon ? WEAPON_UI[weapon] : null;
     desktop.parentElement!.hidden = !item;
     touch.disabled = !item;
-    touch.setAttribute("aria-label", item ? `Fire ${weapon}` : "Fire weapon");
+    touch.setAttribute(
+      "aria-label",
+      item ? `Fire ${weapon}` : "No weapon equipped",
+    );
+    touch.innerHTML = item
+      ? `${icon(item.glyph)}<span class="weapon-name">${weapon}</span>`
+      : '<span class="weapon-empty" aria-hidden="true">EMPTY</span>';
     touch.style.setProperty("--weapon-color", item?.color || "#a6bec8");
     if (!item) {
       desktop.replaceChildren();

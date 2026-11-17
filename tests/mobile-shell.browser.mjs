@@ -53,7 +53,7 @@ try {
       "#lap-times",
       "#view",
       "#pause",
-      "#weapon",
+      "#touch-fire",
       ".shield-instrument",
       ".velocity",
       "#steer-pad",
@@ -95,12 +95,14 @@ try {
     ).toBe("50%");
     await expect(page.locator("#steer-pad")).toHaveText("");
     await expect(page.locator("#air-pad")).toHaveText("");
-    await expect(page.locator(".touch-actions")).toHaveText("");
+    await expect(page.locator(".touch-actions")).toHaveText("MISSILE");
+    await expect(page.locator("#weapon")).toBeHidden();
     const canvas = await page.locator("#game").boundingBox();
     expect(canvas).toEqual({ x: 0, y: 0, width, height });
     await page.screenshot({ path: `${output}/${name}.png` });
     await page.evaluate(() => window.inventory(null));
     await expect(page.locator("#touch-fire")).toBeDisabled();
+    await expect(page.locator("#touch-fire")).toHaveText("EMPTY");
     // Manifest is parsed by Chromium, rather than only checking its JSON syntax.
     const app = await cdp.send("Page.getAppManifest");
     expect(app.errors).toEqual([]);
