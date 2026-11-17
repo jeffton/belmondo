@@ -46,13 +46,13 @@ for (const [index, config] of TRACKS.entries()) {
       );
       assert.equal(
         crossbars.length,
-        kind === "approach" ? 2 : 1,
-        "one launch threshold and one plain receiving sill, not repeated fragments",
+        kind === "approach" ? 2 : 0,
+        "launch has a threshold; the receiving racing surface stays unpainted",
       );
       assert.equal(
         apron.filter((patch) => patch.right < 0 || patch.left > 0).length,
-        kind === "approach" ? 2 : 0,
-        "shoulder arms lead to launch; no painted landing frame",
+        2,
+        "paired shoulder finishes, without floating fragments or a connected landing frame",
       );
       const ends = apron
         .flatMap((patch) => [patch.start, patch.end])
@@ -138,6 +138,13 @@ for (const [index, config] of TRACKS.entries()) {
     material.onBeforeCompile(shader, null);
     assert.equal(shader.uniforms.jumpRectangles.value, ink.rectangles);
     assert.equal(shader.uniforms.jumpColors.value, ink.colors);
+    assert.equal(shader.uniforms.jumpAsphalt.value, ink.asphalt);
+    for (const [i, patch] of ink.layout.entries())
+      assert.equal(
+        ink.asphalt[i],
+        Number(patch.kind === "landing"),
+        "receiving finishes preserve road texture and lighting; launch remains unchanged",
+      );
     assert.equal(shader.uniforms.jumpWindow.value, ink.window);
     assert(shader.vertexShader.includes("vJumpDeck = uv * 32.0"));
     assert(

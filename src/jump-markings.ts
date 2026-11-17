@@ -67,9 +67,19 @@ export function getJumpMarkingLayout(track: Track) {
     );
   patch("approach", launch, -22, -0.9, 0.9, 20, 0xe84228);
   patch("approach", launch, -7, -0.9, 0.9, 10, 0xffedd2);
-  // One ivory receiving sill identifies solid deck from the air. The landing
-  // stays unframed and unpainted beyond its edge, rather than mirroring takeoff.
-  patch("landing", landing, 9, -0.9, 0.9, 14, 0xffedd2);
+  // Oxide-finished receiving shoulders meet the existing 1.65m service edge.
+  // They are a material change at the lip, not a stripe across the racing deck.
+  const outer = 1 - 1.65 / track.frame(landing).width;
+  for (const side of [-1, 1])
+    patch(
+      "landing",
+      landing,
+      16,
+      side < 0 ? -outer : outer - 0.2,
+      side < 0 ? -(outer - 0.2) : outer,
+      28,
+      new THREE.Color(3.6, 0.85, 0.45),
+    );
   return patches;
 }
 
@@ -91,6 +101,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
     );
   });
   const colors = layout.map((patch) => new THREE.Color(patch.color));
+  const asphalt = layout.map((patch) => Number(patch.kind === "landing"));
   const window = new THREE.Vector2(
     Math.min(...layout.map((patch) => patch.start)),
     Math.max(...layout.map((patch) => patch.end)),
@@ -98,6 +109,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.jumpRectangles = { value: rectangles };
     shader.uniforms.jumpColors = { value: colors };
+    shader.uniforms.jumpAsphalt = { value: asphalt };
     shader.uniforms.jumpWindow = { value: window };
     shader.vertexShader =
       `varying vec2 vJumpDeck;\n${shader.vertexShader}`.replace(
@@ -108,6 +120,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
       varying vec2 vJumpDeck;
       uniform vec4 jumpRectangles[${layout.length}];
       uniform vec3 jumpColors[${layout.length}];
+      uniform float jumpAsphalt[${layout.length}];
       uniform vec2 jumpWindow;
       float jumpCoverage(vec2 point, vec4 rectangle, vec2 footprint) {
         vec2 low = vec2(rectangle.x, rectangle.z);
@@ -126,10 +139,14 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
             vJumpDeck.y - jumpFootprint.y * 0.5 <= jumpWindow.y) {
           float jumpInk = 0.0;
           vec3 jumpColor = vec3(0.0);
+          float asphaltLight = dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722));
           for (int i = 0; i < ${layout.length}; i++) {
             float coverage = jumpCoverage(vJumpDeck, jumpRectangles[i], jumpFootprint);
             jumpInk += coverage;
-            jumpColor += jumpColors[i] * coverage;
+            // Pigment follows the lit asphalt's grain and light/shade, rather
+            // than replacing it with a blank uniformly coloured rectangle.
+            vec3 finish = mix(jumpColors[i], asphaltLight * jumpColors[i], jumpAsphalt[i]);
+            jumpColor += finish * coverage;
           }
           if (jumpInk > 0.0)
             outgoingLight = mix(outgoingLight, jumpColor / jumpInk, min(jumpInk, 1.0));
@@ -139,5 +156,5 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
     );
   };
   material.customProgramCacheKey = () => "jump-apron-coverage-v1";
-  return { layout, rectangles, colors, window };
+  return { layout, rectangles, colors, asphalt, window };
 }
