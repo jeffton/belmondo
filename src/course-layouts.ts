@@ -171,7 +171,7 @@ export const NEW_COURSES: TrackConfig[] = [
     points: monsoonPoints,
     // The recovery boost feeds one connected counterturn/outlet combination,
     // rather than a free straight followed by an unrelated isolated corner.
-    rhythm: [{ start: 0.565, end: 0.725, offset: 44 }],
+    rhythm: [{ start: 0.565, end: 0.725, offset: 20 }],
     split: [0.765, 0.945],
     fork: {
       offsets: [-75, 70],
