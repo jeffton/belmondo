@@ -70,6 +70,8 @@ import { createSky } from "./sky.ts";
 import { buildEnvironment } from "./environment.ts";
 import { buildRacingInfrastructure } from "./racing-infrastructure.ts";
 import { buildCity } from "./city.ts";
+import { buildNightHarbor } from "./night-harbor.ts";
+import { buildCinderWorks } from "./cinder-works.ts";
 import { buildVegetation } from "./vegetation.ts";
 import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.ts";
 import {
@@ -610,6 +612,10 @@ export class World {
     this.city = faultline
       ? Object.assign(new THREE.Group(), { update(_time: number) {} })
       : buildCity(this.scene, track, textures, environment);
+    if (cfg.name === "NOCTILUCENT")
+      buildNightHarbor(this.scene, track, textures, environment);
+    if (cfg.name === "CINDERLINE")
+      buildCinderWorks(this.scene, track, textures, environment);
     yield;
     if (flagship)
       buildFlagship(

@@ -8,8 +8,7 @@ import {
   NIGHT_HARBOR_QUAY,
 } from "../src/night-harbor.ts";
 import { buildCinderWorks } from "../src/cinder-works.ts";
-import { placesTerrainFixture } from "./helpers/places-terrain-fixture.js";
-const placesTerrain = await placesTerrainFixture();
+import { createTerrain } from "../src/terrain.ts";
 
 for (const [name, build] of [
   ["NOCTILUCENT", buildNightHarbor],
@@ -17,7 +16,7 @@ for (const [name, build] of [
 ]) {
   test(`${name}: whole works clear all carriageways horizontally and root in the integrated terrain`, () => {
     const track = makeTrack(TRACK_INDEX[name]);
-    const terrain = placesTerrain.createTerrain(track);
+    const terrain = createTerrain(track);
     const textures = {
       concrete: new THREE.Texture(),
       paint: new THREE.Texture(),

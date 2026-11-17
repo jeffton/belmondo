@@ -1,6 +1,17 @@
 import type { Track, TrackFrame } from "./track.ts";
 import * as THREE from "three";
 import { createNearestPointIndex } from "./nearest-point-index.ts";
+import { createFaultlineWorkingCut } from "./faultline-processing.ts";
+import {
+  createNightHarborBasin,
+  nightHarborBaseHeight,
+} from "./night-harbor.ts";
+import {
+  createCinderRidgeLandform,
+  cinderRidgeBaseHeight,
+  createCinderWorksLandform,
+  cinderWorksLandHeight,
+} from "./cinder-works.ts";
 import { getWaterfrontDistricts } from "./course-geography.ts";
 import { getFinishDistrictLayout } from "./finish-district.ts";
 import {
@@ -68,6 +79,11 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
   const floodedCut = faultline ? faultlineFloodedCut(track) : null;
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
+  const harborBasin = harbor ? createNightHarborBasin(track) : null;
+  const volcanic = recipe?.biome === "volcanic";
+  const cinderRidge = volcanic ? createCinderRidgeLandform(track) : null;
+  const cinderWorks = volcanic ? createCinderWorksLandform(track) : null;
+  const workingCut = faultline ? createFaultlineWorkingCut(track) : null;
   const slopeColored =
     faultline ||
     ["polar", "hydraulic", "volcanic"].includes(recipe?.biome ?? "");
@@ -153,8 +169,6 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
         [0.165, -1],
         [0.285, 1],
         [0.38, -1],
-        [0.57, 1],
-        [0.675, -1],
         [0.77, 1],
         [0.87, 1],
         [0.94, -1],
@@ -193,7 +207,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     const r = Math.hypot((x - centerX) / radiusX, (z - centerZ) / radiusZ);
     let base;
     if (faultline) {
-      base = faultlineLandHeight(x, z);
+      base = workingCut!(x, z, faultlineLandHeight(x, z));
     } else if (recipe) {
       base = biomeLandHeight(recipe, x, z, {
         centerX,
@@ -203,13 +217,19 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
         distance,
         roadY: f.p.y,
       });
+      if (volcanic) base = cinderRidgeBaseHeight(cinderRidge!, x, z, base);
     } else if (desert) {
       const strata = 12 * Math.sin(z * 0.006 + x * 0.002);
       const mesa = smooth(80, 170, distance) * (1 - smooth(350, 650, distance));
       base =
         40 + strata + mesa * (65 + 45 * Math.sin(x * 0.004 - z * 0.003) ** 2);
     } else if (harbor) {
-      base = -25 + (1 - smooth(0.85, 1.15, r)) * 66;
+      base = nightHarborBaseHeight(
+        harborBasin!,
+        x,
+        z,
+        -25 + (1 - smooth(0.85, 1.15, r)) * 66,
+      );
     } else {
       const island = 1 - smooth(0.74, 1.05, r);
       const headland = (1 - smooth(0.2, 0.8, r)) * 64;
@@ -301,6 +321,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
         (1 - smooth(58, 87, across)) * (1 - smooth(39, 68, along));
       y = THREE.MathUtils.lerp(y, site.y, footprint);
     }
+    if (volcanic) y = cinderWorksLandHeight(cinderWorks!, x, z, y);
     return y;
   }
   const heights = prepared?.heights ?? new Float32Array(STRIDE * STRIDE);
