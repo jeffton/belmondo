@@ -80,10 +80,32 @@ for (const [name, build] of [
               assert(p.y < NIGHT_HARBOR_SEA, "hull keel remains in the water");
             }
         }
-        assert(
-          root.userData.foundations[1].deck >= NIGHT_HARBOR_QUAY,
-          "freight apron remains above sea",
-        );
+        for (const [i, j] of [
+          [1, 2],
+          [2, 3],
+        ]) {
+          const a = root.userData.foundations[i],
+            b = root.userData.foundations[j];
+          const delta = b.center.clone().sub(a.center);
+          for (const axis of [a.right, a.forward, b.right, b.forward]) {
+            const reach =
+              (Math.abs(a.right.dot(axis)) * a.width +
+                Math.abs(a.forward.dot(axis)) * a.depth +
+                Math.abs(b.right.dot(axis)) * b.width +
+                Math.abs(b.forward.dot(axis)) * b.depth) /
+              2;
+            assert(
+              Math.abs(delta.dot(axis)) < reach,
+              "freight quay, transfer waterfront and terminal have physically overlapping foundations",
+            );
+          }
+          assert.equal(a.deck, NIGHT_HARBOR_QUAY);
+          assert.equal(
+            b.deck,
+            NIGHT_HARBOR_QUAY,
+            "connected harbor aprons share one above-sea datum",
+          );
+        }
       } else {
         const works = root.userData.foundations[0];
         assert(
@@ -112,11 +134,10 @@ for (const [name, build] of [
           );
         }
       }
-      assert(
-        root.children.every(
-          (mesh) => mesh.isInstancedMesh && !mesh.material.transparent,
-        ),
-      );
+      root.traverse((object) => {
+        if (object.isMesh)
+          assert(object.isInstancedMesh && !object.material.transparent);
+      });
     } finally {
       const geometries = new Set(terrain.geometries),
         materials = new Set();

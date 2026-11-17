@@ -55,6 +55,7 @@ export function industrialMeshes(
   root: THREE.Group,
   textures: CircuitTextures,
   palette: Record<string, number>,
+  fog = true,
 ) {
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const batches = new Map<
@@ -91,6 +92,7 @@ export function industrialMeshes(
           color: palette[material],
           map: material === "dark" ? textures.paint : textures.concrete,
           flatShading: true,
+          fog,
         }),
       });
     batches.get(key)!.matrices.push(matrix);

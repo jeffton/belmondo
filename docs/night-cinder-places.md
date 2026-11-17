@@ -2,7 +2,7 @@
 
 ## NOCTILUCENT
 
-The climbing deck, open crossing and bridge exit overlook one long harbor basin. A wet repair berth and a freight quay occupy opposite ends of the bowl; the lower crossing remains between them. The repair vessel sits in real water. The descent ends beside a freight terminal sharing the harbor's pale concrete, blue-metal machinery and muted cargo-red identification.
+The climbing deck, open crossing and bridge exit overlook one long harbor basin. A wet repair berth occupies the approach end; the lower crossing stays open. Beyond it, a freight quay physically overlaps a 1,500 m transfer waterfront and the descent's terraced freight terminal. Two rooted cargo-hoist portals give the high deck a harbor-scale silhouette. The repair vessel sits in real water. Pale concrete, blue-metal machinery and muted cargo-red identification connect the waterfront.
 
 The global sea is −16 m; quays are at least −10 m. Foundations intersect the final terrain, including its indexed triangle extrema. Neither crossing receives an overhead chord or new architecture in its horizontal racing corridor.
 
@@ -10,7 +10,7 @@ The global sea is −16 m; quays are at least −10 m. Foundations intersect the
 
 The caldera release leads onto an exposed basalt backbone. Low flanks reveal the jump and its receiving ridge against the volcanic skyline. Existing grading carries the unchanged racing deck; the gap and volcano geometry retain their own roles.
 
-A retained shelf in the lower gorge holds one connected pale geothermal works: a long turbine hall, five condenser beds and a common pipe header. The plant stays low rather than becoming an industrial wall above the exposed upper rim. The narrow compound valley, lower-gorge steering and broad banked upper route remain intact.
+A retained shelf and an open approach forecourt in the lower gorge hold one connected pale geothermal works: a long turbine hall, five condenser beds and a common pipe header. The plant stays low rather than becoming an industrial wall above the exposed upper rim. The narrow compound valley, lower-gorge steering and broad banked upper route remain intact.
 
 ## Integration
 
@@ -39,4 +39,4 @@ Remove overlapping scenery rather than layering it:
 
 ## Validation
 
-The focused checks cover complete oriented foundations and actual box/roof footprints against all routes, indexed terrain contacts, sea/berth/keel relationships and the low plant's relation to the upper rim. They do not replace actual crossing/flight runs or LOWRES chase-camera art review. No runtime updates, additional lights, transparency, shadow passes or dependencies are used.
+The focused checks cover complete oriented foundations and actual box/roof footprints against all routes, indexed terrain contacts, sea/berth/keel relationships and the low plant's relation to the upper rim. They do not replace actual crossing/flight runs or LOWRES chase-camera art review. The distant cargo hoists use quiet, haze-mixed silhouette materials; the nearby terminal retains normal scene fog. No runtime updates, additional lights, transparency, shadow passes or dependencies are used.

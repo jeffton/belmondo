@@ -11,12 +11,26 @@ export function createNightHarborBasin(track: Track) {
   const f = track.frame(0.723 * track.length);
   const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
   const right = new THREE.Vector3(forward.z, 0, -forward.x);
+  const reachFrame = track.frame(0.858 * track.length);
+  const reachForward = new THREE.Vector3(
+    reachFrame.tangent.x,
+    0,
+    reachFrame.tangent.z,
+  ).normalize();
+  const reachRight = new THREE.Vector3(reachForward.z, 0, -reachForward.x);
   return {
     center: f.p.clone().addScaledVector(right, -160),
     right,
     forward,
     width: 1200,
     depth: 2600,
+    reach: {
+      center: reachFrame.p.clone().addScaledVector(reachRight, -320),
+      right: reachRight,
+      forward: reachForward,
+      width: 340,
+      depth: 1660,
+    },
   };
 }
 
@@ -32,7 +46,16 @@ export function nightHarborBaseHeight(
   const across = Math.abs(dx * basin.right.x + dz * basin.right.z);
   const along = Math.abs(dx * basin.forward.x + dz * basin.forward.z);
   const shore = Math.max(across - basin.width / 2, along - basin.depth / 2);
-  const weight = 1 - THREE.MathUtils.smoothstep(shore, -80, 80);
+  const rdx = x - basin.reach.center.x,
+    rdz = z - basin.reach.center.z;
+  const reachEdge = Math.max(
+    Math.abs(rdx * basin.reach.right.x + rdz * basin.reach.right.z) -
+      basin.reach.width / 2,
+    Math.abs(rdx * basin.reach.forward.x + rdz * basin.reach.forward.z) -
+      basin.reach.depth / 2,
+  );
+  const weight =
+    1 - THREE.MathUtils.smoothstep(Math.min(shore, reachEdge), -80, 80);
   return THREE.MathUtils.lerp(
     base,
     Math.min(base, NIGHT_HARBOR_SEA - 9),
@@ -83,11 +106,22 @@ export function buildNightHarbor(
     industrialSite(
       track,
       environment,
-      0.902,
-      1,
-      280,
-      210,
-      240,
+      0.858,
+      -1,
+      320,
+      180,
+      1500,
+      0,
+      NIGHT_HARBOR_QUAY,
+    ),
+    industrialSite(
+      track,
+      environment,
+      0.9,
+      -1,
+      360,
+      320,
+      500,
       0,
       NIGHT_HARBOR_QUAY,
     ),
@@ -220,36 +254,205 @@ export function buildNightHarbor(
         );
         box("transfer-link", "pale", site, -28, deck + 0.8, z, 22, 5, 12);
       }
+    } else if (i === 2) {
+      box(
+        "connected-transfer-quay",
+        "quay",
+        site,
+        0,
+        bottom,
+        0,
+        w,
+        deck - bottom,
+        d,
+      );
+      box(
+        "connected-transfer-apron",
+        "dark",
+        site,
+        0,
+        deck,
+        0,
+        w - 6,
+        0.8,
+        d - 6,
+      );
+      box(
+        "continuous-freight-header",
+        "metal",
+        site,
+        0,
+        deck + 0.8,
+        0,
+        22,
+        6,
+        d - 30,
+      );
+      for (const z of [-620, -310, 0, 310, 620]) {
+        box(
+          "quayside-freight-hall",
+          "pale",
+          site,
+          45,
+          deck + 0.8,
+          z,
+          68,
+          28,
+          210,
+        );
+        box(
+          "quayside-freight-roof",
+          "dark",
+          site,
+          45,
+          deck + 28.8,
+          z,
+          72,
+          3,
+          216,
+        );
+        box(
+          "cargo-loading-bay",
+          "cargo",
+          site,
+          -44,
+          deck + 0.8,
+          z,
+          64,
+          18,
+          170,
+        );
+      }
     } else {
       box("terminal-quay", "quay", site, 0, bottom, 0, w, deck - bottom, d);
       box("terminal-apron", "dark", site, 0, deck, 0, w - 8, 0.6, d - 8);
-      // The descent aims toward a terminal, not a random tall waterfront box.
-      // Two grounded freight halls share a low transfer apron and one tower.
-      for (const x of [-52, 52]) {
-        box("terminal-hall", "pale", site, x, deck, 0, 88, 38, 178);
-        box("terminal-roof", "dark", site, x, deck + 38, 0, 94, 4, 184);
-        for (const z of [-60, -20, 20, 60]) {
-          box("loading-door", "dark", site, x, deck + 3, z, 89, 17, 16);
-          box("door-lintel", "cargo", site, x, deck + 20, z, 90, 3, 18);
+      // A terraced freight interchange terminates the high-deck sightline.
+      // Its lifting spine rises FROM the quay; every setback bears on a wider
+      // occupied mass. The bridge itself remains completely open.
+      for (const x of [-65, 65]) {
+        box("terminal-hall", "pale", site, x, deck, 0, 100, 90, 240);
+        box("terminal-hall-roof", "dark", site, x, deck + 90, 0, 106, 4, 246);
+        for (const z of [-84, 0, 84]) {
+          box("loading-door", "dark", site, x, deck + 3, z, 101, 34, 34);
+          box("door-lintel", "cargo", site, x, deck + 37, z, 102, 6, 36);
         }
       }
-      box("terminal-transfer-spine", "metal", site, 0, deck, 0, 14, 17, 210);
-      box("terminal-control", "pale", site, 0, deck, 92, 32, 76, 30);
+      box(
+        "terminal-upper-transfer",
+        "pale",
+        site,
+        0,
+        deck + 90,
+        30,
+        140,
+        125,
+        160,
+      );
+      box("terminal-upper-roof", "dark", site, 0, deck + 215, 30, 146, 5, 166);
+      for (const x of [-48, 48]) {
+        box("cargo-lift-rib", "metal", site, x, deck + 90, -52, 14, 130, 24);
+        box("transfer-intake", "dark", site, x, deck + 120, 30, 45, 22, 161);
+      }
+      box("terminal-cargo-lift", "metal", site, 0, deck, 80, 42, 350, 46);
+      box("terminal-lift-track", "dark", site, 0, deck, 55, 12, 326, 3);
+      box("terminal-control", "pale", site, 0, deck + 326, 80, 58, 24, 62);
       box(
         "terminal-control-window",
         "dark",
         site,
         0,
-        deck + 56,
-        92,
-        33,
-        12,
-        31,
+        deck + 333,
+        80,
+        59,
+        10,
+        63,
       );
-      box("terminal-control-cap", "cargo", site, 0, deck + 76, 92, 38, 5, 36);
+      box("terminal-control-cap", "cargo", site, 0, deck + 350, 80, 64, 7, 68);
     }
   }
   root.userData.foundations = sites;
   finish();
+  // Two rooted cargo-hoist portals belong to the continuous waterfront, not
+  // the bridge. Quiet haze colours preserve their distant silhouettes without
+  // turning the nearby terminal into a pasted-on unfogged tower.
+  const hoists = new THREE.Group();
+  hoists.name = "night-waterfront-hoists";
+  root.add(hoists);
+  const haze = new THREE.Color(track.config.fog);
+  const colors = Object.fromEntries(
+    Object.entries({ pier: 0x9aaeb5, frame: 0x3c7582, cap: 0x9c5372 }).map(
+      ([name, color]) => [
+        name,
+        new THREE.Color(color).lerp(haze, 0.45).getHex(),
+      ],
+    ),
+  );
+  const crane = industrialMeshes(hoists, textures, colors, false);
+  const quay = sites[2];
+  for (const [z, height] of [
+    [-500, 500],
+    [350, 560],
+  ]) {
+    for (const x of [-55, 55])
+      for (const dz of [-18, 18]) {
+        crane.box(
+          "hoist-leg",
+          "frame",
+          quay,
+          x,
+          quay.deck,
+          z + dz,
+          14,
+          height,
+          14,
+        );
+        crane.box(
+          "hoist-pier",
+          "pier",
+          quay,
+          x,
+          quay.bottom,
+          z + dz,
+          24,
+          quay.deck - quay.bottom,
+          24,
+        );
+      }
+    crane.box(
+      "hoist-crosshead",
+      "pier",
+      quay,
+      0,
+      quay.deck + height - 12,
+      z,
+      126,
+      20,
+      54,
+    );
+    crane.box(
+      "cargo-carriage",
+      "cap",
+      quay,
+      -55,
+      quay.deck + height * 0.58,
+      z,
+      28,
+      48,
+      50,
+    );
+    crane.box(
+      "hoist-machinery",
+      "pier",
+      quay,
+      0,
+      quay.deck + height + 8,
+      z,
+      38,
+      14,
+      48,
+    );
+  }
+  crane.finish();
+  root.userData.bodies.push(...hoists.userData.bodies);
   return root;
 }

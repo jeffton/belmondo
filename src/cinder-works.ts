@@ -50,12 +50,14 @@ export function createCinderWorksLandform(track: Track) {
   const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
   const right = new THREE.Vector3(forward.z, 0, -forward.x);
   return {
-    center: f.p.clone().addScaledVector(right, -170),
+    center: f.p.clone().addScaledVector(right, -125),
     right,
     forward,
-    width: 136,
-    depth: 310,
-    floor: f.p.y - 36,
+    width: 100,
+    depth: 260,
+    floor: f.p.y - 11,
+    forecourt: 125 - f.width - 20,
+    approach: 450,
   };
 }
 
@@ -68,9 +70,14 @@ export function cinderWorksLandHeight(
 ) {
   const dx = x - site.center.x,
     dz = z - site.center.z;
-  const across = Math.abs(dx * site.right.x + dz * site.right.z);
-  const along = Math.abs(dx * site.forward.x + dz * site.forward.z);
-  const edge = Math.max(across - site.width / 2, along - site.depth / 2);
+  const across = dx * site.right.x + dz * site.right.z;
+  const along = dx * site.forward.x + dz * site.forward.z;
+  const edge = Math.max(
+    -across - site.width / 2,
+    across - site.forecourt,
+    -along - site.approach,
+    along - site.depth / 2,
+  );
   // The 24 m collar contains the terrain grid's boundary triangles. The slope
   // beyond it rejoins the basalt; the finished slab never hides a hillside.
   const weight = 1 - THREE.MathUtils.smoothstep(edge, 24, 60);
@@ -93,7 +100,7 @@ export function buildCinderWorks(
     dark: 0x343b43,
     oxide: 0x9f5940,
   });
-  const site = industrialSite(track, environment, 0.818, -1, 170, 136, 310, -1);
+  const site = industrialSite(track, environment, 0.818, -1, 125, 100, 260, -1);
   const { deck, bottom, width, depth } = site;
   box(
     "basalt-retaining-plinth",
@@ -109,20 +116,20 @@ export function buildCinderWorks(
   box("works-apron", "pale", site, 0, deck, 0, width - 4, 0.8, depth - 4);
   // A long pale turbine hall, outdoor condenser banks and a common header
   // establish one installation with a readable cross-section, not copied stacks.
-  box("turbine-hall", "pale", site, -35, deck + 0.8, 0, 54, 23, 270);
-  box("turbine-roof", "dark", site, -35, deck + 23.8, 0, 58, 2, 276);
-  box("main-header", "oxide", site, 4, deck + 0.8, 0, 12, 8, 284);
-  for (const z of [-112, -56, 0, 56, 112]) {
-    box("condenser-bed", "dark", site, 39, deck + 0.8, z, 48, 3, 40);
-    box("condenser-bank", "pale", site, 39, deck + 3.8, z, 44, 15, 36);
-    box("heat-exchanger-face", "dark", site, 39, deck + 18.8, z, 37, 0.8, 27);
-    box("header-branch", "oxide", site, 23, deck + 3.8, z, 38, 6, 6);
-    box("hall-intake", "dark", site, -35, deck + 5, z, 55, 10, 21);
+  box("turbine-hall", "pale", site, -26, deck + 0.8, 0, 42, 23, 230);
+  box("turbine-roof", "dark", site, -26, deck + 23.8, 0, 46, 2, 236);
+  box("main-header", "oxide", site, 1, deck + 0.8, 0, 8, 8, 242);
+  for (const z of [-96, -48, 0, 48, 96]) {
+    box("condenser-bed", "dark", site, 28, deck + 0.8, z, 38, 3, 36);
+    box("condenser-bank", "pale", site, 28, deck + 3.8, z, 34, 15, 32);
+    box("heat-exchanger-face", "dark", site, 28, deck + 18.8, z, 29, 0.8, 25);
+    box("header-branch", "oxide", site, 15, deck + 3.8, z, 28, 6, 6);
+    box("hall-intake", "dark", site, -26, deck + 5, z, 43, 10, 21);
   }
   // One grounded collector tower marks the end of the works; its width and
   // modest elevation keep the upper rim an exposed ridge, never a factory canyon.
-  box("collector-base", "pale", site, -35, deck + 0.8, 133, 30, 38, 28);
-  box("collector-cap", "oxide", site, -35, deck + 38.8, 133, 33, 3, 31);
+  box("collector-base", "pale", site, -26, deck + 0.8, 110, 24, 38, 24);
+  box("collector-cap", "oxide", site, -26, deck + 38.8, 110, 27, 3, 27);
   root.userData.foundations = [site];
   finish();
   return root;
