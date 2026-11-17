@@ -29,6 +29,9 @@ export function roadHeight(
   );
 }
 
+export const ROAD_LOOK_BEHIND = 32;
+export const ROAD_LOOK_AHEAD = 48;
+
 // Search only the connected neighbourhood, never a spatially nearby remote turn.
 export function projectRoad(
   track: Track,
@@ -39,21 +42,35 @@ export function projectRoad(
   const step = 4;
   let best: RoadProjection | null = null;
   const [start, end] = track.config.split;
-  for (let s = anchor - 32; s < anchor + 48;) {
+  let boundaryLap = Number.NaN;
+  let boundaries: number[] = [];
+  const nextCandidates = [0];
+  const cachedFrameS = [Number.NaN, Number.NaN, Number.NaN];
+  const cachedFrames: Array<ReturnType<Track["frame"]> | undefined> = [
+    undefined,
+    undefined,
+    undefined,
+  ];
+  for (let s = anchor - ROAD_LOOK_BEHIND; s < anchor + ROAD_LOOK_AHEAD;) {
     const lap = Math.floor(s / track.length);
     const launch =
       track.config.jump === null
         ? null
         : (lap + track.config.jump) * track.length;
-    const boundaries = [
-      start,
-      end,
-      ...(track.config.jump === null ? [] : [track.config.jump]),
-    ].map((u) => (lap + u) * track.length);
-    const next = Math.min(
-      s + step,
-      ...boundaries.filter((boundary) => boundary > s + 1e-7),
-    );
+    if (lap !== boundaryLap) {
+      boundaries = [
+        start,
+        end,
+        ...(track.config.jump === null ? [] : [track.config.jump]),
+      ].map((u) => (lap + u) * track.length);
+      boundaryLap = lap;
+    }
+    nextCandidates[0] = s + step;
+    for (const boundary of boundaries) {
+      if (boundary > s + 1e-7) nextCandidates.push(boundary);
+    }
+    const next = Math.min(...nextCandidates);
+    nextCandidates.length = 1;
     // Never construct a sloping contact segment across the vertical lip into empty space.
     const sampleEnd =
       launch !== null && Math.abs(next - launch) < 1e-7 ? next - 1e-6 : next;
@@ -67,8 +84,15 @@ export function projectRoad(
     const branches =
       u > start && u < end ? (branch && !connected ? [branch] : [-1, 1]) : [0];
     for (const route of branches) {
-      const a = track.frame(s, route),
-        b = track.frame(sampleEnd, route);
+      const cacheIndex = route + 1;
+      const cachedFrame = cachedFrames[cacheIndex];
+      const a =
+        cachedFrameS[cacheIndex] === s && cachedFrame
+          ? cachedFrame
+          : track.frame(s, route);
+      const b = track.frame(sampleEnd, route);
+      cachedFrameS[cacheIndex] = sampleEnd;
+      cachedFrames[cacheIndex] = b;
       const dx = b.p.x - a.p.x,
         dz = b.p.z - a.p.z;
       const t = clamp(

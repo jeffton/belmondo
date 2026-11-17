@@ -2,22 +2,37 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race, CRAFT } from "../src/race.ts";
+import { roadBounds } from "../src/track.ts";
 import { WeaponEffects } from "../src/weapon-effects.ts";
 
+const trackLength = 14_000;
 const track = {
-  length: 100_000,
-  finishS: 0,
-  config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
+  length: trackLength,
+  finishS: 1_000,
+  config: {
+    name: "TEST PULSE TRACK",
+    split: [0.9, 0.95],
+    jump: null,
+    gapLength: 0,
+    sections: {},
+  },
+  physicalLengths: { 0: trackLength, "-1": trackLength, 1: trackLength },
+  physicalLength: trackLength,
   curvature: () => 0,
+  isTunnel: () => false,
+  bounds(s, branch = 0) {
+    return roadBounds(this, s, branch);
+  },
   gap: () => false,
   frame: (s) => ({
     p: new THREE.Vector3(0, 30, s),
     tangent: new THREE.Vector3(0, 0, 1),
     right: new THREE.Vector3(1, 0, 0),
     up: new THREE.Vector3(0, 1, 0),
+    bank: 0,
     width: 30,
     metric: 1,
-    u: s / 100_000,
+    u: s / trackLength,
   }),
 };
 

@@ -2,26 +2,37 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race, CRAFT, SPEED_CLASSES } from "../src/race.ts";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, roadBounds, TRACK_INDEX } from "../src/track.ts";
 import { createTerrain } from "../src/terrain.ts";
+import { craftSupport } from "../src/contacts.ts";
 
 const neutral = { throttle: true, steer: 0, air: 0 };
 function straight(width = 100) {
-  return {
-    length: 1_000_000,
-    finishS: 0,
-    config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
+  const length = 14_000;
+  const track = {
+    length,
+    finishS: 1_000,
+    config: { split: [0.9, 0.95], jump: null, gapLength: 0, sections: {} },
+    physicalLengths: { 0: length, "-1": length, 1: length },
+    physicalLength: length,
     curvature: () => 0,
+    isTunnel: () => false,
+    bounds(s, branch = 0) {
+      return roadBounds(this, s, branch);
+    },
     gap: () => false,
     frame: (s) => ({
       p: new THREE.Vector3(0, 30, s),
       tangent: new THREE.Vector3(0, 0, 1),
       right: new THREE.Vector3(1, 0, 0),
+      up: new THREE.Vector3(0, 1, 0),
+      bank: 0,
       width,
       metric: 1,
-      u: s / 1_000_000,
+      u: s / length,
     }),
   };
+  return track;
 }
 function setup(speedClass, track = straight(), craft = 0, mode = "trial") {
   const race = new Race(track, craft, mode, speedClass);
@@ -130,8 +141,8 @@ test("missiles catch moving targets with class-independent reach, damage and nor
     race.racers = race.racers.slice(0, 2);
     const target = race.racers[1],
       pace = race.classSpec.pace;
-    target.position.set(0, 32.2, 80);
-    target.contactS = target.s = 80;
+    target.position.set(0, 32.2, race.track.finishS + 80);
+    target.contactS = target.s = race.track.finishS + 80;
     target.velocity.set(0, 0, 140 * pace);
     target.speed = 140 * pace;
     target.aiFire = Infinity;
@@ -197,11 +208,20 @@ test("protection, weapon lifetime and off-road rescue follow class time", () => 
     near(p.protect, 4.75);
     near(p.stun, 0.35);
     near(race.mines[0].life, 13.75);
-    p.position.y += 1000;
+    p.position.y =
+      race.surface.lowestRoadY -
+      craftSupport(p, new THREE.Vector3(0, -1, 0)) -
+      0.1;
+    p.velocity.set(0, -1, 0);
     p.grounded = false;
-    matchedDrive(race, 3.1, { ...neutral, throttle: false });
-    assert(p.grounded, "off-road timeout returns the hull to its checkpoint");
+    matchedDrive(race, 0.25, { ...neutral, throttle: false });
+    assert(
+      p.grounded,
+      "crossing below every road returns the hull to its checkpoint",
+    );
     assert.equal(p.shield, 76);
+    near(p.protect, 4.5);
+    near(race.mines[0].life, 13.5);
   }
 });
 

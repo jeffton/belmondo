@@ -2,7 +2,7 @@ import { pilotInputs } from "./pilot-inputs.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, mod, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, mod, roadBounds, TRACK_INDEX } from "../src/track.ts";
 import { Race, SPEED_CLASSES } from "../src/race.ts";
 import { projectRoad } from "../src/road-projection.ts";
 import { solveContacts, hullExtent } from "../src/contacts.ts";
@@ -13,15 +13,23 @@ function circuit({ gap = false, split = false } = {}) {
   const radius = 200,
     length = Math.PI * 2 * radius;
   const config = {
+    name: "TEST CIRCUIT",
     split: split ? [0.25, 0.45] : [0.9, 0.9],
-    jump: 0.7,
+    jump: gap ? 0.7 : null,
+    gapLength: gap ? 0.02 : 0,
     sections: {},
   };
-  return {
+  const track = {
     length,
     finishS: 0,
     config,
+    physicalLengths: {},
+    physicalLength: 0,
     curvature: () => 1 / radius,
+    isTunnel: () => false,
+    bounds(s, branch = 0) {
+      return roadBounds(this, s, branch);
+    },
     gap: (u) => gap && u >= 0.7 && u < 0.72,
     frame(s, branch = 0) {
       const u = mod(s, length) / length,
@@ -40,29 +48,66 @@ function circuit({ gap = false, split = false } = {}) {
         tangent,
         right,
         up: new THREE.Vector3(0, 1, 0),
+        bank: 0,
         width: 15,
         metric: 1,
         u,
       };
     },
   };
+  track.physicalLengths = Object.fromEntries(
+    [-1, 0, 1].map((branch) => {
+      const frames = Array.from({ length: 512 }, (_, i) =>
+        track.frame((i * length) / 512, branch),
+      );
+      const distance = frames
+        .slice(1)
+        .reduce((sum, frame, i) => sum + frames[i].p.distanceTo(frame.p), 0);
+      return [
+        branch,
+        distance + frames.at(-1).p.distanceTo(track.frame(length, branch).p),
+      ];
+    }),
+  );
+  track.physicalLength = track.physicalLengths[0];
+  return track;
 }
+const straightTracks = new Map();
 function straight(width = 15) {
-  return {
-    length: 1_000_000,
-    finishS: 0,
-    config: { split: [0.9, 0.95], jump: 0.99, sections: {} },
+  if (straightTracks.has(width)) return straightTracks.get(width);
+  const length = 14_000,
+    finishS = 1_000;
+  const track = {
+    length,
+    finishS,
+    config: {
+      name: "TEST STRAIGHT",
+      split: [0.9, 0.95],
+      jump: null,
+      gapLength: 0,
+      sections: {},
+    },
+    physicalLengths: { 0: length, "-1": length, 1: length },
+    physicalLength: length,
     curvature: () => 0,
+    isTunnel: () => false,
+    bounds(s, branch = 0) {
+      return roadBounds(this, s, branch);
+    },
     gap: () => false,
     frame: (s) => ({
       p: new THREE.Vector3(0, 30, s),
       tangent: new THREE.Vector3(0, 0, 1),
       right: new THREE.Vector3(1, 0, 0),
+      up: new THREE.Vector3(0, 1, 0),
+      bank: 0,
       width,
       metric: 1,
-      u: s / 1_000_000,
+      u: s / length,
     }),
   };
+  straightTracks.set(width, track);
+  return track;
 }
 
 function setup(track = circuit(), mode = "trial") {
@@ -192,6 +237,8 @@ test("held pitch changes a real jump's height, range and landing without pose te
     p.velocity.copy(frame.tangent).multiplyScalar(160);
     p.contactS = p.s = s;
     p.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+    p.pitch = -Math.asin(frame.tangent.y);
+    p.pitchRate = 0;
     p.gate = Math.floor((s / track.length) * 32) + 1;
     let flew = false,
       apex = p.position.y,
@@ -275,8 +322,15 @@ test("pitch, yaw and bilateral airbrakes remain independent simultaneous control
     airRight: 1,
     pitch: -1,
   });
+  const pitchOnly = setup(straight());
+  pitchOnly.player.velocity.set(0, 0, 120);
+  drive(pitchOnly, 0.25, { ...neutral, pitch: -1 });
   assert(race.player.yaw > 0 && race.player.position.x > 0);
-  assert(race.player.pitch < -0.15);
+  assert(race.player.pitch < 0 && race.player.pitchRate < 0);
+  assert(
+    Math.abs(race.player.pitch - pitchOnly.player.pitch) < 1e-10,
+    "yaw and both airbrakes do not interrupt the physical pitch response",
+  );
   assert(
     race.player.speed < 120,
     "both airbrakes still add drag while pitch is held",
@@ -385,6 +439,11 @@ test("joined production forks and merges have no hidden branch-edge wall", () =>
         const x = inward * (f.width - hullExtent(p, f.right) - 0.3);
         p.position.copy(f.p).addScaledVector(f.right, x);
         p.position.y += 2.2;
+        p.pitch = Math.atan2(
+          f.up.x * Math.sin(p.yaw) + f.up.z * Math.cos(p.yaw),
+          f.up.y,
+        );
+        p.pitchRate = 0;
         p.velocity.copy(f.right).multiplyScalar(inward * 65);
         p.s = p.contactS = s;
         p.branch = branch;
@@ -437,6 +496,8 @@ test("a forward drive into the separating splitter tip hits a real barrier", () 
       p.position.y += 2.2;
       p.velocity.copy(f.tangent).multiplyScalar(160);
       p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      p.pitch = -Math.asin(f.tangent.y);
+      p.pitchRate = 0;
       p.contactS = p.s = s;
       p.branch = branch;
       p.gate = Math.floor((s / track.length) * 32) + 1;
@@ -495,6 +556,8 @@ test("route selection follows the connected fork, but separated routes retain th
         p.yaw = Math.atan2(f.right.x * side, f.right.z * side);
         p.position.copy(f.p);
         p.position.y += 2.2;
+        p.pitch = -Math.asin(f.tangent.y);
+        p.pitchRate = 0;
         const profile = railBounds(
           p,
           projectRoad(track, p.position, s, branch),
@@ -604,6 +667,8 @@ test("a legitimate ballistic jump can cross an ordered gate over missing deck", 
   p.position.y += 5;
   p.velocity.copy(f.tangent).multiplyScalar(70);
   p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+  p.pitch = -Math.asin(f.tangent.y);
+  p.pitchRate = 0;
   p.grounded = false;
   p.flight = true;
   drive(race, 0.05, { ...neutral, throttle: false });
@@ -656,6 +721,8 @@ test("gap flight retains horizontal velocity and failed jumps recover before lau
   p.position.copy(f.p);
   p.position.y += 2.2;
   p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+  p.pitch = -Math.asin(f.tangent.y);
+  p.pitchRate = 0;
   p.velocity.copy(f.tangent).multiplyScalar(5);
   p.grounded = false;
   const checkpoint = p.checkpoint.s;

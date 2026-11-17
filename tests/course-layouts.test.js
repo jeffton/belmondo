@@ -1,9 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
-import { makeTrack, TRACK_INDEX } from "../src/track.ts";
+import { makeTrack, roadBounds, TRACK_INDEX } from "../src/track.ts";
 import { Race, CRAFT } from "../src/race.ts";
 import { projectRoad } from "../src/road-projection.ts";
+import { craftSupport } from "../src/contacts.ts";
+import { HOVER_REACH } from "../src/hover-support.ts";
 
 // Authored v4 world routes, including Coast's accepted 12 m launch lip.
 const authoredCourses = [
@@ -134,11 +136,25 @@ test("fast descending hulls land on their selected crossing level, not through t
       r.position.copy(f.p);
       r.position.y += 27.2;
       r.velocity.set(0, -400 * pace, 0);
+      r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      r.pitch = -Math.asin(f.tangent.y);
+      r.pitchRate = 0;
       r.grounded = false;
       r.flight = true;
-      race.update(0.1 / pace, { throttle: false, steer: 0, air: 0 });
-      assert(r.grounded);
-      assert(Math.abs(r.position.y - f.p.y - 2.2) < 0.2);
+      for (let step = 0; step < 30 && !r.grounded; step++) {
+        race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
+        assert.equal(r.recoveredThisStep, false);
+        assert.equal(r.shield, 100);
+      }
+      assert(r.grounded, "the fixed-step descent acquires real hover support");
+      const surface = race.surface.beneath(r.position, 0, Infinity);
+      assert(surface);
+      assert(Math.abs(surface.s - s) < 8, "the selected deck owns the landing");
+      const clearance =
+        r.position.clone().sub(surface.point).dot(surface.up) -
+        craftSupport(r, surface.up);
+      assert(clearance >= -1e-8, "the solid hull does not penetrate its deck");
+      assert(r.position.y - surface.point.y <= 2.2 + HOVER_REACH);
       assert(Math.abs(r.contactS - s) < 8);
       assert.equal(r.shield, 100);
     }
@@ -173,13 +189,28 @@ test("being below the upper bridge cannot snap a hull to that deck or steal prog
 test("a diagonal arrival cannot earn a gate crossed outside its finite road width", () => {
   const track = {
     length: 1000,
-    config: { split: [0.8, 0.9], jump: 0.95, sections: {} },
+    finishS: 0,
+    config: {
+      name: "TEST GATE TRACK",
+      split: [0.8, 0.9],
+      jump: null,
+      gapLength: 0,
+      sections: {},
+    },
+    physicalLengths: { 0: 1000, "-1": 1000, 1: 1000 },
+    physicalLength: 1000,
     gap: () => false,
     curvature: () => 0,
+    isTunnel: () => false,
+    bounds(s, branch = 0) {
+      return roadBounds(this, s, branch);
+    },
     frame: (s) => ({
       p: new THREE.Vector3(0, 30, s),
       tangent: new THREE.Vector3(0, 0, 1),
       right: new THREE.Vector3(1, 0, 0),
+      up: new THREE.Vector3(0, 1, 0),
+      bank: 0,
       width: 18,
       metric: 1,
       u: s / 1000,

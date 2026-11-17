@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { Race, SPEED_CLASSES } from "../src/race.ts";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { createTerrain } from "../src/terrain.ts";
+import { craftSupport } from "../src/contacts.ts";
 
 for (let index = 0; index < 3; index++) {
   test(`off-road hulls hit the actual terrain and rescue without false progression on course ${index}`, () => {
@@ -16,10 +18,15 @@ for (let index = 0; index < 3; index++) {
       const s = track.length * 0.055,
         f = track.frame(s);
       r.position.copy(f.p).addScaledVector(f.right, f.width + 12);
-      r.position.y = terrain.heightAt(r.position.x, r.position.z) + 1.15;
+      r.position.y =
+        terrain.heightAt(r.position.x, r.position.z) +
+        craftSupport(r, new THREE.Vector3(0, 1, 0)) +
+        0.02;
       r.contactS = r.s = s;
       r.gate = Math.floor((s / track.length) * 32) + 1;
-      r.grounded = false;
+      // The stale flag is not a terrain-collision bypass: the real hull is
+      // placed just above the queried surface and crosses it during this step.
+      r.grounded = true;
       r.velocity.set(0, -60 * pace, 0);
       race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
       assert(
@@ -50,13 +57,9 @@ for (let index = 0; index < 3; index++) {
   });
 }
 
-test("terrain sweeps cannot interfere with grounded road contact", () => {
-  const track = makeTrack(TRACK_INDEX.COAST);
-  const terrain = {
-    sweepSurface() {
-      assert.fail("grounded hull must not query land collision");
-    },
-  };
+test("real terrain queries preserve grounded road contact", () => {
+  const track = makeTrack(TRACK_INDEX.COAST),
+    terrain = createTerrain(track);
   for (let speedClass = 0; speedClass < 3; speedClass++) {
     const race = new Race(track, 0, "trial", speedClass, terrain);
     race.countdown = 0;
@@ -64,4 +67,5 @@ test("terrain sweeps cannot interfere with grounded road contact", () => {
     assert.equal(race.player.shield, 100);
     assert(race.player.grounded);
   }
+  for (const geometry of terrain.geometries) geometry.dispose();
 });

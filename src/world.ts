@@ -18,6 +18,7 @@ interface SurfaceQuad {
   color: THREE.ColorRepresentation;
   kind?: string;
   uv?: number[][];
+  indices?: number[];
 }
 interface SparkParticle {
   life: number;
@@ -50,6 +51,12 @@ import { createRailFaceTexture, railFaceUV } from "./rail-face.ts";
 import { buildTrackPads } from "./track-pads.ts";
 import { tunnelSegment } from "./tunnel-architecture.ts";
 import { applyJumpMarkings } from "./jump-markings.ts";
+import {
+  roadFrame,
+  roadPoint,
+  roadStations,
+  roadStrip,
+} from "./road-surface.ts";
 import { buildStartGantry } from "./start-gantry.ts";
 import { gridApproachBlend } from "./start-sequence.ts";
 import { buildFinishDistrict } from "./finish-district.ts";
@@ -95,7 +102,7 @@ function quadGeometry(
     const cornerColors = q.p.map(
       (point) => new THREE.Color(lighting.shade(point, q.color)),
     );
-    for (const i of [0, 2, 1, 0, 3, 2]) {
+    for (const i of q.indices ?? [0, 2, 1, 0, 3, 2]) {
       const color = cornerColors[i];
       vertices.push(...q.p[i].toArray());
       c.push(color.r, color.g, color.b);
@@ -298,17 +305,6 @@ export class World {
     buildRacingInfrastructure(this.scene, track, textures, environment);
     yield;
     const quads: SurfaceQuad[] = [];
-    const roadPoint = (frame: RoadFrame, x: number, y: number) => {
-      const inner =
-        frame.seam &&
-        ((frame.innerSide === 1 && x === frame.clipMax) ||
-          (frame.innerSide === -1 && x === frame.clipMin));
-      return (
-        inner
-          ? frame.seam!.clone()
-          : frame.p.clone().addScaledVector(frame.right, x)
-      ).addScaledVector(frame.up, y);
-    };
     const addStrip = (
       a: RoadFrame,
       b: RoadFrame,
@@ -327,8 +323,6 @@ export class World {
       const leftB = clamp(edgeAt(b, left), b.clipMin, b.clipMax),
         rightB = clamp(edgeAt(b, right), b.clipMin, b.clipMax);
       if (leftA === rightA && leftB === rightB) return;
-      const v0 = (a.u * track.length) / 32,
-        v1 = ((b.u < a.u ? b.u + 1 : b.u) * track.length) / 32;
       // Night projectors need vertices across the deck, not just at its edges.
       // Boundaries and root stations are unchanged; subdivision is render-only.
       const divisions = kind === "road" && cfg.name === "NOCTILUCENT" ? 8 : 1;
@@ -350,55 +344,23 @@ export class World {
             ? leftB
             : THREE.MathUtils.lerp(leftB, rightB, strip / divisions);
         quads.push({
-          p: [
-            roadPoint(a, x0, y),
-            roadPoint(a, x1, y),
-            roadPoint(b, x2, y),
-            roadPoint(b, x3, y),
-          ],
+          ...roadStrip(
+            track,
+            a,
+            b,
+            [x0, x1, x2, x3],
+            y,
+            [strip / divisions, (strip + 1) / divisions],
+            (kind === "road" || kind === "concrete") &&
+              left === -a.width &&
+              right === a.width,
+          ),
           color,
           kind,
-          uv: [
-            [x0 / 32, v0],
-            [x1 / 32, v0],
-            [x2 / 32, v1],
-            [x3 / 32, v1],
-          ],
         });
       }
     };
-    const steps = Math.ceil(track.length / 5);
-    const stations = [
-      ...new Set([
-        ...Array.from({ length: steps + 1 }, (_, i) => i / steps),
-        ...cfg.split.filter((u) => u >= 0 && u <= 1),
-        ...(cfg.ramp ? [cfg.ramp.start] : []),
-        ...(cfg.jump === null ? [] : [cfg.jump, cfg.jump + cfg.gapLength!]),
-      ]),
-    ].sort((a, b) => a - b);
-    const connectedAt = (u: number) => {
-      const f = track.frame(u * track.length, -1);
-      return track.bounds(f.u * track.length, -1).connected;
-    };
-    const transitions = [];
-    for (let i = 0; i < stations.length - 1; i++) {
-      let left = stations[i],
-        right = stations[i + 1];
-      if (left < cfg.split[0] || right > cfg.split[1]) continue;
-      const leftConnected = connectedAt(left);
-      if (leftConnected === connectedAt(right)) continue;
-      // Both road halves must end at the same physical fork tip. Interpolating
-      // directly from a joined station to a separated one opens an early hole.
-      while (true) {
-        const middle = (left + right) / 2;
-        if (middle === left || middle === right) break;
-        if (connectedAt(middle) === leftConnected) left = middle;
-        else right = middle;
-      }
-      transitions.push(leftConnected ? left : right);
-    }
-    stations.push(...transitions);
-    stations.sort((a, b) => a - b);
+    const stations = roadStations(track);
     for (let i = 0; i < stations.length - 1; i++) {
       const u = stations[i];
       const split = u >= cfg.split[0] && u < cfg.split[1];
@@ -408,17 +370,14 @@ export class World {
       }
       if (track.gap(u)) continue;
       for (const branch of split ? [-1, 1] : [0]) {
-        const a = track.frame(u * track.length, branch) as RoadFrame,
-          b = track.frame(
+        const a = roadFrame(track, u * track.length, branch),
+          b = roadFrame(
+            track,
             stations[i + 1] * track.length -
               (stations[i + 1] === cfg.jump ? 0.000001 : 0),
             branch,
-          ) as RoadFrame,
+          ),
           w = a.width;
-        for (const f of [a, b]) {
-          Object.assign(f, track.bounds(f.u * track.length, branch));
-          f.branch = branch;
-        }
         const shared = split && a.connected && b.connected;
         addStrip(
           a,
@@ -836,7 +795,7 @@ export class World {
       );
       return;
     }
-    const f = this.track.frame(racer.s, racer.branch);
+    const f = this.track.frame(racer.contactS, racer.branch);
     for (let i = 0; i < 10; i++) {
       const particle =
         this.sparkData[this.sparkCursor++ % this.sparkData.length];
@@ -861,7 +820,7 @@ export class World {
     this.finishDistrict.update(this.time);
     const player = race.player,
       track = this.track;
-    const f = track.frame(player.s, player.branch);
+    const f = track.frame(player.contactS, player.branch);
     const focus = player.position.clone().addScaledVector(UP, 0.7);
     const forward = new THREE.Vector3(
       Math.sin(player.yaw),

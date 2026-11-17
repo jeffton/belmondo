@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { ConvexHull } from "three/addons/math/ConvexHull.js";
+import { buildHull } from "./craft.ts";
 
 interface Hull {
   yaw: number;
@@ -9,6 +11,97 @@ interface Hull {
 const HALF_WIDTH = 3.1;
 const HALF_LENGTH = 4.25;
 export const HULL_HEIGHT = 2.2;
+
+export interface CraftContactHull {
+  readonly points: readonly THREE.Vector3[];
+  readonly faces: readonly (readonly [number, number, number])[];
+  readonly radius: number;
+}
+const contactHulls = new Map<number, CraftContactHull>();
+
+export function contactHull(craft: number): CraftContactHull {
+  let shape = contactHulls.get(craft);
+  if (!shape) {
+    const cloud: THREE.Vector3[] = [];
+    for (const geometry of Object.values(buildHull(craft))) {
+      const positions = geometry.attributes.position;
+      for (let i = 0; i < positions.count; i++)
+        cloud.push(new THREE.Vector3().fromBufferAttribute(positions, i));
+      geometry.dispose();
+    }
+    // Only extreme vertices can touch a plane. The cached convex support has
+    // the exact same extrema as the solid visible hull, without scanning every
+    // render vertex during a collision query.
+    const hull = new ConvexHull().setFromPoints(cloud);
+    const extremes = new Set<THREE.Vector3>();
+    for (const face of hull.faces) {
+      let edge = face.edge;
+      do {
+        extremes.add(edge.head().point);
+        edge = edge.next;
+      } while (edge !== face.edge);
+    }
+    const points = [...extremes];
+    const indices = new Map(points.map((point, index) => [point, index]));
+    const faces = hull.faces.map((face): [number, number, number] => [
+      indices.get(face.edge.head().point)!,
+      indices.get(face.edge.next.head().point)!,
+      indices.get(face.edge.next.next.head().point)!,
+    ]);
+    shape = {
+      points,
+      faces,
+      radius: Math.sqrt(Math.max(...points.map((point) => point.lengthSq()))),
+    };
+    contactHulls.set(craft, shape);
+  }
+  return shape;
+}
+
+// Deck contact uses the real solid ship, including its physical yaw and pitch.
+// The broad pair/rail box is not a symmetric vertical landing hull: its empty
+// lower corners would hit a ramp before the visible nose ever reaches it.
+export function craftSupport(
+  r: { craft: number; yaw: number; pitch: number },
+  axis: THREE.Vector3,
+): number {
+  const sinYaw = Math.sin(r.yaw),
+    cosYaw = Math.cos(r.yaw),
+    sinPitch = Math.sin(r.pitch),
+    cosPitch = Math.cos(r.pitch);
+  const localX = axis.x * cosYaw - axis.z * sinYaw;
+  const yawZ = axis.x * sinYaw + axis.z * cosYaw;
+  const localY = axis.y * cosPitch + yawZ * sinPitch;
+  const localZ = -axis.y * sinPitch + yawZ * cosPitch;
+  let minimum = Infinity;
+  for (const point of contactHull(r.craft).points)
+    minimum = Math.min(
+      minimum,
+      point.x * localX + point.y * localY + point.z * localZ,
+    );
+  return -minimum;
+}
+
+export function writeCraftVertices(
+  r: { craft: number; yaw: number; pitch: number },
+  target: THREE.Vector3[],
+): void {
+  const points = contactHull(r.craft).points;
+  const cosPitch = Math.cos(r.pitch),
+    sinPitch = Math.sin(r.pitch);
+  const cosYaw = Math.cos(r.yaw),
+    sinYaw = Math.sin(r.yaw);
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const y = point.y * cosPitch - point.z * sinPitch;
+    const z = point.y * sinPitch + point.z * cosPitch;
+    target[i].set(
+      point.x * cosYaw + z * sinYaw,
+      y,
+      -point.x * sinYaw + z * cosYaw,
+    );
+  }
+}
 
 export function hullExtent(r: Pick<Hull, "yaw">, axis: THREE.Vector3): number {
   const sin = Math.sin(r.yaw),

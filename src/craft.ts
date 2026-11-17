@@ -353,7 +353,7 @@ function foil(
   }
 }
 
-function buildHull(variant: number): Hull {
+export function buildHull(variant: number): Hull {
   const airframe = AIRFRAMES[variant];
   const core = new Skin();
   const accent = new Skin();

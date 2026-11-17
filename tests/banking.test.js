@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
 import { Race, SPEED_CLASSES } from "../src/race.ts";
+import { craftSupport } from "../src/contacts.ts";
+import { HOVER_REACH } from "../src/hover-support.ts";
 import { projectRoad, roadHeight } from "../src/road-projection.ts";
 import { railBounds } from "../src/rail-profile.ts";
 import { getTrackPickups, pickupPoint, crossesPickup } from "../src/pickups.ts";
@@ -86,6 +88,8 @@ for (const index of Object.values(TRACK_INDEX)) {
           const p = race.player,
             pace = race.classSpec.pace;
           p.yaw = Math.atan2(f.right.x * side, f.right.z * side);
+          p.pitch = -Math.asin(f.tangent.y);
+          p.pitchRate = 0;
           p.position.copy(f.p);
           p.position.y += 2.2;
           const profile = railBounds(
@@ -145,6 +149,8 @@ for (const index of Object.values(TRACK_INDEX)) {
         p.contactS = p.s = f.s;
         p.gate = Math.floor((f.s / track.length) * 32) + 1;
         p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+        p.pitch = -Math.asin(f.tangent.y);
+        p.pitchRate = 0;
         const yaw = p.yaw;
         for (let i = 0; i < 24; i++)
           race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
@@ -197,6 +203,8 @@ for (const [name, index, reversal] of [
       p.position.copy(f.p);
       p.position.y += 2.2;
       p.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+      p.pitch = -Math.asin(f.tangent.y);
+      p.pitchRate = 0;
       p.velocity.copy(f.tangent).multiplyScalar(160 * race.classSpec.pace);
       for (let i = 0; i < 48; i++) {
         race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
@@ -208,8 +216,18 @@ for (const [name, index, reversal] of [
         );
         assert(!p.wallTouched);
         const road = projectRoad(track, p.position, p.contactS, p.branch);
+        const surface = race.surface.beneath(p.position, 0, Infinity);
+        assert(surface, "the moving hull retains a physical deck beneath it");
+        const clearance =
+          p.position.clone().sub(surface.point).dot(surface.up) -
+          craftSupport(p, surface.up);
         assert(
-          Math.abs(p.position.y - roadHeight(road, p.position) - 2.2) < 0.5,
+          clearance >= -1e-8,
+          "suspension compression cannot penetrate the hull",
+        );
+        assert(
+          p.h < HOVER_REACH,
+          "the racer remains inside normal hover reach",
         );
         const visible = track.frame(road.s, p.branch);
         assert(road.up.dot(visible.up) > 0.999);

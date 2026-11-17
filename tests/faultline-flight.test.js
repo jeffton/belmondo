@@ -12,6 +12,8 @@ function place(race, u, height = 2.2, speed = 150) {
   racer.position.copy(frame.p).addScaledVector(frame.up, height);
   racer.s = racer.contactS = s;
   racer.yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+  racer.pitch = -Math.asin(frame.tangent.y);
+  racer.pitchRate = 0;
   racer.gate = Math.floor(((s - track.finishS) / track.length) * 32) + 1;
   racer.velocity.copy(frame.tangent).multiplyScalar(speed);
   return { racer, frame };
@@ -77,32 +79,23 @@ for (const [craft, spec] of CRAFT.entries())
         });
 
 for (const [speedClass, speed] of SPEED_CLASSES.entries())
-  for (const scenario of [
-    "valid",
-    "outside",
-    "stalled",
-    "reverse",
-    "past receiver",
-    "before gap",
-  ])
-    test(`long-flight rescue boundary ${speed.id}: ${scenario}`, () => {
+  for (const scenario of ["before gap", "past receiver", "outside"]) {
+    test(`airborne ${speed.id}: ${scenario} uses gravity, not a runway timeout`, () => {
       const race = new Race(track, 0, "trial", speedClass);
       race.countdown = 0;
       const u =
-        scenario === "past receiver"
-          ? track.config.sections.runway[1] + 0.01
-          : scenario === "before gap"
-            ? track.config.jump - 0.01
-            : track.config.jump + track.config.gapLength + 0.005;
-      const { racer, frame } = place(race, u, 100, 150 * speed.pace);
+        scenario === "before gap"
+          ? track.config.jump - 0.01
+          : track.config.sections.runway[1] + 0.01;
+      const { racer, frame } = place(race, u, 100, 0);
+      if (scenario === "outside")
+        racer.position.addScaledVector(frame.right, 150);
       racer.grounded = false;
       racer.flight = true;
       racer.offroad = 3.1;
-      if (scenario === "outside")
-        racer.position.addScaledVector(frame.right, 150);
-      if (scenario === "stalled") racer.velocity.set(0, 0, 0);
-      if (scenario === "reverse") racer.velocity.negate();
-      race.update(1 / 120, { throttle: false, steer: 0 });
-      assert.equal(racer.recoveredThisStep, scenario !== "valid");
-      assert.equal(racer.shield, scenario === "valid" ? 100 : 76);
+      race.update(1 / 120, {});
+      assert.equal(racer.recoveredThisStep, false);
+      assert.equal(racer.shield, 100);
+      assert(Math.abs(racer.velocity.y + (35 * speed.pace ** 2) / 120) < 1e-10);
     });
+  }

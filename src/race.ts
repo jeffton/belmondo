@@ -1,7 +1,26 @@
 import * as THREE from "three";
 import { clamp, mod, roadBounds } from "./track.ts";
-import { projectRoad, roadHeight } from "./road-projection.ts";
-import { solveContacts, hullExtent } from "./contacts.ts";
+import {
+  projectRoad,
+  roadHeight,
+  ROAD_LOOK_BEHIND,
+  ROAD_LOOK_AHEAD,
+} from "./road-projection.ts";
+import {
+  HOVER_REACH,
+  hoverReaction,
+  integrateHover,
+  integratePitch,
+} from "./hover-support.ts";
+import { getRoadSurface } from "./road-surface.ts";
+import type { RoadSurface, RoadSurfaceContact } from "./road-surface.ts";
+import {
+  solveContacts,
+  hullExtent,
+  craftSupport,
+  contactHull,
+  writeCraftVertices,
+} from "./contacts.ts";
 import { getTrackPickups, crossesPickup } from "./pickups.ts";
 import { Launch } from "./launch.ts";
 import {
@@ -76,6 +95,7 @@ export interface Racer {
   yawRate: number;
   pitchTrim: number;
   pitch: number;
+  pitchRate: number;
   contactS: number;
   gate: number;
   grounded: boolean;
@@ -116,6 +136,58 @@ export interface RaceMine extends ShotBase {
 const angle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const HOVER = 2.2;
 const GATES = 32;
+const UP = new THREE.Vector3(0, 1, 0);
+const DOWN = new THREE.Vector3(0, -1, 0);
+
+interface HullMotion {
+  start: THREE.Vector3[];
+  end: THREE.Vector3[];
+  between: THREE.Vector3[];
+}
+const hullMotions = new WeakMap<Racer, HullMotion>();
+
+function hullMotion(racer: Racer): HullMotion {
+  let motion = hullMotions.get(racer);
+  if (!motion) {
+    const points = contactHull(racer.craft).points;
+    motion = {
+      start: points.map(() => new THREE.Vector3()),
+      end: points.map(() => new THREE.Vector3()),
+      between: points.map(() => new THREE.Vector3()),
+    };
+    hullMotions.set(racer, motion);
+  }
+  return motion;
+}
+
+function linearHullVertices(motion: HullMotion, fraction: number) {
+  if (fraction === 0) return motion.start;
+  if (fraction === 1) return motion.end;
+  for (let i = 0; i < motion.start.length; i++)
+    motion.between[i].copy(motion.start[i]).lerp(motion.end[i], fraction);
+  return motion.between;
+}
+
+// Physical contact follows the intersected deck; ordered race progress does not.
+function surfaceRoad(
+  track: Track,
+  position: THREE.Vector3,
+  anchor: number,
+  surface: RoadSurfaceContact,
+): { road: RoadProjection; rail: RoadProjection } {
+  const s =
+    anchor +
+    mod(surface.s - anchor + track.length / 2, track.length) -
+    track.length / 2;
+  const rail = projectRoad(track, position, s, surface.branch);
+  const road = { ...rail, point: rail.point.clone(), up: surface.up };
+  road.point.y =
+    surface.point.y -
+    (surface.up.x * (road.point.x - surface.point.x) +
+      surface.up.z * (road.point.z - surface.point.z)) /
+      surface.up.y;
+  return { road, rail };
+}
 
 export const CRAFT = [
   {
@@ -168,6 +240,7 @@ export class Race {
   declare classSpec: (typeof SPEED_CLASSES)[number];
   declare lapCount: number;
   declare track: Track;
+  declare surface: RoadSurface;
   declare pickups: TrackPickup[];
   declare mode: string;
   declare time: number;
@@ -200,6 +273,7 @@ export class Race {
     this.classSpec = SPEED_CLASSES[speedClass];
     this.lapCount = LAPS_BY_CLASS[speedClass];
     this.track = track;
+    this.surface = getRoadSurface(track);
     this.pickups = getTrackPickups(track);
     this.mode = mode;
     this.time = 0;
@@ -261,12 +335,15 @@ export class Race {
       r.yawRate = 0;
       r.pitchTrim = 0;
       r.pitch = -Math.asin(f.tangent.y);
+      r.pitchRate = 0;
       r.contactS = r.s;
       r.gate = 1;
       r.grounded = true;
       r.checkpoint = { s: r.s, branch: 0, gate: 1 };
       r.offroad = 0;
       r.contactSound = 0;
+      // Prepare solid hulls while the race loads, not on its first active frame.
+      hullMotion(r);
     }
   }
   emit(kind: string, text: string) {
@@ -340,6 +417,7 @@ export class Race {
     r.yawRate = 0;
     r.pitchTrim = 0;
     r.pitch = -Math.asin(f.tangent.y);
+    r.pitchRate = 0;
     r.contactS = s;
     r.s = s;
     r.branch = branch;
@@ -577,6 +655,7 @@ export class Race {
       }),
     );
     const previousYaw = new Map(active.map((r) => [r, r.yaw]));
+    const previousPitch = new Map(active.map((r) => [r, r.pitch]));
     for (const r of active) {
       if (r.eliminated) continue;
       r.wallTouched = r.contactMoved = false;
@@ -662,25 +741,36 @@ export class Race {
         const error = angle(desiredYaw - r.yaw);
         // Read crests as well as plan curvature: the same body must brake
         // before negative vertical curvature exceeds its gravity/contact load.
-        const crest =
+        const strictNightCrest =
           track.config.night &&
           intendedBranch === 1 &&
           u > forkStart - 0.04 &&
-          u < forkEnd
-            ? Math.max(
-                0,
-                ...[0.25, 0.6, 1].map((t) => {
-                  const s = r.contactS + (r.speed * t) / pace;
-                  const a = track.frame(s - 6, intendedBranch);
-                  const b = track.frame(s + 6, intendedBranch);
-                  return (a.tangent.y - b.tangent.y) / a.p.distanceTo(b.p);
-                }),
+          u < forkEnd;
+        const crest = Math.max(
+          0,
+          ...[0.25, 0.6, 1].map((t) => {
+            const s = r.contactS + (r.speed * t) / pace;
+            if (
+              !strictNightCrest &&
+              [-6, 0, 6].some((offset) =>
+                track.gap(mod(s + offset, track.length) / track.length),
               )
-            : 0;
+            )
+              return 0;
+            const a = track.frame(s - 6, intendedBranch);
+            const b = track.frame(s + 6, intendedBranch);
+            return (a.tangent.y - b.tangent.y) / a.p.distanceTo(b.p);
+          }),
+        );
+        // Powered hover can sustain h_eq = (v²κ - 35pace²) / (90pace²)
+        // up to its existing reach. The authored night descent keeps its policy.
         const cornerSpeed = Math.min(
           Math.sqrt((110 * pace2) / Math.max(curve, 0.0001)),
           (0.9 * spec.handling * pace) / Math.max(curve, 0.0001),
-          Math.sqrt((25 * pace2) / Math.max(crest, 0.0001)),
+          Math.sqrt(
+            ((strictNightCrest ? 25 : 35 + 90 * HOVER_REACH) * pace2) /
+              Math.max(crest, 0.0001),
+          ),
         );
         // Heading correction requests yaw, not a craft-independent stick angle.
         // Differential airbrakes supply rotation beyond the ordinary stick;
@@ -765,15 +855,155 @@ export class Race {
           (r.pitchTrim * 0.7 * pace) / (1 + r.velocity.length() / (120 * pace));
         r.velocity.applyAxisAngle(new THREE.Vector3(rx, 0, rz), pitchRate * dt);
       }
-      r.velocity.y -= 35 * pace2 * dt;
+      const origin = r.position.clone();
+      const initialPitch = r.pitch;
+      const initialYaw = previousYaw.get(r)!;
+      let fieldRoad: RoadProjection | null = null;
+      let captured = false;
+      const sampleHover = (time: number, y: number, vy: number) => {
+        const point = new THREE.Vector3(
+          origin.x + r.velocity.x * time,
+          y,
+          origin.z + r.velocity.z * time,
+        );
+        const surface = this.surface.beneath(point, 0, Infinity);
+        fieldRoad = null;
+        captured = false;
+        if (!surface) return 0;
+        const { road, rail } = surfaceRoad(track, point, r.contactS, surface);
+        const bounds = railBounds(r, rail, point);
+        if (rail.x < bounds.min || rail.x > bounds.max) return 0;
+        const offset =
+          mod(surface.s - r.contactS + track.length / 2, track.length) -
+          track.length / 2;
+        const establishedContact =
+          r.grounded &&
+          surface.branch === r.branch &&
+          offset >= -ROAD_LOOK_BEHIND &&
+          offset < ROAD_LOOK_AHEAD;
+        const phase = time === 0 ? 0 : time / dt;
+        const support = craftSupport(
+          {
+            craft: r.craft,
+            yaw: initialYaw + angle(r.yaw - initialYaw) * phase,
+            pitch: initialPitch + (r.pitch - initialPitch) * phase,
+          },
+          surface.up,
+        );
+        if (
+          !establishedContact &&
+          point.clone().sub(surface.point).dot(surface.up) < support
+        )
+          return 0;
+        const height = point.y - roadHeight(road, point) - HOVER;
+        const roadVy =
+          -(road.up.x * r.velocity.x + road.up.z * r.velocity.z) / road.up.y;
+        fieldRoad = road;
+        captured = height < HOVER_REACH;
+        return hoverReaction(height, vy - roadVy, pace);
+      };
+      const initialReaction = sampleHover(0, r.position.y, r.velocity.y);
+      const initialRoad = fieldRoad as RoadProjection | null;
+      const initiallyCaptured = captured;
+      const attitude = integratePitch(
+        r.pitch,
+        r.pitchRate,
+        (initiallyCaptured
+          ? Math.atan2(
+              initialRoad!.up.x * Math.sin(r.yaw) +
+                initialRoad!.up.z * Math.cos(r.yaw),
+              initialRoad!.up.y,
+            )
+          : -Math.atan2(r.velocity.y, Math.hypot(r.velocity.x, r.velocity.z))) +
+          r.pitchTrim,
+        dt,
+        pace,
+      );
+      r.pitch = attitude.pitch;
+      r.pitchRate = attitude.pitchRate;
+      const suspension = integrateHover(
+        r.position.y,
+        r.velocity.y,
+        dt,
+        35 * pace2,
+        (time, y, vy) => {
+          if (time === 0) return initialReaction;
+          return sampleHover(time, y, vy);
+        },
+      );
       r.position.addScaledVector(r.velocity, dt);
+      r.position.y = suspension.height;
+      r.velocity.y = suspension.velocity;
+      const contactedRoad = fieldRoad as RoadProjection | null;
+      if (captured && contactedRoad) {
+        r.contactS = contactedRoad.s;
+        r.branch = contactedRoad.branch;
+        // Preserve the existing near-road bank support and horizontal handling.
+        r.velocity.x +=
+          contactedRoad.wallAxis.x *
+          Math.sin(contactedRoad.bank) *
+          suspension.reactionDelta;
+        r.velocity.z +=
+          contactedRoad.wallAxis.z *
+          Math.sin(contactedRoad.bank) *
+          suspension.reactionDelta;
+      }
     }
-    const roads = new Map(
-      active.map((r) => [
-        r,
-        projectRoad(track, r.position, r.contactS, r.branch),
-      ]),
-    );
+    const roads = new Map<Racer, RoadProjection>();
+    const deckContacts = new Map<Racer, RoadSurfaceContact>();
+    const terrainImpacts = new Set<Racer>();
+    for (const r of active) {
+      const previous = previousPositions.get(r)!;
+      const oldYaw = previousYaw.get(r)!;
+      const oldPitch = previousPitch.get(r)!;
+      const shape = contactHull(r.craft);
+      const motion = hullMotion(r);
+      writeCraftVertices(
+        { craft: r.craft, yaw: oldYaw, pitch: oldPitch },
+        motion.start,
+      );
+      writeCraftVertices(r, motion.end);
+      const contact = this.surface.sweep(
+        previous,
+        r.position,
+        shape,
+        (fraction) => linearHullVertices(motion, fraction),
+      );
+      const terrainContact = this.terrain?.sweepSurface(
+        previous,
+        r.position,
+        craftSupport(r, UP),
+      );
+      if (
+        terrainContact &&
+        (!contact || terrainContact.fraction < contact.fraction)
+      ) {
+        terrainImpacts.add(r);
+        roads.set(r, projectRoad(track, r.position, r.contactS, r.branch));
+        continue;
+      }
+      if (contact) {
+        const centre = previous.clone().lerp(r.position, contact.fraction);
+        const normalVelocity = r.velocity.dot(contact.up);
+        if (normalVelocity < 0)
+          r.velocity.addScaledVector(contact.up, -normalVelocity);
+        // Complete the remaining motion along the contacted surface. Landing
+        // removes penetration momentum, never forward/tangential momentum.
+        r.position
+          .copy(centre)
+          .addScaledVector(r.velocity, dt * (1 - contact.fraction));
+        const { road, rail } = surfaceRoad(
+          track,
+          r.position,
+          r.contactS,
+          contact,
+        );
+        r.contactS = road.s;
+        r.branch = road.branch;
+        roads.set(r, rail);
+        deckContacts.set(r, contact);
+      } else roads.set(r, projectRoad(track, r.position, r.contactS, r.branch));
+    }
     const crossesSplitter = (r: Racer, road: RoadProjection) => {
       if (road.connected || !road.branch) return false;
       const previous = roadBounds(track, r.contactS, road.branch);
@@ -801,6 +1031,7 @@ export class Race {
       );
     };
     const constrainWall = (r: Racer) => {
+      if (terrainImpacts.has(r)) return;
       r.contactMoved = true;
       const road = roads.get(r)!;
       const { min, max, intersectsMin, intersectsMax } = railBounds(
@@ -841,7 +1072,7 @@ export class Race {
       r.contactMoved = r.wallTouched;
     }
     solveContacts(
-      active.filter((r) => !r.eliminated),
+      active.filter((r) => !r.eliminated && !terrainImpacts.has(r)),
       constrainWall,
       (a, b, closing) => {
         closing /= pace;
@@ -862,58 +1093,92 @@ export class Race {
         this.eliminate(r);
         continue;
       }
+      if (terrainImpacts.has(r)) {
+        r.shield = Math.max(10, r.shield - 24);
+        this.recover(r);
+        if (r.id === 0) this.emit("hit", "GROUND IMPACT");
+        // A checkpoint return cannot sweep through gates or pickups.
+        continue;
+      }
       const previous = previousPositions.get(r)!;
       const ai = r.id !== 0;
-      const road = r.contactMoved
+      const wasGrounded = r.grounded;
+      let road = r.contactMoved
         ? projectRoad(track, r.position, r.contactS, r.branch)
         : roads.get(r)!;
+      let railRoad = road;
+      const sweptContact = deckContacts.get(r);
+      const physicalSurface =
+        sweptContact ??
+        this.surface.beneath(r.position, 0, HOVER + HOVER_REACH);
+      let touchingDeck = sweptContact !== undefined;
+      let fieldContact = false;
+      if (physicalSurface) {
+        const normalDistance = r.position
+          .clone()
+          .sub(physicalSurface.point)
+          .dot(physicalSurface.up);
+        let clearance: number | undefined =
+          normalDistance - craftSupport(r, physicalSurface.up);
+        if (clearance < 0) {
+          // The lowest global vertex can be over a gap. Only hull features
+          // above this finite triangle can penetrate or support the craft.
+          const finite = this.surface.finiteContact(
+            physicalSurface.faceId,
+            r.position,
+            contactHull(r.craft),
+            hullMotion(r).end,
+          );
+          clearance = finite?.distance;
+        }
+        const offset =
+          mod(physicalSurface.s - r.contactS + track.length / 2, track.length) -
+          track.length / 2;
+        const establishedContact =
+          wasGrounded &&
+          physicalSurface.branch === r.branch &&
+          offset >= -ROAD_LOOK_BEHIND &&
+          offset < ROAD_LOOK_AHEAD;
+        fieldContact =
+          clearance !== undefined &&
+          (clearance >= 0 || touchingDeck || establishedContact);
+        if (fieldContact) {
+          const selected = surfaceRoad(
+            track,
+            r.position,
+            r.contactS,
+            physicalSurface,
+          );
+          road = selected.road;
+          railRoad = selected.rail;
+          if (clearance! <= 0 && (establishedContact || touchingDeck)) {
+            r.position.addScaledVector(physicalSurface.up, -clearance!);
+            const normalVelocity = r.velocity.dot(physicalSurface.up);
+            if (normalVelocity < 0)
+              r.velocity.addScaledVector(physicalSurface.up, -normalVelocity);
+            touchingDeck = true;
+          }
+        }
+      }
       const u = mod(road.s, track.length) / track.length;
       const [splitStart, splitEnd] = track.config.split;
       if (u > splitStart && u < splitEnd) r.branch = road.branch;
       else r.branch = 0;
-      const splitterEntry = crossesSplitter(r, road);
+      const splitterEntry = crossesSplitter(r, railRoad);
       r.contactS = road.s;
       r.x = road.x;
       r.vx = r.velocity.dot(road.wallAxis);
       const gap = track.gap(u);
-      let height = r.position.y - roadHeight(road, r.position) - HOVER;
-      const { min, max } = railBounds(r, road, r.position);
-      let onDeck = road.x >= min - 0.05 && road.x <= max + 0.05;
-      const wasGrounded = r.grounded;
-      // Resolve the actual deck crossing before endpoint classification. A fast
-      // descending hull cannot pass through a road between two physics samples.
-      const previousHeight = previous.y - roadHeight(road, previous) - HOVER;
-      if (!wasGrounded && !gap && previousHeight > 0 && height <= 0) {
-        const fraction = previousHeight / (previousHeight - height);
-        const contact = previous.clone().lerp(r.position, fraction);
-        const contactX = contact.clone().sub(road.point).dot(road.wallAxis);
-        const contactBounds = railBounds(r, road, contact);
-        if (contactX >= contactBounds.min && contactX <= contactBounds.max) {
-          r.position.copy(contact);
-          r.x = road.x = contactX;
-          onDeck = true;
-          const normalSpeed = r.velocity.dot(road.up);
-          if (normalSpeed < 0)
-            r.velocity.addScaledVector(road.up, -normalSpeed);
-          height = 0;
-        }
-      }
-      r.grounded = !gap && onDeck && height < 1.2 && height > -3;
-      if (wasGrounded && !r.grounded && onDeck) r.flight = true;
+      const height = r.position.y - roadHeight(road, r.position) - HOVER;
+      // Rail faces follow the authored frame, not the triangulated deck normal.
+      const { min, max } = railBounds(r, railRoad, r.position);
+      const onDeck = railRoad.x >= min - 0.05 && railRoad.x <= max + 0.05;
+      r.grounded =
+        touchingDeck ||
+        (!gap && fieldContact && onDeck && height < HOVER_REACH);
+      if (wasGrounded && !r.grounded) r.flight = true;
       if (r.grounded) {
         r.flight = false;
-        const roadVy =
-          -(road.up.x * r.velocity.x + road.up.z * r.velocity.z) / road.up.y;
-        const reaction =
-          ((roadVy - r.velocity.y) * 18 * pace - height * 90 * pace2) * dt;
-        r.velocity.y += reaction;
-        // Bank support contributes inward force, never heading or velocity alignment.
-        r.velocity.x += road.wallAxis.x * Math.sin(road.bank) * reaction;
-        r.velocity.z += road.wallAxis.z * Math.sin(road.bank) * reaction;
-        if (height < -0.35) {
-          r.position.y = roadHeight(road, r.position) + HOVER - 0.35;
-          r.velocity.y = Math.max(r.velocity.y, roadVy);
-        }
         if (!wasGrounded && r.id === 0) this.emit("land", "TOUCHDOWN");
         r.offroad = 0;
         if (
@@ -925,16 +1190,6 @@ export class Race {
         )
           r.checkpoint = { s: r.s, branch: r.branch, gate: r.gate };
       } else if (gap && wasGrounded && r.id === 0) this.emit("jump", "FLIGHT");
-      if (
-        !r.grounded &&
-        this.terrain?.sweepSurface(previous, r.position, 1.1)
-      ) {
-        r.shield = Math.max(10, r.shield - 24);
-        this.recover(r);
-        if (!ai) this.emit("hit", "GROUND IMPACT");
-        // A checkpoint return cannot sweep through gates or pickups.
-        continue;
-      }
       // Validate the swept crossing itself, not the end-of-step deck contact.
       // A legal airborne crossing can end outside the deck beside a jump.
       if (r.grounded || r.flight) {
@@ -997,31 +1252,33 @@ export class Race {
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.
       const previousBounds = railBounds(
         { yaw: previousYaw.get(r)! },
-        road,
+        railRoad,
         previous,
       );
       const previousX =
-        road.x -
-        (r.position.x - previous.x) * road.wallAxis.x -
-        (r.position.z - previous.z) * road.wallAxis.z;
+        railRoad.x -
+        (r.position.x - previous.x) * railRoad.wallAxis.x -
+        (r.position.z - previous.z) * railRoad.wallAxis.z;
       if (
         r.wallTouched ||
         (!gap &&
-          (road.x < min || road.x > max) &&
+          (railRoad.x < min || railRoad.x > max) &&
           (splitterEntry ||
             (previousX >= previousBounds.min - 0.05 &&
               previousX <= previousBounds.max + 0.05)) &&
-          (road.x < min
-            ? railBounds(r, road, r.position).intersectsMin
-            : railBounds(r, road, r.position).intersectsMax))
+          (railRoad.x < min
+            ? railBounds(r, railRoad, r.position).intersectsMin
+            : railBounds(r, railRoad, r.position).intersectsMax))
       ) {
-        const sign = r.wallTouched ? r.wallSide! : road.x < min ? -1 : 1;
-        if (road.x < min || road.x > max)
+        const sign = r.wallTouched ? r.wallSide! : railRoad.x < min ? -1 : 1;
+        if (railRoad.x < min || railRoad.x > max)
           r.position.addScaledVector(
-            road.right,
-            clamp(road.x, min, max) - road.x,
+            railRoad.right,
+            clamp(railRoad.x, min, max) - railRoad.x,
           );
-        respondToRail(r, road, sign);
+        respondToRail(r, railRoad, sign);
+        r.wallTouched = true;
+        r.wallSide = sign;
         r.velocity.x *= Math.exp(-3 * classDt);
         r.velocity.z *= Math.exp(-3 * classDt);
         if (r.protect <= 0) r.shield -= classDt * 10;
@@ -1054,22 +1311,14 @@ export class Race {
         this.eliminate(r);
         continue;
       }
-      // Long authored jumps can remain airborne beyond the lost-racer timer.
-      // Keep that timer for missing the corridor, reversing/stalling, or flying
-      // past the receiving straight; gravity and deck contact remain unchanged.
-      const runway = track.config.sections.runway;
-      const validRunwayFlight =
-        r.flight &&
-        track.config.jump !== null &&
-        runway &&
-        u >= track.config.jump &&
-        u < runway[1] &&
-        onDeck &&
-        r.velocity.x * road.tangent.x + r.velocity.z * road.tangent.z > 0 &&
-        (r.position.x - previous.x) * road.tangent.x +
-          (r.position.z - previous.z) * road.tangent.z >
-          0;
-      if (height < -18 || (r.offroad > 3 && !validRunwayFlight)) {
+      // An airborne body may land on another deck. Only an actual terrain hit
+      // or descent entirely below every road is a lost racer, not elapsed air
+      // time or distance beneath its previous route.
+      if (
+        !r.grounded &&
+        r.velocity.y < 0 &&
+        r.position.y + craftSupport(r, DOWN) < this.surface.lowestRoadY
+      ) {
         r.shield = Math.max(10, r.shield - 24);
         this.recover(r);
         if (!ai) this.emit("hit", "RESCUE");
@@ -1078,10 +1327,6 @@ export class Race {
       r.h = Math.max(0, r.position.y - roadHeight(road, r.position) - HOVER);
       r.vy = r.velocity.y;
       r.speed = Math.hypot(r.velocity.x, r.velocity.z);
-      r.pitch =
-        (r.grounded
-          ? -Math.asin(road.tangent.y)
-          : -Math.atan2(r.velocity.y, r.speed)) + r.pitchTrim;
       if (r.grounded && !r.recoveredThisStep) {
         for (const [index, pad] of this.pickups.entries()) {
           const key = `${r.lap}:${pad.id}`;

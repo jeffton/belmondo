@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race } from "../src/race.ts";
-import { makeTrack } from "../src/track.ts";
+import { makeTrack, roadBounds } from "../src/track.ts";
 import { projectRoad } from "../src/road-projection.ts";
 import {
   railBounds,
@@ -13,22 +13,41 @@ import {
 import { hullExtent, HULL_HEIGHT } from "../src/contacts.ts";
 
 const controls = { throttle: true, steer: 0, air: 0 };
-function straight() {
+const straightTrack = (() => {
+  const length = 14_000,
+    finishS = 1_000;
   return {
-    length: 100000,
-    finishS: 0,
-    config: { split: [0.8, 0.9], jump: 0.95, sections: {} },
+    length,
+    finishS,
+    config: {
+      name: "TEST STRAIGHT",
+      split: [0.8, 0.9],
+      jump: null,
+      gapLength: 0,
+      sections: {},
+    },
+    physicalLengths: { 0: length, "-1": length, 1: length },
+    physicalLength: length,
     gap: () => false,
     curvature: () => 0,
+    isTunnel: () => false,
+    bounds(s, branch = 0) {
+      return roadBounds(this, s, branch);
+    },
     frame: (s) => ({
       p: new THREE.Vector3(0, 30, s),
       tangent: new THREE.Vector3(0, 0, 1),
       right: new THREE.Vector3(1, 0, 0),
+      up: new THREE.Vector3(0, 1, 0),
+      bank: 0,
       width: 18,
       metric: 1,
-      u: s / 100000,
+      u: s / length,
     }),
   };
+})();
+function straight() {
+  return straightTrack;
 }
 function planeClearance(r, road, side) {
   const normal = railFaceNormal(road, side);
