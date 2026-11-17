@@ -56,6 +56,7 @@ import {
   roadPoint,
   roadStations,
   roadStrip,
+  getRoadSurface,
 } from "./road-surface.ts";
 import { buildStartGantry } from "./start-gantry.ts";
 import { gridApproachBlend } from "./start-sequence.ts";
@@ -75,7 +76,6 @@ import {
   collectCraftResources,
   releaseCraftShadow,
 } from "./craft.ts";
-import { getRoadSurface } from "./road-surface.ts";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);

@@ -192,6 +192,18 @@ export interface FiniteRoadContact extends RoadSurfaceContact {
   hullPoint: THREE.Vector3;
 }
 
+/** Immutable view of an indexed physical top face for visual projection. */
+export interface RoadSurfaceTriangle {
+  readonly a: Readonly<THREE.Vector3Like>;
+  readonly b: Readonly<THREE.Vector3Like>;
+  readonly c: Readonly<THREE.Vector3Like>;
+  readonly up: Readonly<THREE.Vector3Like>;
+  readonly sa: number;
+  readonly sb: number;
+  readonly sc: number;
+  readonly branch: number;
+}
+
 interface SurfaceTriangle {
   id: number;
   a: THREE.Vector3;
@@ -391,6 +403,17 @@ export class RoadSurface {
     );
     this.triangles = [...triangles];
     this.root = indexTriangles(triangles);
+  }
+
+  /** Visit existing top faces overlapping a footprint; the static index is shared. */
+  forEachTriangle(
+    minX: number,
+    maxX: number,
+    minZ: number,
+    maxZ: number,
+    action: (triangle: RoadSurfaceTriangle) => void,
+  ): void {
+    visit(this.root, minX, maxX, minZ, maxZ, action);
   }
 
   /** Local suspension support, not permission to acquire another route. */
