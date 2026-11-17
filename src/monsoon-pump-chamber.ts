@@ -18,7 +18,8 @@ export function buildMonsoonPumpChamber(
     cap: { color: 0xd9d5c9, map: "paint" },
     machinery: { color: 0x203841, map: "paint" },
     gate: { color: 0xf1c845, map: "paint" },
-    water: { color: 0x34766f, map: "water" },
+    water: { color: 0x6abfd2, map: "water" },
+    wet: { color: 0x526f73, map: "concrete" },
   });
   const waters: { point: THREE.Vector3; bottom: number; road: number }[] = [];
   const foundations = [];
@@ -157,6 +158,59 @@ export function buildMonsoonPumpChamber(
     const front = s.p.clone().addScaledVector(right, -(s.width + 17.5));
     site.box("machinery", front.setY(s.p.y + 25), [1, 18, s.length], s.yaw);
   }
+  // The inlet gatehouse has a transverse quay face across the low race. Its
+  // waterline is seen head-on on the bend approach, not only in a side trench.
+  const quayFrame = track.frame(0.326 * track.length);
+  const quayYaw = Math.atan2(quayFrame.tangent.x, quayFrame.tangent.z);
+  const quayRight = new THREE.Vector3(Math.cos(quayYaw), 0, -Math.sin(quayYaw));
+  const quayForward = new THREE.Vector3(
+    Math.sin(quayYaw),
+    0,
+    Math.cos(quayYaw),
+  );
+  const quayCenter = quayFrame.p
+    .clone()
+    .addScaledVector(quayRight, quayFrame.width + 61.5);
+  const quayWidth = 113,
+    quayDepth = 18;
+  const quayFoot = architecturalFooting(
+    environment,
+    quayCenter,
+    quayWidth,
+    quayDepth,
+    quayYaw,
+  );
+  const lowWater = quayFrame.p.y - 7;
+  const wetTop = lowWater + 2,
+    quayTop = quayFrame.p.y + 26;
+  site.box(
+    "wet",
+    quayCenter.clone().setY((quayFoot.bottom + wetTop) / 2),
+    [quayWidth, wetTop - quayFoot.bottom, quayDepth],
+    quayYaw,
+  );
+  site.box(
+    "concrete",
+    quayCenter.clone().setY((wetTop + quayTop) / 2),
+    [quayWidth, quayTop - wetTop, quayDepth],
+    quayYaw,
+  );
+  site.box(
+    "cap",
+    quayCenter.clone().setY(quayTop + 1),
+    [quayWidth + 2, 2, quayDepth + 2],
+    quayYaw,
+  );
+  site.root.userData.quay = {
+    center: quayCenter,
+    forward: quayForward,
+    right: quayRight,
+    width: quayWidth,
+    depth: quayDepth,
+    lowWater,
+    footing: quayFoot,
+    top: quayTop,
+  };
   // The inlet is compressed under a high gate carriage; the second throat
   // releases into sky and the boost-fed outlet. Neither obstructs racing space.
   for (const u of [0.326, 0.49]) {

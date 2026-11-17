@@ -173,14 +173,20 @@ for (const name of ["WHITEOUT", "MONSOON", "CINDERLINE"]) {
                 "monsoon-pump-chamber-machinery",
                 "monsoon-pump-chamber-cap",
               ].includes(hit.object.name);
+            const intentionalOpticalHouse =
+              name === "WHITEOUT" &&
+              branch === 0 &&
+              u >= 0.312 &&
+              u <= 0.36 &&
+              hit.object.name.startsWith("whiteout-optical-wing-");
             assert(
-              intentionalGallery || intentionalGate,
+              intentionalGallery || intentionalGate || intentionalOpticalHouse,
               `actual scene triangles over route ${u}/${branch}/${x}: ${hit.object.name}`,
             );
-            if (intentionalGate)
+            if (intentionalGate || intentionalOpticalHouse)
               assert(
                 hit.distance >= 39,
-                "operational gate carriage clears the complete racing envelope",
+                "operational gate/instrument house clears the complete racing envelope",
               );
             // Match the emitted gallery's existing soffit-clearance contract.
             assert(

@@ -82,20 +82,40 @@ test("WHITEOUT observatory is grounded as one basin installation and clears the 
   );
   const { footing, deck } = root.userData;
   for (const p of footing.contacts) assert(p.y > footing.bottom && p.y < deck);
-  // Check real scene triangles across all road widths, not only programme boxes.
+  // Only the single authored instrument house may cover the racing basin;
+  // every real underside triangle must retain the full navigable airspace.
+  let wingHits = 0;
   for (let u = 0.275; u < 0.49; u += 0.0005) {
     const f = track.frame(u * track.length);
     for (const x of [-f.width, 0, f.width]) {
       const p = f.p.clone().addScaledVector(f.right, x);
       ray.set(p, new THREE.Vector3(0, 1, 0));
       ray.far = 200;
-      assert.equal(
-        ray.intersectObjects(meshes).length,
-        0,
-        "installation never covers the racing basin",
-      );
+      for (const hit of ray.intersectObjects(meshes)) {
+        assert(
+          u >= 0.312 &&
+            u <= 0.36 &&
+            hit.object.name.startsWith("whiteout-optical-wing-"),
+          "only the authored optical house enters the racing overhead volume",
+        );
+        assert(
+          hit.distance >= 39,
+          "actual instrument-house/truss underside clears the complete banked racing envelope",
+        );
+        wingHits++;
+      }
     }
   }
+  assert(
+    wingHits > 0,
+    "the instrument house physically crosses the pilot's route, not only a scenery metadata range",
+  );
+  const wing = root.getObjectByName("whiteout-optical-wing");
+  for (const p of wing.userData.footing.contacts)
+    assert(
+      p.y > wing.userData.footing.bottom && p.y < wing.userData.floor,
+      "the shared caisson roots into actual basin terrain",
+    );
   // A continuous gallery must be present next to the changing spiral, not
   // merely a centrepoint tagged as an observatory that the driver never sees.
   for (const u of [0.3, 0.34, 0.38, 0.42, 0.445]) {
@@ -206,6 +226,34 @@ test("MONSOON visible low water race, retained depth and gate carriage are actua
     );
   }
   groundMaterial.dispose();
+  const quay = root.userData.quay;
+  const wetFace = root.getObjectByName("monsoon-pump-chamber-wet");
+  assert.equal(wetFace.material.map, textures.concrete);
+  const quayFrom = quay.center
+    .clone()
+    .addScaledVector(quay.forward, -quay.depth / 2 - 4)
+    .setY(quay.lowWater + 1);
+  ray.set(quayFrom, quay.forward);
+  ray.far = 8;
+  const face = ray.intersectObject(wetFace)[0];
+  assert(
+    face && Math.abs(face.distance - 4) < 0.001,
+    "a transverse exposed construction face meets the real low waterline head-on",
+  );
+  ray.set(
+    quayFrom.clone().setY(quay.lowWater + 1),
+    new THREE.Vector3(0, -1, 0),
+  );
+  ray.far = 2;
+  assert(
+    ray.intersectObject(water).length > 0,
+    "the quay face is beside rendered water, not a dry roadside costume",
+  );
+  for (const p of quay.footing.contacts)
+    assert(
+      p.y > quay.footing.bottom && p.y < quay.top,
+      "quay foundations enclose exact excavated terrain",
+    );
   // Overflow faces expose the 42m reservoir head above the excavated 3m race.
   for (const u of [0.342, 0.414, 0.491]) {
     const f = track.frame(u * track.length);

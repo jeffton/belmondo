@@ -5,6 +5,7 @@ import {
   architecturalFooting,
   courseArchitecture,
 } from "./course-architecture.ts";
+import { buildWhiteoutOpticalWing } from "./whiteout-optical-wing.ts";
 
 /** One optical installation: an incoming dome and a continuous vaulted rim lab. */
 export function buildWhiteoutObservatory(
@@ -189,6 +190,7 @@ export function buildWhiteoutObservatory(
     at(opticalDeck + 27),
   );
   put("instrument", 0, deck + 21, -42, 30, 3, 9);
+  buildWhiteoutOpticalWing(site.root, track, textures, environment);
   site.root.userData.footing = footing;
   site.root.userData.deck = deck;
   site.root.userData.spiralRange = track.config.sections.basinSpiral;
