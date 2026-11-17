@@ -27,6 +27,50 @@ export interface ShadowSurface {
   ): void;
 }
 
+interface TriangleTopology {
+  trackLength: number;
+  edges: string[];
+  transverse: {
+    station: number;
+    a: THREE.Vector3Like;
+    b: THREE.Vector3Like;
+    key: string;
+  }[];
+}
+
+// Surface triangles are immutable and shared by all eight projectors. Cache
+// world/station keys once instead of rebuilding long strings each render frame.
+const topology = new WeakMap<ShadowTriangle, TriangleTopology>();
+function triangleTopology(
+  triangle: ShadowTriangle,
+  trackLength: number,
+): TriangleTopology {
+  const existing = topology.get(triangle);
+  if (existing && existing.trackLength === trackLength) return existing;
+  const points = [triangle.a, triangle.b, triangle.c];
+  const stations = [triangle.sa, triangle.sb, triangle.sc].map(
+    (s) => ((s % trackLength) + trackLength) % trackLength,
+  );
+  const vertices = points.map((p, i) => `${p.x},${p.y},${p.z},${stations[i]}`);
+  const edges = vertices.map((a, i) => {
+    const b = vertices[(i + 1) % 3];
+    return a < b ? `${a}/${b}` : `${b}/${a}`;
+  });
+  const result: TriangleTopology = { trackLength, edges, transverse: [] };
+  for (let i = 0; i < 3; i++) {
+    const j = (i + 1) % 3;
+    if (stations[i] === stations[j])
+      result.transverse.push({
+        station: stations[i],
+        a: points[i],
+        b: points[j],
+        key: edges[i],
+      });
+  }
+  topology.set(triangle, result);
+  return result;
+}
+
 interface Vertex {
   x: number;
   y: number;
@@ -164,35 +208,18 @@ export class CraftShadow {
         key: string;
       }[]
     >();
-    const stationKey = (s: number) =>
-      ((s % trackLength) + trackLength) % trackLength;
-    const vertexKey = (p: THREE.Vector3Like, station: number) =>
-      `${p.x},${p.y},${p.z},${stationKey(station)}`;
     for (let i = 0; i < triangles.length; i++) {
-      const t = triangles[i];
-      const keys = [
-        vertexKey(t.a, t.sa),
-        vertexKey(t.b, t.sb),
-        vertexKey(t.c, t.sc),
-      ];
-      const ownEdges = keys.map((a, j) => {
-        const b = keys[(j + 1) % 3];
-        const key = a < b ? `${a}/${b}` : `${b}/${a}`;
+      const data = triangleTopology(triangles[i], trackLength);
+      for (const key of data.edges) {
         const neighbors = edges.get(key);
         if (neighbors) neighbors.push(i);
         else edges.set(key, [i]);
-        return key;
-      });
-      triangleEdges.push(ownEdges);
-      const points = [t.a, t.b, t.c];
-      const stations = [t.sa, t.sb, t.sc];
-      for (let j = 0; j < 3; j++) {
-        const k = (j + 1) % 3;
-        if (stationKey(stations[j]) !== stationKey(stations[k])) continue;
-        const station = stationKey(stations[j]);
-        const group = transverse.get(station) ?? [];
-        group.push({ index: i, a: points[j], b: points[k], key: ownEdges[j] });
-        transverse.set(station, group);
+      }
+      triangleEdges.push([...data.edges]);
+      for (const edge of data.transverse) {
+        const group = transverse.get(edge.station) ?? [];
+        group.push({ index: i, a: edge.a, b: edge.b, key: edge.key });
+        transverse.set(edge.station, group);
       }
     }
     // At a fork tip one incoming transverse edge meets two outgoing half-edges.
