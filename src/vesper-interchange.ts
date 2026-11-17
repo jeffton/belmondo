@@ -90,18 +90,36 @@ export function buildVesperInterchange(
   for (let i = 0; i < p.length - 1; i++) {
     const a = p[i],
       b = p[i + 1];
-    const body = (lowA: number, lowB: number, highA: number, highB: number) => [
-      new THREE.Vector3(a.center.x, lowA, a.center.z - a.halfWidth),
-      new THREE.Vector3(b.center.x, lowB, b.center.z - b.halfWidth),
+    const body = (
+      lowA: number,
+      lowB: number,
+      highA: number,
+      highB: number,
+      recess: number,
+    ) => [
+      new THREE.Vector3(a.center.x, lowA, a.center.z - a.halfWidth + recess),
+      new THREE.Vector3(b.center.x, lowB, b.center.z - b.halfWidth + recess),
       new THREE.Vector3(b.center.x, lowB, b.center.z + b.halfWidth),
       new THREE.Vector3(a.center.x, lowA, a.center.z + a.halfWidth),
-      new THREE.Vector3(a.center.x, highA, a.center.z - a.halfWidth),
-      new THREE.Vector3(b.center.x, highB, b.center.z - b.halfWidth),
+      new THREE.Vector3(a.center.x, highA, a.center.z - a.halfWidth + recess),
+      new THREE.Vector3(b.center.x, highB, b.center.z - b.halfWidth + recess),
       new THREE.Vector3(b.center.x, highB, b.center.z + b.halfWidth),
       new THREE.Vector3(a.center.x, highA, a.center.z + a.halfWidth),
     ];
-    prism("podium", body(a.bottom, b.bottom, a.podium, b.podium));
-    prism("ceramic", body(a.podium, b.podium, a.roof, b.roof));
+    prism("podium", body(a.bottom, b.bottom, a.podium, b.podium, 0));
+    // A real recessed platform sits behind load-bearing piers. The glazed
+    // rooms are not painted onto a single flat terminal wall.
+    prism("ceramic", body(a.podium, b.podium, a.roof, b.roof, 12));
+    prism("ceramic", body(a.roof - 2, b.roof - 2, a.roof + 1, b.roof + 1, 0));
+    arch.box(
+      "ceramic",
+      new THREE.Vector3(
+        a.center.x,
+        (a.podium + a.roof) / 2,
+        a.center.z - a.halfWidth + 2,
+      ),
+      [4, a.roof - a.podium, 4],
+    );
     // The concourse ceiling is continuous and follows the descending deck;
     // it is not a repeated row of disconnected horizontal slabs.
     const canopy = (f: typeof a, y: number, side: number) =>
@@ -138,13 +156,21 @@ export function buildVesperInterchange(
     const upperY = (a.upper.p.y + b.upper.p.y) / 2;
     const half = (a.halfWidth + b.halfWidth) / 2;
     const depth = Math.abs(a.center.x - b.center.x);
+    arch.box(
+      "steel",
+      center
+        .clone()
+        .setY(lowerY - 2)
+        .add(new THREE.Vector3(0, 0, -half + 6)),
+      [depth, 1.5, 12],
+    );
     // Broad occupied rooms reveal a single building at two floor levels.
     arch.box(
       i % 3 === 0 ? "warm" : "glass",
       center
         .clone()
         .setY(lowerY + 6)
-        .add(new THREE.Vector3(0, 0, -half - 0.25)),
+        .add(new THREE.Vector3(0, 0, -half + 11.75)),
       [depth * 0.72, 6, 0.5],
     );
     arch.box(

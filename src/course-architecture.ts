@@ -25,6 +25,13 @@ export function courseArchitecture(
     geometry: THREE.BufferGeometry,
     matrix: THREE.Matrix4,
   ) {
+    // Authored prisms and standard primitives share one material batch. An
+    // identity index retains each prism's face normals while matching the
+    // indexed primitives required by mergeGeometries.
+    if (geometry.index === null)
+      geometry.setIndex(
+        Array.from({ length: geometry.attributes.position.count }, (_, i) => i),
+      );
     geometry.applyMatrix4(matrix);
     geometry.computeBoundingBox();
     parts.push({ kind, bounds: geometry.boundingBox!.clone() });
