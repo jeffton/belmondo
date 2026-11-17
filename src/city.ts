@@ -426,10 +426,6 @@ export function buildCity(
           [0.213, 1, 175, "refinery"],
           [0.312, 1, 170, "freight"],
           [0.425, -1, 185, "city"],
-          [0.572, -1, 210, "gantry"],
-          [0.663, -1, 165, "refinery"],
-          [0.817, 1, 180, "freight"],
-          [0.917, -1, 225, "city"],
         ]
       : [
           [0.137, 1, 180, "transit"],

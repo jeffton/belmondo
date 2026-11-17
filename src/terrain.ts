@@ -2,6 +2,11 @@ import type { Track, TrackFrame } from "./track.ts";
 import * as THREE from "three";
 import { createNearestPointIndex } from "./nearest-point-index.ts";
 import { createFaultlineWorkingCut } from "./faultline-processing.ts";
+import { carveMonsoonLock } from "./monsoon-lock-landform.ts";
+import {
+  createCoastSolarLandform,
+  retainsCoastGallery,
+} from "./coast-solar-landform.ts";
 import {
   createNightHarborBasin,
   nightHarborBaseHeight,
@@ -96,6 +101,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     for (const branch of branches)
       samples.push({ ...track.frame(u * track.length, branch), branch });
   }
+  const placesLandform = createCoastSolarLandform(track, samples);
   const minX = Math.min(...samples.map((f) => f.p.x));
   const maxX = Math.max(...samples.map((f) => f.p.x));
   const minZ = Math.min(...samples.map((f) => f.p.z));
@@ -322,7 +328,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
       y = THREE.MathUtils.lerp(y, site.y, footprint);
     }
     if (volcanic) y = cinderWorksLandHeight(cinderWorks!, x, z, y);
-    return y;
+    return placesLandform(x, z, y);
   }
   const heights = prepared?.heights ?? new Float32Array(STRIDE * STRIDE);
   if (!prepared) {
@@ -377,6 +383,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
       }
     }
     if (recipe?.biome === "hydraulic") {
+      carveMonsoonLock(track, lowerCell);
       // Excavate the full authored flume beneath its visible water mesh. Apply
       // the cut through lowerCell so heightAt and the rendered terrain triangles
       // share the same earthworks; the gravity path and water elevation stay put.
@@ -410,7 +417,9 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
     if (!recipe && !desert && !harbor) {
       // Occupied waterfront floors are authored relative to the road. Clear their
       // basements in the land itself; do not push terrain through existing shops.
-      const galleries = getWaterfrontDistricts(track);
+      const galleries = getWaterfrontDistricts(track).filter(([start]) =>
+        retainsCoastGallery(start),
+      );
       for (const [start, end, branch, side] of galleries) {
         // Match the occupied basement slabs emitted by buildFlagship: each bay
         // has one horizontal longitudinal axis, not a continuously climbing floor.

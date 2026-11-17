@@ -104,13 +104,6 @@ export const NEW_COURSE_RECIPES: Record<string, CourseRecipe> = {
     districts: [
       { name: "CALDERA EXCHANGE", u: 0.23, side: -1, kind: "geothermal" },
       { name: "SULFUR CUT", u: 0.435, side: 1, kind: "basalt" },
-      {
-        name: "CONDENSER FIELD",
-        u: 0.78,
-        side: -1,
-        branch: -1,
-        kind: "condenser",
-      },
     ],
     approaches: [
       { name: "RIDGE STEAM MAINS", u: 0.1, side: 1, kind: "pipe-yard" },

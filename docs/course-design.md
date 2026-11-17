@@ -23,6 +23,7 @@ BELMONDO is precision-built anti-gravity racing in inhabited landscapes. Learn f
 - Compose broad value masses before detail: a quiet dark deck, readable boundaries, substantial structures and selective accents. Preserve the character of each environment rather than making every course grey.
 - Separate material roles. Solar collectors are dark machinery, not window facades; water is not patterned concrete; painted metal is not ceramic. Let pigment retain the road's texture, lighting and shadows.
 - Use local construction depth: darker recesses and supports, readable soffits and coherent roof masses. A bright stripe on every floor turns a building into a wireframe.
+- Judge place identity and spatial rhythm through a driven sequence. Desktop and portrait may reveal different parts; neither needs to explain every technical waterline or industrial connection.
 - Sequence enclosure and release. Existing cuttings, galleries, open water, roof routes and canyon streets should frame the next place. Strengthen an existing landmark or remove competing detail before adding another object.
 - Position structures for the chase view. NOCTILUCENT's open high bridge is an intentional release against VESPER's enclosed city. A raised-truss experiment read as floating wings from the cockpit and was rejected; more skyline is not automatically better.
 - Bake broad terrain distinctions into vertex colour: snow against blue ice, deep vegetation against exposed banks, cool basalt against sparse sulfur beds. Avoid repetitive fine stripes or grain on every surface.
@@ -30,22 +31,22 @@ BELMONDO is precision-built anti-gravity racing in inhabited landscapes. Learn f
 
 ## Circuit identities
 
-| Circuit       | Driving / spatial signature                                       | Visual hierarchy                                                           |
-| ------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| WHITEOUT      | Falling basin, climbing valley, exposed ridge versus ice cut      | Quiet snow, blue ice, dark observatory; orange instruments                 |
-| MONSOON       | Spillway dive, dry lock, technical outlet, climbing fork          | Pale hydraulic structures, deep green banks, water and pressure works      |
-| KAISEKI COAST | Waterfront combinations, bore versus skyway, climbing reversal    | Warm sea/sky, pale ceramic masses, dark recesses, selective vermilion      |
-| SOLAR ARRAY   | Rock-cut climb, mountain tunnel, route choice, transmission turns | Warm earth, dark collectors, coherent service halls, cool technical steel  |
-| FAULTLINE     | Rising rim, bench versus bore, great jump, extraction shelves     | Broad mineral faces, reclaimed green, turquoise water, isolated machinery  |
-| CINDERLINE    | Narrow compound valley, caldera release, gorge versus rim         | Cool basalt, sparse sulfur, pale condenser silhouettes                     |
-| NOCTILUCENT   | Freight climb, crossing levels, open high bridge, gravity descent | Dark water/warehouses, readable steel, selected warm terminal masses       |
-| VESPER        | Rooftops, lower gallery, market, tower canyon, freight streets    | District-scale colour fields; readable soffits, restrained secondary light |
+| Circuit       | Driving / spatial signature                                                             | Visual hierarchy                                                                     |
+| ------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| WHITEOUT      | Tightening observatory spiral, climbing valley, ridge versus ice cut                    | Quiet snow, blue ice, a supported optical vault and restrained instruments           |
+| MONSOON       | Spillway basin, pump chamber, technical outlet, climbing fork                           | Pale hydraulic masses, blue water, deep green banks and pressure works               |
+| KAISEKI COAST | Waterfront combinations, bore versus skyway, institute, coastal yard and receiving mole | Warm sea/sky, open public court, pale ceramic masses and selective vermilion         |
+| SOLAR ARRAY   | Collector hillside, mountain tunnel, route choice, process-to-rock release              | Warm earth, continuous dark collector bands, grounded service halls and cool steel   |
+| FAULTLINE     | Rising rim, bench versus bore, great jump, broad-to-tight extraction return             | Broad mineral faces, reclaimed green, turquoise water and a connected working cut    |
+| CINDERLINE    | Exposed ridge, caldera release, gorge versus rim, retained works shelf                  | Cool basalt, sparse sulfur and a low condenser silhouette facing the approach        |
+| NOCTILUCENT   | Freight climb, crossing levels, open bridge, descent into a freight apron               | Dark water, connected quays, readable cargo hoists and selected warm terminal masses |
+| VESPER        | Rooftops, covered arrival, open court and terminal hall, market, tower canyon           | District-scale colour fields, deep occupied openings and restrained interior light   |
 
 ## Verification
 
 Use the actual `Track`, `Race`, terrain, `World` and chase camera. Static plan views help diagnose geometry; they do not establish driving feel or visual quality.
 
-Compare matched LOWRES desktop and portrait/mobile views through approaches, commitment points and exits. Run continuous legal-input sequences to check turn preparation, pickup choices, flight and landing; distinguish scenario initialization from subsequent driving. Review consecutive frames for shimmer, clipping, hidden decisions and competing silhouettes. Obtain an independent code and visual/motion review.
+Compare matched LOWRES desktop and portrait/mobile views through approaches, commitment points and exits. Run continuous legal-input sequences to check turn preparation, pickup choices, flight and landing; distinguish scenario initialization from subsequent driving. Review consecutive frames for shimmer, clipping, hidden decisions and competing silhouettes. Obtain an independent code and visual/motion review. Transfer the capture slot only after its owner explicitly confirms browser closure; queued steering does not interrupt an in-flight tool.
 
 Run the all-craft/class/branch AI matrix, physical player/fork and flight tests, radius and terrain-clearance guards, then the complete suite, typecheck and build. Measure scenery clearance on both crossing levels; a decorative structure must not fill a legal airborne corridor. Keep records, progression and user storage intact. Do not weaken unrelated assertions to accommodate a candidate. Report simulated frame cadence and renderer counts as such, not device FPS.
 

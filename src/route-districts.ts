@@ -49,21 +49,6 @@ export const ROUTE_DISTRICTS = [
       branch: -1,
       style: "berth",
     },
-    {
-      name: "PROCESS WORKS",
-      start: 0.563,
-      end: 0.662,
-      side: 1,
-      style: "silos",
-    },
-    { name: "LOWER DOCKS", start: 0.812, end: 0.889, side: -1, style: "cargo" },
-    {
-      name: "NIGHT TERMINAL",
-      start: 0.904,
-      end: 0.94,
-      side: 1,
-      style: "berth",
-    },
   ],
 ];
 
