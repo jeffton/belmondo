@@ -1,4 +1,4 @@
-import type { Track, TrackFrame } from "./track.ts";
+import type { Track } from "./track.ts";
 import * as THREE from "three";
 
 /** Walk real deck metres, including ramp slope, without crossing the missing deck. */
@@ -53,42 +53,42 @@ export function getJumpMarkingLayout(track: Track) {
       end: offsetAlongDeck(track, station, length / 2),
     });
   }
-  // Contracting, broken transverse slab marks leave the central racing line open.
-  for (const distance of [-96, -60, -32, -12]) {
-    for (const [left, right] of [
-      [-0.91, -0.65],
-      [-0.58, -0.28],
-      [0.28, 0.58],
-      [0.65, 0.91],
-    ])
-      patch("approach", launch, distance, left, right, 1.4, 0xe4d9c2);
-  }
-  // Sparse open brackets identify the receiving deck, not a boost/pickup socket.
-  for (const distance of [20, 96, 208]) {
-    for (const side of [-1, 1]) {
-      const a = side * 0.34,
-        b = side * 0.91;
+  // Split staples, not arrows: three broad vermilion mouths count down to
+  // takeoff. Ivory endcaps and long outer prongs survive low-res foreshortening.
+  // The uninterrupted dark centre is a racing line, never a pickup socket.
+  const vermilion = 0xef482d;
+  const ivory = 0xfff1d7;
+  function pair(
+    kind: string,
+    anchor: number,
+    distance: number,
+    inner: number,
+    outer: number,
+    length: number,
+    color: THREE.ColorRepresentation,
+  ) {
+    for (const side of [-1, 1])
       patch(
-        "landing",
-        landing,
+        kind,
+        anchor,
         distance,
-        Math.min(a, b),
-        Math.max(a, b),
-        1.6,
-        0xe4d9c2,
+        side < 0 ? -outer : inner,
+        side < 0 ? -inner : outer,
+        length,
+        color,
       );
-      const c = side * 0.86;
-      patch(
-        "landing",
-        landing,
-        distance + 2.5,
-        Math.min(c, b),
-        Math.max(c, b),
-        6.6,
-        0xc17b67,
-      );
-    }
   }
+  for (const distance of [-168, -100, -32]) {
+    pair("approach", launch, distance, 0.24, 0.9, 13, vermilion);
+    pair("approach", launch, distance - 10, 0.24, 0.9, 5, ivory);
+    pair("approach", launch, distance + 17, 0.72, 0.9, 19, vermilion);
+  }
+  // One long receiving cradle reverses the launch motif: a wide threshold,
+  // then receding shoulder arms. It reads from the air without painting the void.
+  pair("landing", landing, 14, 0.24, 0.9, 18, vermilion);
+  pair("landing", landing, 27, 0.24, 0.7, 6, ivory);
+  pair("landing", landing, 59, 0.72, 0.9, 70, vermilion);
+  pair("landing", landing, 64, 0.64, 0.7, 64, ivory);
   return patches;
 }
 
@@ -97,8 +97,8 @@ function paintTexture() {
   let seed = 7901;
   for (let i = 0; i < pixels.length; i += 4) {
     seed = (seed * 16807) % 2147483647;
-    const grain = 225 + (seed % 30);
-    pixels.set([grain, grain, grain, seed % 101 < 14 ? 0 : 255], i);
+    const grain = 240 + (seed % 16);
+    pixels.set([grain, grain, grain, seed % 101 < 4 ? 0 : 255], i);
   }
   const texture = new THREE.DataTexture(pixels, 64, 32);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -110,7 +110,7 @@ function paintTexture() {
   return texture;
 }
 
-/** Printed directly onto the deck; no collider, raised pad, arrow or light. */
+/** Flat reflective ink: no collider, pad, arrow, light or bloom. */
 export function buildJumpMarkings(
   scene: THREE.Object3D,
   track: Track,
@@ -124,23 +124,40 @@ export function buildJumpMarkings(
     uv = [];
   const layout = getJumpMarkingLayout(track);
   for (const patch of layout) {
-    const a = track.frame(patch.start),
-      b = track.frame(patch.end);
-    const points = [
-      a.p.clone().addScaledVector(a.right, patch.left * a.width),
-      a.p.clone().addScaledVector(a.right, patch.right * a.width),
-      b.p.clone().addScaledVector(b.right, patch.right * b.width),
-      b.p.clone().addScaledVector(b.right, patch.left * b.width),
-    ];
-    for (const index of [0, 2, 1, 0, 3, 2]) {
-      const p = points[index],
-        tint = new THREE.Color(lighting.shade(p, patch.color));
-      positions.push(...p.toArray());
-      colors.push(tint.r, tint.g, tint.b);
-      uv.push(
-        (index === 0 || index === 3 ? patch.left : patch.right) * a.width,
-        index < 2 ? patch.start : patch.end,
+    // Follow the ramp/banking rather than stretching a plane through the deck.
+    // Five-metre slices match the road renderer's longitudinal resolution.
+    const slices = Math.ceil((patch.end - patch.start) / 5);
+    for (let slice = 0; slice < slices; slice++) {
+      const start = THREE.MathUtils.lerp(
+        patch.start,
+        patch.end,
+        slice / slices,
       );
+      const end = THREE.MathUtils.lerp(
+        patch.start,
+        patch.end,
+        (slice + 1) / slices,
+      );
+      const a = track.frame(start),
+        b = track.frame(end);
+      const points = [
+        a.p.clone().addScaledVector(a.right, patch.left * a.width),
+        a.p.clone().addScaledVector(a.right, patch.right * a.width),
+        b.p.clone().addScaledVector(b.right, patch.right * b.width),
+        b.p.clone().addScaledVector(b.right, patch.left * b.width),
+      ];
+      for (const index of [0, 2, 1, 0, 3, 2]) {
+        const p = points[index]
+            .clone()
+            .addScaledVector(index < 2 ? a.up : b.up, 0.04),
+          tint = new THREE.Color(lighting.shade(p, patch.color));
+        positions.push(...p.toArray());
+        colors.push(tint.r, tint.g, tint.b);
+        uv.push(
+          (index === 0 || index === 3 ? patch.left : patch.right) * a.width,
+          index < 2 ? start : end,
+        );
+      }
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -151,7 +168,7 @@ export function buildJumpMarkings(
   geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   geometry.computeVertexNormals();
-  const material = new THREE.MeshLambertMaterial({
+  const material = new THREE.MeshBasicMaterial({
     vertexColors: true,
     map: paintTexture(),
     alphaTest: 0.4,

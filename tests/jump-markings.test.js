@@ -42,7 +42,15 @@ for (const [index, config] of TRACKS.entries()) {
       layout.some((patch) => patch.kind === "approach") &&
         layout.some((patch) => patch.kind === "landing"),
     );
-    for (const patch of layout) {
+    for (const [i, patch] of layout.entries()) {
+      for (const other of layout.slice(i + 1))
+        assert(
+          patch.end <= other.start ||
+            patch.start >= other.end ||
+            patch.right <= other.left ||
+            patch.left >= other.right,
+          "paint layers must not overlap and flicker on the same deck",
+        );
       assert(
         Math.abs(
           deckDistance(track, patch.anchor, patch.station) -
@@ -84,7 +92,7 @@ for (const [index, config] of TRACKS.entries()) {
     }
   });
 
-  test(`${config.name}: jump paint is one worn non-emissive mesh on the actual road plane`, () => {
+  test(`${config.name}: reflective jump ink is batched and follows the curved deck without raised pads`, () => {
     const track = makeTrack(index),
       scene = new THREE.Scene();
     const { mesh, layout } = buildJumpMarkings(scene, track, {
@@ -96,31 +104,43 @@ for (const [index, config] of TRACKS.entries()) {
       "runway paint should add one batched draw, not per-stripe objects",
     );
     assert(
-      mesh.material.isMeshLambertMaterial &&
-        mesh.material.emissive.getHex() === 0,
+      mesh.material.isMeshBasicMaterial,
+      "reflective ink stays legible at night without lights or bloom",
     );
     assert(
       mesh.material.polygonOffset && mesh.material.alphaTest > 0,
       "worn ink stays flat without z-fighting",
     );
     const positions = mesh.geometry.attributes.position;
-    for (let i = 0; i < layout.length; i++) {
-      const patch = layout[i];
-      for (const [j, station, side] of [
-        [0, patch.start, patch.left],
-        [2, patch.start, patch.right],
-        [1, patch.end, patch.right],
-        [4, patch.end, patch.left],
-      ]) {
-        const f = track.frame(station),
-          p = new THREE.Vector3().fromBufferAttribute(positions, i * 6 + j);
-        const expected = f.p.clone().addScaledVector(f.right, side * f.width);
-        assert(
-          p.distanceTo(expected) < 0.001,
-          "paint must not add a raised pad or alter the road surface",
-        );
+    let vertex = 0;
+    for (const patch of layout) {
+      const slices = Math.ceil((patch.end - patch.start) / 5);
+      for (let slice = 0; slice < slices; slice++) {
+        const start =
+          patch.start + ((patch.end - patch.start) * slice) / slices;
+        const end =
+          patch.start + ((patch.end - patch.start) * (slice + 1)) / slices;
+        for (const [j, station, side] of [
+          [0, start, patch.left],
+          [2, start, patch.right],
+          [1, end, patch.right],
+          [3, start, patch.left],
+          [4, end, patch.left],
+          [5, end, patch.right],
+        ]) {
+          const f = track.frame(station),
+            p = new THREE.Vector3().fromBufferAttribute(positions, vertex + j);
+          const expected = f.p.clone().addScaledVector(f.right, side * f.width);
+          assert(
+            Math.abs(p.clone().sub(expected).dot(f.up) - 0.04) < 0.001 &&
+              p.distanceTo(expected) < 0.041,
+            "only a four-centimetre render bias separates ink from its deck; no raised insert",
+          );
+        }
+        vertex += 6;
       }
     }
+    assert.equal(positions.count, vertex);
     const data = mesh.material.map.image.data;
     let chipped = 0,
       painted = 0;
