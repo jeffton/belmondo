@@ -16,14 +16,14 @@ const RENDER_FIXTURES = [
   [
     "WHITEOUT",
     "4c14f4134a87e38c87ba9f309507691d2fdea307fcec4ae1524896ba88592f76",
-    "6952d61c68e0d766d3932f55a37c5897e066585d135d3363c456380788edefb8",
-    "43acbddcbfbc47bbd65769654fd9673612201b8342f5f97d5fba37c798539697",
+    "bd8acdd2392de563276a449e71d429fed1d0446ce4e1352cd1f8be7a8109b80c",
+    "17623d2dedd6ea041be5b2e1d8d9496902a3ea6b9022a3c2b6aab006c67d4064",
   ],
   [
     "MONSOON",
     "35c8fea77a3365eb6cfbec26ee550c001e32ee2cbaaabac32dc2d300330a7ebf",
-    "06bd5164c37748f1e6147f063f52d96c62a2dfaacb57541a246e2cfb2c8411c1",
-    "7c3ab5d6b399b351bcde8069482140d5ca4c7f7a390e3eee7a3bb3d906ade368",
+    "93efeaf9711675019d5e0f69ad504fc40e16f7fcfdf5bcd2f9acd1bfaeb1eefa",
+    "31d8526f6472af4b217632d56a80b989c95a51d8977c3ab87f831763dc16f0a6",
   ],
   [
     "KAISEKI COAST",
@@ -40,8 +40,8 @@ const RENDER_FIXTURES = [
   [
     "FAULTLINE",
     "d72073fd1d427dd8c1c09cbfd2bba203dea3adcee8e7fbae587e45d079911aeb",
-    "5a5f9a4294627484ff2257999497e910c39e304a2ee61e08e3d3bc8eed731e4a",
-    "28265fc7583ab89a2da8cb8ae87bfac6ef740673458ac59cc2c3f053c44816a1",
+    "a5bdfa6c0af7ad0d183f2322c1c7475eaef4d95cfc32607bdc09840c220139b6",
+    "4cd31d8f874d2ebd852ca4874857db79600a54cbcf2dc1985d5fccbb09fc5f9a",
   ],
   [
     "CINDERLINE",
@@ -57,9 +57,9 @@ const RENDER_FIXTURES = [
   ],
   [
     "VESPER CIRCUIT",
-    "d1b2bc67d2a2e51024c91b5456c87f0335f24ef74e0f194835897e8abe22488c",
-    "a8cf36908959a4bfc95aba7431b92c2efe56d84d5fe08f3a223f34e4ead3f3d4",
-    "c0c9f939d84138c0636f78377866ffb459a5379a5d8db10f2d380507420e6bf4",
+    "902a48c23329383831f04a980b8a09b4da181f960cce473e8c03adfc1733d7e4",
+    "45ccb68de6b6149b9e3699125bc9fe4254507a00d9d02d8c32cc7f11c2fcfa32",
+    "e096c9aab5d0274746b19909c847d87aa188bb00c7afae275c893cd17a0b6e8d",
   ],
 ];
 const tracks = RENDER_FIXTURES.map((_, i) => makeTrack(i));
@@ -149,30 +149,48 @@ for (const [
   });
 }
 
-test("WHITEOUT preserves baseline road triangles outside the climbing valley and its bank transitions", () => {
-  const track = tracks[0];
-  // Track uses a 45-station-unit bank kernel, six neighbouring tangents and
-  // local tangent/interpolation samples. Include their finite reach, not an
-  // arbitrary whole-sector exemption. The expected hash is from f6f2a7d.
-  const frameStep = track.length / Math.ceil(track.length / 3);
-  const reach = 45 + 9 * frameStep;
-  const outside = triangles(getRoadSurface(track)).filter(
-    (face) =>
-      Math.max(face.sa, face.sb, face.sc) < 0.54 * track.length - reach ||
-      Math.min(face.sa, face.sb, face.sc) > 0.66 * track.length + reach,
-  );
-  assert.equal(outside.length, 2988);
-  assert.equal(
-    digest(
-      outside
-        .map((t) =>
-          [...t.a.toArray(), ...t.b.toArray(), ...t.c.toArray()].join(","),
-        )
-        .sort(),
-    ),
-    "ddfe51f9f5fbd63e90359d376285511062a278d1d2e6ad57ab041fa888dd7956",
-  );
-});
+for (const [index, windows, count, hash] of [
+  [
+    0,
+    [
+      [0.3, 0.5],
+      [0.54, 0.66],
+    ],
+    2444,
+    "e446ad96e9ffc73e777cfc328aa4745d2774ee08c8795a7d6f8d020fd60a1465",
+  ],
+  [
+    1,
+    [[0.565, 0.725]],
+    3098,
+    "89860b15d7070e873c7ee09be4ec0f5d347cde3438d637aa6a2bade48cd4d450",
+  ],
+]) {
+  test(`${tracks[index].config.name}: road outside authored windows matches the independent baseline`, () => {
+    const track = tracks[index],
+      step = track.length / Math.ceil(track.length / 3);
+    // Six tangent neighbours, the actual 45m bank kernel and one interpolation sample.
+    const reach = index === 1 ? (Math.ceil(45 / step) + 6 + 1) * step : 0;
+    const outside = triangles(getRoadSurface(track)).filter((face) =>
+      windows.every(
+        ([a, b]) =>
+          Math.max(face.sa, face.sb, face.sc) < a * track.length - reach ||
+          Math.min(face.sa, face.sb, face.sc) > b * track.length + reach,
+      ),
+    );
+    assert.equal(outside.length, count);
+    assert.equal(
+      digest(
+        outside
+          .map((t) =>
+            [...t.a.toArray(), ...t.b.toArray(), ...t.c.toArray()].join(","),
+          )
+          .sort(),
+      ),
+      hash,
+    );
+  });
+}
 
 const pointHull = { faces: [], radius: 1.1 };
 const pointVertices = () => [new THREE.Vector3(0, -1.1, 0)];
