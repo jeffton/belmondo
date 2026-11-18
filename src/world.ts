@@ -71,6 +71,7 @@ import { circuitTextures } from "./materials.ts";
 import { buildTrackLighting } from "./track-lighting.ts";
 import { createSky } from "./sky.ts";
 import { buildEnvironment } from "./environment.ts";
+import { buildSceneryActivity } from "./scenery-activity.ts";
 import { buildRacingInfrastructure } from "./racing-infrastructure.ts";
 import { buildCity } from "./city.ts";
 import { buildNightHarbor } from "./night-harbor.ts";
@@ -153,6 +154,7 @@ export class World {
   declare lighting: ReturnType<typeof buildTrackLighting>;
   declare environment: EnvironmentSurface;
   declare city: ReturnType<typeof buildCity>;
+  declare scenery: ReturnType<typeof buildSceneryActivity>;
   declare startGantry: ReturnType<typeof buildStartGantry>;
   declare finishDistrict: ReturnType<typeof buildFinishDistrict>;
   declare weaponEffects: WeaponEffects;
@@ -745,6 +747,7 @@ export class World {
     buildTrackAdvertising(this.scene, track, environment);
     yield;
     buildVegetation(this.scene, track, environment);
+    this.scenery = buildSceneryActivity(this.scene, track, environment);
     yield;
     this.weaponEffects = new WeaponEffects(this.scene);
     this.impactSparks = new ImpactSparks(this.scene);
@@ -833,6 +836,7 @@ export class World {
       this.camera.updateProjectionMatrix();
     }
     this.city.update(this.time);
+    this.scenery.update(this.time);
     this.startGantry.update(race, demo);
     this.finishDistrict.update(this.time);
     const player = race.player,

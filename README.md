@@ -65,6 +65,8 @@ Design Study pages through original OpenAI Image concept boards (world, league, 
 
 `GAME_URL=http://127.0.0.1:5187 node tests/menu-audio.browser.mjs` verifies real Web Audio output, autoplay locking, keyboard/gamepad/touch navigation, paused dialogs, zero effects volume and unchanged records.
 
+`node tests/scenery-activity.browser.mjs` sweeps each course's animated landmark through the real LOWRES chase camera on desktop and portrait; `SOURCE_URL` and `ARTIFACT_DIR` select the local server and report folder. Its matched draw-call/triangle comparison measures added render work, not hardware frame rate.
+
 The browser test expects Vite at `http://127.0.0.1:5178`; start it with `npm run dev -- --port 5178`. Set `GAME_URL` to test another deployment. `npx playwright install chromium` installs its browser. SwiftShader is enabled for headless Linux without a GPU.
 
 After `npm run build`, run `node tests/race-start-loading.browser.mjs` to hold the real course worker and check queued START, retry and cancellation on desktop keyboard and mobile touch. Run `node tests/supernova.browser.mjs` to check class access and race start on desktop and small-screen touch.
