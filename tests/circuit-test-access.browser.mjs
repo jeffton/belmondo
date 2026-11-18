@@ -37,7 +37,7 @@ try {
     await page.route("**/src/course-preparation.ts*", (route) =>
       route.fulfill({
         contentType: "text/javascript",
-        body: "export class CoursePreparation { async load() { return { workerMs: 0 }; } }",
+        body: "export class CoursePreparation { async load() { return { workerMs: 0 }; } cancel() {} }",
       }),
     );
     for (const [file, name] of [
@@ -47,7 +47,7 @@ try {
       await page.route(`**/src/${file}.ts`, (route) =>
         route.fulfill({
           contentType: "text/javascript",
-          body: `export class ${name} { constructor() { return new Proxy({audio:{paused:true}}, {get:(o,k)=>k in o?o[k]:(()=>{})}); } }`,
+          body: `export class ${name} { constructor() { return new Proxy({ audio: { paused: true }, start: async () => {} }, { get: (o, k) => k in o ? o[k] : (() => {}) }); } }`,
         }),
       );
     }
@@ -69,7 +69,7 @@ try {
     });
     await page.goto(server.resolvedUrls.local[0]);
     await page.waitForFunction(() => window.testCircuitQA);
-    await expect(page.locator("#tracks button:disabled")).toHaveCount(4);
+    await expect(page.locator("#tracks button:disabled")).toHaveCount(5);
     await page.evaluate(async () => {
       await testCircuitQA.select(6);
     });
@@ -77,9 +77,9 @@ try {
     for (let i = 0; i < 5; i++) await page.locator(".wordmark").click();
     await expect(page.locator("#circuit-test-access")).toBeVisible();
     await expect(page.locator("#tracks button:disabled")).toHaveCount(0);
-    await page.reload();
-    await page.waitForFunction(() => window.testCircuitQA);
-    await expect(page.locator("#tracks button:disabled")).toHaveCount(0);
+    expect(
+      await page.evaluate(() => localStorage.getItem("nv-test-access")),
+    ).toBe(null);
     await page.evaluate(async () => {
       await testCircuitQA.select(6);
       await testCircuitQA.start();
@@ -103,12 +103,31 @@ try {
     ).toEqual([null, null]);
     await expect(page.locator(".new-record-mark")).toHaveCount(0);
     await page.evaluate(() => testCircuitQA.return());
+    await expect(page.locator("#tracks button:disabled")).toHaveCount(0);
     await page.locator("#circuit-test-access").click();
-    await expect(page.locator("#tracks button:disabled")).toHaveCount(4);
+    await expect(page.locator("#tracks button:disabled")).toHaveCount(5);
     await expect(page.locator("#circuit-test-access")).toBeHidden();
     await page.reload();
     await page.waitForFunction(() => window.testCircuitQA);
-    await expect(page.locator("#tracks button:disabled")).toHaveCount(4);
+    for (let i = 0; i < 5; i++) await page.locator(".wordmark").click();
+    await expect(page.locator("#circuit-test-access")).toBeVisible();
+    await page.evaluate(() => {
+      localStorage.setItem("nv-test-access", "on");
+      localStorage.setItem("nv-records", '{"saved":42}');
+      localStorage.setItem("nv-progression", '{"classes":{}}');
+      localStorage.setItem("nv-render", "clean");
+    });
+    await page.reload();
+    await page.waitForFunction(() => window.testCircuitQA);
+    await expect(page.locator("#circuit-test-access")).toBeHidden();
+    await expect(page.locator("#tracks button:disabled")).toHaveCount(5);
+    expect(
+      await page.evaluate(() =>
+        ["nv-test-access", "nv-records", "nv-progression", "nv-render"].map(
+          (key) => localStorage.getItem(key),
+        ),
+      ),
+    ).toEqual([null, '{"saved":42}', '{"classes":{}}', "clean"]);
     await page.evaluate(async () => {
       await testCircuitQA.start();
       testCircuitQA.result();
@@ -119,16 +138,19 @@ try {
       ),
     ).toBeTruthy();
     expect(
+      await page.evaluate(() => JSON.parse(localStorage.getItem("nv-records"))),
+    ).toMatchObject({ saved: 42 });
+    expect(
       await page.evaluate(
         () =>
           Object.keys(JSON.parse(localStorage.getItem("nv-records"))).length,
       ),
-    ).toBe(1);
+    ).toBe(2);
     expect(errors).toEqual([]);
     await page.close();
   }
   console.log(
-    "Test circuit access: desktop/mobile locks, local opt-in, race snapshot and no saved results PASS",
+    "Test circuit access: desktop/mobile locks, page-only opt-in, legacy cleanup and results isolation PASS",
   );
 } finally {
   await browser.close();

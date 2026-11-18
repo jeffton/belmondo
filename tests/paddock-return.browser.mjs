@@ -31,27 +31,23 @@ try {
   page.setDefaultTimeout(15000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.addInitScript(
-    ({ testAccess }) => {
-      if (testAccess) localStorage.setItem("nv-test-access", "on");
-      window.paddockPad = {
-        index: 0,
-        id: "Paddock regression standard controller",
-        connected: true,
-        mapping: "standard",
-        axes: [0, 0, 0, 0],
-        buttons: Array.from({ length: 17 }, () => ({
-          pressed: false,
-          touched: false,
-          value: 0,
-        })),
-      };
-      Object.defineProperty(navigator, "getGamepads", {
-        value: () => [window.paddockPad],
-      });
-    },
-    { testAccess },
-  );
+  await page.addInitScript(() => {
+    window.paddockPad = {
+      index: 0,
+      id: "Paddock regression standard controller",
+      connected: true,
+      mapping: "standard",
+      axes: [0, 0, 0, 0],
+      buttons: Array.from({ length: 17 }, () => ({
+        pressed: false,
+        touched: false,
+        value: 0,
+      })),
+    };
+    Object.defineProperty(navigator, "getGamepads", {
+      value: () => [window.paddockPad],
+    });
+  });
   await page.route("**/src/main.ts", async (route) => {
     const { code } = await server.transformRequest("/src/main.ts");
     await route.fulfill({
@@ -189,6 +185,7 @@ try {
     const rendered = await page.evaluate(() => window.paddockQA.render());
     expect(rendered.calls).toBeGreaterThan(0);
   };
+  if (testAccess) for (let i = 0; i < 5; i++) await tap(".wordmark");
   await page.locator(`input[name="mode"][value="${mode}"]`).check();
   await tap("#setup-next");
   await page

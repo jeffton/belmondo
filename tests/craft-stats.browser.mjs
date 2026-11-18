@@ -39,7 +39,6 @@ try {
         await page.addInitScript(() => {
           window.requestAnimationFrame = () => 0;
           localStorage.setItem("nv-records", '{"preserved":42}');
-          localStorage.setItem("nv-test-access", "on");
           Object.defineProperty(navigator, "getGamepads", {
             get: () => () => (window.testPad ? [window.testPad] : []),
           });
@@ -89,6 +88,7 @@ try {
         });
         await page.goto(server.resolvedUrls.local[0]);
         await page.waitForFunction(() => window.nullVector);
+        for (let i = 0; i < 5; i++) await page.locator(".wordmark").click();
         await expect(page.locator("#craft-stats")).toBeHidden();
         await goToSetupStage(page, "track");
         await expect(page.locator("#craft-stats")).toBeHidden();

@@ -1,11 +1,8 @@
-export const TEST_ACCESS_KEY = "nv-test-access";
-
-/** Local circuit access, deliberately separate from wins and saved records. */
+/** Test circuit access lasts for this page only. */
 export function createCircuitTestAccess(
-  storage: Pick<Storage, "getItem" | "setItem">,
   onChange: (enabled: boolean) => void = () => {},
 ) {
-  let enabled = storage.getItem(TEST_ACCESS_KEY) === "on";
+  let enabled = false;
   let taps = 0;
   return {
     get enabled() {
@@ -13,7 +10,6 @@ export function createCircuitTestAccess(
     },
     toggle() {
       enabled = !enabled;
-      storage.setItem(TEST_ACCESS_KEY, enabled ? "on" : "off");
       onChange(enabled);
       return enabled;
     },

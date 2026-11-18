@@ -283,7 +283,9 @@ const records: Record<string, number> = JSON.parse(
   localStorage.getItem("nv-records") || "{}",
 );
 const progression = loadProgression(localStorage);
-const circuitTestAccess = createCircuitTestAccess(localStorage, () => {
+// Discard the old persisted override without touching records or progression.
+localStorage.removeItem("nv-test-access");
+const circuitTestAccess = createCircuitTestAccess(() => {
   updateTestAccessBadge();
   refreshTrackProgression();
 });
