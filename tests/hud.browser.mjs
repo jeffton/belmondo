@@ -53,7 +53,49 @@ try {
     }, touch);
     await expect(page.locator(".lap #timer")).toHaveText("03:59.99");
     await expect(page.locator(".lap #lap")).toBeVisible();
-    await expect(page.locator(".lap #lap-times")).toBeVisible();
+    const splitList = page.locator(".lap #lap-times");
+    await expect(splitList).toBeVisible();
+    await splitList.evaluate((list) => {
+      list.insertAdjacentHTML(
+        "beforeend",
+        Array.from(
+          { length: 5 },
+          (_, i) =>
+            `<div class="lap-time"><span>LAP ${i + 1}</span><b>00:35.12</b></div>`,
+        ).join(""),
+      );
+    });
+    const splits = splitList.locator(".lap-time:visible");
+    await expect(splits).toHaveCount(touch ? 1 : 6);
+    const timing = await splits.evaluateAll((rows) => {
+      const plate = document.querySelector(".lap");
+      const plateBounds = plate.getBoundingClientRect();
+      const face = getComputedStyle(plate, "::before").backgroundColor;
+      return rows.map((row) => {
+        const box = row.getBoundingClientRect();
+        const style = getComputedStyle(row);
+        return {
+          cream: style.backgroundColor === face,
+          ink: style.color === getComputedStyle(plate).color,
+          clipped: style.clipPath.startsWith("polygon("),
+          left: box.left,
+          right: box.right,
+          top: box.top,
+          bottom: box.bottom,
+          plateBottom: plateBounds.bottom,
+          plateLeft: plateBounds.left,
+        };
+      });
+    });
+    for (const [i, row] of timing.entries()) {
+      expect(row.cream && row.ink && row.clipped).toBe(true);
+      expect(row.left).toBe(row.plateLeft);
+      expect(row.top).toBeGreaterThanOrEqual(
+        i ? timing[i - 1].bottom : row.plateBottom,
+      );
+      expect(row.right).toBeLessThanOrEqual(viewport.width);
+      expect(row.bottom).toBeLessThan(viewport.height / 2);
+    }
     const glyphs = new Set(),
       colors = new Set();
     const active = touch ? "#touch-fire" : "#weapon";
