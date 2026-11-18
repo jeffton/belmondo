@@ -24,9 +24,10 @@ export function buildFaultlineEnvironment(
   const root = new THREE.Group();
   root.name = "faultline-environment";
   scene.add(root);
+  // The quarry's beds follow world elevation and mapped faults; keep the
+  // tile neutral so it never draws a parallel set of false sediment lines.
   const naturalMap = mineralGroundTexture(
-    (_u, v, fold, basin) =>
-      224 + fold * 9 + basin * 6 - (Math.sin(v * 3 + fold) > 0.85 ? 14 : 0),
+    (_u, _v, fold, basin) => 225 + fold * 8 + basin * 5,
   );
   const groundMat = new THREE.MeshLambertMaterial({
     vertexColors: true,

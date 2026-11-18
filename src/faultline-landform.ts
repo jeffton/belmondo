@@ -113,14 +113,16 @@ export function faultlineGroundColor(
   } else if (reclaimed && slope < 1.35) {
     color.setHSL(0.225, 0.38, 0.43 + variation);
   } else {
-    // Faulted strata: warm ironstone, chalk, blue slate and copper-bearing seams.
-    // Broad bands survive the terrain's 23 m vertex grid at racing speed.
-    const stratum =
-      (((y + 0.11 * x + 9 * Math.sin(z * 0.002)) % 128) + 128) % 128;
-    if (stratum < 28) color.setHSL(0.055, 0.43, 0.48 + variation);
-    else if (stratum < 51) color.setHSL(0.105, 0.29, 0.66 + variation);
-    else if (stratum < 78) color.setHSL(0.49, 0.23, 0.4 + variation);
-    else if (stratum < 98) color.setHSL(0.6, 0.16, 0.39 + variation);
-    else color.setHSL(0.125, 0.28, 0.59 + variation);
+    // Two oblique fractures displace and tilt whole beds. In any one cut
+    // the pilot sees an ochre cap, thick clay and a few recessed shale faces,
+    // not an endless cycle of equally prominent painted colour bands.
+    const block = z + x * 0.43 > 180 ? 1 : x - z * 0.28 < -420 ? -1 : 0;
+    const bed = y + (0.08 + block * 0.055) * x + 46 * block;
+    const exposed = Math.sin(x * 0.008 + z * 0.004) * 13;
+    if (bed + exposed > 225) color.setHSL(0.095, 0.24, 0.55 + variation);
+    else if (bed > 137) color.setHSL(0.06, 0.28, 0.44 + variation);
+    else if (bed + exposed > 94) color.setHSL(0.12, 0.12, 0.47 + variation);
+    else if (bed > 12) color.setHSL(0.59, 0.12, 0.34 + variation);
+    else color.setHSL(0.075, 0.31, 0.41 + variation);
   }
 }

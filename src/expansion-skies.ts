@@ -72,11 +72,11 @@ export const EXPANSION_SKIES: Record<string, SkyStory> = {
     cities: [],
   },
   "VESPER CIRCUIT": {
-    dusk: 0x3b326b,
-    cloud: 0x5d5085,
-    ridge: 0x303f70,
-    foreground: 0x202a53,
-    skyline: 0x39567b,
+    dusk: 0x5e485c,
+    cloud: 0x93716f,
+    ridge: 0x504858,
+    foreground: 0x34293b,
+    skyline: 0x5a3f55,
     far: [
       [0, 0.012],
       [0.25, 0.018],
@@ -106,11 +106,11 @@ export const EXPANSION_SKIES: Record<string, SkyStory> = {
     ],
   },
   WHITEOUT: {
-    dusk: 0xafd6e6,
-    cloud: 0xc5e5ee,
-    ridge: 0x599dbd,
-    foreground: 0x397f9e,
-    skyline: 0x346786,
+    dusk: 0xc2dce4,
+    cloud: 0xe7f0ee,
+    ridge: 0x77a0b5,
+    foreground: 0x587f98,
+    skyline: 0x416f89,
     ridgeStyle: "angular",
     snow: 0xd1edf3,
     far: [
@@ -210,10 +210,10 @@ export const EXPANSION_SKIES: Record<string, SkyStory> = {
     ],
   },
   CINDERLINE: {
-    dusk: 0xbb849d,
-    cloud: 0xa07998,
-    ridge: 0x72527e,
-    foreground: 0x443b65,
+    dusk: 0xc89189,
+    cloud: 0xa57983,
+    ridge: 0x71536d,
+    foreground: 0x503a57,
     skyline: 0x65728b,
     ridgeStyle: "angular",
     far: [

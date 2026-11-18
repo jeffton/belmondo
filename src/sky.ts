@@ -7,11 +7,11 @@ const TAU = Math.PI * 2;
 const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
   ...EXPANSION_SKIES,
   "KAISEKI COAST": {
-    dusk: 0xc28fae,
-    cloud: 0xd6b4c9,
-    ridge: 0x557fa5,
-    foreground: 0x366c87,
-    skyline: 0x54869b,
+    dusk: 0xb6ccd0,
+    cloud: 0xe0e5d5,
+    ridge: 0x779cac,
+    foreground: 0x507d8a,
+    skyline: 0x648b92,
     far: [
       [0, 0.035],
       [0.06, 0.055],
@@ -23,9 +23,10 @@ const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
       [0.46, 0.12],
       [0.52, 0.025],
       [0.63, 0.012],
-      [0.71, 0.095],
-      [0.78, 0.07],
-      [0.87, 0.02],
+      // Keep a low wide sea horizon ahead of the inlet flyover.
+      [0.71, 0.043],
+      [0.78, 0.015],
+      [0.87, 0.009],
       [1, 0.035],
     ],
     near: [
@@ -39,8 +40,8 @@ const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
       [0.53, 0.04],
       [0.57, 0],
       [0.7, 0],
-      [0.77, 0.06],
-      [0.82, 0.035],
+      [0.76, 0.011],
+      [0.82, 0],
       [0.87, 0],
       [1, 0],
     ],
@@ -52,15 +53,15 @@ const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
     cities: [
       [0.19, 0.245, 0.055, "terraces"],
       [0.5, 0.555, 0.07, "terraces"],
-      [0.77, 0.825, 0.047, "terraces"],
+      [0.68, 0.73, 0.035, "terraces"],
     ],
   },
   "SOLAR ARRAY": {
-    dusk: 0xc9788c,
-    cloud: 0xce91b1,
-    ridge: 0xaa678c,
-    foreground: 0x894d77,
-    skyline: 0x735079,
+    dusk: 0xd59e70,
+    cloud: 0xe6b58f,
+    ridge: 0xaa765d,
+    foreground: 0x815948,
+    skyline: 0x655455,
     far: [
       [0, 0.09],
       [0.06, 0.15],
@@ -109,11 +110,11 @@ const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
     ],
   },
   NOCTILUCENT: {
-    dusk: 0x3b427b,
-    cloud: 0x5c6195,
-    ridge: 0x293b68,
-    foreground: 0x182d53,
-    skyline: 0x244d70,
+    dusk: 0x354e66,
+    cloud: 0x50627c,
+    ridge: 0x263d5d,
+    foreground: 0x151f34,
+    skyline: 0x182a40,
     far: [
       [0, 0.045],
       [0.09, 0.09],
@@ -201,9 +202,10 @@ function cityAt(groups: [number, number, number, string][], u: number) {
     if (kind === "docks") {
       const span = p * 5,
         bay = span % 1;
-      const mast = bay > 0.18 && bay < 0.25;
-      const jib = bay > 0.2 && bay < 0.82;
-      return { height: height * (mast ? 1 : jib ? 0.75 : 0.24), kind, p };
+      const mast = bay > 0.15 && bay < 0.29;
+      const jib = bay > 0.2 && bay < 0.79;
+      const rise = mast ? 1 : jib ? 0.89 - (bay - 0.29) * 0.42 : 0.2;
+      return { height: height * rise, kind, p };
     }
     if (kind === "observatory") {
       const bay = (p * 3) % 1;
@@ -373,27 +375,22 @@ export function paintSky(
                 )
               : cityColor;
           pixel = blend(pixel, facade, haze * cityCoverage);
-          // Small, irregularly occupied window clusters, not a neon grid.
-          const seed = (((x % (width - 1)) * 73856093) ^ (y * 19349663)) >>> 0;
-          if (
-            night &&
-            latitude > 0.024 &&
-            city.kind === "towers" &&
-            seed % 31 < 2 &&
-            x % 3
-          )
-            pixel = blend(
-              pixel,
-              seed % 2 ? [151, 171, 171] : [181, 151, 115],
-              0.55 * haze * cityCoverage,
-            );
-          if (
-            night &&
-            city.kind === "docks" &&
-            Math.abs(latitude - cityHeight * 0.74) < 0.004 &&
-            seed % 4 === 0
-          )
-            pixel = blend(pixel, [116, 164, 176], 0.5 * haze * cityCoverage);
+          // Long harbour beacons trace the working roofs and crane jibs. The
+          // unlit gaps define the shape without a field of sparkling pixels.
+          if (night && (city.kind === "docks" || city.kind === "towers")) {
+            const bay = (city.p * (city.kind === "docks" ? 5 : 11)) % 1;
+            const lit =
+              city.kind === "docks"
+                ? bay > 0.23 && bay < 0.75
+                : bay > 0.16 && bay < 0.84;
+            const trim = cityHeight - latitude;
+            if (lit && trim < 0.018)
+              pixel = blend(
+                pixel,
+                city.kind === "docks" ? [136, 184, 181] : [103, 146, 165],
+                0.74 * (1 - smooth(0.006, 0.018, trim)) * haze * cityCoverage,
+              );
+          }
         }
       }
       const offset = (y * width + x) * 4;

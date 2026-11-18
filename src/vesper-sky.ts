@@ -26,16 +26,16 @@ export function vesperFacade(
   const { local, tower } = city;
   const side = local < 0.22;
   const color = side
-    ? [20, 29, 46]
+    ? [29, 25, 35]
     : tower % 3 === 0
-      ? [33, 39, 58]
-      : [27, 37, 54];
+      ? [57, 42, 47]
+      : [43, 34, 43];
   const level = latitude / height;
   if (local > 0.88 || level < 0.18 || level > 0.87) return color;
   // Occupied office blocks, a service spine or an unlit residential tower.
   // Palette and layout belong to whole buildings, not individual source pixels.
-  const warm = tower % 3 === 0;
-  const light = warm ? [112, 88, 69] : [63, 105, 121];
+  const warm = tower % 5 !== 2;
+  const light = warm ? [161, 108, 72] : [78, 113, 123];
   if (tower % 4 === 0 && local > 0.27 && local < 0.35) return light;
   const bands = tower % 4 === 1 ? [0.32, 0.62] : tower % 4 === 2 ? [0.74] : [];
   if (

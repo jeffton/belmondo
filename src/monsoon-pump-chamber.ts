@@ -14,12 +14,12 @@ export function buildMonsoonPumpChamber(
   environment: EnvironmentSurface,
 ) {
   const site = courseArchitecture(parent, "monsoon-pump-chamber", textures, {
-    concrete: { color: 0x8c8c83, map: "concrete" },
+    concrete: { color: 0xaba69b, map: "concrete" },
     cap: { color: 0xd9d5c9, map: "paint" },
-    machinery: { color: 0x203841, map: "paint" },
-    gate: { color: 0xf1c845, map: "paint" },
-    water: { color: 0x6abfd2, map: "water" },
-    wet: { color: 0x526f73, map: "concrete" },
+    machinery: { color: 0x324d53, map: "paint" },
+    gate: { color: 0xe5ba62, map: "paint" },
+    water: { color: 0x5d9da6, map: "water" },
+    wet: { color: 0x384f4c, map: "concrete" },
   });
   const waters: { point: THREE.Vector3; bottom: number; road: number }[] = [];
   const foundations = [];
@@ -189,6 +189,8 @@ export function buildMonsoonPumpChamber(
     [quayWidth, wetTop - quayFoot.bottom, quayDepth],
     quayYaw,
   );
+  // The saturated aggregate and pale dry concrete meet at the visible tide
+  // line; the two existing masses carry the break without another mesh.
   site.box(
     "concrete",
     quayCenter.clone().setY((wetTop + quayTop) / 2),

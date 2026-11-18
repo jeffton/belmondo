@@ -170,10 +170,10 @@ export function buildWhiteoutFork(
     };
     const roofA = roofProfile(a, i),
       roofB = roofProfile(b, i + 1);
-    const snow = [0xe0f4f4, 0xcbe5ed, 0xd7eef2];
+    const snow = [0xebf5f4, 0xe1eef0, 0xe6f1f2];
     for (let edge = 0; edge < roofA.length; edge++) {
       const next = (edge + 1) % roofA.length;
-      const tint = edge >= 2 && edge <= 4 ? snow[(edge + i) % 3] : 0x83c2d3;
+      const tint = edge >= 2 && edge <= 4 ? snow[edge - 2] : 0x99cad4;
       quad(
         "icecut-gallery",
         roofA[edge],

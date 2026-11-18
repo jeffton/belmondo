@@ -98,9 +98,9 @@ export function buildCinderWorks(
   scene.add(root);
   const { box, finish } = industrialMeshes(root, textures, {
     rock: 0x49424a,
-    pale: 0xd3d1bb,
-    dark: 0x343b43,
-    oxide: 0x9f5940,
+    pale: 0xe7bc87,
+    dark: 0x302e37,
+    oxide: 0xab6245,
   });
   const site = industrialSite(track, environment, 0.835, 1, 180, 60, 100, -1);
   const { deck, bottom, width, depth } = site;

@@ -17,11 +17,22 @@ export function buildSolarCollectorHillside(
   const pixels = new Uint8Array(64 * 64 * 4);
   for (let y = 0; y < 64; y++)
     for (let x = 0; x < 64; x++) {
-      const value = x % 8 === 0 || y % 16 === 0 ? 118 : x % 8 === 4 ? 235 : 211;
+      // One atlas tile is one collector module. A generous structural seam
+      // and a broad sky-facing reflection survive the chase-view footprint.
+      const glass = Math.round(193 + 36 * Math.sin((x / 63) * Math.PI));
+      const value =
+        x < 4 || x >= 60 || y < 5 || y >= 59
+          ? 103
+          : x < 8 || x >= 56
+            ? 247
+            : x === 31 || x === 32
+              ? 151
+              : glass;
       pixels.set([value, value, value, 255], (y * 64 + x) * 4);
     }
   const cells = new THREE.DataTexture(pixels, 64, 64);
   cells.name = "solar-collector-cells";
+  cells.colorSpace = THREE.SRGBColorSpace;
   cells.wrapS = cells.wrapT = THREE.RepeatWrapping;
   cells.generateMipmaps = true;
   cells.minFilter = THREE.LinearMipmapLinearFilter;
@@ -29,7 +40,8 @@ export function buildSolarCollectorHillside(
   cells.needsUpdate = true;
   const materials = {
     panel: new THREE.MeshLambertMaterial({
-      color: 0x315e77,
+      color: 0x4e8d9e,
+      emissive: 0x192936,
       map: cells,
       side: THREE.DoubleSide,
     }),
@@ -51,7 +63,7 @@ export function buildSolarCollectorHillside(
     const key = `${kind}:${Math.floor(middle.x / 256)}:${Math.floor(middle.z / 256)}`;
     if (!batches.has(key)) batches.set(key, { kind, positions: [], uv: [] });
     const batch = batches.get(key)!;
-    const length = points[0].distanceTo(points[1]) / 24;
+    const length = kind === "panel" ? 1 : points[0].distanceTo(points[1]) / 24;
     const uv = [
       [0, 0],
       [0, length],

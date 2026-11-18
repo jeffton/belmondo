@@ -97,9 +97,9 @@ export const NEW_COURSE_RECIPES: Record<string, CourseRecipe> = {
     biome: "volcanic",
     ground: [0.68, 0.24, 0.22],
     rock: 0x41405f,
-    wall: 0x395d70,
-    pale: 0xd3e3e9,
-    accent: 0xe4d43e,
+    wall: 0x423b40,
+    pale: 0xe2b98f,
+    accent: 0xf0bf80,
     vegetation: 0x8b8b56,
     districts: [
       { name: "CALDERA EXCHANGE", u: 0.23, side: -1, kind: "geothermal" },

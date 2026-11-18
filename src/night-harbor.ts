@@ -468,7 +468,7 @@ export function buildNightHarbor(
   root.add(hoists);
   const haze = new THREE.Color(track.config.fog);
   const colors = Object.fromEntries(
-    Object.entries({ pier: 0x9aaeb5, frame: 0x3c7582, cap: 0x9c5372 }).map(
+    Object.entries({ pier: 0xb3ceca, frame: 0x2b475d, cap: 0x986b70 }).map(
       ([name, color]) => [
         name,
         new THREE.Color(color).lerp(haze, 0.45).getHex(),

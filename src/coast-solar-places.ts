@@ -26,12 +26,12 @@ export function buildCoastSolarPlaces(
   parent.add(root);
   const colors = coast
     ? {
-        wall: 0xd9d2b9,
-        base: 0x6b7873,
-        roof: 0x344d50,
-        glass: 0x4f858c,
-        accent: 0xa14a39,
-        panel: 0x223d4c,
+        wall: 0xeee3c9,
+        base: 0x667d7e,
+        roof: 0x314d50,
+        glass: 0x56939d,
+        accent: 0x9c4636,
+        panel: 0x254451,
       }
     : {
         wall: 0xd0bc9a,

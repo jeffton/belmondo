@@ -267,7 +267,16 @@ export function buildVesperDistricts(
             : district.light;
         const occupied = (y: number, span: number, warm = false) => {
           // Recessed window banks with dark mullions, not bright floor wireframes.
-          part(face, y, 0, 0.8, 5.5, span, warm ? 0xb48a68 : 0x537d91, "neon");
+          part(
+            face,
+            y,
+            0,
+            0.8,
+            5.5,
+            span,
+            warm ? 0xe2a66c : variant % 4 === 0 ? 0x668a96 : 0xba875e,
+            "neon",
+          );
           for (const z of [-0.28, 0, 0.28])
             part(face - side * 0.5, y, z * span, 0.9, 5.7, 1.8, 0x273344);
         };

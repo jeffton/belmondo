@@ -122,7 +122,13 @@ export function buildHydraulicLock(
           b[j],
           b[j + 1],
           a[j + 1],
-          j === 3 ? 0x34766f : j === 1 || j === 5 ? 0xd0ccbf : 0x88877e,
+          j === 3
+            ? 0x3d8692
+            : j === 1 || j === 5
+              ? 0xd3cdbe
+              : j === 2 || j === 4
+                ? 0x496261
+                : 0x9d988b,
           j === 3,
         );
     }
