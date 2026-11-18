@@ -2861,6 +2861,29 @@ body[data-input-mode="touch"] #menu .setup-navigation button:active {
   background: var(--programme-rule);
 }
 
+/* Race instruments use the programme's hierarchy without its paper panels:
+   lead with the live numbers and reserve saturated ink for active signals. */
+#hud .hud-top :is(#position, #lap),
+#hud .velocity > strong {
+  color: var(--paper);
+}
+#hud .hud-top > :is(div:first-child, .lap) > .hud-label {
+  padding-bottom: 2px;
+  border-bottom: 1px solid #e6e3cf70;
+  letter-spacing: 0.09em;
+}
+#hud .hud-top strong small,
+#hud .speed-unit {
+  color: #d1d4c4;
+}
+#hud .hud-track > #timer {
+  color: #e6e3cfe0;
+  font-weight: 600;
+}
+#hud .velocity::before {
+  background: linear-gradient(90deg, var(--mint) 0 8px, #e6e3cf70 8px);
+}
+
 /* Race holding and classification sheets use the same ruled stock. */
 :is(#pause-panel, #results) {
   background: #101519bf;
@@ -3066,6 +3089,21 @@ body[data-input-mode="touch"] #menu .setup-navigation button:active {
   #menu #model-subtitle {
     font-size: 8px;
     letter-spacing: 0.03em;
+  }
+  #menu #craft-stats {
+    gap: 4px;
+    padding-inline: 6px;
+  }
+  #menu .craft-stat dt {
+    font-size: 7px;
+    letter-spacing: 0;
+  }
+  #menu .craft-stat-value {
+    font-size: 14px;
+  }
+  #menu .craft-stat-value::after {
+    margin-left: 1px;
+    font-size: 7px;
   }
   #menu .speed-choices {
     grid-template-columns: repeat(2, minmax(0, 1fr));
