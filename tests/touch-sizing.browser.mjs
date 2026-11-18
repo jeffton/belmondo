@@ -9,7 +9,7 @@ const server = await createServer({
   server: { host: "127.0.0.1", port: 0, watch: null },
 });
 await server.listen();
-const output = "/var/tmp/belmondo-touch-pad-sizing-evidence";
+const output = process.env.TOUCH_SIZING_OUTPUT || "test-artifacts/touch-sizing";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({
   headless: true,

@@ -6,7 +6,12 @@ const output = "test-artifacts/mobile-shell";
 await mkdir(output, { recursive: true });
 const html = (await readFile(new URL("../index.html", import.meta.url), "utf8"))
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
-  .replace("</head>", '<link rel="stylesheet" href="/src/style.css"></head>');
+  .replace(
+    "</head>",
+    ["style", "console-menu", "race-hud"]
+      .map((sheet) => `<link rel="stylesheet" href="/src/${sheet}.css">`)
+      .join("") + "</head>",
+  );
 const browser = await chromium.launch({
   args: ["--no-sandbox", "--disable-gpu"],
 });
@@ -85,7 +90,7 @@ try {
       await page
         .locator(".lap-times")
         .evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).toBe("rgba(0, 0, 0, 0)");
+    ).toBe("rgba(24, 23, 21, 0.91)");
     const stick = boxes["#steer-pad"];
     expect(stick.width).toBe(stick.height);
     expect(

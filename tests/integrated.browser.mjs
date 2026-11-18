@@ -472,7 +472,14 @@ async function hudFourDigits() {
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
     .replace(
       "</head>",
-      `<style>${await readFile(new URL("../src/style.css", import.meta.url), "utf8")}</style></head>`,
+      (
+        await Promise.all(
+          ["style", "console-menu", "race-hud"].map(
+            async (sheet) =>
+              `<style>${await readFile(new URL(`../src/${sheet}.css`, import.meta.url), "utf8")}</style>`,
+          ),
+        )
+      ).join("") + "</head>",
     );
   const context = await browser.newContext({
     viewport: { width: 844, height: 390 },
