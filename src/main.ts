@@ -853,8 +853,12 @@ $("touch-fire").addEventListener("pointerdown", (e) => {
 $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
-$("touch-scrap").onclick = () => {
+$("touch-scrap").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
   if (state === "race" && !paused) race.scrapWeapon();
+});
+$("touch-scrap").onclick = (e) => {
+  if (e.detail === 0 && state === "race" && !paused) race.scrapWeapon();
 };
 function navigationRoot() {
   const dialogs = document.querySelectorAll<HTMLDialogElement>("dialog[open]");

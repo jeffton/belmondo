@@ -67,22 +67,21 @@ async function open(viewport, touch) {
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
   await mockInputApp(page);
-  if (touch)
-    // Equip one real SHIELD in the isolated fixture; application input and
-    // Race.fire stay production code, with no writable application telemetry.
-    await page.route("**/src/race.ts", (route) =>
-      route.fulfill({
-        contentType: "text/javascript",
-        body: `export * from "/src/race.ts?touch-fire-fixture";
-          import { Race as Base } from "/src/race.ts?touch-fire-fixture";
-          export class Race extends Base {
-            constructor(...args) {
-              super(...args);
-              this.player.weapon = "SHIELD";
-            }
-          }`,
-      }),
-    );
+  // Pre-equip a real SHIELD; input, inventory and Race methods stay production code.
+  await page.route("**/src/race.ts", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: `export * from "/src/race.ts?touch-fire-fixture";
+        import { Race as Base } from "/src/race.ts?touch-fire-fixture";
+        export class Race extends Base {
+          constructor(...args) {
+            super(...args);
+            this.player.weapon = "SHIELD";
+            this.player.shield = 64;
+          }
+        }`,
+    }),
+  );
   await page.goto(server.resolvedUrls.local[0]);
   await page.waitForFunction(
     () => window.nullVector?.telemetry.state === "menu",
@@ -186,6 +185,57 @@ try {
   await controls(page, { throttle: true, launchIntent: true });
   await page.keyboard.up("KeyW");
   await controls(page, { throttle: false, launchIntent: false });
+  const waitArmed = () =>
+    page.waitForFunction(() => {
+      const t = window.nullVector.telemetry;
+      return t.state === "race" && t.countdown === 0 && t.weapon === "SHIELD";
+    });
+  await waitArmed();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#pause-panel")).toBeVisible();
+  // A resumes while B is held; held B must not fire on entering the race.
+  await page.evaluate(() => {
+    window.inputPad.buttons = [1];
+  });
+  await page.waitForTimeout(70);
+  await expect(page.locator("#pause-panel")).toBeVisible();
+  await page.evaluate(() => {
+    window.inputPad.buttons = [0, 1];
+  });
+  await expect(page.locator("#pause-panel")).toBeHidden();
+  await page.waitForTimeout(90);
+  expect((await read(page)).weapon).toBe("SHIELD");
+  await page.evaluate(() => {
+    window.inputPad.buttons = [];
+  });
+  await page.waitForTimeout(70);
+  await page.evaluate(() => {
+    window.inputPad.buttons = [1];
+  });
+  await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
+  expect((await read(page)).shield).toBe(76);
+  await controls(page, { throttle: false, launchIntent: false });
+  await page.evaluate(() => {
+    window.inputPad.buttons = [];
+  });
+  await page.keyboard.press("Escape");
+  await page.locator("#restart").click();
+  await waitArmed();
+  await page.evaluate(() => {
+    window.inputPad.buttons = [0, 2];
+  });
+  await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
+  expect((await read(page)).shield).toBe(69);
+  await controls(page, { throttle: true, launchIntent: true });
+  await page.evaluate(() => {
+    window.inputPad.buttons = [];
+  });
+  await page.keyboard.press("Escape");
+  await page.locator("#restart").click();
+  await waitArmed();
+  await page.keyboard.press("x");
+  await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
+  expect((await read(page)).shield).toBe(69);
   await context.close();
 
   for (const viewport of [
@@ -318,6 +368,7 @@ try {
       () => window.nullVector.telemetry.weapon === null,
     );
     await expect(page.locator("#touch-fire")).toBeDisabled();
+    await expect(page.locator("#touch-scrap")).toBeDisabled();
     await controls(page, {
       throttle: 0.5,
       airLeft: 0.4,
@@ -333,6 +384,29 @@ try {
       steer: 0,
       pitch: 0,
     });
+    if (viewport.width === 390) {
+      await page.locator("#pause").tap();
+      await page.locator("#restart").tap();
+      await page.waitForFunction(
+        () => window.nullVector.telemetry.countdown === 0,
+      );
+      await expect(page.locator("#touch-scrap")).toBeEnabled();
+      const scrap = {
+        id: 3,
+        x: scrapBox.x + scrapBox.width / 2,
+        y: scrapBox.y + scrapBox.height / 2,
+      };
+      await send("touchStart", [stick, air(-0.4, 0.5)]);
+      await controls(page, { throttle: 0.5, airLeft: 0.4, steer: -0.5 });
+      await send("touchStart", [stick, air(-0.4, 0.5), scrap]);
+      await page.waitForFunction(
+        () => window.nullVector.telemetry.weapon === null,
+      );
+      expect((await read(page)).shield).toBe(69);
+      await controls(page, { throttle: 0.5, airLeft: 0.4, steer: -0.5 });
+      await send("touchCancel", []);
+      await expect(page.locator("#touch-scrap")).toBeDisabled();
+    }
     await page.keyboard.down("KeyW");
     await expect(page.locator("body")).toHaveAttribute(
       "data-input-mode",

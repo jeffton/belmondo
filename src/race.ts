@@ -483,12 +483,9 @@ export class Race {
     r.weapon = null;
     const before = r.shield;
     r.shield = Math.min(100, r.shield + 5);
-    const gain = r.shield - before;
+    const gain = Math.ceil(r.shield) - Math.ceil(before);
     if (r.id === 0)
-      this.emit(
-        "scrap",
-        gain > 0 ? `SHIELD +${Math.ceil(gain)}` : "WEAPON SCRAPPED",
-      );
+      this.emit("scrap", gain > 0 ? `SHIELD +${gain}` : "WEAPON SCRAPPED");
   }
   fire(r = this.player) {
     if (

@@ -24,7 +24,7 @@ test("each inventory item buys up to five shield without firing, boost or protec
     assert.deepEqual(race.events, [{ kind: "scrap", text: "SHIELD +5" }]);
   }
   p.weapon = "SHIELD";
-  p.shield = 99;
+  p.shield = 98.4;
   race.scrapWeapon();
   assert.equal(p.shield, 100);
   assert.equal(race.events.at(-1).text, "SHIELD +1");
