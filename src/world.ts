@@ -804,14 +804,22 @@ export class World {
       return;
     }
     const f = this.track.frame(racer.contactS, racer.branch);
-    for (let i = 0; i < 10; i++) {
+    // Player weapon hits share this pool with landings and rescue. Keep their
+    // fragments near the hull instead of leaving a long trail under the flash.
+    const weaponImpact = kind === "hit" && text === "IMPACT";
+    const count = weaponImpact ? 6 : 10;
+    for (let i = 0; i < count; i++) {
       const particle =
         this.sparkData[this.sparkCursor++ % this.sparkData.length];
-      particle.life = 0.25 + Math.random() * 0.4;
+      particle.life = weaponImpact
+        ? 0.09 + Math.random() * 0.09
+        : 0.25 + Math.random() * 0.4;
       particle.p.copy(racer.position);
       particle.v
         .copy(f.tangent)
-        .multiplyScalar(-12 - Math.random() * 18)
+        .multiplyScalar(
+          weaponImpact ? -5 - Math.random() * 6 : -12 - Math.random() * 18,
+        )
         .addScaledVector(f.right, (Math.random() - 0.5) * 20)
         .addScaledVector(f.up, Math.random() * 12);
     }

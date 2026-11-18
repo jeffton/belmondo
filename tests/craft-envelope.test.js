@@ -52,9 +52,18 @@ test("all solid airframes fit physical contact bounds without degenerate or non-
         [2.55, -0.08, -3.32],
       ],
     );
-    const slow = exhausts[0].scale.z;
+    const idle = exhausts[0].scale.z;
+    craft.userData.updateExhaust(220, false, 0);
+    const cruise = exhausts[0].scale.z;
+    assert(cruise > 3 * idle);
     craft.userData.updateExhaust(220, true, 0);
-    assert(exhausts[0].scale.z > slow * 3);
+    assert(exhausts[0].scale.z > cruise);
+    for (const flame of exhausts) {
+      flame.geometry.computeBoundingBox();
+      const length = -flame.geometry.boundingBox.min.z * flame.scale.z;
+      assert(length < 4, "nozzle exhaust stays local even under boost");
+      assert(flame.material.opacity < 0.5);
+    }
   }
 });
 

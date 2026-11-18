@@ -192,11 +192,21 @@ test("PULSE electrical arcs follow only genuine struck hulls and reuse slots aft
   fx.update(race, 0, 0);
   assert.equal(slot.root.visible, true);
   assert.equal(fx.pools.get("PULSE_HIT")[0].root.visible, false);
+  const strikeOpacity = slot.root.children[0].material.opacity;
+  target.pulseHit = 0.45;
   target.position.z += 8;
   target.s = target.contactS = target.position.z;
   fx.update(race, 0, 0.1);
   assert.ok(slot.root.position.equals(target.position));
-  assert.ok(slot.root.children.every((arc) => arc.material.opacity > 0));
+  assert.ok(
+    slot.root.children.every(
+      (arc) =>
+        arc.material.opacity > 0 && arc.material.opacity < strikeOpacity / 3,
+    ),
+  );
+  const trace = slot.root.children[0].material.opacity;
+  fx.update(race, 0, 0.2);
+  assert.equal(slot.root.children[0].material.opacity, trace);
   target.pulseHit = 0;
   fx.update(race, 0, 1);
   assert.equal(slot.root.visible, false);

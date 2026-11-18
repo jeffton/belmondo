@@ -40,26 +40,30 @@ function painted(parts: PaintedPart[]) {
   return merged;
 }
 
-function streakGeometry() {
-  // Two crossed tapered ribbons keep the exhaust readable from both cameras.
+function streakGeometry(profile: [halfWidth: number, distance: number][]) {
+  // Crossed ribbons remain legible in chase view and from the side.
   const positions = [];
   const uvs = [];
   for (const vertical of [false, true]) {
-    const points = [
-      [-0.42, 0],
-      [0.42, 0],
-      [0.04, -1],
-      [-0.04, -1],
-    ].map(([width, z]) => (vertical ? [0, width, z] : [width, 0, z]));
-    const corners = [
-      [0, 1],
-      [1, 1],
-      [1, 0],
-      [0, 0],
-    ];
-    for (const i of [0, 1, 2, 0, 2, 3]) {
-      positions.push(...points[i]);
-      uvs.push(...corners[i]);
+    for (let row = 1; row < profile.length; row++) {
+      const [a, start] = profile[row - 1];
+      const [b, end] = profile[row];
+      const points = [
+        [-a, start],
+        [a, start],
+        [b, end],
+        [-b, end],
+      ].map(([width, z]) => (vertical ? [0, width, -z] : [width, 0, -z]));
+      const corners = [
+        [0, 1 - start],
+        [1, 1 - start],
+        [1, 1 - end],
+        [0, 1 - end],
+      ];
+      for (const i of [0, 1, 2, 0, 2, 3]) {
+        positions.push(...points[i]);
+        uvs.push(...corners[i]);
+      }
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -94,13 +98,12 @@ export class WeaponEffects {
   declare pools: Map<string, EffectSlot[]>;
   declare metalTexture: THREE.Texture;
   declare exhaustTexture: THREE.Texture;
-  declare smokeTexture: THREE.Texture;
   declare bodyMaterial: THREE.MeshLambertMaterial;
-  declare smokeGeometry: THREE.BufferGeometry;
   declare arcGeometry: THREE.BufferGeometry;
   declare seekerGeometry: THREE.BufferGeometry;
   declare mineGeometry: THREE.BufferGeometry;
   declare streakGeometry: THREE.BufferGeometry;
+  declare boostGeometry: THREE.BufferGeometry;
   declare waveGeometry: THREE.BufferGeometry;
   declare coreGeometry: THREE.BufferGeometry;
   declare shardsGeometry: THREE.BufferGeometry;
@@ -111,13 +114,11 @@ export class WeaponEffects {
     this.pools = new Map();
     this.metalTexture = weaponTexture("metal");
     this.exhaustTexture = weaponTexture("exhaust");
-    this.smokeTexture = weaponTexture("smoke");
     this.bodyMaterial = new THREE.MeshLambertMaterial({
       map: this.metalTexture,
       vertexColors: true,
       flatShading: true,
     });
-    this.smokeGeometry = new THREE.PlaneGeometry(1, 1);
     this.arcGeometry = new THREE.TorusGeometry(1, 0.09, 3, 12, Math.PI * 1.35);
     this.seekerGeometry = painted([
       [
@@ -154,8 +155,24 @@ export class WeaponEffects {
         ],
       ]),
     ]);
-    this.streakGeometry = streakGeometry();
-    this.waveGeometry = new THREE.TorusGeometry(1, 0.055, 4, 24);
+    this.streakGeometry = streakGeometry([
+      [0.42, 0],
+      [0.04, 1],
+    ]);
+    // A shoulder and a long blade-like taper, not simply a brighter plume.
+    this.boostGeometry = streakGeometry([
+      [0.31, 0],
+      [0.53, 0.12],
+      [0.44, 0.47],
+      [0.045, 1],
+    ]);
+    this.waveGeometry = new THREE.TorusGeometry(
+      1,
+      0.075,
+      3,
+      16,
+      Math.PI * 1.62,
+    );
     this.coreGeometry = new THREE.IcosahedronGeometry(0.5, 0);
     this.shardsGeometry = painted(
       Array.from({ length: 12 }, (_, i) => {
@@ -163,7 +180,7 @@ export class WeaponEffects {
         const height = (i / 11 - 0.5) * 2;
         const radius = Math.sqrt(1 - height * height);
         return [
-          new THREE.TetrahedronGeometry(0.2),
+          new THREE.TetrahedronGeometry(0.15),
           i % 2 ? 0xffe1a5 : 0xff5b39,
           [Math.cos(angle) * radius, height, Math.sin(angle) * radius],
         ];
@@ -234,38 +251,28 @@ export class WeaponEffects {
       for (let i = 0; i < 4; i++) {
         const arc = mesh(this.arcGeometry, glow(i % 2 ? 0xb5faff : 0xfb4db2));
         arc.position.z = (i - 1.5) * 1.8;
-        arc.scale.set(2.8, 1.1, 1);
+        arc.scale.set(2.8, 1.05, 1);
+        arc.material.forceSinglePass = true;
       }
     } else if (kind === "TURBO") {
       for (const side of [-1, 1]) {
-        const material = glow(0x4c96ff, 0.5);
+        const material = glow(0xffdf9a);
         material.map = this.exhaustTexture;
-        const wake = mesh(this.streakGeometry, material);
-        wake.position.set(side * 2.55, -0.08, -3.4);
+        material.forceSinglePass = true;
+        const wake = mesh(this.boostGeometry, material);
+        wake.position.set(side * 2.55, -0.08, -3.45);
       }
     } else {
       mesh(this.coreGeometry, glow(0xffc581, 0.9));
-      mesh(this.waveGeometry, glow(0xff7d43, 0.9));
+      const wave = mesh(this.waveGeometry, glow(0xff7d43, 0.9));
+      wave.material.forceSinglePass = true;
       const debrisMaterial = new THREE.MeshBasicMaterial({
         vertexColors: true,
         map: this.metalTexture,
         transparent: true,
+        depthWrite: false,
       });
       mesh(this.shardsGeometry, debrisMaterial);
-      // Two crossed soot sheets, not a camera-facing opaque explosion ball.
-      for (const rotation of [0, Math.PI / 2]) {
-        const smoke = mesh(
-          this.smokeGeometry,
-          new THREE.MeshBasicMaterial({
-            color: 0x303541,
-            map: this.smokeTexture,
-            transparent: true,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-          }),
-        );
-        smoke.rotation.y = rotation;
-      }
     }
     root.visible = false;
     this.scene.add(root);
@@ -292,6 +299,8 @@ export class WeaponEffects {
 
   update(race: import("./race.ts").Race, dt: number, time: number) {
     const live = new Set([...race.shots, ...race.mines]);
+    // A newly observed detonation gets its first frame at full strength.
+    for (const blast of this.blasts) blast.age += dt;
     for (const [effect, slot] of this.active) {
       if (live.has(effect)) continue;
       slot.busy = slot.root.visible = false;
@@ -348,27 +357,24 @@ export class WeaponEffects {
       }
     }
     for (const blast of this.blasts) {
-      blast.age += dt;
-      const t = blast.age / 0.55;
-      blast.root.visible = t < 1;
-      blast.busy = t < 1;
-      blast.root.children[0].scale.setScalar(1 + Math.min(t * 8, 2));
-      blast.root.children[1].rotation.x = blast.mine ? Math.PI / 2 : 0;
-      blast.root.children[1].scale.setScalar(2 + t * 13);
-      blast.root.children[2].scale.set(
-        2 + t * 18,
-        2 + t * 12,
-        2 + t * (blast.mine ? 18 : 28),
+      const t = blast.age / 0.2;
+      blast.root.visible = blast.busy = t < 1;
+      if (!blast.busy) continue;
+      const [flash, wave, fragments] = blast.root.children;
+      const spread = 1 - (1 - t) ** 2;
+      flash.visible = t < 0.4;
+      flash.scale.setScalar(1.15 + spread);
+      flash.material.opacity = Math.max(0, 1 - t * 2.5);
+      wave.rotation.set(blast.mine ? Math.PI / 2 : 0, 0, spread * 0.7);
+      wave.scale.setScalar(1.4 + spread * 3.4);
+      wave.material.opacity = 0.85 * (1 - t) ** 2;
+      fragments.scale.set(
+        1 + spread * 3.5,
+        1 + spread * 2.4,
+        1 + spread * (blast.mine ? 3.5 : 5.5),
       );
-      blast.root.children[2].rotation.set(t * 2, t * 3, t);
-      for (const [i, mesh] of blast.root.children.entries()) {
-        mesh.material.opacity = Math.max(0, i === 0 ? 1 - t * 4 : 1 - t);
-        if (i >= 3) {
-          mesh.scale.setScalar(4 + t * 14);
-          mesh.position.y = t * 3;
-          mesh.material.opacity = Math.sin(t * Math.PI) * 0.5;
-        }
-      }
+      fragments.rotation.set(spread, spread * 1.5, spread);
+      fragments.material.opacity = 0.92 * (1 - t);
     }
     this.blasts = this.blasts.filter((b) => b.busy);
     for (const [i, racer] of race.racers.entries()) {
@@ -384,15 +390,19 @@ export class WeaponEffects {
           "YXZ",
         );
         const strength = racer.pulseHit / 0.65;
+        // Read the strike first, then keep a dim hull-bound electrical trace
+        // for the rest of the existing engine-disruption window.
+        const strike = Math.max(0, (strength - 0.7) / 0.3);
+        const travel = 1 - strength;
         for (const [j, arc] of hit.root.children.entries()) {
-          arc.rotation.z = time * (j % 2 ? -19 : 23) + j * 1.7;
-          arc.material.opacity =
-            strength * (0.55 + 0.3 * Math.sin(time * 47 + j));
+          arc.rotation.z = j * 1.7 + travel * (j % 2 ? -4 : 5);
+          arc.material.opacity = strength * (0.24 + strike * 0.7);
         }
       }
       const pool = this.pools.get("TURBO")!;
       const slot = pool[i] || this.allocate("TURBO");
       slot.root.visible = racer.boost > 0.1;
+      if (!slot.root.visible) continue;
       slot.root.position.copy(racer.position);
       slot.root.rotation.set(
         racer.pitch,
@@ -400,9 +410,14 @@ export class WeaponEffects {
         -racer.yawRate * 0.45,
         "YXZ",
       );
+      const strength = THREE.MathUtils.smoothstep(racer.boost, 0.1, 0.8);
       for (const wake of slot.root.children) {
-        wake.scale.set(1 + racer.boost, 1 + racer.boost, 5 + racer.boost * 13);
-        wake.material.opacity = racer.boost * 0.38;
+        wake.scale.set(
+          0.85 + strength * 0.45,
+          0.7 + strength * 0.23,
+          4 + strength * 10,
+        );
+        wake.material.opacity = strength * 0.92;
       }
     }
   }

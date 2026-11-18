@@ -189,7 +189,7 @@ test("first race RAF after start completes and schedules its successor", async (
   assert.equal(scheduled.length, 1);
 });
 
-test("scrapes use the contact frame while hit and landing retain their existing burst", () => {
+test("rail and landing bursts stay distinct from compact weapon impact fragments", () => {
   const { sparks, racer, frame } = fixture();
   racer.s = 120;
   racer.contactS = 119;
@@ -219,4 +219,16 @@ test("scrapes use the contact frame while hit and landing retain their existing 
   World.prototype.burst.call(world, racer, "scrape", "CONTACT");
   assert.equal(world.sparkCursor, 30);
   assert.equal(sparks.cursor, 10);
+  const normal = world.sparkData.slice(0, 30);
+  assert(normal.every((p) => p.life >= 0.25));
+  World.prototype.burst.call(world, racer, "hit", "IMPACT");
+  assert.equal(sparks.cursor, 10);
+  assert.equal(world.sparkCursor, 36);
+  const impact = world.sparkData.slice(30, 36);
+  assert(
+    impact.every(
+      (p) =>
+        p.p.equals(racer.position) && p.life < 0.2 && p.v.length() * p.life < 4,
+    ),
+  );
 });

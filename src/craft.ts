@@ -664,14 +664,16 @@ function buildResources(): CraftResources {
   exhaustMap.colorSpace = THREE.SRGBColorSpace;
   const flameMaterial = new THREE.MeshBasicMaterial({
     map: exhaustMap,
-    color: 0x71ecff,
+    color: 0x9bbcc6,
+    opacity: 0.46,
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
     toneMapped: false,
+    forceSinglePass: true,
   });
-  const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x9dffff });
+  const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x92b1b8 });
   const glowGeometry = new THREE.PlaneGeometry(0.47, 0.19);
   const shieldGeometry = new THREE.SphereGeometry(1, 24, 12);
   shieldGeometry.scale(4.3, 1.45, 5);
@@ -822,13 +824,17 @@ export function createCraft(
     boost: number | boolean,
     time: number,
   ) => {
+    // Leave the long, sharper wake to the separate boost effect. The
+    // nozzle flame only shows a small kick in the first few metres.
     const length =
-      (0.25 + Math.min(1.4, speed / 175)) * (1 + (boost as number) * 0.65);
+      (0.2 + Math.min(0.8, speed / 250)) * (1 + Number(boost) * 0.18);
     for (let i = 0; i < flames.length; i++) {
       const flame = flames[i];
-      flame.scale.z = length * (1 + Math.sin(time * 47 + i * 2) * 0.045);
-      flame.scale.x = 1 + (boost as number) * 0.18;
-      flame.scale.y = 1 + (boost as number) * 0.18;
+      flame.scale.set(
+        0.75,
+        0.75,
+        length * (1 + Math.sin(time * 47 + i * 2) * 0.025),
+      );
     }
   };
   craft.userData.updateExhaust(0, false, 0);
