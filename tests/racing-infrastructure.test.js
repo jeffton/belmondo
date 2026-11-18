@@ -152,7 +152,7 @@ for (const [index, config] of TRACKS.entries()) {
       }
     }
     const expected = {
-      "KAISEKI COAST": 2,
+      "PALM BREAKER": 2,
       "SOLAR ARRAY": 3,
       FAULTLINE: 2,
       NOCTILUCENT: 1,

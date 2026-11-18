@@ -1,4 +1,4 @@
-import type { Track, TrackFrame } from "./track.ts";
+import { isCoastLayout, type Track, type TrackFrame } from "./track.ts";
 import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -17,7 +17,7 @@ interface VegetationProfile {
   tint?: number;
 }
 export const VEGETATION_PROFILES: Record<string, VegetationProfile> = {
-  "KAISEKI COAST": {
+  "PALM BREAKER": {
     ranges: [
       [0.06, 0.19],
       [0.4, 0.59],
@@ -354,8 +354,15 @@ export function buildVegetation(
   const batches = new Map<string, THREE.Matrix4[]>(
     [...geometries.keys()].map((s) => [s, []]),
   );
+  // Retain Coast’s authored plant distribution when its display name changes.
+  const coastSeed = 851574784;
   const rng = random(
-    [...track.config.name].reduce((seed, c) => seed * 31 + c.charCodeAt(0), 17),
+    isCoastLayout(track.config.layoutId)
+      ? coastSeed
+      : [...track.config.name].reduce(
+          (seed, c) => seed * 31 + c.charCodeAt(0),
+          17,
+        ),
   );
   const lerp = (a: number, b: number) => a + (b - a) * rng();
   const transform = new THREE.Object3D();

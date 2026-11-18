@@ -1,4 +1,4 @@
-import type { Track, TrackFrame } from "./track.ts";
+import { isCoastLayout, type Track, type TrackFrame } from "./track.ts";
 export interface CourseDistrict {
   name: string;
   u: number;
@@ -128,9 +128,8 @@ export function newCourseRecipe(track: Track): CourseRecipe | null {
 
 export function assertKnownEnvironment(track: Track) {
   if (
-    !["KAISEKI COAST", "SOLAR ARRAY", "NOCTILUCENT"].includes(
-      track.config.name,
-    ) &&
+    !isCoastLayout(track.config.layoutId) &&
+    !["SOLAR ARRAY", "NOCTILUCENT"].includes(track.config.name) &&
     !newCourseRecipe(track)
   )
     throw new Error(`Unknown course environment: ${track.config.name}`);

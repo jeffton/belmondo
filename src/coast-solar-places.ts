@@ -18,7 +18,7 @@ export function buildCoastSolarPlaces(
   textures: CircuitTextures,
   environment: EnvironmentSurface,
 ) {
-  const coast = track.config.name === "KAISEKI COAST";
+  const coast = track.config.name === "PALM BREAKER";
   if (!coast && track.config.name !== "SOLAR ARRAY") return;
   const quayHeight = coast ? createCoastQuayProfile(track) : null;
   const root = new THREE.Group();

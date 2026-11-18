@@ -37,7 +37,7 @@ export const COURSE_LIGHTING: Record<string, CourseLighting> = {
     halo: [0x9fc9e1, 0.08],
     flare: false,
   },
-  "KAISEKI COAST": {
+  "PALM BREAKER": {
     direction: [-0.8, 0.16, 0.55],
     skyGlow: [[224, 216, 171], 0.13],
     hemisphere: [0xc5deea, 0x4a666c],

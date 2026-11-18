@@ -1,5 +1,5 @@
 import type { Vector3, Vector3Like } from "three";
-import type { Track } from "./track.ts";
+import { isCoastLayout, type Track } from "./track.ts";
 
 // Deliberate racing-line choices, not random spawns. Lateral metres are relative
 // to the authored route; each fork offers a different reward and approach line.
@@ -20,6 +20,9 @@ export interface TrackPickup extends PickupShape {
   center: Vector3;
   up: Vector3;
 }
+// Keep Coast pickup IDs stable across the display-name change.
+const COAST_PICKUP_KEY = "KAISEKI COAST";
+
 const layouts: Record<string, PickupRecord[]> = {
   "VESPER CIRCUIT": [
     [
@@ -80,7 +83,7 @@ const layouts: Record<string, PickupRecord[]> = {
       "Boulevard acceleration after the final technical corner",
     ],
   ],
-  "KAISEKI COAST": [
+  [COAST_PICKUP_KEY]: [
     [
       0.065,
       0,
@@ -347,8 +350,11 @@ const layouts: Record<string, PickupRecord[]> = {
 };
 
 export function getTrackPickups(track: Track): TrackPickup[] {
+  const key = isCoastLayout(track.config.layoutId)
+    ? COAST_PICKUP_KEY
+    : track.config.name;
   return Object.entries(layouts)
-    .filter(([name]) => name === track.config.name)
+    .filter(([name]) => name === key)
     .flatMap(([name, records]) =>
       records.map(([u, branch, lateral, type, purpose], index) => {
         const pad = {

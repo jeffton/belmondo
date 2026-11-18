@@ -1,6 +1,6 @@
 # Finish straight
 
-`config.sections.finishStraight` is an unwrapped normalized interval crossing the authored geometry seam. The timing plane is its downstream endpoint, `track.finishS`. `buildFinishDistrict(scene, track, textures, environment)` fills both sides of that entire straight with grounded spectator terraces. `getFinishDistrictLayout(track)` exports their complete oriented footprints. Kaiseki shop districts use shared geographic reservations outside the spectator zone.
+`config.sections.finishStraight` is an unwrapped normalized interval crossing the authored geometry seam. The timing plane is its downstream endpoint, `track.finishS`. `buildFinishDistrict(scene, track, textures, environment)` fills both sides of that entire straight with grounded spectator terraces. `getFinishDistrictLayout(track)` exports their complete oriented footprints. Palm Breaker shop districts use shared geographic reservations outside the spectator zone.
 
 A worn checkerboard covers the complete straight. A crisp transverse stripe and the single dynamic countdown/lap/FINISH board share `track.frame(track.finishS)`. Distance boards sit 300, 160 and 60 station metres upstream. The player grid starts 18 station metres upstream, with nine-metre grid spacing.
 
@@ -8,7 +8,7 @@ A worn checkerboard covers the complete straight. A crisp transverse stripe and 
 
 Terraces have approximately 48-metre cullable sections with service gaps and nine-metre shoulders. Foundations intersect the visible terrain and clear its sampled maximum. The dynamic board provides the timing arch; spectator architecture stays outside the racing corridor.
 
-- **Kaiseki:** civic steps and transit roof blades.
+- **Palm Breaker:** civic steps and transit roof blades.
 - **Solar:** sandstone banks and industrial shade fins.
 - **Noctilucent:** dockside terraces and loading-hall balconies.
 

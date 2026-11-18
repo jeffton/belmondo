@@ -1,6 +1,6 @@
 # Course geography
 
-- **Kaiseki Coast:** coastal headlands, graded streets, grounded shopping terraces and a deep sea gap beneath the signature jump.
+- **Palm Breaker:** coastal headlands, graded streets, grounded shopping terraces and a deep sea gap beneath the signature jump.
 - **Solar Array:** a high sandstone pass, solar shelves and a bored mountain tunnel. A separate faceted rock volume forms the mountain and portals while preserving an open racing void.
 - **Noctilucent:** reclaimed freight districts, canals and a high trussed crossing above a physically open lower route.
 

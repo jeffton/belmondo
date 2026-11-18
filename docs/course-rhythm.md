@@ -1,12 +1,12 @@
 # Circuit rhythm
 
-Kaiseki Coast and Solar Array use alternating physical corners rather than continuous one-direction loops. The changes affect the shared road surface, banking, fork frames, projection, pickups and terrain. Race physics and player controls are unchanged.
+Palm Breaker and Solar Array use alternating physical corners rather than continuous one-direction loops. The changes affect the shared road surface, banking, fork frames, projection, pickups and terrain. Race physics and player controls are unchanged.
 
-| Circuit       | Prior length |   Length | Opposite-direction cornering | Corner sequence                          |
-| ------------- | -----------: | -------: | ---------------------------: | ---------------------------------------- |
-| Kaiseki Coast |     5.771 km | 5.867 km |                        420 m | R12°–L49°–R33°–L22°, then L21°–R22°–L79° |
-| Solar Array   |     6.547 km | 6.622 km |                        334 m | L15°–R25°–L53°, then L47°–R14°–L31°      |
-| Noctilucent   |     6.125 km | 6.125 km |            1,033 m, retained | R115°–L117°–L112°–R115°                  |
+| Circuit      | Prior length |   Length | Opposite-direction cornering | Corner sequence                          |
+| ------------ | -----------: | -------: | ---------------------------: | ---------------------------------------- |
+| Palm Breaker |     5.771 km | 5.867 km |                        420 m | R12°–L49°–R33°–L22°, then L21°–R22°–L79° |
+| Solar Array  |     6.547 km | 6.622 km |                        334 m | L15°–R25°–L53°, then L47°–R14°–L31°      |
+| Noctilucent  |     6.125 km | 6.125 km |            1,033 m, retained | R115°–L117°–L112°–R115°                  |
 
 Plan-view measurements sample the final centre deck at 2,000 stations and classify corners tighter than 700 m radius. The previous Coast and Solar layouts had no opposite-direction corners at that threshold. Heading totals describe contiguous substantial turns, not hairpins. The finer existing 1,500-station, three-route radius guard remains authoritative for local kinks: every route must stay at or above 150 m radius. Measurement smoothing is not used to waive that guard.
 

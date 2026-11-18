@@ -178,7 +178,7 @@ export function getTrackAdvertisingLayout(track: Track) {
       [0.635, -1, 4, 39, 6, -12, 100],
       [0.89, 1, -1, 37, 0, -10, 120],
     ],
-    "KAISEKI COAST": [
+    "PALM BREAKER": [
       [0.222, 1, 0, 44, 6, -10, 120],
       [0.458, 1, 2, 39, 20, -10, 75],
       [0.668, 1, 6, 47, 6, -10, 120],

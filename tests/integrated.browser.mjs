@@ -395,7 +395,7 @@ async function finishFixture() {
     const features = await page.evaluate(() => {
       const f = window.finishFixture,
         c = f.track.config;
-      if (c.name === "KAISEKI COAST")
+      if (c.name === "PALM BREAKER")
         return [
           { name: "coast-ads", u: 0.187 },
           { name: "coast-sloped-ramp", u: c.jump - c.ramp.length / 2 },

@@ -4,7 +4,7 @@
 
 **Whiteout:** the open snowbridge crosses above a separate blue-ice gallery. Routes exchange sides with 55 world units between their crossing decks. The ridge route has an exposed crest; the ice route has a sheltered alignment beneath a physical roof. Both carry one weapon pad. See [Whiteout verification](whiteout-split.md).
 
-**Kaiseki Coast:** independent alignments take the lower route through a sustained curved headland bore and the upper route onto a high, open inlet flyover. Their horizons, turning directions and elevation journeys differ. A broad common apron settles both approaches before the ravine turn. Both carry one weapon pad. See [Coast verification](coast-split.md).
+**Palm Breaker:** independent alignments take the lower route through a sustained curved headland bore and the upper route onto a high, open inlet flyover. Their horizons, turning directions and elevation journeys differ. A broad common apron settles both approaches before the ravine turn. Both carry one weapon pad. See [Coast verification](coast-split.md).
 
 **Cinderline:** the lower route threads a narrower continuous basalt gorge through opposing bends. The wider upper route follows a banked caldera-rim arc with an open horizon. Both carry one weapon pad; neither needs a compensating boost.
 
@@ -24,10 +24,10 @@ AI branch preference remains racer-ID parity. Body integration, AI controls, shi
 
 INDUCTION stock-driver sector seconds, lower/inner versus upper/outer for Coast and Cinderline:
 
-| Circuit       |         Striker |          Raptor |          Wraith |
-| ------------- | --------------: | --------------: | --------------: |
-| Kaiseki Coast | 10.687 / 10.728 | 10.623 / 10.633 | 12.050 / 12.311 |
-| Cinderline    |   7.928 / 8.014 |   7.430 / 7.369 |   9.411 / 9.705 |
+| Circuit      |         Striker |          Raptor |          Wraith |
+| ------------ | --------------: | --------------: | --------------: |
+| Palm Breaker | 10.687 / 10.728 | 10.623 / 10.633 | 12.050 / 12.311 |
+| Cinderline   |   7.928 / 8.014 |   7.430 / 7.369 |   9.411 / 9.705 |
 
 `tests/fork-diagnostics.mjs` writes reproducible road-only measurements; `tests/fork-pack-diagnostics.mjs` measures natural grid traffic. `tests/coast-player-input.test.js` separately checks an ordinary-input pilot without assigning NPC identity or changing body state. Geometry/environment tests cover real route divergence, joined noses, full road-envelope clearance, roofs, terrain, equal rewards and independent projection. Accepted physical hashes protect the six circuits outside Coast.
 

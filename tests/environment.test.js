@@ -28,7 +28,7 @@ for (const [index, config] of TRACKS.entries()) {
       }
     // The legacy tower locator is not used by the authored biome districts.
     // Their real foundations/forks/triangles are covered by the new-course tests.
-    if (["KAISEKI COAST", "SOLAR ARRAY", "NOCTILUCENT"].includes(config.name))
+    if (["PALM BREAKER", "SOLAR ARRAY", "NOCTILUCENT"].includes(config.name))
       for (let i = 0; i < 30; i++) {
         const f = track.frame((i / 30) * track.length),
           candidate = f.p

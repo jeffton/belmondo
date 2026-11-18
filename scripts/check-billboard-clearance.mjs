@@ -1,5 +1,5 @@
 import * as T from "three";
-import { makeTrack, TRACKS } from "../src/track.ts";
+import { isCoastLayout, makeTrack, TRACKS } from "../src/track.ts";
 import { buildEnvironment } from "../src/environment.ts";
 import { buildCity } from "../src/city.ts";
 import { buildFlagship, loadFlagshipAssets } from "../src/flagship.ts";
@@ -57,7 +57,7 @@ export function setup(index) {
   const env = buildEnvironment(scene, track, textures);
   buildCity(scene, track, textures, env);
   buildFinishDistrict(scene, track, textures, env);
-  if (track.config.name === "KAISEKI COAST")
+  if (isCoastLayout(track.config.layoutId))
     buildFlagship(scene, track, textures, env, loadFlagshipAssets());
   scene.updateMatrixWorld(true);
   const objects = [];

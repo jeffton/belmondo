@@ -6,7 +6,7 @@ Course palettes select campaigns deliberately:
 
 | Course         | Campaigns                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
-| Kaiseki Coast  | NEMU, SATO, IONPEAR, KOTORI: cream, coral and botanical space-pop         |
+| Palm Breaker   | NEMU, SATO, IONPEAR, KOTORI: cream, coral and botanical space-pop         |
 | Solar Array    | KOTORI, SATO, RIFF, ARC: radiation, energy and machinery                  |
 | Noctilucent    | NEMU, DOPPLER, MOTH, IONPEAR: nocturnal life and transmission             |
 | Whiteout       | MOTH, NEMU, DOPPLER, ARC: pale forms, lunar cools and observatory signals |

@@ -42,7 +42,7 @@ try {
   await page.keyboard.press("ArrowRight");
   await checkImmediateModel("MONSOON", "keyboard");
   await page.locator('#tracks button[data-index="2"]').tap();
-  await checkImmediateModel("KAISEKI COAST", "touch");
+  await checkImmediateModel("PALM BREAKER", "touch");
   const sameRow = await page
     .locator("#tracks button")
     .evaluateAll(

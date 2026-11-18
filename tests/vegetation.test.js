@@ -65,7 +65,7 @@ for (let index = 0; index < TRACKS.length; index++) {
       plants.length > 0,
       "biome has actual accepted vegetation, not only a scatter recipe",
     );
-    if (["KAISEKI COAST", "MONSOON"].includes(track.config.name)) {
+    if (["PALM BREAKER", "MONSOON"].includes(track.config.name)) {
       assert(plants.some((p) => p.species === "palm"));
       assert(plants.some((p) => p.species === "tree"));
       assert(plants.some((p) => p.species === "bush"));

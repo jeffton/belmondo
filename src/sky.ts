@@ -6,7 +6,7 @@ import { vesperTower, vesperFacade } from "./vesper-sky.ts";
 const TAU = Math.PI * 2;
 const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
   ...EXPANSION_SKIES,
-  "KAISEKI COAST": {
+  "PALM BREAKER": {
     dusk: 0xb6ccd0,
     cloud: 0xe0e5d5,
     ridge: 0x779cac,

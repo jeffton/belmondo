@@ -239,11 +239,18 @@ export const TRACK_INDEX = Object.freeze({
   VESPER: 7,
 });
 
+export const COAST_LAYOUT_ID = "coast-4-finish-end";
+
+export function isCoastLayout(layoutId: string) {
+  // The archived v3 driving fixture exercises the original Coast geometry.
+  return layoutId === COAST_LAYOUT_ID || layoutId === "coast-3";
+}
+
 export const TRACKS: TrackConfig[] = [
   { ...NEW_COURSES[0], subtitle: "01 / Polar observatory" },
   { ...NEW_COURSES[1], subtitle: "02 / Hydraulic city" },
   {
-    name: "KAISEKI COAST",
+    name: "PALM BREAKER",
     curveType: "centripetal",
     subtitle: "03 / Coastal megastructure",
     color: 0x13d9e7,
@@ -257,7 +264,7 @@ export const TRACKS: TrackConfig[] = [
     widthSections: [
       { start: 0.43, fullStart: 0.442, fullEnd: 0.452, end: 0.47, width: 22 },
     ],
-    layoutId: "coast-4-finish-end",
+    layoutId: COAST_LAYOUT_ID,
     points: layoutPoints("coast"),
     banks: [
       [0.07, 0.27, 0.025],
@@ -481,10 +488,9 @@ export function makeTrack(index: number): Track {
       p.copy(homeA).lerp(homeB, (homeU - homeStart) / (homeEnd - homeStart));
     } else if (homeU >= homeStart - homeFade && homeU < homeStart) {
       const outer = curve.getPointAt(homeStart - homeFade);
-      const direction =
-        config.name === "KAISEKI COAST"
-          ? runwayDirection.clone()
-          : curve.getTangentAt(homeStart - homeFade).multiplyScalar(length);
+      const direction = isCoastLayout(config.layoutId)
+        ? runwayDirection.clone()
+        : curve.getTangentAt(homeStart - homeFade).multiplyScalar(length);
       if (config.night) {
         outer.y = 65;
         direction.y = 0;
@@ -937,7 +943,7 @@ export function makeTrack(index: number): Track {
     const u = mod(s, length) / length;
     const enclosedBranch = config.tunnelBranches
       ? config.tunnelBranches.includes(branch)
-      : config.name !== "KAISEKI COAST" && (!config.night || branch === -1);
+      : !isCoastLayout(config.layoutId) && (!config.night || branch === -1);
     return (
       config.tunnel !== null &&
       enclosedBranch &&

@@ -42,7 +42,7 @@ export type PreparedWorldScene = Omit<
   | "draw"
 >;
 
-import { mod, clamp } from "./track.ts";
+import { mod, clamp, isCoastLayout } from "./track.ts";
 import { steeringBank, updateShipBank } from "./ship-bank.ts";
 import { clearChaseCamera } from "./chase-camera.ts";
 import { aimMenuFlyover } from "./menu-flyover.ts";
@@ -283,7 +283,7 @@ export class World {
     this.ships = [];
     this.cameraReady = false;
     const cfg = track.config;
-    const flagship = cfg.name === "KAISEKI COAST";
+    const flagship = isCoastLayout(cfg.layoutId);
     const faultline = cfg.name === "FAULTLINE";
     const fogColor = flagship ? 0x788391 : cfg.fog;
     const textures: ReturnType<typeof circuitTextures> & {

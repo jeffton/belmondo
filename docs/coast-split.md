@@ -1,4 +1,4 @@
-# Kaiseki Coast: headland bore and inlet flyover
+# Palm Breaker: headland bore and inlet flyover
 
 The lower route descends past occupied waterfront frontage into a sustained, enclosed curved bore through the headland. The upper route climbs onto a high open flyover above an excavated sea inlet. They have independent horizontal alignments, elevation profiles and turning directions, not a shared spline with adjacent lane offsets. The bore uses grounded rock, dark lining, chamfered roof, ribs and sparse warm lamps; the flyover keeps its open coastal horizon.
 

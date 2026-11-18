@@ -31,16 +31,16 @@ BELMONDO is precision-built anti-gravity racing in inhabited landscapes. Learn f
 
 ## Circuit identities
 
-| Circuit       | Driving / spatial signature                                                             | Visual hierarchy                                                                     |
-| ------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| WHITEOUT      | Tightening observatory spiral, climbing valley, ridge versus ice cut                    | Quiet snow, blue ice, a supported optical vault and restrained instruments           |
-| MONSOON       | Spillway basin, pump chamber, technical outlet, climbing fork                           | Pale hydraulic masses, blue water, deep green banks and pressure works               |
-| KAISEKI COAST | Waterfront combinations, bore versus skyway, institute, coastal yard and receiving mole | Warm sea/sky, open public court, pale ceramic masses and selective vermilion         |
-| SOLAR ARRAY   | Collector hillside, mountain tunnel, route choice, process-to-rock release              | Warm earth, continuous dark collector bands, grounded service halls and cool steel   |
-| FAULTLINE     | Rising rim, bench versus bore, great jump, broad-to-tight extraction return             | Broad mineral faces, reclaimed green, turquoise water and a connected working cut    |
-| CINDERLINE    | Exposed ridge, caldera release, gorge versus rim, retained works shelf                  | Cool basalt, sparse sulfur and a low condenser silhouette facing the approach        |
-| NOCTILUCENT   | Freight climb, crossing levels, open bridge, descent into a freight apron               | Dark water, connected quays, readable cargo hoists and selected warm terminal masses |
-| VESPER        | Rooftops, covered arrival, open court and terminal hall, market, tower canyon           | District-scale colour fields, deep occupied openings and restrained interior light   |
+| Circuit      | Driving / spatial signature                                                             | Visual hierarchy                                                                     |
+| ------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| WHITEOUT     | Tightening observatory spiral, climbing valley, ridge versus ice cut                    | Quiet snow, blue ice, a supported optical vault and restrained instruments           |
+| MONSOON      | Spillway basin, pump chamber, technical outlet, climbing fork                           | Pale hydraulic masses, blue water, deep green banks and pressure works               |
+| PALM BREAKER | Waterfront combinations, bore versus skyway, institute, coastal yard and receiving mole | Warm sea/sky, open public court, pale ceramic masses and selective vermilion         |
+| SOLAR ARRAY  | Collector hillside, mountain tunnel, route choice, process-to-rock release              | Warm earth, continuous dark collector bands, grounded service halls and cool steel   |
+| FAULTLINE    | Rising rim, bench versus bore, great jump, broad-to-tight extraction return             | Broad mineral faces, reclaimed green, turquoise water and a connected working cut    |
+| CINDERLINE   | Exposed ridge, caldera release, gorge versus rim, retained works shelf                  | Cool basalt, sparse sulfur and a low condenser silhouette facing the approach        |
+| NOCTILUCENT  | Freight climb, crossing levels, open bridge, descent into a freight apron               | Dark water, connected quays, readable cargo hoists and selected warm terminal masses |
+| VESPER       | Rooftops, covered arrival, open court and terminal hall, market, tower canyon           | District-scale colour fields, deep occupied openings and restrained interior light   |
 
 ## Verification
 

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Track, TrackFrame } from "./track.ts";
+import { isCoastLayout, type Track, type TrackFrame } from "./track.ts";
 import { createNearestPointIndex } from "./nearest-point-index.ts";
 
 export function retainsCoastGallery(start: number) {
@@ -34,7 +34,7 @@ export function createCoastQuayProfile(track: Track) {
 /** Bake once beside terrain samples. Apply to landHeight before grid sampling,
  * road grading, terrain meshes and collision queries are derived from that grid. */
 export function createCoastSolarLandform(track: Track, samples: TrackFrame[]) {
-  const coast = track.config.name === "KAISEKI COAST";
+  const coast = isCoastLayout(track.config.layoutId);
   if (!coast && track.config.name !== "SOLAR ARRAY")
     return (_x: number, _z: number, base: number) => base;
   const nearest = createNearestPointIndex(samples.map((f) => f.p));

@@ -1,5 +1,5 @@
 import type * as THREE from "three";
-import type { Track } from "./track.ts";
+import { isCoastLayout, type Track } from "./track.ts";
 import type { CircuitTextures, TerrainSurface } from "./environment.ts";
 import { buildCoastHeadlandBore } from "./coast-headland-bore.ts";
 
@@ -12,6 +12,6 @@ export function buildForkEnvironments(
   textures: CircuitTextures,
   terrain: TerrainSurface,
 ) {
-  if (track.config.name === "KAISEKI COAST")
+  if (isCoastLayout(track.config.layoutId))
     return buildCoastHeadlandBore(parent, track, textures, terrain);
 }

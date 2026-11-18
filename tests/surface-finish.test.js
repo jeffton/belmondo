@@ -124,7 +124,7 @@ test("instance UV uses each rotated building's dimensions, preserving shared pri
 test("wet finish and diffuse mineral decks compose with real red jump asphalt", () => {
   const map = new THREE.Texture();
   const wet = new Set([
-    "KAISEKI COAST",
+    "PALM BREAKER",
     "MONSOON",
     "NOCTILUCENT",
     "VESPER CIRCUIT",

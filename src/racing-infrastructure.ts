@@ -10,7 +10,7 @@ const SERVICE_SITES: Record<string, [number, number][]> = {
     [0.31, -1],
     [0.84, 1],
   ],
-  "KAISEKI COAST": [
+  "PALM BREAKER": [
     [0.16, -1],
     [0.57, 1],
   ],

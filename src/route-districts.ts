@@ -59,7 +59,7 @@ export function buildRouteDistricts(
   textures: CircuitTextures,
   environment: EnvironmentSurface,
 ) {
-  const course = ["KAISEKI COAST", "SOLAR ARRAY", "NOCTILUCENT"].indexOf(
+  const course = ["PALM BREAKER", "SOLAR ARRAY", "NOCTILUCENT"].indexOf(
     track.config.name,
   );
   const districts = ROUTE_DISTRICTS[course];

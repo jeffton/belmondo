@@ -3,7 +3,7 @@ import * as THREE from "three";
 // Wide, low-intensity highlights distinguish sealed wet decks from diffuse
 // mineral surfaces. No reflection pass, new texture, noise or moving overlay.
 export const ROAD_FINISH = {
-  "KAISEKI COAST": { specular: 0x252630, shininess: 7 },
+  "PALM BREAKER": { specular: 0x252630, shininess: 7 },
   "VESPER CIRCUIT": { specular: 0x344753, shininess: 11 },
   MONSOON: { specular: 0x354448, shininess: 8 },
   NOCTILUCENT: { specular: 0x304456, shininess: 10 },

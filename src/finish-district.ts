@@ -11,7 +11,7 @@ import {
 const DISTRICTS: Record<string, string[]> = {
   FAULTLINE: ["quarry-rim-grandstand", "reclamation-gallery"],
   "VESPER CIRCUIT": ["neon-boulevard-grandstand", "transit-concourse-gallery"],
-  "KAISEKI COAST": ["civic-terrace", "transit-gallery"],
+  "PALM BREAKER": ["civic-terrace", "transit-gallery"],
   "SOLAR ARRAY": ["sandstone-bank", "test-apron"],
   NOCTILUCENT: ["terminal-quay", "loading-balcony"],
   WHITEOUT: ["expedition-grandstand", "observatory-gallery"],

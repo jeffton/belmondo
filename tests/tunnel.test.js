@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
 
-test("tunnel metadata matches enclosed courses, not Kaiseki's open canopy", () => {
+test("tunnel metadata matches enclosed courses, not Palm Breaker’s open canopy", () => {
   const coast = makeTrack(TRACK_INDEX.COAST);
   for (let i = 0; i < 100; i++)
     assert.equal(coast.isTunnel((i / 100) * coast.length), false);

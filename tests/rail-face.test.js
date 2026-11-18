@@ -112,7 +112,7 @@ test("course paint identities are distinct mineral palettes, not one recoloured 
       averagePanel(railFacePixels(course.name), 80, 112),
     ]),
   );
-  const coast = dark["KAISEKI COAST"];
+  const coast = dark["PALM BREAKER"];
   const solar = dark["SOLAR ARRAY"];
   const night = dark.NOCTILUCENT;
   assert(coast[2] > coast[0], "coast uses deep petrol-blue paint");
