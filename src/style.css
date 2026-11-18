@@ -579,7 +579,6 @@ dialog {
   position: fixed;
   max-width: 760px;
   width: calc(100% - 35px);
-  max-height: calc(100dvh - 40px);
   border: 0;
   border-top: 5px solid var(--orange);
   background: var(--ink);
@@ -1684,18 +1683,27 @@ dialog,
 #game {
   touch-action: none;
 }
-/* Safe-area insets protect modal content without cropping the world. */
-body.touch dialog:not(#pause-panel) {
-  width: calc(
-    100% - max(20px, env(safe-area-inset-left)) -
-      max(20px, env(safe-area-inset-right))
-  );
+/* Center auxiliary dialogs inside the visible, safe app rectangle, rather
+   than the layout viewport used by the browser's default modal centering. */
+dialog:not(#pause-panel) {
+  --dialog-top: max(20px, env(safe-area-inset-top));
+  --dialog-right: max(17.5px, env(safe-area-inset-right));
+  --dialog-bottom: max(20px, env(safe-area-inset-bottom));
+  --dialog-left: max(17.5px, env(safe-area-inset-left));
+  inset: var(--dialog-top) var(--dialog-right)
+    calc(100% - var(--app-height) + var(--dialog-bottom)) var(--dialog-left);
+  width: calc(100% - var(--dialog-left) - var(--dialog-right));
   max-height: calc(
-    100dvh - max(20px, env(safe-area-inset-top)) -
-      max(20px, env(safe-area-inset-bottom))
+    var(--app-height) - var(--dialog-top) - var(--dialog-bottom)
   );
+  margin: auto;
 }
-body.touch :is(dialog, .overlay) {
+body.touch dialog:not(#pause-panel) {
+  --dialog-right: max(20px, env(safe-area-inset-right));
+  --dialog-left: max(20px, env(safe-area-inset-left));
+  padding: 20px;
+}
+body.touch .overlay {
   padding-top: max(20px, env(safe-area-inset-top));
   padding-right: max(20px, env(safe-area-inset-right));
   padding-bottom: max(20px, env(safe-area-inset-bottom));

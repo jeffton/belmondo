@@ -127,6 +127,62 @@ try {
         expect(bottom).toBeLessThanOrEqual(visibleHeight - insets.bottom + 1);
     };
     await checkFooter();
+    const checkDialog = async (open, id, last) => {
+      const dialog = page.locator(id);
+      const trigger = page.locator(open);
+      if (width < 900) await trigger.tap();
+      else await trigger.click();
+      await expect(dialog).toBeVisible();
+      if (last === ".help-small")
+        await expect
+          .poll(() =>
+            page.locator("#concept").evaluate((image) => image.naturalWidth),
+          )
+          .toBeGreaterThan(0);
+      const geometry = await dialog.evaluate((element, last) => {
+        const client = element.getBoundingClientRect();
+        const top = element.scrollTop;
+        element.scrollTop = element.scrollHeight;
+        const target = element.querySelector(last).getBoundingClientRect();
+        element.scrollTop = top;
+        return {
+          box: client.toJSON(),
+          horizontalOverflow: element.scrollWidth - element.clientWidth,
+          end: target.toJSON(),
+        };
+      }, last);
+      expect(geometry.box.y, id + " top safe").toBeGreaterThanOrEqual(
+        insets.top - 1,
+      );
+      expect(geometry.box.bottom, id + " bottom safe").toBeLessThanOrEqual(
+        visibleHeight - insets.bottom + 1,
+      );
+      expect(geometry.box.x, id + " left safe").toBeGreaterThanOrEqual(
+        insets.left - 1,
+      );
+      expect(geometry.box.right, id + " right safe").toBeLessThanOrEqual(
+        width - insets.right + 1,
+      );
+      expect(
+        geometry.horizontalOverflow,
+        id + " horizontal overflow",
+      ).toBeLessThanOrEqual(1);
+      expect(
+        geometry.end.y,
+        id + " last content starts inside",
+      ).toBeGreaterThanOrEqual(geometry.box.y - 1);
+      expect(
+        geometry.end.bottom,
+        id + " last content reachable",
+      ).toBeLessThanOrEqual(geometry.box.bottom + 1);
+      const close = dialog.locator(".close");
+      if (width < 900) await close.tap();
+      else await close.click();
+      await expect(dialog).toBeHidden();
+    };
+    await checkDialog("#help-open", "#help-dialog", ".arsenal span:last-child");
+    await checkDialog("#music-open", "#music-dialog", "#effects-volume");
+    await checkDialog("#art-open", "#art-dialog", ".help-small");
     if (width === viewports[0][0] && height === viewports[0][1]) {
       const icons = await page.evaluate(async () => {
         const manifest = await (
@@ -463,6 +519,8 @@ try {
       }
     }
     await page.screenshot({ path: `${output}/${width}-${height}-pause.png` });
+    await checkDialog("#pause-music", "#music-dialog", "#effects-volume");
+    await expect(page.locator("#pause-panel")).toBeVisible();
     if (width < 900) await page.locator("#quit").tap();
     else await page.locator("#quit").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
@@ -476,7 +534,7 @@ try {
       landing,
     );
     console.log(
-      `${width}×${height}: stages, selections, responsive bounds, livefeed, race and return PASS`,
+      `${width}×${height}: stages, selections, responsive dialogs, livefeed, race and return PASS`,
     );
     await context.close();
   }
