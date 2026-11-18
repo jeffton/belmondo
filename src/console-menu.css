@@ -595,6 +595,20 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 #help-dialog .pad-labels {
   fill: var(--console-black);
 }
+#help-dialog .pad-wires {
+  stroke: #604e3d;
+}
+#help-dialog .utility-keys kbd {
+  color: var(--console-cream);
+}
+#help-dialog .arsenal b {
+  color: var(--console-black);
+}
+#help-dialog .arsenal .weapon-icon {
+  padding: 3px;
+  color: var(--weapon-color);
+  background: var(--console-black);
+}
 #music-dialog #music-status {
   background: #18171514;
 }
