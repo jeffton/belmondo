@@ -21,6 +21,8 @@ const report = { url, cases: [], errors: [] };
 try {
   for (const [device, viewport, touch] of [
     ["desktop", { width: 1440, height: 900 }, false],
+    ["desktop-narrow", { width: 280, height: 360 }, false],
+    ["desktop-short", { width: 320, height: 210 }, false],
     ["landscape", { width: 844, height: 390 }, true],
     ["portrait", { width: 390, height: 844 }, true],
     ["compact", { width: 320, height: 568 }, true],
@@ -53,6 +55,24 @@ try {
     }, touch);
     await expect(page.locator(".lap #timer")).toHaveText("03:59.99");
     await expect(page.locator(".lap #lap")).toBeVisible();
+    const geometry = await page.evaluate(() => {
+      const rect = (selector) =>
+        document.querySelector(selector).getBoundingClientRect().toJSON();
+      return {
+        row: rect(".hud-top"),
+        position: rect(".race-position"),
+        lap: rect(".lap"),
+        bottom: rect(".hud-bottom"),
+      };
+    });
+    expect(geometry.position.left).toBe(geometry.row.left);
+    if (touch) {
+      expect(geometry.lap.left).toBe(geometry.position.left);
+      expect(geometry.lap.top).toBeGreaterThan(geometry.position.bottom);
+    } else {
+      expect(geometry.lap.right).toBe(geometry.row.right);
+      expect(geometry.lap.top).toBe(geometry.position.top);
+    }
     const splitList = page.locator(".lap #lap-times");
     await expect(splitList).toBeVisible();
     await splitList.evaluate((list) => {
@@ -84,17 +104,22 @@ try {
           bottom: box.bottom,
           plateBottom: plateBounds.bottom,
           plateLeft: plateBounds.left,
+          plateRight: plateBounds.right,
         };
       });
     });
     for (const [i, row] of timing.entries()) {
       expect(row.cream && row.ink && row.clipped).toBe(true);
-      expect(row.left).toBe(row.plateLeft);
+      if (touch) expect(row.left).toBe(row.plateLeft);
+      else expect(row.right).toBe(row.plateRight);
+      expect(row.left).toBeGreaterThanOrEqual(0);
       expect(row.top).toBeGreaterThanOrEqual(
         i ? timing[i - 1].bottom : row.plateBottom,
       );
       expect(row.right).toBeLessThanOrEqual(viewport.width);
-      expect(row.bottom).toBeLessThan(viewport.height / 2);
+      if (touch) expect(row.bottom).toBeLessThan(viewport.height / 2);
+      else expect(row.left).toBeGreaterThan(viewport.width / 2);
+      expect(row.bottom).toBeLessThan(geometry.bottom.top);
     }
     const glyphs = new Set(),
       colors = new Set();
@@ -199,8 +224,19 @@ try {
         expect(state.button.y).toBeGreaterThanOrEqual(0);
         expect(state.button.right).toBeLessThanOrEqual(viewport.width);
         expect(state.button.bottom).toBeLessThanOrEqual(viewport.height);
-        if (!touch)
+        if (!touch) {
+          expect(state.button.x + state.button.width / 2).toBeCloseTo(
+            viewport.width / 2,
+            0,
+          );
+          expect(state.button.y).toBe(geometry.position.top);
+          expect(state.button.x).toBeGreaterThan(geometry.position.right);
+          expect(state.button.right).toBeLessThan(geometry.lap.left);
           expect(state.button.bottom).toBeLessThan(viewport.height / 2);
+          const lap = await page.locator(".lap").boundingBox();
+          expect(lap.x + lap.width).toBe(geometry.lap.right);
+          expect(lap.y).toBe(geometry.lap.top);
+        }
         expect(state.name.x).toBeGreaterThanOrEqual(state.button.x);
         expect(state.name.right).toBeLessThanOrEqual(state.button.right);
         for (const [selector, control] of Object.entries(state.controls)) {
@@ -266,7 +302,7 @@ try {
   }
   expect(report.errors).toEqual([]);
   console.log(
-    "HUD: five weapons, empty/re-empty, input-mode switching, bounds/non-overlap and pause menu passed on desktop, landscape, portrait and compact mobile.",
+    "HUD: five weapons, empty/re-empty, input-mode switching, bounds/non-overlap and pause menu passed on desktop (wide and compact), landscape, portrait and compact mobile.",
   );
 } finally {
   await writeFile(

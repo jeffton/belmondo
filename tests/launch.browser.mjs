@@ -287,6 +287,7 @@ try {
   if (process.env.LAUNCH_SCOPE === "visual") {
     for (const [label, device, viewport] of [
       ["desktop", "keyboard", { width: 1440, height: 900 }],
+      ["desktop-compact", "keyboard", { width: 480, height: 360 }],
       ["landscape", "touch", { width: 844, height: 390 }],
       ["portrait", "touch", { width: 390, height: 844 }],
     ]) {
@@ -344,7 +345,22 @@ try {
       await page.screenshot({
         path: `test-artifacts/launch-visual-${label}-race.png`,
       });
-      await expect(page.locator("#lap-times")).toBeVisible();
+      await expect(page.locator("#lap-times .current b")).not.toHaveText(
+        "00:00.00",
+      );
+      const hudBounds = await page.locator(".hud-top").boundingBox();
+      const position = await page.locator(".race-position").boundingBox();
+      const lap = await page.locator(".lap").boundingBox();
+      expect(position.x).toBe(hudBounds.x);
+      if (device === "touch") {
+        expect(lap.x).toBe(position.x);
+        expect(lap.y).toBeGreaterThan(position.y + position.height);
+        await expect(page.locator("#touch-fire")).toBeVisible();
+      } else {
+        expect(lap.x + lap.width).toBe(hudBounds.x + hudBounds.width);
+        expect(lap.y).toBe(position.y);
+        await expect(page.locator("#touch-fire")).toBeHidden();
+      }
       await expect(page.locator("#thrust-system")).toBeVisible();
       await expect(page.locator("#speed-bar")).toBeVisible();
       report.cases.push({
