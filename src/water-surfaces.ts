@@ -2,8 +2,28 @@ import * as THREE from "three";
 
 /** Ocean-only tiling; local world-scaled water shares the unmodified atlas. */
 export function createOceanGeometry(shore?: (x: number, z: number) => number) {
-  const divisions = shore ? 100 : 1;
+  // Put the vertices in the coastal basin, not out on the open horizon.
+  // The outer rows connect to the unbroken coarse ocean at ±6000 m.
+  const divisions = shore ? 27 : 1;
   const geometry = new THREE.PlaneGeometry(12000, 12000, divisions, divisions);
+  if (shore) {
+    const positions = geometry.attributes.position;
+    const coordinate = (i: number, low: number, high: number) =>
+      i === 0
+        ? -6000
+        : i === divisions
+          ? 6000
+          : THREE.MathUtils.lerp(low, high, (i - 1) / (divisions - 2));
+    for (let j = 0; j <= divisions; j++) {
+      for (let i = 0; i <= divisions; i++) {
+        const index = j * (divisions + 1) + i;
+        const x = coordinate(i, -3000, 450);
+        const y = -coordinate(j, -1750, 1750);
+        positions.setXYZ(index, x, y, 0);
+        geometry.attributes.uv.setXY(index, x / 12000 + 0.5, y / 12000 + 0.5);
+      }
+    }
+  }
   const uv = geometry.attributes.uv;
   for (let i = 0; i < uv.count; i++)
     uv.setXY(i, uv.getX(i) * 250, uv.getY(i) * 250);
