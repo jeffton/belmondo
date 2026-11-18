@@ -62,7 +62,7 @@ test("actual PULSE fire damages and slows AI, with temporary engine disruption t
   race.fire();
   assert.equal(race.player.weapon, null);
   assert.equal(target.shield, 100 - 18 / CRAFT[target.craft].armor);
-  assert.equal(target.speed, 160 * 0.64);
+  assert.equal(target.speed, 160 * 0.68);
   assert.equal(target.stun, 0);
   assert.ok(target.pulseHit > 0);
   assert.equal(target.velocity.x, 0);
@@ -79,11 +79,11 @@ test("actual PULSE fire damages and slows AI, with temporary engine disruption t
   race.update(1 / 120, throttle);
   control.update(1 / 120, throttle);
   assert.ok(target.velocity.z < comparison.velocity.z);
-  assert.ok(Math.abs(target.velocity.z - 160 * 0.64) < 1);
+  assert.ok(Math.abs(target.velocity.z - 160 * 0.68) < 1);
   assert.ok(target.s > 45);
   for (let i = 0; i < 90; i++) race.update(1 / 120, throttle);
   assert.equal(target.pulseHit, 0);
-  assert.ok(target.speed > 160 * 0.64);
+  assert.ok(target.speed > 160 * 0.68);
 });
 
 test("AI PULSE hits player under the same damage and disruption rules", () => {
@@ -94,7 +94,7 @@ test("AI PULSE hits player under the same damage and disruption rules", () => {
   ai.weapon = "PULSE";
   race.fire(ai);
   assert.equal(race.player.shield, 82);
-  assert.equal(race.player.speed, 160 * 0.64);
+  assert.equal(race.player.speed, 160 * 0.68);
   assert.ok(race.player.pulseHit > 0);
   assert.ok(race.events.some((event) => event.kind === "hit"));
 });

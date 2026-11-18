@@ -77,7 +77,7 @@ test("weapon damage scales planar speed without altering vertical speed or steer
     target.yawRate = 0.62;
     target.pitchRate = -0.23;
     race.damage(target, 5, weapon);
-    assert.equal(target.speed, 64);
+    assert.equal(target.speed, 68);
     assert.equal(target.velocity.y, -24);
     assert.equal(target.yawRate, 0.62);
     assert.equal(target.pitchRate, -0.23);

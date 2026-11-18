@@ -402,8 +402,8 @@ export class Race {
     if (armedHit) {
       r.weaponHit = WEAPON_HIT_DURATION;
       // Preserve flight height, heading and pilot authority; only lose planar speed.
-      r.velocity.x *= 0.64;
-      r.velocity.z *= 0.64;
+      r.velocity.x *= 0.68;
+      r.velocity.z *= 0.68;
     } else {
       r.velocity.multiplyScalar(0.78);
       r.stun = 0.6;
