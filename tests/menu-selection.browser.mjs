@@ -4,7 +4,7 @@ const webKit = process.env.MENU_ENGINE === "webkit";
 const url = process.env.GAME_URL || "http://127.0.0.1:5196";
 const browser = await (webKit ? webkit : chromium).launch(
   webKit
-    ? {}
+    ? { executablePath: process.env.WEBKIT_EXECUTABLE_PATH }
     : {
         args: [
           "--no-sandbox",
