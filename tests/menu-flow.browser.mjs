@@ -52,6 +52,25 @@ try {
       },
       TRACKS.map((track) => track.layoutId),
     );
+    // Linux WebKit cannot install an iOS home-screen app. Model a portrait
+    // standalone webview whose visible area is shorter than its lvh box.
+    const standaloneInset = Number(process.env.MENU_STANDALONE_INSET ?? 0);
+    const emulateStandalone =
+      useWebKit && height > width && standaloneInset > 0;
+    const visibleHeight = height - (emulateStandalone ? standaloneInset : 0);
+    if (emulateStandalone)
+      await context.addInitScript((height) => {
+        const match = window.matchMedia.bind(window);
+        window.matchMedia = (query) => {
+          const result = match(query);
+          if (query.includes("display-mode: standalone"))
+            Object.defineProperty(result, "matches", { value: true });
+          return result;
+        };
+        Object.defineProperty(window.visualViewport, "height", {
+          value: height,
+        });
+      }, visibleHeight);
     const page = await context.newPage();
     const insets =
       width >= 900
@@ -64,10 +83,15 @@ try {
       // measured iPhone env() values into the built stylesheet, not the DOM.
       await page.route("**/assets/*.css", async (route) => {
         const response = await route.fetch();
-        const body = (await response.text()).replace(
+        let body = (await response.text()).replace(
           /env\(safe-area-inset-(top|right|bottom|left)\)/g,
           (_, side) => `${insets[side]}px`,
         );
+        if (emulateStandalone)
+          body = body.replaceAll(
+            "(display-mode:standalone)",
+            "(orientation:portrait)",
+          );
         await route.fulfill({ response, body });
       });
     } else {
@@ -85,6 +109,24 @@ try {
     );
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
     await expect(page.locator("#menu h1")).toHaveText("BELMONDO");
+    const checkFooter = async () => {
+      const footer = await page
+        .locator("#menu .menu-footer")
+        .evaluate((element) => ({
+          bounds: element.getBoundingClientRect().toJSON(),
+          padding: parseFloat(getComputedStyle(element).paddingBottom),
+          background: getComputedStyle(element).backgroundColor,
+          controls: [...element.querySelectorAll("a, button, input")]
+            .filter((control) => control.getClientRects().length)
+            .map((control) => control.getBoundingClientRect().bottom),
+        }));
+      expect(footer.bounds.bottom).toBeCloseTo(visibleHeight, 0);
+      expect(footer.padding).toBe(insets.bottom);
+      expect(footer.background).toBe("rgb(24, 23, 21)");
+      for (const bottom of footer.controls)
+        expect(bottom).toBeLessThanOrEqual(visibleHeight - insets.bottom + 1);
+    };
+    await checkFooter();
     if (width === viewports[0][0] && height === viewports[0][1]) {
       const icons = await page.evaluate(async () => {
         const manifest = await (
@@ -137,9 +179,11 @@ try {
     await expect(page.locator("#tracks")).toBeHidden();
     await expect(page.locator("#start")).toBeHidden();
     await page.locator('input[name="speed-class"][value="2"]').check();
+    await checkFooter();
     await page.screenshot({ path: `${output}/${width}-${height}-class.png` });
     await page.locator("#setup-next").click();
     for (const stage of ["track", "craft"]) {
+      await checkFooter();
       if (stage === "track") {
         await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
         for (const [index, track] of TRACKS.entries())
@@ -167,7 +211,7 @@ try {
           );
           expect(bounds.y).toBeGreaterThanOrEqual(insets.top - 1);
           expect(bounds.y + bounds.height).toBeLessThanOrEqual(
-            height - insets.bottom + 1,
+            visibleHeight - insets.bottom + 1,
           );
           expect(
             await page.evaluate(
@@ -248,7 +292,7 @@ try {
         .evaluate((canvas) => [canvas.width, canvas.height]);
       expect(backgroundBuffer).toEqual([
         Math.round(width * 0.55),
-        Math.round(height * 0.55),
+        Math.round(visibleHeight * 0.55),
       ]);
       const nativePreview = await page
         .locator(".menu-preview-canvas")
@@ -268,59 +312,62 @@ try {
       expect(nativePreview.height).toBeGreaterThanOrEqual(
         Math.floor(nativePreview.cssHeight * 0.55),
       );
-      const layout = await page.evaluate((insets) => {
-        const menu = document.getElementById("menu");
-        const model = document
-          .getElementById("menu-model")
-          .getBoundingClientRect();
-        const body = document
-          .querySelector(".menu-body")
-          .getBoundingClientRect();
-        const visible = [
-          ...document.querySelectorAll("#menu button, #menu a, #menu input"),
-        ].filter((e) => e.getClientRects().length);
-        return {
-          stage: menu.dataset.stage,
-          content: [...document.querySelectorAll(".menu-body > *")]
-            .filter((element) => element.getClientRects().length)
-            .map((element) => {
-              const rect = element.getBoundingClientRect();
-              return {
-                id: element.id,
-                top: rect.top,
-                bottom: rect.bottom,
-                height: rect.height,
-              };
-            }),
-          scroll: menu.scrollHeight - menu.clientHeight,
-          width: innerWidth,
-          height: innerHeight,
-          model: { top: model.top, bottom: model.bottom, right: model.right },
-          body: {
-            top: body.top,
-            bottom: body.bottom,
-            left: body.left,
-            right: body.right,
-          },
-          headerBottom: document
-            .querySelector("#menu .masthead")
-            .getBoundingClientRect().bottom,
-          footerTop: document
-            .querySelector("#menu footer")
-            .getBoundingClientRect().top,
-          outside: visible
-            .filter((e) => {
-              const b = e.getBoundingClientRect();
-              return (
-                b.left < insets.left - 1 ||
-                b.top < insets.top - 1 ||
-                b.right > innerWidth - insets.right + 1 ||
-                b.bottom > innerHeight - insets.bottom + 1
-              );
-            })
-            .map((e) => e.id || e.textContent),
-        };
-      }, insets);
+      const layout = await page.evaluate(
+        (insets) => {
+          const menu = document.getElementById("menu");
+          const model = document
+            .getElementById("menu-model")
+            .getBoundingClientRect();
+          const body = document
+            .querySelector(".menu-body")
+            .getBoundingClientRect();
+          const visible = [
+            ...document.querySelectorAll("#menu button, #menu a, #menu input"),
+          ].filter((e) => e.getClientRects().length);
+          return {
+            stage: menu.dataset.stage,
+            content: [...document.querySelectorAll(".menu-body > *")]
+              .filter((element) => element.getClientRects().length)
+              .map((element) => {
+                const rect = element.getBoundingClientRect();
+                return {
+                  id: element.id,
+                  top: rect.top,
+                  bottom: rect.bottom,
+                  height: rect.height,
+                };
+              }),
+            scroll: menu.scrollHeight - menu.clientHeight,
+            width: innerWidth,
+            height: innerHeight,
+            model: { top: model.top, bottom: model.bottom, right: model.right },
+            body: {
+              top: body.top,
+              bottom: body.bottom,
+              left: body.left,
+              right: body.right,
+            },
+            headerBottom: document
+              .querySelector("#menu .masthead")
+              .getBoundingClientRect().bottom,
+            footerTop: document
+              .querySelector("#menu footer")
+              .getBoundingClientRect().top,
+            outside: visible
+              .filter((e) => {
+                const b = e.getBoundingClientRect();
+                return (
+                  b.left < insets.left - 1 ||
+                  b.top < insets.top - 1 ||
+                  b.right > innerWidth - insets.right + 1 ||
+                  b.bottom > innerHeight - insets.bottom + 1
+                );
+              })
+              .map((e) => e.id || e.textContent),
+          };
+        },
+        { ...insets, bottom: insets.bottom + height - visibleHeight },
+      );
       await page.screenshot({
         path: `${output}/${width}-${height}-${stage}.png`,
       });
@@ -400,10 +447,26 @@ try {
         expect(top).toBeGreaterThanOrEqual(insets.top);
         expect(bottom).toBeLessThanOrEqual(height - insets.bottom);
       }
+    } else {
+      const pause = await page.locator("#pause-panel").evaluate((dialog) => ({
+        panel: dialog.querySelector(".panel").getBoundingClientRect().toJSON(),
+        controls: [...dialog.querySelectorAll("h2, button")].map((control) =>
+          control.getBoundingClientRect().toJSON(),
+        ),
+      }));
+      expect(pause.panel.bottom).toBeCloseTo(visibleHeight, 0);
+      for (const { left, right, top, bottom } of pause.controls) {
+        expect(left).toBeGreaterThanOrEqual(insets.left);
+        expect(right).toBeLessThanOrEqual(width - insets.right);
+        expect(top).toBeGreaterThanOrEqual(insets.top);
+        expect(bottom).toBeLessThanOrEqual(visibleHeight - insets.bottom);
+      }
     }
     await page.screenshot({ path: `${output}/${width}-${height}-pause.png` });
-    await page.locator("#quit").click();
+    if (width < 900) await page.locator("#quit").tap();
+    else await page.locator("#quit").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await checkFooter();
     await expect(
       page.locator("#tracks button").nth(faultlineIndex),
     ).toHaveAttribute("aria-pressed", "true");

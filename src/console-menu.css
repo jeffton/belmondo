@@ -676,6 +676,8 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
     width: 100%;
     align-self: end;
     margin: 0;
+    /* The bottom inset is padding inside the panel, not outside its box. */
+    max-height: calc(var(--app-height) - env(safe-area-inset-top));
     padding: 26px max(12px, env(safe-area-inset-right))
       calc(12px + env(safe-area-inset-bottom))
       max(12px, env(safe-area-inset-left));

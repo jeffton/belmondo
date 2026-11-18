@@ -20,7 +20,7 @@
 }
 @media (display-mode: standalone), (display-mode: fullscreen) {
   :root {
-    --app-height: 100lvh;
+    --app-height: min(100lvh, var(--standalone-visible-height, 100lvh));
     background: #10202c;
   }
   body {

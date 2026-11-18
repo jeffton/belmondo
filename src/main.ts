@@ -45,6 +45,26 @@ window.addEventListener("gamepaddisconnected", () => rumble.stop());
 window.addEventListener("pagehide", () => rumble.stop());
 
 installZoomPolicy();
+const standalonePortrait = matchMedia(
+  "(display-mode: standalone) and (orientation: portrait), (display-mode: fullscreen) and (orientation: portrait)",
+);
+const visualViewport = window.visualViewport;
+let standaloneVisibleHeight = "";
+function updateStandaloneHeight() {
+  // iOS can include system chrome in lvh even when the visible webview is shorter.
+  const height =
+    standalonePortrait.matches && visualViewport?.scale === 1
+      ? `${visualViewport.height}px`
+      : "";
+  if (height === standaloneVisibleHeight) return false;
+  standaloneVisibleHeight = height;
+  document.documentElement.style.setProperty(
+    "--standalone-visible-height",
+    height,
+  );
+  return true;
+}
+updateStandaloneHeight();
 await document.fonts.load('700 16px "Noto Sans JP"');
 type InputMode = "keyboard" | "gamepad" | "touch";
 type MenuStage = "mode" | "class" | "track" | "craft";
@@ -593,7 +613,17 @@ $("render-quality").onchange = () => {
   applyQuality();
   localStorage.setItem("nv-render", world.quality);
 };
-window.addEventListener("resize", () => world.resize());
+window.addEventListener("resize", () => {
+  updateStandaloneHeight();
+  world.resize();
+});
+function resizeStandaloneViewport() {
+  if (updateStandaloneHeight()) world.resize();
+}
+visualViewport?.addEventListener("resize", resizeStandaloneViewport);
+standalonePortrait.addEventListener("change", resizeStandaloneViewport);
+window.addEventListener("pageshow", resizeStandaloneViewport);
+resizeStandaloneViewport();
 function clearInput() {
   rumble.stop();
   keys.clear();
