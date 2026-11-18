@@ -176,7 +176,19 @@ try {
   await selection("track");
   // Track → Class retains both footer commands in the DOM. Native focus
   // must follow the new stage's cursor rather than linger on the old command.
-  await page.locator("#setup-back").focus();
+  const back = page.locator("#setup-back");
+  await back.focus();
+  const selectedTrack = page.locator(kinds.track);
+  await selectedTrack.dispatchEvent("pointerdown", {
+    pointerType: "touch",
+    bubbles: true,
+  });
+  await selectedTrack.dispatchEvent("pointercancel", {
+    pointerType: "touch",
+    bubbles: true,
+  });
+  await expect(selectedTrack).toHaveClass(/menu-cursor/);
+  await expect(back).toBeFocused();
   await page.keyboard.press("Enter");
   await selection("class");
   await expect(page.locator(kinds.class)).toBeFocused();

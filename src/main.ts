@@ -309,15 +309,13 @@ function setInputMode(mode: InputMode) {
   touch = mode === "touch";
   document.body.classList.toggle("touch", touch || touchLayout);
   document.body.dataset.inputMode = mode;
-  if (
-    fromTouch &&
-    navigationRoot()?.id === "menu" &&
-    menuNavigator &&
-    !document.activeElement?.closest(".setup-navigation")
-  ) {
+  if (fromTouch && navigationRoot()?.id === "menu" && menuNavigator) {
     // A cancelled touch can leave the pointer cursor on a different choice.
-    // Keep native focus on explicit Back/Select commands authoritative.
-    menuNavigator.cursor = null;
+    // Resume from a natively focused setup command or the committed choice.
+    menuNavigator.cursor =
+      document.activeElement?.closest<HTMLElement>(
+        ".setup-navigation button",
+      ) ?? null;
     menuNavigator.sync();
   }
   if (!touch) {
