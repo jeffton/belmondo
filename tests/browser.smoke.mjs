@@ -36,10 +36,18 @@ try {
     await page.locator("#setup-next").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
     await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
+    await expect(page.locator("#tracks button b")).toHaveText(
+      TRACKS.map(({ name }) => name),
+    );
+    await expect(page.locator("#tracks button").first()).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.locator("#circuit-name")).toHaveText("PALM BREAKER");
     await page.locator("#tracks button").nth(1).click();
     await expect(page.locator("#circuit-name")).toHaveText("MONSOON");
     await page.locator("#tracks button").nth(2).click();
-    await expect(page.locator("#circuit-name")).toHaveText("PALM BREAKER");
+    await expect(page.locator("#circuit-name")).toHaveText("WHITEOUT");
     await page.locator("#tracks button").first().click();
     await page.locator("#setup-next").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "craft");

@@ -8,7 +8,9 @@ const output = resolve(
   process.argv[3] || "/var/tmp/coast-divergent-qa/player.json",
 );
 const mode = process.argv[4] || "trial";
-const { makeTrack } = await import(pathToFileURL(join(root, "src/track.ts")));
+const { makeTrack, TRACK_INDEX } = await import(
+  pathToFileURL(join(root, "src/track.ts"))
+);
 const { Race, CRAFT, SPEED_CLASSES } = await import(
   pathToFileURL(join(root, "src/race.ts"))
 );
@@ -70,7 +72,7 @@ function drive(track, r, branch, speedClass) {
     slowing: clamp((speed - target) / (18 * pace), 0, 1),
   });
 }
-const track = makeTrack(2),
+const track = makeTrack(TRACK_INDEX.COAST),
   terrain = createTerrain(track),
   rows = [];
 try {

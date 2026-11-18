@@ -68,11 +68,11 @@ test("drivers maintain distinct cruising lines and return after a completed pass
 });
 
 test("real connected fork lanes sense opposite-branch traffic but not separated decks", async () => {
-  const { makeTrack } = await import("../src/track.ts");
+  const { makeTrack, TRACK_INDEX } = await import("../src/track.ts");
   const { Race } = await import("../src/race.ts");
 
   function approach(condition) {
-    const track = makeTrack(0);
+    const track = makeTrack(TRACK_INDEX.WHITEOUT);
     const s = (track.config.split[0] + 0.0001) * track.length;
     assert(track.bounds(s, -1).connected);
     assert(track.bounds(s + 15, 1).connected);

@@ -229,9 +229,9 @@ function layoutPoints(course: "coast" | "solar" | "night") {
 }
 
 export const TRACK_INDEX = Object.freeze({
-  WHITEOUT: 0,
+  COAST: 0,
   MONSOON: 1,
-  COAST: 2,
+  WHITEOUT: 2,
   SOLAR: 3,
   FAULTLINE: 4,
   CINDERLINE: 5,
@@ -247,12 +247,10 @@ export function isCoastLayout(layoutId: string) {
 }
 
 export const TRACKS: TrackConfig[] = [
-  { ...NEW_COURSES[0], subtitle: "01 / Polar observatory" },
-  { ...NEW_COURSES[1], subtitle: "02 / Hydraulic city" },
   {
     name: "PALM BREAKER",
     curveType: "centripetal",
-    subtitle: "03 / Sunshine air coast",
+    subtitle: "01 / Sunshine air coast",
     color: 0x13d9e7,
     sky: 0x428ce8,
     fog: 0xa7dbe4,
@@ -309,6 +307,8 @@ export const TRACKS: TrackConfig[] = [
     jump: 0.82,
     tunnel: [0.11, 0.19],
   },
+  { ...NEW_COURSES[1], subtitle: "02 / Hydraulic city" },
+  { ...NEW_COURSES[0], subtitle: "03 / Polar observatory" },
   {
     name: "SOLAR ARRAY",
     curveType: "centripetal",

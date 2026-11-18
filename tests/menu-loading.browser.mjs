@@ -42,7 +42,7 @@ try {
   await page.keyboard.press("ArrowRight");
   await checkImmediateModel("MONSOON", "keyboard");
   await page.locator('#tracks button[data-index="2"]').tap();
-  await checkImmediateModel("PALM BREAKER", "touch");
+  await checkImmediateModel("WHITEOUT", "touch");
   const sameRow = await page
     .locator("#tracks button")
     .evaluateAll(
@@ -62,7 +62,7 @@ try {
       value: () => [window.modelPad],
     });
   }, sameRow);
-  await checkImmediateModel("WHITEOUT", "gamepad");
+  await checkImmediateModel("PALM BREAKER", "gamepad");
   expect(errors).toEqual([]);
   console.log(
     `Immediate models/labels with held real worker PASS ${viewport.join("×")}`,

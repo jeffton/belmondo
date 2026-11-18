@@ -22,13 +22,14 @@ try {
         const three = source.match(
           /from\s+["']([^"']*\/three\.js[^"']*)["']/,
         )[1];
-        const [{ World }, { makeTrack }, THREE] = await Promise.all([
-          import("/src/world.ts"),
-          import("/src/track.ts"),
-          import(three),
-        ]);
+        const [{ World }, { makeTrack, TRACK_INDEX }, THREE] =
+          await Promise.all([
+            import("/src/world.ts"),
+            import("/src/track.ts"),
+            import(three),
+          ]);
         const world = new World(document.createElement("canvas")),
-          track = makeTrack(2);
+          track = makeTrack(TRACK_INDEX.COAST);
         world.build(track);
         const g = world.scene.getObjectByName("fork-destination-board");
         world.scene.updateMatrixWorld(true);

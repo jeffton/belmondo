@@ -243,7 +243,7 @@ async function checkNavigation(page, viewport) {
   );
   await page.keyboard.press("ArrowLeft");
   expect(await page.evaluate(() => window.menuQA().selectedTrack)).toBe(
-    TRACK_INDEX.WHITEOUT,
+    TRACK_INDEX.COAST,
   );
   const tracksInOneRow = await page
     .locator("#tracks button")
@@ -259,10 +259,10 @@ async function checkNavigation(page, viewport) {
     await page.keyboard.press("ArrowRight");
   } else await page.keyboard.press("ArrowDown");
   expect(await page.evaluate(() => window.menuQA().selectedTrack)).toBe(
-    TRACK_INDEX.COAST,
+    TRACK_INDEX.WHITEOUT,
   );
   await expect(page.locator("#model-name")).toHaveText(
-    TRACKS[TRACK_INDEX.COAST].name,
+    TRACKS[TRACK_INDEX.WHITEOUT].name,
   );
   await page.evaluate(() => window.menuCursorQA("#setup-next"));
   await page.keyboard.press("ArrowUp");
@@ -551,7 +551,7 @@ async function checkStateContracts(page) {
   await goToSetupStage(page, "class");
   await page.locator('input[name="speed-class"][value="1"]').check();
   expect(await page.evaluate(() => window.menuQA().selectedTrack)).toBe(
-    TRACK_INDEX.WHITEOUT,
+    TRACK_INDEX.COAST,
   );
   await goToSetupStage(page, "track");
   await expect(trackButtons.nth(3)).toBeDisabled();

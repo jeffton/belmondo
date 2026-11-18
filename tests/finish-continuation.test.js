@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Race } from "../src/race.ts";
-import { makeTrack, TRACKS } from "../src/track.ts";
+import { makeTrack, TRACK_INDEX, TRACKS } from "../src/track.ts";
 
 function approach(race, racer, distance = 2) {
   const s = race.track.finishS + race.lapCount * race.track.length - distance;
@@ -96,7 +96,7 @@ for (const [course, config] of TRACKS.entries()) {
 }
 
 test("AI finishers leave the line while the player races; player then continues through the result screen", () => {
-  const race = new Race(makeTrack(0), 0, "race");
+  const race = new Race(makeTrack(TRACK_INDEX.WHITEOUT), 0, "race");
   race.countdown = 0;
   const npc = race.racers[1];
   approach(race, npc);
@@ -117,7 +117,7 @@ test("AI finishers leave the line while the player races; player then continues 
 });
 
 test("finished hulls cannot block or damage an unfinished ship; eliminated ships stay stopped", () => {
-  const track = makeTrack(0);
+  const track = makeTrack(TRACK_INDEX.WHITEOUT);
   const race = new Race(track);
   race.countdown = 0;
   const finisher = race.racers[1];
@@ -150,7 +150,7 @@ test("finished hulls cannot block or damage an unfinished ship; eliminated ships
 });
 
 test("all eight finishers keep circulating after the last crossing, with frozen order and no pile at the line", () => {
-  const race = new Race(makeTrack(0));
+  const race = new Race(makeTrack(TRACK_INDEX.WHITEOUT));
   race.countdown = 0;
   for (const racer of [...race.racers.slice(1), race.player]) {
     approach(race, racer);
