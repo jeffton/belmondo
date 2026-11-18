@@ -30,12 +30,6 @@
   display: none;
 }
 
-#menu-model .team-plate {
-  position: absolute;
-  z-index: 1;
-  inset: 0 0 auto auto;
-}
-
 #result-data .team-plate {
   margin-bottom: 0.4em;
 }

@@ -1,6 +1,6 @@
-# BELMONDO Circuit — league graphics
+# BELMONDO league graphics
 
-The Circuit is a sporting league, not a backdrop. Registration numbers, clear black-on-paper shapes and three homologated team marks connect the paddock to the timing board, airframes and results. PIP remains the Circuit's starter. The three teams retain the existing ship names, craft IDs, NPC colours and performance:
+Three team emblems connect craft selection, the timing board, airframes and results. Registration numbers appear on the timing board and in the results. PIP is the starter. The three teams retain the existing ship names, craft IDs, NPC colours and performance:
 
 | Airframe | Entry      | Chase read                                                         |
 | -------- | ---------- | ------------------------------------------------------------------ |

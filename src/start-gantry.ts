@@ -280,7 +280,7 @@ export function buildStartGantry(scene: THREE.Object3D, track: Track) {
     ctx.fillStyle = MINT;
     ctx.font = '600 20px "Archivo"';
     ctx.textAlign = "right";
-    ctx.fillText("BELMONDO / CIRCUIT", 994, 27);
+    ctx.fillText("BELMONDO / TIMING 01", 994, 27);
     for (const [i, team] of LEAGUE_TEAMS.entries()) {
       const x = 285 + i * 110;
       ctx.fillStyle = team.color;

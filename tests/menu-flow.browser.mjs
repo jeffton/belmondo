@@ -66,6 +66,11 @@ try {
       () => window.nullVector.telemetry.menuRacers[0].s,
     );
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
+    await expect(page.locator("#menu h1")).toHaveText("BELMONDO");
+    await expect(page.locator("#menu .masthead")).not.toContainText(
+      /cir[cq]uit/i,
+    );
+    await page.screenshot({ path: `${output}/${width}-${height}-mode.png` });
     await page.locator("#setup-next").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
     await page.waitForFunction(
@@ -75,6 +80,7 @@ try {
     await expect(page.locator("#tracks")).toBeHidden();
     await expect(page.locator("#start")).toBeHidden();
     await page.locator('input[name="speed-class"][value="2"]').check();
+    await page.screenshot({ path: `${output}/${width}-${height}-class.png` });
     await page.locator("#setup-next").click();
     for (const stage of ["track", "craft"]) {
       if (stage === "track") {
@@ -114,21 +120,18 @@ try {
         }
         await page.locator("#tracks button").nth(faultlineIndex).click();
       } else {
-        for (const [craft, team] of [
-          [0, "VEX / 01"],
-          [1, "LUX / 27"],
-          [2, "PHASE / 44"],
-        ]) {
-          await page
-            .locator(`#crafts button[data-craft-index="${craft}"]`)
-            .click();
-          await expect(page.locator("#menu-model .team-plate")).toHaveText(
-            team,
+        const marks = new Set();
+        for (const craft of [0, 1, 2]) {
+          const choice = page.locator(
+            `#crafts button[data-craft-index="${craft}"]`,
           );
+          const emblem = choice.locator(".team-emblem");
+          await expect(emblem).toBeVisible();
+          marks.add(await emblem.innerHTML());
+          await choice.click();
+          await expect(choice).toHaveAttribute("aria-pressed", "true");
         }
-        await expect(page.locator("#crafts .choice .team-emblem")).toHaveCount(
-          3,
-        );
+        expect(marks.size).toBe(3);
       }
       await expect(page.locator("#menu")).toHaveAttribute("data-stage", stage);
       await expect(page.locator("#menu-model")).toBeVisible();
