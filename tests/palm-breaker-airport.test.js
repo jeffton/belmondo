@@ -26,7 +26,7 @@ test("Palm Breaker airport is low-cost, grounded in the bay and outside the race
       points.push(point.applyMatrix4(mesh.matrixWorld));
     }
   }
-  const near = track.frame(0.846 * track.length);
+  const near = track.frame(0.873 * track.length);
   const right = new Vector3(near.tangent.z, 0, -near.tangent.x).normalize();
   const inward = Math.min(
     ...points.map((point) => point.clone().sub(near.p).dot(right)),

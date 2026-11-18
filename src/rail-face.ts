@@ -10,7 +10,7 @@ export const RAIL_FACE_PATTERN = Object.freeze({
 const PALETTES: Record<string, { light: number; dark: number }> = {
   FAULTLINE: { light: 0xe3e3c5, dark: 0x3b4d3e },
   "VESPER CIRCUIT": { light: 0xb3d6dc, dark: 0x313c66 },
-  "PALM BREAKER": { light: 0xe3e1cc, dark: 0x314b5b },
+  "PALM BREAKER": { light: 0xf4dfbc, dark: 0x305f63 },
   "SOLAR ARRAY": { light: 0xe7d5b0, dark: 0x61483f },
   NOCTILUCENT: { light: 0xd1d2e7, dark: 0x3e3c59 },
   WHITEOUT: { light: 0xdbe6e5, dark: 0x385c75 },

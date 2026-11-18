@@ -84,6 +84,7 @@ import {
   releaseCraftShadow,
 } from "./craft.ts";
 import { buildFlagship, loadFlagshipAssets } from "./flagship.ts";
+import { buildPalmBreakerAirport } from "./palm-breaker-airport.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);
 const mat = (
@@ -617,7 +618,7 @@ export class World {
     if (cfg.name === "CINDERLINE")
       buildCinderWorks(this.scene, track, textures, environment);
     yield;
-    if (flagship)
+    if (flagship) {
       buildFlagship(
         this.scene,
         track,
@@ -625,6 +626,8 @@ export class World {
         environment,
         this.flagshipAssets,
       );
+      buildPalmBreakerAirport(this.scene, track, environment);
+    }
     yield;
     const obj = new THREE.Object3D();
     const foundationQuads: SurfaceQuad[] = [];

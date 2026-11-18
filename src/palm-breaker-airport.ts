@@ -21,7 +21,7 @@ export function buildPalmBreakerAirport(
   track: Track,
   environment: Pick<EnvironmentSurface, "heightAt">,
 ): THREE.Group {
-  const frame = track.frame(0.846 * track.length);
+  const frame = track.frame(0.873 * track.length);
   const right = new THREE.Vector3(
     frame.tangent.z,
     0,
@@ -32,7 +32,7 @@ export function buildPalmBreakerAirport(
   // Seaward of the shipyard ribs. The roof reaches pilot height, while the
   // broad plinth and floating berths read independently down at the water.
   root.position.copy(frame.p).addScaledVector(right, frame.width + 139);
-  root.position.y = frame.p.y - 70;
+  root.position.y = frame.p.y - 33;
   root.rotation.y = Math.atan2(frame.tangent.x, frame.tangent.z);
   root.updateMatrix();
 

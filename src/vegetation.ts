@@ -25,7 +25,7 @@ export const VEGETATION_PROFILES: Record<string, VegetationProfile> = {
       [0.7, 0.786],
       [0.905, 0.948],
     ],
-    species: ["palm", "palm", "palm", "bush"],
+    species: ["palm", "palm", "palm", "tree", "bush"],
     spacing: 75,
     cluster: [5, 10],
     setback: [51, 135],
@@ -460,6 +460,48 @@ export function buildVegetation(
         };
         root.userData.plants.push(plant);
         batches.get(species)!.push(plant.matrix);
+      }
+    }
+  }
+  if (isCoastLayout(track.config.layoutId)) {
+    // Tall, spaced palms on the open side of the hotel climb. They break the
+    // skyline in the chase view; the smaller hillside groves remain behind.
+    const palm = geometries.get("palm")!;
+    for (let i = 0; i < 19; i++) {
+      const u = 0.48 + i * 0.0102;
+      const f = track.frame(u * track.length);
+      const right = new THREE.Vector3(f.tangent.z, 0, -f.tangent.x).normalize();
+      for (const offset of [57, 68, 79]) {
+        const p = f.p.clone().addScaledVector(right, f.width + offset);
+        const h = terrain.heightAt(p.x, p.z);
+        if (h < -13 || h < f.p.y - 16 || h > f.p.y + 23) continue;
+        transform.position.set(p.x, h - 0.18, p.z);
+        transform.rotation.set(0, i * 0.71, 0);
+        transform.scale.setScalar(1.95 + (i % 3) * 0.16);
+        transform.updateMatrix();
+        transform.position.y += groundedGeometryOffset(
+          palm,
+          transform.matrix,
+          terrain.heightAt,
+          0.18,
+        );
+        transform.updateMatrix();
+        const box = palm.boundingBox!.clone().applyMatrix4(transform.matrix);
+        if (
+          !vegetationRoadClear(box, terrain.samples) ||
+          obstacles.intersects(box.clone().expandByScalar(3))
+        )
+          continue;
+        const matrix = transform.matrix.clone();
+        root.userData.plants.push({
+          species: "palm",
+          matrix,
+          box,
+          root: transform.position.clone(),
+          u,
+        });
+        batches.get("palm")!.push(matrix);
+        break;
       }
     }
   }
