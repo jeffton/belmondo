@@ -236,6 +236,13 @@ try {
     });
   };
   await capture("results");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("#result-quit")).toHaveCSS(
+    "background-color",
+    "rgb(251, 77, 43)",
+  );
+  await expect(page.locator("#again")).toHaveCSS("color", "rgb(24, 23, 21)");
+  await page.keyboard.press("ArrowUp");
   if (exit === "touch") await page.locator("#result-quit").tap();
   else if (exit === "controller") {
     await page.evaluate(() => {

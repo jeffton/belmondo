@@ -193,10 +193,16 @@
 #menu #tracks .choice :is(.track-progress, .track-lock) {
   margin: 0;
 }
-#menu #tracks .choice.has-trophy .track-progress {
-  /* The trophy visual carries the same place, with the full name on the button. */
-  position: absolute;
-  clip-path: inset(50%);
+#menu #tracks .choice:has(.track-progress:not([hidden])) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1px;
+}
+#menu #tracks .choice .track-progress {
+  font-size: 8px;
+  min-height: 0;
 }
 #menu #tracks .choice.active .track-trophy {
   color: var(--console-black);
@@ -376,14 +382,15 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
     display: block;
   }
   #menu #tracks .choice.has-trophy {
-    padding-right: 9px;
+    padding-right: 16px;
   }
   #menu #tracks .choice b {
+    margin: 0;
     font-size: clamp(10px, 1.65vw, 15px);
   }
   #menu #tracks .choice .track-trophy {
-    top: 5px;
-    right: 5px;
+    top: 50%;
+    right: 3px;
     width: 11px;
   }
   #menu #tracks .choice .track-lock {

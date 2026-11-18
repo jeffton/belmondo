@@ -2562,17 +2562,6 @@ body.touch :is(dialog, .overlay) {
   padding-left: max(20px, env(safe-area-inset-left));
 }
 
-/* Keep the primary action quiet while a different action is selected. */
-:is(#pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
-  .start:not(.menu-cursor) {
-  color: var(--paper);
-  background: transparent;
-  box-shadow: none;
-}
-:is(#pause-panel, #results):has(:is(button, a).menu-cursor:not(.choice))
-  .start:not(.menu-cursor)::after {
-  visibility: hidden;
-}
 [data-keyboard-hint]::before {
   content: attr(data-keyboard-hint);
   order: 1;
@@ -2691,33 +2680,6 @@ body[data-input-mode="keyboard"]
 }
 :is(#pause-panel, #results) .panel > button.menu-cursor::after {
   visibility: visible;
-}
-body[data-input-mode="touch"]
-  #pause-panel
-  .panel
-  > button.menu-cursor:not(.start) {
-  color: var(--paper);
-  background: transparent;
-  border-color: #71919d77;
-}
-body[data-input-mode="touch"] #pause-panel .panel > button.menu-cursor::after {
-  visibility: hidden;
-}
-body[data-input-mode="touch"] #pause-panel .panel > button.start {
-  color: #111e27;
-  background: var(--orange);
-  border-color: var(--orange);
-}
-body[data-input-mode="touch"]
-  #pause-panel:has(.menu-cursor:not(.choice))
-  .panel
-  > button.start:not(.menu-cursor) {
-  color: #111e27;
-  background: var(--orange);
-  border-color: var(--orange);
-}
-body[data-input-mode="touch"] #pause-panel .panel > button.start::after {
-  visibility: hidden;
 }
 @media (max-height: 480px) {
   #pause-panel .panel {

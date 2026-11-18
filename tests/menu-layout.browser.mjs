@@ -230,6 +230,14 @@ try {
   await expect(page.locator("#resume")).toHaveClass(/menu-cursor/);
   await page.keyboard.press("ArrowDown");
   await expect(page.locator("#restart")).toHaveClass(/menu-cursor/);
+  await expect(page.locator("#restart")).toHaveCSS(
+    "background-color",
+    "rgb(251, 77, 43)",
+  );
+  await expect(page.locator("#resume")).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
   const pauseSizes = await page
     .locator("#pause-panel .panel > button")
     .evaluateAll((buttons) =>

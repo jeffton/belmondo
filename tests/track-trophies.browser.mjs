@@ -111,8 +111,12 @@ try {
         path: `test-artifacts/trophies-${viewport.width}x${viewport.height}-bronze.png`,
       });
       await buttons.nth(0).click();
-      await page.keyboard.press("ArrowRight");
+      const horizontal =
+        (await buttons.nth(0).boundingBox()).y ===
+        (await buttons.nth(1).boundingBox()).y;
+      await page.keyboard.press(horizontal ? "ArrowRight" : "ArrowDown");
       await expect(buttons.nth(1)).toHaveClass(/active/);
+      await expect(buttons.nth(1).locator(".track-progress")).toBeVisible();
       await page.evaluate(() => {
         window.trophyPad = {
           axes: [0, 0],
@@ -123,9 +127,12 @@ try {
         };
       });
       await page.waitForTimeout(200);
-      await page.evaluate(() => {
-        window.trophyPad.buttons[14] = { pressed: true, value: 1 };
-      });
+      await page.evaluate(
+        (button) => {
+          window.trophyPad.buttons[button] = { pressed: true, value: 1 };
+        },
+        horizontal ? 14 : 12,
+      );
       await expect(buttons.nth(0)).toHaveClass(/active/);
       await page.evaluate(() => {
         window.trophyPad = null;
