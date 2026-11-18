@@ -473,13 +473,6 @@ body.touch #speed {
   font-size: 10px;
   letter-spacing: 0.08em;
 }
-@media (orientation: landscape) and (max-height: 450px) {
-  body.touch {
-    --steer-size: 116px;
-    --air-width: 128px;
-    --air-height: 72px;
-  }
-}
 @media (max-width: 360px) {
   #hud {
     --hud-left: max(9px, calc(var(--hud-safe-left) + 6px));
