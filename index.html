@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#111c25" />
+    <meta name="theme-color" content="#101519" />
     <meta
       name="description"
       content="BELMONDO — anti-gravity combat racing. Eight pilots, split routes and coastal megastructures. Play in your browser."
@@ -41,21 +41,22 @@
     <div class="scanlines" aria-hidden="true"></div>
     <main id="menu" data-stage="mode">
       <header class="masthead">
-        <span class="brand-symbol" aria-hidden="true">B<span>/</span></span
-        ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
-        ><span class="edition"
-          ><img
+        <span class="brand-symbol" aria-hidden="true">B<span>/</span></span>
+        <span class="circuit-imprint">BELMONDO<br />CIRCUIT</span>
+        <span class="edition">
+          <span>ANTI-GRAVITY LEAGUE<br />SEASON / 01</span>
+          <img
             class="lab-mascot"
             src="/art/pip-lab-mark.svg"
             width="36"
             height="36"
             alt=""
-          /><span>EST. 2146<br />SEASON / 01</span></span
-        >
+          />
+        </span>
       </header>
       <div class="menu-layout">
         <div class="menu-body">
-          <h1 class="wordmark">BELMONDO</h1>
+          <h1 class="wordmark">BELMONDO <span>CIRCUIT</span></h1>
           <section
             class="setup-stage"
             data-panel="mode"
@@ -169,6 +170,26 @@
             <p id="start-status" role="status"></p>
           </div>
         </div>
+        <div class="season-print" aria-hidden="true">
+          <span>OFFICIAL CIRCUIT PROGRAMME</span>
+          <b>01</b>
+          <span>08 CIRCUITS / 01 SEASON</span>
+        </div>
+        <div
+          id="menu-model"
+          hidden
+          role="group"
+          aria-label="Rotating circuit model"
+        >
+          <span
+            id="model-register"
+            class="model-register"
+            aria-hidden="true"
+          ></span>
+          <strong id="model-name"></strong>
+          <small id="model-subtitle" hidden></small>
+          <dl id="craft-stats" aria-label="Craft specifications" hidden></dl>
+        </div>
       </div>
       <footer class="menu-footer">
         <nav class="menu-links" aria-label="Menu tools">
@@ -202,16 +223,7 @@
           </label>
         </nav>
       </footer>
-      <div
-        id="menu-model"
-        hidden
-        role="group"
-        aria-label="Rotating circuit model"
-      >
-        <strong id="model-name"></strong>
-        <small id="model-subtitle" hidden></small>
-        <dl id="craft-stats" aria-label="Craft specifications" hidden></dl>
-      </div>
+
       <div class="world-caption">
         <strong id="circuit-name">KAISEKI COAST</strong
         ><small>35° N / 139° E — RECLAIMED ZONE</small>

@@ -173,10 +173,16 @@ $("model-name").after(paddockTeam);
 function updateModelName() {
   paddockTeam.hidden = menuStage !== "craft";
   if (!paddockTeam.hidden) setTeamPlate(paddockTeam, selectedCraft);
-  $("craft-circuit").textContent = TRACKS[selectedTrack].name;
-  $("model-subtitle").textContent = TRACKS[selectedTrack].subtitle
-    .split("/")[1]
-    .trim();
+  const selectedCircuit = TRACKS[selectedTrack];
+  $("craft-circuit").textContent = selectedCircuit.name;
+  const [registration, location] = selectedCircuit.subtitle.split(" / ");
+  $("model-subtitle").textContent = location;
+  $("model-register").textContent =
+    menuStage === "track"
+      ? `${registration} / ROUTE STUDY`
+      : menuStage === "craft"
+        ? "PADDOCK / CRAFT"
+        : `CLASS ${String(selectedSpeedClass + 1).padStart(2, "0")}`;
   $("model-subtitle").hidden = menuStage !== "track";
   $("model-name").textContent =
     menuStage === "class"
