@@ -38,14 +38,19 @@ try {
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "race",
   );
-  for (const [name, width, height, left, right, bottom] of [
-    ["portrait", 390, 844, 0, 0, 34],
-    ["landscape", 844, 390, 47, 47, 21],
-    ["compact", 320, 568, 0, 0, 0],
+  for (const [name, width, height, left, right, top, bottom] of [
+    ["portrait", 390, 844, 0, 0, 47, 34],
+    ["landscape", 844, 390, 47, 47, 0, 21],
+    ["short-landscape", 568, 320, 44, 0, 0, 21],
+    ["compact", 320, 568, 0, 0, 0, 0],
   ]) {
     await page.setViewportSize({ width, height });
     const override = await page.addStyleTag({
-      content: `#touch-controls { left: max(14px, ${left}px) !important; right: max(14px, ${right}px) !important; bottom: max(12px, ${bottom}px) !important; } body.touch .hud-bottom { left: max(14px, ${left}px) !important; right: max(14px, ${right}px) !important; bottom: calc(max(12px, ${bottom}px) + 144px) !important; }`,
+      content: `#hud { --hud-safe-left: ${left}px; --hud-safe-right: ${right}px; --hud-safe-top: ${top}px; --hud-safe-bottom: ${bottom}px; }`,
+    });
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+      return document.fonts.ready.then(() => undefined);
     });
     const geometry = await page.evaluate(() => {
       const rect = (selector) => {
@@ -61,7 +66,12 @@ try {
           "#touch-fire",
           ".shield",
           ".velocity",
-          ".hud-top",
+          ".race-position",
+          ".lap",
+          "#timer",
+          "#lap-times",
+          "#view",
+          "#pause",
         ].map((selector) => [selector, rect(selector)]),
       );
     });
@@ -70,27 +80,34 @@ try {
       a.x + a.width > b.x &&
       a.y < b.y + b.height &&
       a.y + a.height > b.y;
-    const controls = ["#steer-pad", "#air-pad", "#touch-fire"];
-    for (const selector of controls) {
+    const items = Object.keys(geometry);
+    for (const [i, selector] of items.entries()) {
       const box = geometry[selector];
-      assert(box.x >= left && box.x + box.width <= width - right);
-      assert(box.y >= 0 && box.y + box.height <= height - bottom);
-      for (const hud of [".shield", ".velocity", ".hud-top"])
+      assert(
+        box.x >= left && box.x + box.width <= width - right,
+        `${name}: ${selector} outside horizontal safe area`,
+      );
+      assert(
+        box.y >= top && box.y + box.height <= height - bottom,
+        `${name}: ${selector} outside vertical safe area`,
+      );
+      for (const other of items.slice(i + 1))
         assert(
-          !overlap(box, geometry[hud]),
-          `${name}: ${selector} overlaps ${hud}`,
+          !overlap(box, geometry[other]),
+          `${name}: ${selector} overlaps ${other}`,
         );
     }
     assert.equal(geometry["#touch-fire"].width, geometry["#air-pad"].width);
-    for (let i = 0; i < controls.length; i++)
-      for (let j = i + 1; j < controls.length; j++)
-        assert(!overlap(geometry[controls[i]], geometry[controls[j]]));
+    for (const control of ["#pause", "#view", "#touch-fire"]) {
+      assert(geometry[control].width >= 44);
+      assert(geometry[control].height >= 44);
+    }
     await page.screenshot({ path: `${output}/${name}.png` });
     results.push({
       name,
       width,
       height,
-      safeArea: { left, right, bottom },
+      safeArea: { left, right, top, bottom },
       geometry,
     });
     await override.evaluate((element) => element.remove());

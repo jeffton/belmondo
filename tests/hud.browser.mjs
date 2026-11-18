@@ -7,7 +7,12 @@ const url = process.env.SOURCE_URL || "http://127.0.0.1:5178";
 await mkdir("test-artifacts", { recursive: true });
 const html = (await readFile(new URL("../index.html", import.meta.url), "utf8"))
   .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "")
-  .replace("</head>", '<link rel="stylesheet" href="/src/style.css"></head>');
+  .replace(
+    "</head>",
+    ["style", "console-menu", "race-hud"]
+      .map((sheet) => `<link rel="stylesheet" href="/src/${sheet}.css">`)
+      .join("") + "</head>",
+  );
 const browser = await chromium.launch({
   headless: true,
   args: ["--no-sandbox"],

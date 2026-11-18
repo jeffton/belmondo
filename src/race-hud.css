@@ -1,0 +1,489 @@
+/* BELMONDO flight instruments: number plates, not a cockpit overlay. */
+#hud {
+  --hud-safe-left: env(safe-area-inset-left);
+  --hud-safe-right: env(safe-area-inset-right);
+  --hud-safe-top: env(safe-area-inset-top);
+  --hud-safe-bottom: env(safe-area-inset-bottom);
+  --hud-left: max(clamp(12px, 2.4vw, 35px), calc(var(--hud-safe-left) + 8px));
+  --hud-right: max(clamp(12px, 2.4vw, 35px), calc(var(--hud-safe-right) + 8px));
+  --hud-top: max(12px, calc(var(--hud-safe-top) + 6px));
+  --hud-bottom: max(12px, calc(var(--hud-safe-bottom) + 6px));
+  --hud-face: var(--console-cream);
+  --hud-ink: var(--console-black);
+  --hud-signal: var(--console-red);
+  --hud-cut: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  position: fixed;
+  inset: 0 0 auto;
+  height: var(--app-height);
+  z-index: 2;
+  pointer-events: none;
+  touch-action: none;
+  color: var(--hud-face);
+  font: 700 12px/1.1 var(--interface);
+  font-variant-numeric: tabular-nums;
+}
+#hud button {
+  pointer-events: auto;
+  color: var(--hud-ink);
+  border: 0;
+}
+.hud-top {
+  position: absolute;
+  inset: var(--hud-top) var(--hud-right) auto var(--hud-left);
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 4px 8px;
+}
+.hud-track {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+#hud-track {
+  display: none;
+}
+.race-position {
+  grid-column: 1;
+  grid-row: 1;
+}
+.lap {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+}
+:is(.race-position, .lap, #timer, .shield-instrument, .velocity) {
+  color: var(--hud-ink);
+  background: var(--hud-face);
+  clip-path: var(--hud-cut);
+}
+:is(.race-position, .lap) {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 9px;
+  min-width: 112px;
+  padding: 4px 12px;
+}
+/* Lap history hangs outside the number plate; clip only the plate itself. */
+.lap {
+  isolation: isolate;
+  clip-path: none;
+  background: none;
+}
+.lap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hud-face);
+  clip-path: var(--hud-cut);
+}
+.hud-label,
+.instrument-label,
+.speed-unit {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+#position,
+#lap,
+#speed {
+  font: italic 900 25px/1 var(--console-heading);
+}
+:is(#position, #lap) small {
+  font-size: 0.58em;
+  margin-left: 2px;
+}
+#timer {
+  display: block;
+  padding: 5px 13px;
+  text-align: right;
+  font: 700 21px/1 var(--telemetry);
+  white-space: nowrap;
+}
+.lap-times {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 3px;
+  width: max-content;
+  padding: 4px 7px;
+  color: var(--hud-face);
+  background: #181715e8;
+}
+.lap-time {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font: 700 10px/1.45 var(--interface);
+  color: #decfb3;
+  white-space: nowrap;
+}
+.lap-time.current {
+  color: var(--hud-face);
+}
+.lap-time > b {
+  font: 700 11px/1.3 var(--telemetry);
+}
+.hud-bottom {
+  position: absolute;
+  inset: auto var(--hud-right) var(--hud-bottom) var(--hud-left);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+.shield {
+  position: relative;
+  width: 138px;
+}
+.shield-instrument {
+  padding: 6px 12px 8px;
+}
+.shield .hud-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.shield-mark {
+  width: 8px;
+  height: 9px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 85% 65%, 50% 100%, 15% 65%);
+}
+.shield-value {
+  margin-left: auto;
+  font: 700 17px/1 var(--telemetry);
+}
+.shield-value small {
+  margin-left: 1px;
+  font-size: 9px;
+}
+.shield.critical .shield-instrument {
+  background: var(--hud-signal);
+}
+.shield.critical .hud-label {
+  color: transparent;
+}
+.shield.critical :is(.shield-mark, .shield-value),
+#shield-warning {
+  color: var(--hud-ink);
+}
+#shield-warning {
+  position: absolute;
+  top: 9px;
+  left: 23px;
+  font-size: 9px;
+  line-height: 11px;
+}
+#map {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 0;
+  width: 118px;
+  height: auto;
+}
+.velocity {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 4px 5px;
+  width: 174px;
+  padding: 6px 12px 8px;
+}
+#speed {
+  font-size: clamp(26px, 2.65vw, 39px);
+}
+.speed-unit {
+  text-align: right;
+  white-space: nowrap;
+}
+:is(.speed-instrument, .thrust) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+}
+.instrument-label {
+  font-size: 9px;
+}
+.bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  background: #18171538;
+  transform: skewX(-16deg);
+}
+.bar i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--hud-ink);
+}
+.shield-cells {
+  height: 7px;
+  margin-top: 4px;
+  mask-image: repeating-linear-gradient(90deg, #000 0 8%, transparent 8% 10%);
+}
+#thrust-bar {
+  width: 0;
+}
+.launch-band {
+  display: none;
+  position: absolute;
+  inset: 0 auto 0 65%;
+  width: 15%;
+  background: var(--hud-signal);
+  border-inline: 1px solid var(--hud-ink);
+}
+.thrust.launch .launch-band {
+  display: block;
+}
+#race-message {
+  position: absolute;
+  inset: 28% 12px auto;
+  text-align: center;
+  font: italic 900 clamp(18px, 4vw, 40px)/1 var(--console-heading);
+  text-shadow:
+    0 2px 3px var(--hud-ink),
+    0 0 8px var(--hud-ink);
+}
+.weapon {
+  margin-top: 5px;
+}
+#weapon,
+#touch-fire {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  isolation: isolate;
+  height: 44px;
+  width: 100%;
+  padding: 4px 10px;
+  background: none;
+  text-align: center;
+}
+:is(#weapon, #touch-fire, #view, #pause)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--hud-face);
+  clip-path: var(--hud-cut);
+}
+:is(#weapon, #touch-fire, #view, #pause):active::before,
+#view[aria-pressed="true"]::before {
+  background: var(--hud-signal);
+}
+#hud button:focus-visible {
+  outline: 2px solid var(--hud-signal);
+  outline-offset: 1px;
+}
+#hud .weapon-icon {
+  display: block;
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  padding: 3px;
+  color: var(--weapon-color);
+  background: var(--hud-ink);
+}
+.weapon-name {
+  font: italic 900 14px/1 var(--console-heading);
+  white-space: nowrap;
+}
+:is(#view, #pause) {
+  display: none;
+  position: absolute;
+  top: var(--hud-top);
+  right: var(--hud-right);
+  isolation: isolate;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  touch-action: manipulation;
+}
+#view {
+  right: calc(var(--hud-right) + 48px);
+}
+:is(#view, #pause) svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  pointer-events: none;
+}
+#pause .control-solid {
+  fill: currentColor;
+  stroke: none;
+}
+#touch-controls {
+  display: none;
+}
+body.touch[data-input-mode="touch"] :is(#view, #pause) {
+  display: grid;
+}
+body.touch[data-input-mode="touch"] #touch-controls {
+  position: absolute;
+  inset: auto var(--hud-right) var(--hud-bottom) var(--hud-left);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+body.touch[data-input-mode="touch"] .weapon {
+  display: none;
+}
+body.touch[data-input-mode="touch"] .hud-top {
+  grid-template-columns: max-content minmax(0, 1fr) 92px;
+}
+body.touch[data-input-mode="touch"] .hud-track {
+  display: contents;
+}
+body.touch[data-input-mode="touch"] #timer {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: start;
+  padding: 6px 10px;
+  font-size: 15px;
+}
+body.touch {
+  --steer-size: 128px;
+  --air-width: 144px;
+  --air-height: 88px;
+  --fire-height: 44px;
+  --control-gap: 5px;
+}
+body.touch :is(.race-position, .lap) {
+  min-width: 84px;
+  padding: 4px 9px;
+  gap: 4px;
+}
+body.touch :is(#position, #lap) {
+  font-size: 18px;
+}
+body.touch .hud-label {
+  font-size: 8px;
+}
+body.touch .lap-time:not(.current),
+body.touch #map {
+  display: none;
+}
+body.touch[data-input-mode="touch"] .hud-bottom {
+  bottom: calc(
+    var(--hud-bottom) + var(--air-height) + var(--fire-height) +
+      var(--control-gap) + 6px
+  );
+}
+body.touch .shield {
+  width: 102px;
+}
+body.touch .velocity {
+  width: var(--air-width);
+}
+body.touch #speed {
+  font-size: 25px;
+}
+#steer-pad,
+#air-pad {
+  position: relative;
+  pointer-events: auto;
+  touch-action: none;
+  border: 1px solid #fff0d199;
+  background: #18171569;
+}
+#steer-pad {
+  width: var(--steer-size);
+  height: var(--steer-size);
+  border-radius: 50%;
+}
+#air-pad {
+  width: 100%;
+  height: var(--air-height);
+  border-radius: 5px 5px 72px 72px;
+}
+.stick-reticle {
+  position: absolute;
+  pointer-events: none;
+}
+#steer-pad .stick-reticle {
+  inset: 12%;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--hud-face), var(--hud-face)) left center / 8px 2px
+      no-repeat,
+    linear-gradient(var(--hud-face), var(--hud-face)) right center / 8px 2px
+      no-repeat,
+    linear-gradient(var(--hud-face), var(--hud-face)) center top / 2px 8px
+      no-repeat,
+    linear-gradient(var(--hud-face), var(--hud-face)) center bottom / 2px 8px
+      no-repeat;
+}
+#air-pad .stick-reticle {
+  inset: 15px 12.5% auto;
+  height: 2px;
+  background: #fff0d18c;
+}
+:is(#steer-pad, #air-pad) i {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  background: var(--hud-face);
+  border: 2px solid var(--hud-ink);
+  border-radius: 50%;
+}
+#steer-pad i {
+  width: 29px;
+  height: 29px;
+  top: calc(50% - 14.5px);
+  left: calc(50% - 14.5px);
+}
+#air-pad i {
+  width: 26px;
+  height: 26px;
+  top: 3px;
+  left: calc(50% - 13px);
+}
+#air-pad.pressed i,
+#steer-pad:active i {
+  background: var(--hud-signal);
+}
+.touch-actions {
+  width: var(--air-width);
+  display: grid;
+  gap: var(--control-gap);
+}
+#touch-fire {
+  height: var(--fire-height);
+  touch-action: none;
+}
+#touch-fire:disabled {
+  color: var(--hud-face);
+  pointer-events: none;
+}
+#touch-fire:disabled::before {
+  background: #181715aa;
+}
+.weapon-empty {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+@media (orientation: landscape) and (max-height: 450px) {
+  body.touch {
+    --steer-size: 116px;
+    --air-width: 128px;
+    --air-height: 72px;
+  }
+}
+@media (max-width: 360px) {
+  #hud {
+    --hud-left: max(9px, calc(var(--hud-safe-left) + 6px));
+    --hud-right: max(9px, calc(var(--hud-safe-right) + 6px));
+  }
+}

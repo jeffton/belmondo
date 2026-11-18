@@ -1,5 +1,6 @@
 import "./style.css";
 import "./console-menu.css";
+import "./race-hud.css";
 import "./league-team.css";
 import { LEAGUE_TEAMS, teamEmblem } from "./league-teams.ts";
 import { Vector3 } from "three";
@@ -1141,8 +1142,11 @@ function drawMap() {
     90 + (p.x - (minX + maxX) / 2) * scale,
     60 + (p.z - (minZ + maxZ) / 2) * scale,
   ];
-  ctx.strokeStyle = "#d9e5e5";
+  ctx.strokeStyle = "#fff0d1";
   ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "#181715";
+  ctx.shadowBlur = 2;
   ctx.beginPath();
   points.forEach((p, i) => {
     const [x, y] = xy(p);
@@ -1154,7 +1158,7 @@ function drawMap() {
   for (const r of [...race.racers].reverse()) {
     if (r.eliminated) continue;
     const [x, y] = xy(track.frame(r.s, r.branch).p);
-    ctx.fillStyle = r.id === 0 ? "#ff782b" : "#a2ceda";
+    ctx.fillStyle = r.id === 0 ? "#fb4d2b" : "#fff0d1";
     ctx.beginPath();
     ctx.arc(x, y, r.id === 0 ? 3.5 : 2, 0, Math.PI * 2);
     ctx.fill();
@@ -1264,9 +1268,6 @@ function updateHUD(now: number) {
   $("lap-times").innerHTML = timingRows.join("");
   $("shield-num").textContent = String(Math.ceil(p.shield));
   $("shield-bar").style.width = `${p.shield}%`;
-  $("shield-bar").style.background = race.criticalShield
-    ? "#ff642a"
-    : "#d4f53c";
   $("shield-warning").hidden = !race.criticalShield;
   $("shield-warning").parentElement!.classList.toggle(
     "critical",

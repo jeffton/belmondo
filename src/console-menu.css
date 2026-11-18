@@ -6,7 +6,15 @@
   src: url("/fonts/archivo-menu-display.woff2") format("woff2");
 }
 
-:is(#menu, #pause-panel, #results, #help-dialog, #music-dialog, #art-dialog) {
+:is(
+  #menu,
+  #pause-panel,
+  #results,
+  #help-dialog,
+  #music-dialog,
+  #art-dialog,
+  #hud
+) {
   --console-cream: #fff0d1;
   --console-black: #181715;
   --console-red: #fb4d2b;
