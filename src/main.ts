@@ -1,4 +1,6 @@
 import "./style.css";
+import "./league-team.css";
+import { LEAGUE_TEAMS, teamEmblem } from "./league-teams.ts";
 import { Vector3 } from "three";
 import { TRACKS, makeTrack, clamp, mod } from "./track.ts";
 import { Race, CRAFT, SPEED_CLASSES, LAPS_BY_CLASS } from "./race.ts";
@@ -135,7 +137,7 @@ function updateCraftStats() {
   const craft = CRAFT[selectedCraft];
   $("craft-stats").style.setProperty(
     "--craft-accent",
-    `#${craft.color.toString(16).padStart(6, "0")}`,
+    LEAGUE_TEAMS[selectedCraft].color,
   );
   $("craft-stats").innerHTML = (
     [
@@ -155,7 +157,22 @@ function updateCraftStats() {
     })
     .join("");
 }
+function setTeamPalette(element: HTMLElement, index: number) {
+  const team = LEAGUE_TEAMS[index];
+  element.style.setProperty("--team-color", team.color);
+  element.style.setProperty("--team-ink", team.ink);
+}
+function setTeamPlate(element: HTMLElement, index: number) {
+  const team = LEAGUE_TEAMS[index];
+  setTeamPalette(element, index);
+  element.innerHTML = `${teamEmblem(index)}<span>${team.name} / ${team.number}</span>`;
+}
+const paddockTeam = document.createElement("div");
+paddockTeam.className = "team-plate";
+$("model-name").after(paddockTeam);
 function updateModelName() {
+  paddockTeam.hidden = menuStage !== "craft";
+  if (!paddockTeam.hidden) setTeamPlate(paddockTeam, selectedCraft);
   $("craft-circuit").textContent = TRACKS[selectedTrack].name;
   $("model-subtitle").textContent = TRACKS[selectedTrack].subtitle
     .split("/")[1]
@@ -529,7 +546,8 @@ for (const i of [2, 0, 1]) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.craftIndex = String(i);
-  button.innerHTML = `<span><b>${c.name}</b><small>${c.text.split("/")[0].trim().toUpperCase()}</small></span>`;
+  setTeamPalette(button, i);
+  button.innerHTML = `${teamEmblem(i)}<span><b>${c.name}</b><small>${c.text.split("/")[0].trim().toUpperCase()}</small></span>`;
   button.onclick = () => {
     if (selectedCraft !== i) cancelStart();
     selectedCraft = i;
@@ -1178,6 +1196,10 @@ function showResults() {
         ? "YOU LOST"
         : `${race.position}${({ 2: "ND", 3: "RD" } as Record<number, string>)[race.position] || "TH"} PLACE`;
   $("result-data").replaceChildren();
+  const classifiedTeam = document.createElement("div");
+  classifiedTeam.className = "team-plate";
+  setTeamPlate(classifiedTeam, race.player.craft);
+  $("result-data").append(classifiedTeam);
   const lines: [string, string, boolean?, boolean?][] = [
     ["CLASS", race.classSpec.name],
     [

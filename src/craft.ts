@@ -56,7 +56,7 @@ function atlasUV(tile: number, u: number, v: number): UV {
   const inset = 2 / 256;
   return [
     ((tile % 4) + inset + u * (1 - inset * 2)) / 4,
-    1 - (Math.floor(tile / 4) + inset + v * (1 - inset * 2)) / 2,
+    1 - (Math.floor(tile / 4) + inset + v * (1 - inset * 2)) / 4,
   ];
 }
 
@@ -302,6 +302,7 @@ function foil(
   thickness: number,
   tile: number,
   tipRise = 0,
+  printUV?: (point: Point3) => UV,
 ): void {
   const contour = outline.map(([x, z]) => new THREE.Vector2(x, z));
   const triangles = THREE.ShapeUtils.triangulateShape(contour, []);
@@ -313,7 +314,7 @@ function foil(
       z,
     ];
   };
-  const uv = (p: Point3): UV => [p[0] / 6 + 0.5, (3 - p[2]) / 6];
+  const uv = printUV ?? ((p: Point3): UV => [p[0] / 6 + 0.5, (3 - p[2]) / 6]);
   for (const triangle of triangles) {
     for (const top of [true, false]) {
       const points = triangle.map((index) => point(index, top));
@@ -368,7 +369,7 @@ export function buildHull(variant: number): Hull {
     [1, 1],
     [0, 1],
   ];
-  loft(core, airframe.hull);
+  loft(core, airframe.hull, 8 + variant);
   loft(canopy, airframe.canopy, 4);
 
   // Narrow ventral battery keel makes the craft a volume in rear chase view.
@@ -393,20 +394,27 @@ export function buildHull(variant: number): Hull {
       0,
       variant === 2 ? 0.05 : 0.015,
     );
-    // Separate narrow painted inset follows the foil's outer half. It does not
-    // turn the entire central deck into a featureless livery triangle.
+    // One asymmetric factory plate survives the chase camera. The opposite
+    // foil and the fins retain the pilot's accent for same-team grid rivals.
+    const teamSide = variant === 1 ? 1 : -1;
     const panel: WingPoint[] = airframe.wing.map(([x, z]) => [
       0.55 + (x - 0.55) * 0.84,
       z * 0.86 - 0.15,
     ]);
     foil(
-      accent,
+      side === teamSide ? core : accent,
       panel,
       side,
       airframe.wingY + 0.082,
       0.012,
-      1,
+      side === teamSide ? 12 + variant : 1,
       variant === 2 ? 0.05 : 0.015,
+      side === teamSide
+        ? ([x, , z]) => [
+            THREE.MathUtils.clamp((Math.abs(x) - 0.38) / 2.2, 0, 1),
+            THREE.MathUtils.clamp((1.4 - z) / 3.8, 0, 1),
+          ]
+        : undefined,
     );
 
     // Transverse load path joins fuselage, wing and short engine fairing. On
@@ -610,7 +618,7 @@ export function buildHull(variant: number): Hull {
 
 function buildResources(): CraftResources {
   const loader = new THREE.TextureLoader();
-  const atlas = loader.load("/art/craft-livery.png");
+  const atlas = loader.load("/art/craft-league-atlas.png");
   atlas.colorSpace = THREE.SRGBColorSpace;
   atlas.magFilter = THREE.NearestFilter;
   atlas.minFilter = THREE.LinearMipmapLinearFilter;

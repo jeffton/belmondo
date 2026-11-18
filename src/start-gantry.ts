@@ -1,3 +1,4 @@
+import { LEAGUE_TEAMS, paintTeamEmblem } from "./league-teams.ts";
 import type { Track, TrackFrame } from "./track.ts";
 import * as THREE from "three";
 
@@ -279,7 +280,15 @@ export function buildStartGantry(scene: THREE.Object3D, track: Track) {
     ctx.fillStyle = MINT;
     ctx.font = '600 20px "Archivo"';
     ctx.textAlign = "right";
-    ctx.fillText("BELMONDO / TIMING 01", 994, 27);
+    ctx.fillText("BELMONDO / CIRCUIT", 994, 27);
+    for (const [i, team] of LEAGUE_TEAMS.entries()) {
+      const x = 285 + i * 110;
+      ctx.fillStyle = team.color;
+      ctx.fillRect(x, 5, 98, 28);
+      ctx.fillStyle = team.ink;
+      paintTeamEmblem(ctx, i, x + 6, 9, 0.77);
+      ctx.fillText(`${team.code}/${team.number}`, x + 90, 26);
+    }
     drawPip(ctx, stage);
     ctx.fillStyle = LILAC;
     ctx.textAlign = "center";
