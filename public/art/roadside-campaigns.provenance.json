@@ -1,0 +1,12 @@
+{
+  "method": "Original OpenAI Image illustrations with offline typography and atlas layout (scripts/build-billboard-art.py)",
+  "source": {
+    "imageModel": "gpt-image-2.5-flare",
+    "generationId": "ig_0810ccc4333cf5ac016afdb971a87c87d2ae2748585caeb200",
+    "sha256": "fd89ef8db33bdd0e6984bc1ebdbbac396fe54fd292a70f04df80cd57786938cc"
+  },
+  "outputs": {
+    "roadside-campaigns.webp": "751ad522c8a8391cd3bd110cd8e20a96c825ba233431ab18ebc2722cd31f994c",
+    "kaiseki-tenant-plaques.webp": "b2eecc0f21eff93e6ee3e97796fe6aab270916825e70d1ed679b0f9ff4c184c0"
+  }
+}

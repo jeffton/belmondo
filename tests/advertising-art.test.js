@@ -9,26 +9,27 @@ import { ROADSIDE_ART } from "../src/advertising-art.ts";
 const artPath = new URL("../public/art/", import.meta.url);
 
 test("generated board matches provenance and declared texture dimensions", () => {
-  const bytes = readFileSync(
-    new URL("belmondo-graphic-campaigns.png", artPath),
-  );
   const provenance = JSON.parse(
-    readFileSync(
-      new URL("belmondo-graphic-campaigns.provenance.json", artPath),
-    ),
+    readFileSync(new URL("roadside-campaigns.provenance.json", artPath)),
   );
-  assert.equal(
-    createHash("sha256").update(bytes).digest("hex"),
-    provenance.sha256,
-  );
-  assert.deepEqual(
-    [...bytes.subarray(0, 8)],
-    [137, 80, 78, 71, 13, 10, 26, 10],
-  );
-  assert.equal(bytes.readUInt32BE(16), ROADSIDE_ART.width);
-  assert.equal(bytes.readUInt32BE(20), ROADSIDE_ART.height);
-  // One 2170×725 board including its mip chain is below the old 4096×768 board.
-  assert(ROADSIDE_ART.width * ROADSIDE_ART.height < 4096 * 768);
+  for (const [name, hash] of Object.entries(provenance.outputs)) {
+    const bytes = readFileSync(new URL(name, artPath));
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), hash);
+    assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+    assert.equal(bytes.toString("ascii", 8, 16), "WEBPVP8 ");
+    const [width, height] = [
+      bytes.readUInt16LE(26) & 0x3fff,
+      bytes.readUInt16LE(28) & 0x3fff,
+    ];
+    assert.deepEqual(
+      [width, height],
+      ROADSIDE_ART.url.endsWith(name)
+        ? [ROADSIDE_ART.width, ROADSIDE_ART.height]
+        : [512, 512],
+    );
+  }
+  // Including all eight ads costs less GPU memory than the old 2170×725 board.
+  assert(ROADSIDE_ART.width * ROADSIDE_ART.height < 2170 * 725);
 });
 
 test("all campaign faces sample their own artwork, not presentation margins, in one texture batch", () => {
@@ -69,13 +70,13 @@ test("all campaign faces sample their own artwork, not presentation margins, in 
     const uv = panels[0].geometry.attributes.uv;
     assert.equal(panels[0].geometry.attributes.position.count, 8 * 6);
     for (let brand = 0; brand < 8; brand++) {
-      const column = brand % 4;
-      const row = Math.floor(brand / 4);
+      const column = brand % ROADSIDE_ART.columns;
+      const row = Math.floor(brand / ROADSIDE_ART.columns);
       for (let i = brand * 6; i < (brand + 1) * 6; i++) {
-        const x = uv.getX(i) * 2170;
-        const y = (1 - uv.getY(i)) * 725;
-        assert(x > (column * 2170) / 4 && x < ((column + 1) * 2170) / 4);
-        assert(y > 160 + row * 203 && y < 160 + (row + 1) * 203);
+        const x = uv.getX(i) * ROADSIDE_ART.columns;
+        const y = (1 - uv.getY(i)) * ROADSIDE_ART.rows;
+        assert(x > column && x < column + 1);
+        assert(y > row && y < row + 1);
       }
     }
     const details = scene.children[0].children.filter(

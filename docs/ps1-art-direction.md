@@ -11,6 +11,12 @@ Precision-built racing infrastructure in inhabited landscapes: charcoal inductio
 
 LOWRES dimensions, filtering, cameras, routes, physics, pickups, timing and record identities are unchanged. Structural meshes use shared materials and spatially culled instancing; sectional lighting is baked during course construction.
 
+## Track signage
+
+Four freestanding landmarks per lap: three sponsor campaigns and the Pierre Belmondo founder board. Each is staged on an incoming racing line and aimed back at its own approach. Use landscape units with a strong graphic silhouette and a short headline rather than making a tangential face wider. The sponsor art shares one texture atlas; Kaiseki shop plaques use square layouts from the same artwork. Vesper’s municipal plates keep their district labels and use simple civic pictograms.
+
+Cream plates, dark letterforms and red arrows distinguish actionable route guidance from sponsor graphics. Keep the fork's existing branch labels, warning cadence and geometry. Signs must clear all decks and modeled infrastructure; run `node scripts/check-billboard-clearance.mjs scan` and the LOWRES chase-camera matrix in `tests/billboards.browser.mjs`.
+
 ## References
 
 Original PS1 reference material informs the construction and value hierarchy, not copied assets:

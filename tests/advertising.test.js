@@ -60,16 +60,23 @@ for (const [index, config] of TRACKS.entries()) {
           );
         }
       }
-      assert(spec.width >= 48, "readable landmark rather than a rail strip");
+      assert(spec.width >= 36 && spec.width < 48, "large but not oversized");
       assert(
-        spec.height >= 18,
-        "Pierre uses the full campaign proportions too",
+        spec.width / spec.height < 2.5,
+        "Pierre uses the same broad, full billboard format",
       );
       const normal = spec.horizontal.clone().cross({ x: 0, y: 1, z: 0 });
-      assert(
-        normal.dot(spec.frame.tangent) < -0.7,
-        "art faces approaching traffic",
-      );
+      for (const meters of [90, 150]) {
+        const s = spec.u * track.length - meters;
+        const u = s / track.length;
+        const branch =
+          u > config.split[0] && u < config.split[1] ? spec.side : 0;
+        const toPilot = track.frame(s, branch).p.clone().sub(spec.center);
+        assert(
+          normal.dot(toPilot.setY(0).normalize()) > 0.92,
+          "face holds at least 92% of its horizontal width across the approach",
+        );
+      }
       for (const side of [-1, 1]) {
         const p = spec.center
           .clone()

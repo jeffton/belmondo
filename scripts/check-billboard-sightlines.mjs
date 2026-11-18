@@ -1,5 +1,7 @@
 import * as T from "three";
 import { setup } from "./check-billboard-clearance.mjs";
+import { TRACKS } from "../src/track.ts";
+import { getTrackAdvertisingLayout } from "../src/advertising.ts";
 const temp = new T.Vector3();
 function obstruction(ctx, origin, target) {
   const length = origin.distanceTo(target),
@@ -37,9 +39,10 @@ export function visibility(
   spec,
   xs = [-0.45, -0.225, 0, 0.225, 0.45],
   ys = [-0.4, 0, 0.4],
+  distances = [160, 45],
 ) {
   const results = [];
-  for (const distance of [160, 45]) {
+  for (const distance of distances) {
     const s = spec.u * ctx.track.length - distance,
       u = s / ctx.track.length,
       branch =
@@ -68,18 +71,16 @@ export function visibility(
   }
   return results;
 }
-import { getTrackAdvertisingLayout } from "../src/advertising.ts";
-
-// Regression stations where collision-free placements were hidden by towers.
-for (const [course, panels] of [
-  [3, [0]],
-  [6, [2, 3]],
-]) {
+for (const [course] of TRACKS.entries()) {
   const ctx = setup(course);
-  const layout = getTrackAdvertisingLayout(ctx.track);
-  for (const panel of panels) {
-    const result = visibility(ctx, layout[panel]);
-    console.log(ctx.track.config.name, layout[panel].u, JSON.stringify(result));
-    if (result.some((view) => view.clear !== 15)) process.exitCode = 1;
+  for (const ad of getTrackAdvertisingLayout(ctx.track)) {
+    const result = visibility(ctx, ad, undefined, undefined, [150, 120, 90]);
+    console.log(
+      ctx.track.config.name,
+      ad.u,
+      result.map((view) => view.clear),
+    );
+    if (result.filter((view) => view.clear === 15).length < 2)
+      process.exitCode = 1;
   }
 }

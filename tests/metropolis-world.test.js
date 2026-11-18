@@ -12,6 +12,7 @@ import { newCourseRecipe, biomeLandHeight } from "../src/new-course-recipes.ts";
 import { getTrackPickups } from "../src/pickups.ts";
 import { createSky, paintSky } from "../src/sky.ts";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 function dispose(root) {
   const geometries = new Set(),
@@ -133,10 +134,7 @@ test("VESPER architecture grounds on actual rendered terrain and clears banked h
   }
   assert(root.getObjectByName("broken-neon-deck-reflections"));
   const signs = root.children.filter((o) => o.name === "vesper-municipal-sign");
-  assert(
-    signs.length >= 3,
-    "original municipal signs belong to close architecture",
-  );
+  assert.equal(signs.length, 4, "all municipal signs clear the race corridor");
   for (const sign of signs) {
     assert.equal(sign.material.map, signMap);
     for (const value of sign.geometry.attributes.uv.array)
@@ -185,14 +183,22 @@ test("VESPER original 2048 full-sphere panorama has no horizontal seam and sign 
         `sky seam row ${row}`,
       );
   }
-  const provenance = JSON.parse(
-    readFileSync(
-      new URL("../public/art/vesper/provenance.json", import.meta.url),
-      "utf8",
-    ),
-  );
-  assert.equal(provenance.references.length, 0);
-  assert.equal(provenance.altered, false);
-  assert(METROPOLIS_SIGN_ATLAS.endsWith(provenance.asset));
   sky.dispose();
+});
+
+test("Vesper loads the original municipal plates with all four district labels", () => {
+  const url = new URL(`../public${METROPOLIS_SIGN_ATLAS}`, import.meta.url);
+  const provenance = JSON.parse(
+    readFileSync(new URL("municipal-plates.provenance.json", url), "utf8"),
+  );
+  assert.equal(
+    createHash("sha256").update(readFileSync(url)).digest("hex"),
+    provenance.sha256,
+  );
+  assert.deepEqual(provenance.labels, [
+    "VESPER",
+    "NIGHT MARKET",
+    "ROOF TRANSIT",
+    "EAST STACK",
+  ]);
 });

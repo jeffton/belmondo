@@ -9,8 +9,7 @@ import {
   buildVesperTraffic,
 } from "./vesper-districts.ts";
 
-export const METROPOLIS_SIGN_ATLAS =
-  "/art/vesper/openai-image-2026-11-12T20-57-54-474Z-ig_0e43dc0e702bde06016af628221f9c87d29805ac5f177e27a2.png";
+export const METROPOLIS_SIGN_ATLAS = "/art/vesper/municipal-plates.webp";
 
 /** Every architecture test uses the same oriented volume as the visible mesh. */
 export function clearsMetropolisRoad(
@@ -263,18 +262,17 @@ export function buildMetropolis(
       map: signMap,
       side: THREE.DoubleSide,
     });
-    for (const [index, u] of [0.09, 0.31, 0.57, 0.86].entries()) {
-      const f = track.frame(u * track.length);
-      const side = index % 2 ? 1 : -1;
-      const center = f.p
+    // Stage the local plates in gaps between buildings rather than behind them.
+    for (const [index, u] of [0.09, 0.255, 0.56, 0.84].entries()) {
+      const s = u * track.length;
+      const f = track.frame(s);
+      const center = f.p.clone().addScaledVector(f.right, f.width + 18);
+      center.y = f.p.y + 16;
+      const forward = center
         .clone()
-        .addScaledVector(f.right, side * (f.width + 28));
-      center.y = f.p.y + 19;
-      const forward = new THREE.Vector3(
-        f.tangent.x,
-        0,
-        f.tangent.z,
-      ).normalize();
+        .sub(track.frame(s - 120).p)
+        .setY(0)
+        .normalize();
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       const ground = environment.heightAt(center.x, center.z) - 1;
       const signVolume = {
@@ -282,7 +280,7 @@ export function buildMetropolis(
         forward,
         right,
         width: 18,
-        depth: 2,
+        depth: 3,
         bottom: ground,
         top: center.y + 9,
       };
@@ -302,9 +300,11 @@ export function buildMetropolis(
           (1 - row) * 0.5 + uv.getY(i) * 0.5,
         );
       const sign = new THREE.Mesh(shape, signMaterial);
-      sign.position.copy(center);
-      sign.rotation.y = Math.atan2(-f.tangent.x, -f.tangent.z);
+      // The plate sits ahead of its support rather than slicing through it.
+      sign.position.copy(center).addScaledVector(forward, -1.1);
+      sign.rotation.y = Math.atan2(-forward.x, -forward.z);
       sign.name = "vesper-municipal-sign";
+      sign.userData.station = u;
       root.add(sign);
     }
   }

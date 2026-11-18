@@ -22,7 +22,10 @@ export function buildSplitMarkers(
       break;
     }
   }
-  const dark = new THREE.MeshLambertMaterial({ color: 0x142936 });
+  const ink = "#181515";
+  const cream = "#fff0cc";
+  const red = "#c9252b";
+  const dark = new THREE.MeshLambertMaterial({ color: ink });
   const box = new THREE.BoxGeometry(1, 1, 1);
   for (const distance of [270, 150, 60]) {
     const s = fork - distance;
@@ -30,19 +33,20 @@ export function buildSplitMarkers(
     canvas.width = 512;
     canvas.height = 320;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#142936";
+    ctx.fillStyle = cream;
     ctx.fillRect(0, 0, 512, 320);
-    ctx.strokeStyle = "#eaf5dc";
-    ctx.lineWidth = 12;
-    ctx.strokeRect(8, 8, 496, 304);
-    ctx.fillStyle = "#edff77";
+    ctx.fillStyle = ink;
+    ctx.fillRect(0, 0, 512, 84);
+    ctx.fillStyle = cream;
     ctx.textAlign = "center";
-    ctx.font = "bold 66px monospace";
-    ctx.fillText("FORK", 256, 83);
-    ctx.font = "bold 50px monospace";
-    ctx.fillText(`${Math.round(toMetres(distance))} m`, 256, 291);
-    ctx.strokeStyle = "#eaf5dc";
-    ctx.lineWidth = 16;
+    ctx.font = "italic 900 66px Arial, sans-serif";
+    ctx.fillText("FORK", 256, 66);
+    ctx.fillStyle = ink;
+    ctx.font = "bold 50px Arial, sans-serif";
+    ctx.fillText(`${Math.round(toMetres(distance))} m`, 256, 300);
+    ctx.strokeStyle = red;
+    ctx.lineWidth = 22;
+    ctx.lineJoin = "bevel";
     for (const direction of [-1, 1]) {
       ctx.beginPath();
       ctx.moveTo(256, 221);
@@ -57,8 +61,8 @@ export function buildSplitMarkers(
       ctx.stroke();
     }
     if (track.config.fork?.labels) {
-      ctx.fillStyle = "#eaf5dc";
-      ctx.font = "bold 34px monospace";
+      ctx.fillStyle = ink;
+      ctx.font = "bold 37px Arial, sans-serif";
       // The face looks backwards along the course: branch +1 is left
       // in the approaching pilot's view, branch -1 is right.
       ctx.fillText(track.config.fork.labels[1], 128, 246);
@@ -133,16 +137,18 @@ export function buildSplitMarkers(
     canvas.width = 1024;
     canvas.height = 192;
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#142936";
+    ctx.fillStyle = cream;
     ctx.fillRect(0, 0, 1024, 192);
-    ctx.strokeStyle = "#eaf5dc";
-    ctx.lineWidth = 8;
-    ctx.strokeRect(4, 4, 1016, 184);
-    ctx.fillStyle = "#eaf5dc";
+    ctx.fillStyle = ink;
+    ctx.fillRect(508, 0, 8, 192);
     ctx.textAlign = "center";
-    ctx.font = "bold 88px monospace";
-    ctx.fillText(`↙  ${track.config.fork.labels[1]}`, 260, 126);
-    ctx.fillText(`${track.config.fork.labels[0]}  ↘`, 760, 126);
+    ctx.font = "italic 900 100px Arial, sans-serif";
+    ctx.fillText(track.config.fork.labels[1], 288, 128, 345);
+    ctx.fillText(track.config.fork.labels[0], 736, 128, 345);
+    ctx.fillStyle = red;
+    ctx.font = "bold 104px Arial, sans-serif";
+    ctx.fillText("↙", 74, 132);
+    ctx.fillText("↘", 950, 132);
     const map = new THREE.CanvasTexture(canvas);
     map.colorSpace = THREE.SRGBColorSpace;
     map.magFilter = THREE.NearestFilter;
@@ -159,101 +165,120 @@ export function buildSplitMarkers(
 export function getTrackAdvertisingLayout(track: Track) {
   // Four individually staged landmarks per lap: three different campaigns and
   // one full-size Pierre panel. Nothing is tiled along the running rail.
-  const campaigns: Record<string, number[][]> = {
-    FAULTLINE: [
-      [0.12, -1, 7, 56],
-      [0.51, 1, 2, 54],
-      [0.77, 1, 5, 60],
-      [0.865, 1, -1, 48],
-    ],
-    "KAISEKI COAST": [
-      [0.195, 1, 0, 56],
-      [0.485, 1, 2, 50],
-      [0.65, 1, 6, 60],
-      [0.91, -1, -1, 48],
-    ],
-    "SOLAR ARRAY": [
-      [0.105, -1, 1, 56],
-      [0.31, 1, 2, 50],
-      [0.79, 1, 7, 60],
-      [0.92, -1, -1, 48],
-    ],
+  const campaigns: Record<string, BillboardPlacement[]> = {
     WHITEOUT: [
-      [0.105, 1, 4, 52],
-      [0.235, 1, 0, 58],
-      [0.56, 1, 3, 50],
-      [0.94, -1, -1, 48],
+      [0.142, 1, 4, 41, 6, -10, 120],
+      [0.285, -1, 0, 45, 6, -10, 120],
+      [0.587, 1, 3, 39, 0, -10, 75],
+      [0.958, -1, -1, 37, 6, -10, 120],
     ],
     MONSOON: [
-      [0.09, 1, 1, 56],
-      [0.37, -1, 6, 60, 20],
-      [0.575, -1, 4, 50, 20],
-      [0.94, 1, -1, 48],
+      [0.117, 1, 1, 44, 6, -10, 120],
+      [0.32, -1, 6, 43, 6, -10, 120],
+      [0.635, -1, 4, 39, 6, -12, 100],
+      [0.89, 1, -1, 37, 0, -10, 120],
     ],
-    "VESPER CIRCUIT": [
-      [0.12, -1, 3, 54],
-      [0.365, 1, 4, 60],
-      [0.69, -1, 5, 52, 0, -4],
-      [0.965, -1, -1, 50],
+    "KAISEKI COAST": [
+      [0.222, 1, 0, 44, 6, -10, 120],
+      [0.458, 1, 2, 39, 20, -10, 75],
+      [0.668, 1, 6, 47, 6, -10, 120],
+      [0.915, 1, -1, 37, 6, -10, 120],
+    ],
+    "SOLAR ARRAY": [
+      [0.18, 1, 1, 44, 6, -12, 100],
+      [0.347, 1, 2, 39, 6, -10, 120],
+      [0.827, 1, 7, 47, 28, -10, 120],
+      [0.902, 1, -1, 37, 6, -10, 120],
+    ],
+    FAULTLINE: [
+      [0.17, -1, 7, 44, 0, -10, 120],
+      [0.515, -1, 2, 42, 6, -10, 120],
+      [0.77, -1, 5, 47, 6, -10, 120],
+      [0.815, -1, -1, 37, 6, -10, 120],
     ],
     CINDERLINE: [
-      [0.3, -1, 5, 56],
-      [0.41, 1, 2, 52],
-      [0.68, 1, 7, 60],
-      [0.945, 1, -1, 48],
+      [0.3, -1, 5, 44, 6, -10, 120],
+      [0.46, 1, 2, 41, 0, -10, 120],
+      [0.662, 1, 7, 47, 6, -10, 120],
+      [0.955, 1, -1, 37, 6, -10, 120],
     ],
     NOCTILUCENT: [
-      [0.12, 1, 0, 56],
-      [0.3, -1, 3, 52],
-      [0.65, -1, 4, 60],
-      [0.93, -1, -1, 48],
+      [0.17, 1, 0, 44, 6, -10, 120],
+      [0.35, 1, 3, 41, 6, -10, 120],
+      [0.6, 1, 4, 47, 0, -10, 120],
+      [0.948, -1, -1, 37, 6, -10, 120],
+    ],
+    "VESPER CIRCUIT": [
+      [0.13, 1, 3, 42, 0, -10, 120],
+      [0.36, 1, 4, 47, 6, -10, 120],
+      [0.64, 1, 5, 41, 0, -10, 120],
+      [0.947, -1, -1, 39, 6, -10, 120],
     ],
   };
-  return campaigns[track.config.name].map(
-    ([u, side, brand, width, elevation = 0, setback = 0]) => {
-      const branch =
-        u > track.config.split[0] && u < track.config.split[1] ? side : 0;
-      const frame = track.frame(u * track.length, branch);
-      const normal = frame.tangent
-        .clone()
-        .multiplyScalar(-0.85)
-        .addScaledVector(frame.right, -side * 0.55)
-        .setY(0)
-        .normalize();
-      const yaw = Math.atan2(normal.x, normal.z);
-      const height = width * (384 / 1024);
-      const center = frame.p
-        .clone()
-        .addScaledVector(
-          frame.right,
-          side * (frame.width + width * 0.46 + 12 + setback),
-        );
-      // Monsoon's two lock-wall installations stand above the hydraulic walls.
-      center.y = frame.p.y + height / 2 + 7 + elevation;
-      const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-      const corners = [-1, 1].flatMap((x) =>
-        [-1, 1].map((y) =>
-          center
-            .clone()
-            .addScaledVector(horizontal, (x * width) / 2)
-            .add(new THREE.Vector3(0, (y * height) / 2, 0)),
-        ),
-      );
-      return {
-        u,
-        side,
-        branch,
-        brand,
-        frame,
-        center,
-        yaw,
-        width,
-        height,
-        horizontal,
-        corners,
-      };
-    },
+  return campaigns[track.config.name].map((placement) =>
+    billboardPose(track, placement),
   );
+}
+
+type BillboardPlacement = [
+  station: number,
+  side: number,
+  campaign: number,
+  width: number,
+  elevation: number,
+  setback: number,
+  approach: number,
+];
+
+function billboardPose(
+  track: Track,
+  [u, side, brand, width, elevation, setback, aim]: BillboardPlacement,
+) {
+  const branch =
+    u > track.config.split[0] && u < track.config.split[1] ? side : 0;
+  const frame = track.frame(u * track.length, branch);
+  const height = width * (211 / 512);
+  const center = frame.p
+    .clone()
+    .addScaledVector(
+      frame.right,
+      side * (frame.width + width * 0.46 + 12 + setback),
+    );
+  center.y = frame.p.y + height / 2 + 7 + elevation;
+  // Aim at the incoming line, not a fixed angle relative to the local tangent.
+  // A late-apex bend can make those two directions almost perpendicular.
+  const entry = u - aim / track.length;
+  const entryBranch =
+    entry > track.config.split[0] && entry < track.config.split[1] ? side : 0;
+  const normal = track
+    .frame(entry * track.length, entryBranch)
+    .p.clone()
+    .sub(center)
+    .setY(0)
+    .normalize();
+  const yaw = Math.atan2(normal.x, normal.z);
+  const horizontal = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const corners = [-1, 1].flatMap((x) =>
+    [-1, 1].map((y) =>
+      center
+        .clone()
+        .addScaledVector(horizontal, (x * width) / 2)
+        .add(new THREE.Vector3(0, (y * height) / 2, 0)),
+    ),
+  );
+  return {
+    u,
+    side,
+    branch,
+    brand,
+    frame,
+    center,
+    yaw,
+    width,
+    height,
+    horizontal,
+    corners,
+  };
 }
 
 export function buildTrackAdvertising(

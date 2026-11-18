@@ -1,0 +1,11 @@
+{
+  "title": "Vesper municipal plates",
+  "source": "Original typography and wayfinding pictograms, scripts/build-vesper-signs.py",
+  "labels": [
+    "VESPER",
+    "NIGHT MARKET",
+    "ROOF TRANSIT",
+    "EAST STACK"
+  ],
+  "sha256": "4e353e238e34c7aadc3d85b7a519c4fba658510c269efe3570bf635705aef6ce"
+}

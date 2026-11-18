@@ -1,12 +1,11 @@
-// Generated board retained byte-for-byte. UVs exclude its white presentation
-// margins; all eight campaigns share one texture and the existing spatial batches.
+// Eight hand-lettered campaigns share one GPU texture and the existing batches.
 export const ROADSIDE_ART = {
-  url: "/art/belmondo-graphic-campaigns.png",
-  width: 2170,
-  height: 725,
-  columns: 4,
-  rows: 2,
-  region: [0, 160 / 725, 1, 566 / 725],
+  url: "/art/roadside-campaigns.webp",
+  width: 1024,
+  height: 844,
+  columns: 2,
+  rows: 4,
+  region: [0, 0, 1, 1],
 };
 
 // Region coordinates use image-space top-left origin. Three.js UVs start below.

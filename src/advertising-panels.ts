@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { advertisingCellUV } from "./advertising-art.ts";
 
-const ATLAS =
-  "/art/openai-image-2026-11-11T16-25-29-514Z-ig_0a4106913d49f121016af496c5017087d286f627a074fae0ad.png";
+const ATLAS = "/art/kaiseki-tenant-plaques.webp";
 
 // Four original tenants share one image atlas. Spatial batches keep facade ads
 // in the ordinary camera frustum; no per-frame updates or transparent glow layers.
@@ -21,10 +20,10 @@ export function createAdvertising(
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   const panelMaterial = new THREE.MeshBasicMaterial({ map: texture });
-  const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x142333 });
+  const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x221b1c });
   const neonMaterials = [
-    0xff654d, 0x9bffd9, 0xbcafff, 0xf3f5e7, 0xff654d, 0xbcafff, 0x9bffd9,
-    0xf3f5e7,
+    0xee4e42, 0xf2a53a, 0xa1f3ef, 0xc4aaf3, 0xf171bc, 0x93ebd7, 0xf3e5c4,
+    0xef4c47,
   ].map((color) => new THREE.MeshBasicMaterial({ color }));
   const box = new THREE.BoxGeometry(1, 1, 1);
   const chunks = new Map<
