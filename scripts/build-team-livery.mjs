@@ -21,7 +21,7 @@ const prints = LEAGUE_TEAMS.map(({ color, ink, paths }, i) => {
         ? poly("92,0 157,0 194,256 73,256", paper)
         : poly("158,0 256,0 256,256 102,256", color),
     i === 0
-      ? poly("141,88 154,85 233,256 214,256", paper)
+      ? poly("141,88 177,82 256,256 214,256", paper)
       : i === 1
         ? rect(106, 0, 43, 256, color)
         : poly("150,0 158,0 102,256 93,256", ink),
@@ -37,9 +37,9 @@ const prints = LEAGUE_TEAMS.map(({ color, ink, paths }, i) => {
   const wing = [
     rect(0, 0, 256, 256, i === 2 ? paper : color),
     i === 0
-      ? poly("0,0 93,0 180,109 0,91", ink)
+      ? poly("0,0 111,0 193,116 0,103", paper)
       : i === 1
-        ? poly("0,0 256,0 256,65 0,100", ink)
+        ? poly("0,0 256,0 256,65 0,100", paper)
         : poly("0,188 256,134 256,256 0,256", color),
     emblem(x, y, size, ink),
   ];
