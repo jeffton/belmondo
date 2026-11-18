@@ -128,7 +128,12 @@ export function newCourseRecipe(track: Track): CourseRecipe | null {
 
 export function assertKnownEnvironment(track: Track) {
   if (
-    !isCoastLayout(track.config.layoutId) &&
+    !(
+      isCoastLayout(track.config.layoutId) &&
+      (track.config.name === "PALM BREAKER" ||
+        (track.config.layoutId === "coast-3" &&
+          track.config.name === "KAISEKI COAST"))
+    ) &&
     !["SOLAR ARRAY", "NOCTILUCENT"].includes(track.config.name) &&
     !newCourseRecipe(track)
   )

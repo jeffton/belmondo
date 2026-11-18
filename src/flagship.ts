@@ -12,17 +12,19 @@ const UP = new THREE.Vector3(0, 1, 0);
 export function loadFlagshipAssets(): {
   frontage: THREE.Texture;
   mark: THREE.Texture;
+  marinaSign: THREE.Texture;
 } {
   const loader = new THREE.TextureLoader();
   const frontage = loader.load(
     "/art/openai-image-2026-11-11T17-36-07-009Z-ig_04f2669c5602f968016af4a757ff0487d2acc6752b83e2b65f.png",
   );
   const mark = loader.load("/art/belmondo-mark.png");
-  for (const map of [frontage, mark]) {
+  const marinaSign = loader.load("/art/palm-marina.png");
+  for (const map of [frontage, mark, marinaSign]) {
     map.colorSpace = THREE.SRGBColorSpace;
     map.magFilter = THREE.NearestFilter;
   }
-  return { frontage, mark };
+  return { frontage, mark, marinaSign };
 }
 
 // An occupied waterfront in six acts. Architecture is authored in road frames;
@@ -717,21 +719,6 @@ export function buildFlagship(
   }
   promenadePalms.computeBoundingSphere();
   group.add(promenadePalms);
-  const enamel = document.createElement("canvas");
-  enamel.width = 512;
-  enamel.height = 128;
-  const ctx = enamel.getContext("2d")!;
-  ctx.fillStyle = "#f4e1b7";
-  ctx.fillRect(0, 0, 512, 128);
-  ctx.fillStyle = "#db715b";
-  ctx.fillRect(0, 96, 512, 32);
-  ctx.fillStyle = "#275758";
-  ctx.font = "italic 900 65px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("PALM MARINA", 256, 79);
-  const enamelMap = new THREE.CanvasTexture(enamel);
-  enamelMap.colorSpace = THREE.SRGBColorSpace;
-  enamelMap.magFilter = THREE.NearestFilter;
   sheet(
     [
       terminalPoint(-28.25, 10, -13),
@@ -739,7 +726,10 @@ export function buildFlagship(
       terminalPoint(-28.25, 19, 26),
       terminalPoint(-28.25, 19, -13),
     ],
-    new THREE.MeshBasicMaterial({ map: enamelMap, side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({
+      map: assets.marinaSign,
+      side: THREE.DoubleSide,
+    }),
   );
 
   for (const [material, chunks] of sheets) {

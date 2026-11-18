@@ -26,6 +26,7 @@ for (const [legacyIndex, index] of [
         "edge",
         "frontage",
         "mark",
+        "marinaSign",
         "water",
         "metal",
         "glass",
