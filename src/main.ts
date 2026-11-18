@@ -274,10 +274,16 @@ document.body.classList.toggle("touch", touch);
 document.body.dataset.inputMode = inputMode;
 function setInputMode(mode: InputMode) {
   if (inputMode === mode) return;
+  const fromTouch = inputMode === "touch";
   inputMode = mode;
   touch = mode === "touch";
   document.body.classList.toggle("touch", touch || touchLayout);
   document.body.dataset.inputMode = mode;
+  if (fromTouch && navigationRoot()?.id === "menu" && menuNavigator) {
+    // A cancelled touch can leave the pointer cursor on a different choice.
+    menuNavigator.cursor = null;
+    menuNavigator.sync();
+  }
   if (!touch) {
     touchSteer = 0;
     touchPitch = 0;
