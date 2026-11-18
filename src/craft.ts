@@ -411,7 +411,11 @@ export function buildHull(variant: number): Hull {
       variant === 2 ? 0.05 : 0.015,
       side === teamSide
         ? ([x, , z]) => [
-            THREE.MathUtils.clamp((Math.abs(x) - 0.38) / 2.2, 0, 1),
+            THREE.MathUtils.clamp(
+              side === 1 ? (2.58 - x) / 2.2 : (-x - 0.38) / 2.2,
+              0,
+              1,
+            ),
             THREE.MathUtils.clamp((1.4 - z) / 3.8, 0, 1),
           ]
         : undefined,

@@ -6,7 +6,10 @@
 }
 
 #crafts .choice > .team-emblem {
-  color: var(--team-color);
+  box-sizing: content-box;
+  padding: 0.2em;
+  background: var(--team-color);
+  color: var(--team-ink);
 }
 
 .team-plate {

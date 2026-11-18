@@ -27,14 +27,21 @@ const prints = LEAGUE_TEAMS.map(({ color, ink, paths }, i) => {
         : poly("150,0 158,0 102,256 93,256", ink),
     emblem(i === 0 ? 77 : i === 1 ? 81 : 109, 177, 2.8, ink),
   ];
+  // Each print sits inside that airframe's wing UV polygon, not a shared
+  // imaginary rectangle. Leave space from the panel edges for mip filtering.
+  const [x, y, size] = [
+    [34, 116, 5],
+    [112, 80, 3],
+    [18, 134, 3.25],
+  ][i];
   const wing = [
-    rect(0, 0, 256, 256, i === 0 ? color : i === 1 ? ink : paper),
+    rect(0, 0, 256, 256, i === 2 ? paper : color),
     i === 0
-      ? poly("0,0 73,0 208,256 150,256", ink)
+      ? poly("0,0 93,0 180,109 0,91", ink)
       : i === 1
-        ? poly("0,125 256,38 256,256 0,256", color)
+        ? poly("0,0 256,0 256,65 0,100", ink)
         : poly("0,188 256,134 256,256 0,256", color),
-    emblem(i === 0 ? 114 : 109, i === 1 ? 98 : 134, 3.9, ink),
+    emblem(x, y, size, ink),
   ];
   return `<g transform="translate(${i * 256} 0)">${deck.join("")}</g><g transform="translate(${i * 256} 256)">${wing.join("")}</g>`;
 }).join("");
