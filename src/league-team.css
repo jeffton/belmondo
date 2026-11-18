@@ -31,8 +31,9 @@
 }
 
 #menu-model .team-plate {
-  width: max-content;
-  align-self: start;
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto auto;
 }
 
 #result-data .team-plate {
