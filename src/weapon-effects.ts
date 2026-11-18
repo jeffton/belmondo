@@ -13,6 +13,7 @@ const glow = (color: THREE.ColorRepresentation, opacity = 1) =>
     depthWrite: false,
     side: THREE.DoubleSide,
     toneMapped: false,
+    forceSinglePass: true,
   });
 
 type PaintedPart = [
@@ -119,35 +120,52 @@ export class WeaponEffects {
       vertexColors: true,
       flatShading: true,
     });
-    this.arcGeometry = new THREE.TorusGeometry(1, 0.09, 3, 12, Math.PI * 1.35);
+    this.arcGeometry = new THREE.TorusGeometry(1, 0.09, 3, 8, Math.PI * 1.35);
+    // Cream alloy and a red collar separate the arrowhead from its charcoal fins.
     this.seekerGeometry = painted([
       [
-        new THREE.CylinderGeometry(0.18, 0.42, 2.4, 6),
-        0xf5f0d9,
+        new THREE.CylinderGeometry(0.36, 0.42, 2.4, 4),
+        0xffefd1,
         [0, 0, 0],
         Math.PI / 2,
       ],
       [
-        new THREE.ConeGeometry(0.42, 1.1, 6),
-        0xff493d,
+        new THREE.ConeGeometry(0.42, 1.1, 4),
+        0x393438,
         [0, 0, 1.7],
         Math.PI / 2,
       ],
-      [new THREE.BoxGeometry(2.3, 0.12, 1), 0xec4c3c, [0, 0, -0.8]],
-      [new THREE.BoxGeometry(0.12, 1.7, 1), 0x233747, [0, 0, -0.8]],
       [
-        new THREE.CylinderGeometry(0.45, 0.45, 0.22, 6),
-        0x182630,
+        new THREE.CylinderGeometry(0.43, 0.43, 0.3, 4),
+        0xf43130,
+        [0, 0, 1.04],
+        Math.PI / 2,
+      ],
+      ...[-1, 1].map((sign): PaintedPart => [
+        new THREE.BoxGeometry(0.82, 0.12, 0.56).rotateY(sign * 0.48),
+        0x30282a,
+        [sign * 0.62, 0, -0.84],
+      ]),
+      [new THREE.BoxGeometry(0.12, 1.7, 0.86), 0x30282a, [0, 0, -0.8]],
+      [
+        new THREE.CylinderGeometry(0.45, 0.45, 0.22, 4),
+        0x272326,
         [0, 0, -1],
         Math.PI / 2,
       ],
-      [new THREE.BoxGeometry(0.3, 0.18, 0.7), 0xffe3a6, [0, 0.36, 0.3]],
+      [new THREE.BoxGeometry(0.3, 0.09, 0.64), 0x30282a, [0, 0.36, 0.2]],
     ]);
+    // A broad ceramic cap and charcoal base around the amber arming beacon.
     this.mineGeometry = painted([
-      [new THREE.CylinderGeometry(1.15, 1.65, 0.5, 6), 0x253644],
+      [
+        new THREE.CylinderGeometry(1.48, 1.65, 0.24, 6),
+        0x29272a,
+        [0, -0.13, 0],
+      ],
+      [new THREE.CylinderGeometry(1.1, 1.52, 0.26, 6), 0xffefd1, [0, 0.12, 0]],
       ...[0, 1, 2].map((i): PaintedPart => [
         new THREE.BoxGeometry(0.65, 0.3, 1.5).rotateY((i * Math.PI * 2) / 3),
-        i === 0 ? 0xffb62e : 0xe8d9a8,
+        0x29272a,
         [
           Math.sin((i * Math.PI * 2) / 3) * 1.25,
           0,
@@ -163,17 +181,17 @@ export class WeaponEffects {
     this.boostGeometry = streakGeometry([
       [0.31, 0],
       [0.53, 0.12],
-      [0.44, 0.47],
+      [0.29, 0.47],
       [0.045, 1],
     ]);
     this.waveGeometry = new THREE.TorusGeometry(
       1,
       0.075,
       3,
-      16,
+      10,
       Math.PI * 1.62,
     );
-    this.coreGeometry = new THREE.IcosahedronGeometry(0.5, 0);
+    this.coreGeometry = new THREE.OctahedronGeometry(0.5, 0);
     this.shardsGeometry = painted(
       Array.from({ length: 12 }, (_, i) => {
         const angle = i * Math.PI * (3 - Math.sqrt(5));
@@ -181,7 +199,7 @@ export class WeaponEffects {
         const radius = Math.sqrt(1 - height * height);
         return [
           new THREE.TetrahedronGeometry(0.15),
-          i % 2 ? 0xffe1a5 : 0xff5b39,
+          i % 2 ? 0xffefd1 : 0xf14730,
           [Math.cos(angle) * radius, height, Math.sin(angle) * radius],
         ];
       }),
@@ -213,26 +231,26 @@ export class WeaponEffects {
     };
     if (kind === "MISSILE") {
       mesh(this.seekerGeometry, this.bodyMaterial);
-      const exhaust = glow(0x55b9ed, 0.7);
+      const exhaust = glow(0xff482d, 0.7);
       exhaust.map = this.exhaustTexture;
       const flame = mesh(this.streakGeometry, exhaust);
       flame.position.z = -1.3;
-      const core = mesh(this.coreGeometry, glow(0xe9ffff));
+      const core = mesh(this.coreGeometry, glow(0xffefd1));
       core.position.z = -1.2;
-      const hot = glow(0xffd39a, 0.85);
+      const hot = glow(0xffe3bd, 0.85);
       hot.map = this.exhaustTexture;
       const inner = mesh(this.streakGeometry, hot);
       inner.position.z = -1.25;
     } else if (kind === "MINE") {
       mesh(this.mineGeometry, this.bodyMaterial);
-      const ring = mesh(this.arcGeometry, glow(0xffa322, 0.8));
+      const ring = mesh(this.arcGeometry, glow(0xffb341, 0.8));
       ring.rotation.x = Math.PI / 2;
       ring.scale.setScalar(1.7);
       ring.position.y = 0.35;
-      const beacon = mesh(this.coreGeometry, glow(0xffe7ab));
+      const beacon = mesh(this.coreGeometry, glow(0xffdf98));
       beacon.position.y = 0.65;
       beacon.scale.set(0.3, 1.8, 0.3);
-      const antenna = mesh(this.arcGeometry, glow(0xfff0bf, 0.6));
+      const antenna = mesh(this.arcGeometry, glow(0xffedbe, 0.6));
       antenna.rotation.x = Math.PI / 2;
       antenna.scale.setScalar(2.15);
       antenna.position.y = 0.35;
@@ -240,7 +258,7 @@ export class WeaponEffects {
       for (let i = 0; i < 3; i++) {
         const ring = mesh(
           this.arcGeometry,
-          glow(i === 1 ? 0xb5faff : 0xfb4db2, 0.8),
+          glow(i === 1 ? 0xffded5 : 0xf664cc, 0.8),
         );
         ring.scale.setScalar(2 + i * 1.5);
         ring.rotation.z = i * Math.PI * 0.7;
@@ -249,23 +267,20 @@ export class WeaponEffects {
       // Broken electrical bands wrap the struck hull, rather than an explosion
       // at the firing position. Each racer keeps a reusable slot.
       for (let i = 0; i < 4; i++) {
-        const arc = mesh(this.arcGeometry, glow(i % 2 ? 0xb5faff : 0xfb4db2));
+        const arc = mesh(this.arcGeometry, glow(i % 2 ? 0xffded5 : 0xf664cc));
         arc.position.z = (i - 1.5) * 1.8;
         arc.scale.set(2.8, 1.05, 1);
-        arc.material.forceSinglePass = true;
       }
     } else if (kind === "TURBO") {
       for (const side of [-1, 1]) {
-        const material = glow(0xffdf9a);
+        const material = glow(0xffb77a);
         material.map = this.exhaustTexture;
-        material.forceSinglePass = true;
         const wake = mesh(this.boostGeometry, material);
         wake.position.set(side * 2.55, -0.08, -3.45);
       }
     } else {
-      mesh(this.coreGeometry, glow(0xffc581, 0.9));
-      const wave = mesh(this.waveGeometry, glow(0xff7d43, 0.9));
-      wave.material.forceSinglePass = true;
+      mesh(this.coreGeometry, glow(0xffefd1, 0.9));
+      mesh(this.waveGeometry, glow(0xf14730, 0.9));
       const debrisMaterial = new THREE.MeshBasicMaterial({
         vertexColors: true,
         map: this.metalTexture,
@@ -309,10 +324,10 @@ export class WeaponEffects {
       const blast = this.acquire("BLAST");
       blast.mine = !effect.type;
       blast.root.children[0].material.color.setHex(
-        blast.mine ? 0xffefb0 : 0xdff6ff,
+        blast.mine ? 0xffdf98 : 0xffefd1,
       );
       blast.root.children[1].material.color.setHex(
-        blast.mine ? 0xffac32 : 0xff6740,
+        blast.mine ? 0xffb341 : 0xf14730,
       );
       blast.root.position.copy(effect.position);
       blast.root.quaternion.copy(slot.root.quaternion);

@@ -1,36 +1,36 @@
 import { toMetres } from "./units.ts";
 
-// Original instrument glyphs share silhouettes across inventory and flight briefing.
+// Cutout instrument pictograms keep each silhouette distinct even without tint.
 export const WEAPON_UI = {
   MISSILE: {
     color: "#ff535b",
     description: `Homing missile / ${Math.round(toMetres(220))} m lock`,
     glyph:
-      '<path d="m24 5 6 13v13l8 8H10l8-8V18Z"/><path d="M21 40h6l-3 5Z"/><path d="M22 19h4v10h-4Z" fill="#10202c"/>',
+      '<path d="M43 5 29 9 19 18 11 19 6 25 14 26 6 35 15 34 13 42 21 35 24 40 29 34 30 26 39 17Z"/>',
   },
   PULSE: {
     color: "#ff63db",
     description: "Short-range forward shockwave",
     glyph:
-      '<path d="M20 19h8v10h-8Z"/><path d="M14 13a16 16 0 0 0 0 22M34 13a16 16 0 0 1 0 22M8 7a25 25 0 0 0 0 34M40 7a25 25 0 0 1 0 34" fill="none" stroke="currentColor" stroke-width="3"/>',
+      '<path d="M13 8 17 12 10 20V28L17 36 13 40 4 30V18ZM35 8 44 18V30L35 40 31 36 38 28V20L31 12ZM20 19H28L31 24 28 29H20L17 24Z"/>',
   },
   MINE: {
     color: "#ffbf47",
     description: "Persistent rear proximity charge",
     glyph:
-      '<path d="m19 17 2-12h6l2 12-5 3ZM16 25l5 8-10 9-5-9ZM32 25l10 8-5 9-10-9Z"/><path d="m24 17 7 4v8l-7 4-7-4v-8Z" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="25" r="3"/>',
+      '<path fill-rule="evenodd" d="M21 4H27V10L33 13 38 8 42 12 37 17 39 21H45V27H39L37 31 42 36 38 40 33 35 27 38V44H21V38L15 35 10 40 6 36 11 31 9 27H3V21H9L11 17 6 12 10 8 15 13 21 10ZM24 18 18 24 24 30 30 24Z"/>',
   },
   SHIELD: {
     color: "#66edee",
     description: "5 s protection + shield repair",
     glyph:
-      '<path d="m24 5 16 6v14L24 43 8 25V11Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M22 14h4v7h7v4h-7v7h-4v-7h-7v-4h7Z"/>',
+      '<path fill-rule="evenodd" d="M24 4 41 11V27L24 44 7 27V11ZM24 10 12 15V25L24 37 36 25V15Z"/><path d="M22 15H26V21H32V25H26V31H22V25H16V21H22Z"/>',
   },
   TURBO: {
     color: "#609bff",
     description: "2.4 s overdrive",
     glyph:
-      '<path d="M29 3 12 27h11l-4 18 18-26H26Z"/><path d="M6 14h9v3H6ZM3 22h7v3H3ZM33 32h9v3h-9Z"/>',
+      '<path d="M3 10H14L27 24 14 38H3L16 24ZM23 10H34L47 24 34 38H23L36 24Z"/>',
   },
 };
 

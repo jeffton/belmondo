@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { CraftShadow } from "./craft-shadow.ts";
 import { CRAFT_SHADOW_MASKS } from "./craft-shadow-masks.ts";
+import { weaponTexture } from "./weapon-textures.ts";
 
 // One resource set per world: no per-racer texture loads or geometry allocations.
 // The world owns disposal, so a rebuilt scene receives a fresh set.
@@ -682,14 +683,17 @@ function buildResources(): CraftResources {
   const shieldGeometry = new THREE.SphereGeometry(1, 24, 12);
   shieldGeometry.scale(4.3, 1.45, 5);
   const shieldMaterial = new THREE.MeshPhongMaterial({
-    color: 0x65f1ff,
-    emissive: 0x123943,
-    specular: 0xbaffff,
-    shininess: 90,
+    map: weaponTexture("shield"),
+    color: 0xabaaff,
+    emissive: 0x4f4a85,
+    specular: 0xfcf1ff,
+    shininess: 24,
+    flatShading: true,
     transparent: true,
-    opacity: 0.12,
+    opacity: 0.65,
     depthWrite: false,
     side: THREE.DoubleSide,
+    forceSinglePass: true,
   });
   const shadowMasks = CRAFT_SHADOW_MASKS.map(({ path }) => {
     const texture = loader.load(path);

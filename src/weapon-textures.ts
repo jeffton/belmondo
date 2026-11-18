@@ -13,14 +13,21 @@ export function weaponTexture(kind: string) {
       let light;
       let alpha = 1;
       if (kind === "metal") {
-        const seam = x % 16 < 2 || y % 16 < 1;
-        const scratch = (x + y * 7) % 31 === 0;
-        light = seam ? 0.23 : scratch ? 0.95 : 0.58 + noise * 0.3;
+        const seam = x % 16 === 0 || y % 16 === 0;
+        const edge = x % 16 === 1;
+        light = seam ? 0.56 : edge ? 1 : 0.82 + noise * 0.1;
       } else if (kind === "exhaust") {
-        const edge = Math.max(0, 1 - Math.abs(u * 2 - 1));
-        alpha = Math.pow(edge, 1.5) * Math.pow(v, 0.65);
-        light = 0.5 + noise * 0.5;
-        alpha *= 0.55 + noise * 0.45;
+        const edge = 1 - Math.abs(u * 2 - 1);
+        const scan = y % 4 === 0 ? 0.76 : 1;
+        light = edge > 0.64 ? 1 : 0.8;
+        alpha = Math.pow(edge, 1.25) * Math.pow(v, 0.65) * scan;
+      } else if (kind === "shield") {
+        // Two broken collar rails and short equatorial ticks leave the hull readable.
+        const sector = x % 8;
+        const collar = y === 9 || y === 22;
+        const ticks = (sector === 0 || sector === 1) && y >= 14 && y <= 17;
+        light = 1;
+        alpha = collar && sector < 6 ? 1 : ticks ? 0.9 : 0.12;
       } else {
         const radius = Math.hypot(u * 2 - 1, v * 2 - 1);
         alpha = Math.max(0, 1 - radius) * (0.3 + noise * 0.7);

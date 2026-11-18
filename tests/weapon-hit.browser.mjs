@@ -141,6 +141,13 @@ try {
           const image = capture
             ? world.renderer.domElement.toDataURL("image/png").split(",")[1]
             : null;
+          const vfx = {
+            shots: world.weaponEffects.active.size,
+            blasts: world.weaponEffects.blasts.length,
+            pulseHits: world.weaponEffects.pools
+              .get("PULSE_HIT")
+              .map((slot) => slot.root.visible),
+          };
           let cameraAngle = 0;
           if (world.view === "first-person") {
             const baseCamera = world.camera.quaternion.clone();
@@ -152,7 +159,7 @@ try {
           }
           race.update(1 / 120, input);
           race.update(1 / 120, input);
-          return { states, cameraAngle, image };
+          return { states, cameraAngle, image, vfx };
         },
       };
     });
@@ -182,9 +189,20 @@ try {
           frames.push(result);
         }
         const targetFrames = frames.map((f) => f.states[setup.target]);
-        expect(targetFrames.some((f) => f.shield < 100 && f.hit > 0)).toBe(
-          true,
+        const strikeFrame = targetFrames.findIndex(
+          (f) => f.shield < 100 && f.hit > 0,
         );
+        expect(strikeFrame).toBeGreaterThanOrEqual(0);
+        // The visual must appear on the real damage frame, not just a launch
+        // or an expiry. Pulse stays tied to the hull; blasts use the shot slot.
+        const strikeVfx = frames[strikeFrame].vfx;
+        if (weapon === "PULSE") {
+          expect(strikeVfx.pulseHits.filter(Boolean)).toHaveLength(1);
+          expect(strikeVfx.pulseHits[setup.target]).toBe(true);
+        } else {
+          expect(strikeVfx.blasts).toBeGreaterThan(0);
+          expect(frames.at(-1).vfx.blasts).toBe(0);
+        }
         if (view !== "first-person")
           expect(targetFrames.some((f) => f.angle > 0.04)).toBe(true);
         else expect(frames.some((f) => f.cameraAngle > 0.01)).toBe(true);
@@ -202,6 +220,8 @@ try {
           weapon,
           view,
           setup,
+          strikeFrame,
+          strikeVfx,
           maxRoll: Math.max(...targetFrames.map((f) => f.angle)),
           maxCamera: Math.max(...frames.map((f) => f.cameraAngle)),
           final: targetFrames.at(-1),
@@ -217,6 +237,8 @@ try {
           true,
         );
         expect(frame.cameraAngle).toBeLessThan(1e-6);
+        expect(frame.vfx.pulseHits.some(Boolean)).toBe(false);
+        expect(frame.vfx.blasts).toBe(0);
       }
     }
     await page.close();
