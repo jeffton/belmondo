@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import * as THREE from "three";
 import { ConvexHull } from "three/addons/math/ConvexHull.js";
-import { makeTrack, roadBounds } from "../src/track.ts";
+import { makeTrack, roadBounds, TRACKS } from "../src/track.ts";
 import { projectRoad, roadHeight } from "../src/road-projection.ts";
 import { buildHull } from "../src/craft.ts";
 import { getRoadSurface, roadStations } from "../src/road-surface.ts";
@@ -15,54 +15,67 @@ import { getRoadSurface, roadStations } from "../src/road-surface.ts";
 const RENDER_FIXTURES = [
   [
     "WHITEOUT",
+    "whiteout-2-finish-end",
     "4c14f4134a87e38c87ba9f309507691d2fdea307fcec4ae1524896ba88592f76",
     "bd8acdd2392de563276a449e71d429fed1d0446ce4e1352cd1f8be7a8109b80c",
     "17623d2dedd6ea041be5b2e1d8d9496902a3ea6b9022a3c2b6aab006c67d4064",
   ],
   [
     "MONSOON",
+    "monsoon-4-finish-end",
     "35c8fea77a3365eb6cfbec26ee550c001e32ee2cbaaabac32dc2d300330a7ebf",
     "af76753e285301d20f615cc43c0f5cd0e297e7a5f14dae8bf43206526c0675d5",
     "9e848441fa9c431223ed3ff310309585d20cbce59f48600d2c56a87050befd3e",
   ],
   [
     "PALM BREAKER",
+    "coast-4-finish-end",
     "a440be769eba818475972eaef0bc4bdf5807ab760dbb20bf7adac371eec71786",
     "ebcab8493cecae39a1d9a037ca48061f291c89567e0a9a02c21b94225db84ac5",
     "50542e618d17477deef6227a829cbc3bda0147e6a8e03e2e286b6d538028847a",
   ],
   [
     "SOLAR ARRAY",
+    "solar-4-finish-end",
     "61b371ac2769471dea5fed6dbde60ad89ebf0ea4333ec3177c06f6cb6f90bb38",
     "a4a7bdd831f7f8c9e2292e74bc687ac3b8a1a7c6d7d26078bd356adb81e70263",
     "77e8a94d7de70c39c9a99e3a83bb64331c9ab73987abb6bec47cbaa15d0206b0",
   ],
   [
     "FAULTLINE",
+    "faultline-1-finish-end",
     "d72073fd1d427dd8c1c09cbfd2bba203dea3adcee8e7fbae587e45d079911aeb",
     "a5bdfa6c0af7ad0d183f2322c1c7475eaef4d95cfc32607bdc09840c220139b6",
     "4cd31d8f874d2ebd852ca4874857db79600a54cbcf2dc1985d5fccbb09fc5f9a",
   ],
   [
     "CINDERLINE",
+    "cinderline-2-finish-end",
     "f4966bb97d1344ec81a056cf98b34f0a5c3a838e3cdc9ce3b0b95c8b933a4c5e",
     "8d84b092b22c6541672c69f5c20e3d409c8f9a86cf4ce0b6e47bc3c0f9b7f00f",
     "514f5ce0ecd25ae9448a1366164dec7e626abd557ba02dc9d4df8fb45ffc2407",
   ],
   [
     "NOCTILUCENT",
+    "noctilucent-4-finish-end",
     "6015b891b13dc3b2a7c235c08d67bee43f847c5ac5be19bde2463c7747b16411",
     "1d20d1ae029b1c8debf0a5699d1001ec99ae79e252e7033feac891099b655519",
     "1b52240e85efb689b022f77e670ea15a95af2f9c7e7990ff62be349cb0d81dc3",
   ],
   [
     "VESPER CIRCUIT",
+    "vesper-1-finish-end",
     "d1b2bc67d2a2e51024c91b5456c87f0335f24ef74e0f194835897e8abe22488c",
     "0d82c47d97293b55db4ff1f7fbb987791e94eb0c6ee3e237c121afa7ff5be360",
     "d9fd8904964f956dbee0b85537cbf7ea890313dacdf32d3b2e3586af2a9f8637",
   ],
 ];
-const tracks = RENDER_FIXTURES.map((_, i) => makeTrack(i));
+// These indices belong to the frozen fixtures above, not the course menu.
+const tracks = RENDER_FIXTURES.map(([name, layoutId]) => {
+  const menuIndex = TRACKS.findIndex((config) => config.layoutId === layoutId);
+  assert.notEqual(menuIndex, -1, `${name}: missing layout ${layoutId}`);
+  return makeTrack(menuIndex);
+});
 const digest = (value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 function triangles(surface) {
@@ -106,7 +119,7 @@ function recordedFace(surface, name) {
 }
 for (const [
   i,
-  [name, stationsHash, verticesHash, interiorHash],
+  [name, , stationsHash, verticesHash, interiorHash],
 ] of RENDER_FIXTURES.entries()) {
   test(`${name}: renderer/index hashes match and unrelated road vertices stay exact`, () => {
     const track = tracks[i],
