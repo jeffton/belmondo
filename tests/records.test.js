@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { localRecordKey } from "../src/records.ts";
 import { SPEED_CLASSES } from "../src/speed-classes.ts";
 import { TRACKS } from "../src/track.ts";
-import { CRAFT } from "../src/race.ts";
+import { CRAFT, LAPS_BY_CLASS } from "../src/race.ts";
 
 test("course insertion keeps existing records attached to their course and never shares FAULTLINE times", () => {
   const originalLayouts = [
@@ -19,7 +19,7 @@ test("course insertion keeps existing records attached to their course and never
   for (const layoutId of originalLayouts)
     for (let craft = 0; craft < CRAFT.length; craft++)
       for (const mode of ["race", "trial"])
-        for (const [index, speedClass] of SPEED_CLASSES.entries())
+        for (const [index, speedClass] of SPEED_CLASSES.slice(0, 3).entries())
           saved[localRecordKey(layoutId, craft, mode, speedClass, index + 3)] =
             Object.keys(saved).length + 1;
   const keys = new Set();
@@ -32,11 +32,12 @@ test("course insertion keeps existing records attached to their course and never
             craft,
             mode,
             speedClass,
-            index + 3,
+            LAPS_BY_CLASS[index],
           );
           assert(!keys.has(key));
           keys.add(key);
-          if (originalLayouts.includes(track.layoutId)) assert(saved[key] > 0);
+          if (index < 3 && originalLayouts.includes(track.layoutId))
+            assert(saved[key] > 0);
           else assert.equal(saved[key], undefined);
         }
   assert.equal(keys.size, 8 * CRAFT.length * 2 * SPEED_CLASSES.length);

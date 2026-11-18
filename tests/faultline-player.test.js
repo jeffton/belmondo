@@ -1,7 +1,7 @@
 import { before, after, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
-import { Race, CRAFT, SPEED_CLASSES } from "../src/race.ts";
+import { Race, CRAFT, LAPS_BY_CLASS, SPEED_CLASSES } from "../src/race.ts";
 import { createTerrain } from "../src/terrain.ts";
 import { playerPilot } from "./helpers/player-pilot.js";
 
@@ -20,7 +20,7 @@ for (const [speedClass, spec] of SPEED_CLASSES.entries()) {
     });
     for (const [craft, body] of CRAFT.entries())
       for (const branch of [-1, 1]) {
-        test(`${body.name} ${branch === -1 ? "BORE" : "BENCH"} completes all ${speedClass + 3} ordered laps using only player controls`, () => {
+        test(`${body.name} ${branch === -1 ? "BORE" : "BENCH"} completes all ${LAPS_BY_CLASS[speedClass]} ordered laps using only player controls`, () => {
           const race = new Race(track, craft, "trial", speedClass, terrain);
           race.countdown = 0;
           const racer = race.player;

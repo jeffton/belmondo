@@ -229,7 +229,7 @@ export const WEAPONS: Weapon[] = [
   "SHIELD",
   "TURBO",
 ];
-export const LAPS_BY_CLASS = Object.freeze([3, 4, 5]);
+export const LAPS_BY_CLASS = Object.freeze([3, 4, 5, 5]);
 export const CRITICAL_SHIELD = 25;
 // A small engine-input handicap offsets the player's last-place grid slot.
 export const AI_THROTTLE = 0.96;

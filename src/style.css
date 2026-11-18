@@ -2021,6 +2021,18 @@ body.touch .instrument-bar {
 #menu .speed-choices .choice {
   text-align: left;
 }
+#menu .speed-choices .choice:has(input:disabled),
+#menu .speed-choices input:disabled {
+  cursor: not-allowed;
+  color: #b2c4ca;
+}
+#supernova-lock {
+  display: block;
+  margin-top: 4px;
+}
+#supernova-lock[hidden] {
+  display: none;
+}
 #menu .choice {
   padding: 14px 9px;
 }
@@ -2455,7 +2467,10 @@ body.touch .instrument-bar {
   #menu:not([data-stage="mode"]) h1.wordmark {
     display: none;
   }
-  #menu .speed-choices,
+  #menu .speed-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   #menu .crafts {
     flex-direction: row;
   }

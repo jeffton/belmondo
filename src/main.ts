@@ -20,6 +20,7 @@ import "./circuit-test-access.css";
 import {
   loadProgression,
   recordProgressionResult,
+  speedClassIsUnlocked,
   trackIsUnlocked,
   trackProgress,
 } from "./progression.ts";
@@ -286,6 +287,7 @@ const progression = loadProgression(localStorage);
 // Discard the old persisted override without touching records or progression.
 localStorage.removeItem("nv-test-access");
 const circuitTestAccess = createCircuitTestAccess(() => {
+  cancelStart();
   updateTestAccessBadge();
   refreshTrackProgression();
 });
@@ -457,7 +459,33 @@ for (const [i, t] of TRACKS.entries()) {
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
 }
+const supernovaOption = document.querySelector<HTMLInputElement>(
+  'input[name="speed-class"][value="3"]',
+)!;
+function setSelectedSpeedClass(index: number) {
+  if (index !== selectedSpeedClass) cancelStart();
+  selectedSpeedClass = index;
+  menuPreview.setClass(index);
+  updateModelName();
+}
 function refreshTrackProgression() {
+  const supernovaUnlocked = speedClassIsUnlocked(
+    progression,
+    SPEED_CLASSES[Number(supernovaOption.value)].id,
+    TRACKS,
+    circuitTestAccess.enabled,
+  );
+  supernovaOption.disabled = !supernovaUnlocked;
+  $("supernova-lock").hidden = supernovaUnlocked;
+  if (supernovaOption.checked && !supernovaUnlocked) {
+    // Test access can be disabled from any paddock stage. Fall back before
+    // refreshing circuit access or allowing a queued start to proceed.
+    const singularity = document.querySelector<HTMLInputElement>(
+      'input[name="speed-class"][value="2"]',
+    )!;
+    singularity.checked = true;
+    setSelectedSpeedClass(Number(singularity.value));
+  }
   const classId = SPEED_CLASSES[selectedSpeedClass].id;
   for (const button of $("tracks").children) {
     const index = Number(button.dataset.index);
@@ -522,13 +550,13 @@ menuPreview.setClass(selectedSpeedClass);
 setMenuStage("mode");
 $("mode").onchange = refreshTrackProgression;
 $("speed-class").onchange = () => {
-  selectedSpeedClass = Number(
-    document.querySelector<HTMLInputElement>(
-      'input[name="speed-class"]:checked',
-    )!.value,
+  setSelectedSpeedClass(
+    Number(
+      document.querySelector<HTMLInputElement>(
+        'input[name="speed-class"]:checked:not(:disabled)',
+      )!.value,
+    ),
   );
-  menuPreview.setClass(selectedSpeedClass);
-  updateModelName();
   refreshTrackProgression();
 };
 const qualityToggle = $("quality");
@@ -558,7 +586,17 @@ function clearInput() {
   $("steer-pad").querySelector("i")!.style.transform = "";
 }
 async function start(event: MouseEvent) {
-  if (pendingStart || !isTrackUnlocked(selectedTrack)) return;
+  if (
+    pendingStart ||
+    !isTrackUnlocked(selectedTrack) ||
+    !speedClassIsUnlocked(
+      progression,
+      SPEED_CLASSES[selectedSpeedClass].id,
+      TRACKS,
+      circuitTestAccess.enabled,
+    )
+  )
+    return;
   if (!trackLoading && loadedTrack !== selectedTrack)
     selectTrack(selectedTrack);
   const attempt = { button: event.currentTarget as HTMLButtonElement };

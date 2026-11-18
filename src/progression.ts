@@ -1,4 +1,4 @@
-import { SPEED_CLASSES } from "./speed-classes.ts";
+const ORIGINAL_CLASSES = ["c1", "c2", "c3"];
 
 // The order before FAULTLINE was introduced. Storage uses layout identities,
 // never their position in the current course selector.
@@ -38,7 +38,7 @@ export function loadProgression(
   const progression: Progression = JSON.parse(saved);
   if (progression.version === 1) {
     progression.unlocked = Object.fromEntries(
-      SPEED_CLASSES.map(({ id }) => [
+      ORIGINAL_CLASSES.map((id) => [
         id,
         ORIGINAL_LAYOUTS.filter(
           (_, index) =>
@@ -60,6 +60,21 @@ export function trackProgress(
   layoutId: string,
 ) {
   return progression.classes[classId]?.[layoutId] ?? null;
+}
+
+export function speedClassIsUnlocked(
+  progression: Progression,
+  classId: string,
+  tracks: ReadonlyArray<{ layoutId: string }>,
+  testAccess: boolean,
+) {
+  return (
+    classId !== "c4" ||
+    testAccess ||
+    tracks.every(
+      (track) => trackProgress(progression, "c3", track.layoutId)?.won === true,
+    )
+  );
 }
 
 export function trackIsUnlocked(

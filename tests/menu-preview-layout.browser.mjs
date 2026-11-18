@@ -120,7 +120,7 @@ try {
     });
     for (const [stage, count] of [
       ["craft", 3],
-      ["class", 3],
+      ["class", 4],
       ["track", 7],
     ]) {
       for (let index = 0; index < count; index++) {

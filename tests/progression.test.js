@@ -6,6 +6,7 @@ import {
   PROGRESSION_STORAGE_KEY,
   loadProgression,
   recordProgressionResult,
+  speedClassIsUnlocked,
   trackIsUnlocked,
   trackProgress,
 } from "../src/progression.ts";
@@ -102,7 +103,7 @@ test("inserting FAULTLINE preserves every previously open course without inventi
   // Exercise every old unlock boundary, independently in every speed class.
   for (let wonCount = 0; wonCount <= originalLayouts.length; wonCount++) {
     const old = { version: 1, classes: {} };
-    for (const [classIndex, { id }] of SPEED_CLASSES.entries()) {
+    for (const [classIndex, { id }] of SPEED_CLASSES.slice(0, 3).entries()) {
       const count = Math.max(0, wonCount - classIndex);
       old.classes[id] = Object.fromEntries(
         originalLayouts
@@ -113,7 +114,8 @@ test("inserting FAULTLINE preserves every previously open course without inventi
     const migrated = loadProgression(storageFor(old));
     assert.equal(migrated.version, 2);
     assert.deepEqual(migrated.classes, old.classes);
-    for (const { id } of SPEED_CLASSES) {
+    assert.equal(migrated.unlocked.c4, undefined);
+    for (const { id } of SPEED_CLASSES.slice(0, 3)) {
       for (const [oldIndex, layoutId] of originalLayouts.entries()) {
         const previouslyOpen =
           oldIndex < 3 ||
@@ -163,6 +165,46 @@ test("fresh progression unlocks all eight in course order rather than inheriting
   }
   assert.equal(Object.keys(progression.classes.c1).length, 8);
   assert(!trackIsUnlocked(progression, "c2", TRACKS[3].layoutId, 3, TRACKS));
+});
+
+test("SUPERNOVA requires a Combat victory on every current SINGULARITY circuit", () => {
+  const progression = loadProgression({ getItem: () => null });
+  const locked = () => !speedClassIsUnlocked(progression, "c4", TRACKS, false);
+  const last = TRACKS.find((track) => track.name === "FAULTLINE");
+  const race = { ...result(), classSpec: { id: "c3" } };
+  for (const config of TRACKS.filter((track) => track !== last)) {
+    recordProgressionResult(progression, race, { config });
+  }
+  recordProgressionResult(progression, result(), { config: last });
+  recordProgressionResult(
+    progression,
+    { ...race, mode: "trial" },
+    { config: last },
+  );
+  recordProgressionResult(
+    progression,
+    { ...race, position: 2 },
+    { config: last },
+  );
+  assert(
+    locked(),
+    "other classes, Time Attack and second place cannot complete the sweep",
+  );
+  const saved = JSON.stringify(progression);
+  assert(speedClassIsUnlocked(progression, "c4", TRACKS, true));
+  assert.equal(
+    JSON.stringify(progression),
+    saved,
+    "test access is not saved as progress",
+  );
+  assert(locked());
+  recordProgressionResult(progression, race, { config: last });
+  const reloaded = loadProgression(storageFor(progression));
+  assert(speedClassIsUnlocked(reloaded, "c4", TRACKS, false));
+  assert(
+    !trackIsUnlocked(reloaded, "c4", TRACKS[3].layoutId, 3, TRACKS),
+    "circuit progression is independent in SUPERNOVA",
+  );
 });
 
 test("progression uses separate persistent storage and leaves lap-time records intact", () => {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { makeTrack, mod, TRACKS, TRACK_INDEX } from "../src/track.ts";
-import { Race } from "../src/race.ts";
+import { Race, SPEED_CLASSES } from "../src/race.ts";
 
 function approach(race, gate, branch = 0, lateral = 0, distance = 0.5) {
   const r = race.player;
@@ -93,7 +93,7 @@ for (let speedClass = 0; speedClass < 3; speedClass++) {
 }
 
 for (const [course, config] of TRACKS.entries()) {
-  for (let speedClass = 0; speedClass < 3; speedClass++) {
+  for (let speedClass = 0; speedClass < SPEED_CLASSES.length; speedClass++) {
     test(`${config.name} C${speedClass + 1}: ordered gates retain progress through both routes and two lap boundaries`, () => {
       const track = makeTrack(course);
       for (const fork of [-1, 1]) {

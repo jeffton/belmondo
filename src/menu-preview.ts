@@ -264,7 +264,7 @@ function classSymbol(index: number) {
     }
     add(new THREE.BoxGeometry(0.98, 0.23, 0.5), "ferrite", [0, -0.55, 0]);
     add(new THREE.BoxGeometry(0.72, 0.055, 0.51), "copper", [0, -0.55, 0]);
-  } else {
+  } else if (index === 2) {
     // SINGULARITY: one dense faceted gravity seed, not a containment cage.
     // Its filled double-pyramid silhouette stays solid throughout rotation.
     for (const side of [-1, 1]) {
@@ -288,6 +288,26 @@ function classSymbol(index: number) {
       [0, 0, 0],
       [0, Math.PI / 4, 0],
     );
+  } else {
+    // SUPERNOVA: a bright core breaking through a spread of alloy shards.
+    add(new THREE.IcosahedronGeometry(0.29), "emitter", [0, 0, 0]);
+    add(
+      new THREE.TorusGeometry(0.33, 0.045, 4, 12),
+      "ferrite",
+      [0, 0, 0],
+      [Math.PI / 2, 0, 0],
+    );
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      const lift = (i % 2 ? -1 : 1) * 0.42;
+      add(
+        new THREE.OctahedronGeometry(0.23),
+        i % 2 ? "copper" : "shell",
+        [0.57 * Math.cos(angle), lift, 0.57 * Math.sin(angle)],
+        [0, -angle, -Math.PI / 2],
+        [0.74, 1.55, 0.74],
+      );
+    }
   }
   const group = new THREE.Group();
   group.name = SPEED_CLASSES[index].name;

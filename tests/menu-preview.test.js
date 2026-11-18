@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { MenuPreview } from "../src/menu-preview.ts";
 import { makeTrack, TRACKS, TRACK_INDEX } from "../src/track.ts";
 import { createCraft } from "../src/craft.ts";
+import { CRAFT } from "../src/race.ts";
 import { SPEED_CLASSES } from "../src/speed-classes.ts";
 import { localRecordKey } from "../src/records.ts";
 
@@ -255,7 +256,7 @@ test("class sculptures are distinct spatial silhouettes, cached and disposed wit
   const { preview, calls, renderer } = fixture();
   const signatures = new Set();
   const releases = new Map();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < SPEED_CLASSES.length; i++) {
     const previous = preview.classModel;
     preview.setClass(i);
     if (previous) assert.equal(previous.visible, false);
@@ -270,7 +271,7 @@ test("class sculptures are distinct spatial silhouettes, cached and disposed wit
     const size = box.getSize(new THREE.Vector3());
     assert.ok(
       size.x > 0.8 && size.y > 0.8 && size.z > 0.3,
-      "actual volumes, not planar logos",
+      `${preview.classModel.name} has volume, not a planar logo: ${size.toArray()}`,
     );
     const meshes = preview.classModel.children[0].children;
     signatures.add(
@@ -297,7 +298,7 @@ test("class sculptures are distinct spatial silhouettes, cached and disposed wit
   }
   assert.equal(
     signatures.size,
-    3,
+    SPEED_CLASSES.length,
     "geometry differs, not only material colors",
   );
   const first = preview.classes.get(0);
@@ -368,15 +369,16 @@ test("course switches preserve compiled-material ownership and release only repl
 test("class identity and record scopes survive the field-tech naming", () => {
   assert.deepEqual(
     SPEED_CLASSES.map(({ name }) => name),
-    ["INDUCTION", "RESONANCE", "SINGULARITY"],
+    ["INDUCTION", "RESONANCE", "SINGULARITY", "SUPERNOVA"],
   );
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < SPEED_CLASSES.length; i++) {
     assert.equal(
       localRecordKey("layout", 2, "trial", SPEED_CLASSES[i], 5),
       [
         "layout-2-trial-c1-5laps-pace1.2",
         "layout-2-trial-c2-5laps-pace1.4",
         "layout-2-trial-c3-5laps-pace1.6",
+        "layout-2-trial-c4-5laps-pace1.8",
       ][i],
     );
   }
@@ -415,7 +417,8 @@ test("craft and class framing fills the available labeled box without zoom pulsi
   const { preview, setBounds, setLabelBounds } = fixture();
   const point = new THREE.Vector3();
   for (const stage of ["craft", "class"]) {
-    for (let index = 0; index < 3; index++) {
+    const count = stage === "craft" ? CRAFT.length : SPEED_CLASSES.length;
+    for (let index = 0; index < count; index++) {
       if (stage === "craft") preview.setCraft(index);
       else preview.setClass(index);
       preview.setStage(stage);
