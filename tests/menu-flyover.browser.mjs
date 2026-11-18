@@ -251,13 +251,20 @@ try {
       assert(
         report.rows.every((row) => row.lowRes && row.size.every((n) => n > 0)),
       );
+      const occlusions = report.rows.filter((row) => row.centerHit !== null);
+      if (!baseline)
+        assert.deepEqual(
+          occlusions,
+          [],
+          `${name}: scenery across the near sightline`,
+        );
       reports.push({ name, course: TRACKS[index].name, rows: report.rows });
       console.log(
         name,
         TRACKS[index].name,
         report.rows.length,
         "positions, near center hits:",
-        report.rows.filter((row) => row.centerHit !== null).length,
+        occlusions.length,
       );
     }
     await context.close();

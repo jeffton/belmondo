@@ -137,6 +137,7 @@ let menuStage: MenuStage = "mode";
 const menuStages: MenuStage[] = ["mode", "class", "track", "craft"];
 let menuNavigator: MenuNavigation;
 function setMenuStage(stage: MenuStage) {
+  const commandFocused = document.activeElement?.closest(".setup-navigation");
   if (menuStage === "craft" && stage !== "craft") cancelStart();
   menuStage = stage;
   $("menu").dataset.stage = stage;
@@ -161,6 +162,7 @@ function setMenuStage(stage: MenuStage) {
   if (menuNavigator) {
     menuNavigator.cursor = null;
     menuNavigator.sync();
+    if (commandFocused) menuNavigator.focusCursor();
   }
 }
 function updateCraftStats() {

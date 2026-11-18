@@ -228,10 +228,7 @@ export class MenuNavigation {
       this.cursor = next;
       this.selectChoice(next);
       const root = this.root();
-      if (root?.contains(this.document.activeElement)) {
-        const focusTarget = next.querySelector("input") || next;
-        focusTarget.focus({ preventScroll: true });
-      }
+      if (root?.contains(this.document.activeElement)) this.focusCursor();
       if (root?.id === "music-dialog") {
         next.scrollIntoView({ block: "nearest", inline: "nearest" });
       }
@@ -258,6 +255,11 @@ export class MenuNavigation {
     return this.feedback
       ? this.feedback.run("back", () => this.onEscape())
       : this.onEscape();
+  }
+
+  focusCursor() {
+    const item = this.cursor;
+    (item?.querySelector("input") || item)?.focus({ preventScroll: true });
   }
 
   activateCursor() {

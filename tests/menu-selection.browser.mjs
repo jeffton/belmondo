@@ -174,8 +174,18 @@ try {
   await selection("class");
   await page.locator("#setup-next").tap();
   await selection("track");
-  await page.locator("#setup-next").tap();
+  // Track → Class retains both footer commands in the DOM. Native focus
+  // must follow the new stage's cursor rather than linger on the old command.
+  await page.locator("#setup-back").focus();
+  await page.keyboard.press("Enter");
+  await selection("class");
+  await expect(page.locator(kinds.class)).toBeFocused();
+  await page.keyboard.press("Enter");
+  await selection("track");
+  await page.locator("#setup-next").focus();
+  await page.keyboard.press("Enter");
   await selection("craft");
+  await expect(page.locator(kinds.craft)).toBeFocused();
   await page.locator("#setup-back").tap();
   await selection("track");
   await page.locator("#setup-back").tap();
