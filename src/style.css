@@ -241,7 +241,7 @@ h1.wordmark {
   opacity: 0.85;
 }
 #tracks .choice small.track-progress,
-#tracks .choice small.track-lock {
+.choice small.choice-lock {
   min-height: 1.35em;
   margin-top: 4px;
   font-size: 8px;
@@ -289,7 +289,8 @@ h1.wordmark {
 #tracks .active .track-trophy[data-place="3"] {
   color: #804728;
 }
-#tracks .choice.locked {
+#tracks .choice.locked,
+#menu .speed-choices .choice:has(input:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -2014,24 +2015,28 @@ body.touch .instrument-bar {
 #menu #speed-class {
   margin: 0;
 }
-#menu .speed-choices,
 #menu .crafts {
   flex-direction: column;
 }
+#menu .speed-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+}
 #menu .speed-choices .choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
   text-align: left;
 }
-#menu .speed-choices .choice:has(input:disabled),
+#menu .speed-choices .choice-lock {
+  margin: 0;
+  white-space: nowrap;
+}
 #menu .speed-choices input:disabled {
   cursor: not-allowed;
-  color: #b2c4ca;
-}
-#supernova-lock {
-  display: block;
-  margin-top: 4px;
-}
-#supernova-lock[hidden] {
-  display: none;
 }
 #menu .choice {
   padding: 14px 9px;
@@ -2468,7 +2473,6 @@ body.touch .instrument-bar {
     display: none;
   }
   #menu .speed-choices {
-    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   #menu .crafts {

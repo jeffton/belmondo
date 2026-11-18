@@ -455,7 +455,7 @@ for (const [i, t] of TRACKS.entries()) {
   const button = document.createElement("button");
   button.className = "choice";
   button.dataset.index = String(i);
-  button.innerHTML = `<b>${t.name}</b><small class="track-progress" hidden></small><small class="track-lock" hidden>🔒 LOCKED</small><svg class="track-trophy" viewBox="0 0 32 40" aria-hidden="true" focusable="false" hidden><path fill="currentColor" d="M7 2h18v5h7v9l-8 7h-3l-3 4v6h7v5H7v-5h7v-6l-3-4H8l-8-7V7h7Zm0 9H4v3l4 4Zm18 0-1 7 4-4v-3Z"/><path fill="var(--ink)" opacity=".25" d="M16 5h6l-3 15-3 4Zm0 29h7v2h-7Z"/></svg>`;
+  button.innerHTML = `<b>${t.name}</b><small class="track-progress" hidden></small><small class="track-lock choice-lock" hidden>🔒 LOCKED</small><svg class="track-trophy" viewBox="0 0 32 40" aria-hidden="true" focusable="false" hidden><path fill="currentColor" d="M7 2h18v5h7v9l-8 7h-3l-3 4v6h7v5H7v-5h7v-6l-3-4H8l-8-7V7h7Zm0 9H4v3l4 4Zm18 0-1 7 4-4v-3Z"/><path fill="var(--ink)" opacity=".25" d="M16 5h6l-3 15-3 4Zm0 29h7v2h-7Z"/></svg>`;
   button.onclick = () => selectTrack(i);
   $("tracks").append(button);
 }

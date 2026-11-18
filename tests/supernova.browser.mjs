@@ -11,11 +11,15 @@ try {
   browser = await chromium.launch({
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
   });
-  for (const mobile of [false, true]) {
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 320, height: 568 },
+    { width: 568, height: 320 },
+  ]) {
+    const mobile = viewport.width < 700;
+    const savedWins = !mobile;
     const page = await browser.newPage({
-      viewport: mobile
-        ? { width: 320, height: 568 }
-        : { width: 1280, height: 800 },
+      viewport,
       isMobile: mobile,
       hasTouch: mobile,
     });
@@ -33,9 +37,11 @@ try {
           ),
         },
       };
-      if (!mobile)
+      if (savedWins)
         await page.addInitScript((saved) => {
-          localStorage.setItem("nv-progression", JSON.stringify(saved));
+          // Start locked, then reload with wins to exercise both desktop states.
+          if (sessionStorage.getItem("save-wins"))
+            localStorage.setItem("nv-progression", JSON.stringify(saved));
         }, wins);
 
       const activate = (selector) => {
@@ -45,45 +51,86 @@ try {
       await page.goto(url);
       await page.waitForFunction(() => window.nullVector?.telemetry);
       const option = page.locator('input[name="speed-class"][value="3"]');
-      const requirement = page.locator("#supernova-lock");
+      const lock = page.locator("#supernova-lock");
       const tracks = page.locator("#tracks button");
       const badge = page.locator("#circuit-test-access");
-      await activate("#setup-next");
-      if (mobile) {
-        await expect(option).toBeDisabled();
-        await expect(requirement).toBeVisible();
-        const { lockBottom, selectTop } = await page.evaluate(() => ({
-          lockBottom: document
-            .querySelector("#supernova-lock")
-            .getBoundingClientRect().bottom,
-          selectTop: document
-            .querySelector("#setup-next")
-            .getBoundingClientRect().top,
-        }));
-        expect(lockBottom).toBeLessThan(selectTop);
-        const contained = await page
+      async function checkClassLayout() {
+        await page.evaluate(() => document.fonts.ready.then(() => undefined));
+        const cards = await page
           .locator("#speed-class label")
-          .evaluateAll((choices) =>
-            choices.every((choice) => {
+          .evaluateAll((choices) => {
+            const navTop = document
+              .querySelector("#setup-next")
+              .getBoundingClientRect().top;
+            return choices.map((choice) => {
               const card = choice.getBoundingClientRect();
-              return [
+              const labels = [
                 ...choice.querySelectorAll("b, small:not([hidden])"),
-              ].every((label) => {
+              ];
+              const textRects = labels.map((label) => {
                 const range = document.createRange();
                 range.selectNodeContents(label);
-                const text = range.getBoundingClientRect();
-                return text.left >= card.left && text.right <= card.right;
+                return range.getBoundingClientRect();
               });
-            }),
-          );
-        expect(contained).toBe(true);
+              return {
+                width: card.width,
+                height: card.height,
+                inViewport:
+                  card.left >= 0 &&
+                  card.right <= innerWidth &&
+                  card.top >= 0 &&
+                  card.bottom < navTop,
+                textFits: textRects.every(
+                  (text) =>
+                    text.left >= card.left &&
+                    text.right <= card.right &&
+                    text.top >= card.top &&
+                    text.bottom <= card.bottom,
+                ),
+                labelsSeparate:
+                  textRects.length === 1 ||
+                  textRects[0].right <= textRects[1].left ||
+                  textRects[0].bottom <= textRects[1].top,
+              };
+            });
+          });
+        expect(cards).toHaveLength(4);
+        for (const {
+          width,
+          height,
+          inViewport,
+          textFits,
+          labelsSeparate,
+        } of cards) {
+          expect(Math.abs(width - cards[0].width)).toBeLessThan(1);
+          expect(Math.abs(height - cards[0].height)).toBeLessThan(1);
+          expect({ inViewport, textFits, labelsSeparate }).toEqual({
+            inViewport: true,
+            textFits: true,
+            labelsSeparate: true,
+          });
+        }
+      }
+      await activate("#setup-next");
+      await expect(option).toBeDisabled();
+      await checkClassLayout();
+      await expect(lock).toBeVisible();
+      await expect(lock).toHaveText("🔒 LOCKED");
+      await expect(option).toHaveAccessibleName("SUPERNOVA");
+      if (savedWins) {
+        await page.evaluate(() => sessionStorage.setItem("save-wins", "yes"));
+        await page.reload();
+        await page.waitForFunction(() => window.nullVector?.telemetry);
+      } else {
         await activate("#setup-back");
         for (let tap = 0; tap < 5; tap++) await activate(".wordmark");
         await expect(badge).toBeVisible();
-        await activate("#setup-next");
       }
+      await activate("#setup-next");
       await expect(option).toBeEnabled();
-      await expect(requirement).toBeHidden();
+      await expect(lock).toBeHidden();
+      await expect(option).toHaveAccessibleName("SUPERNOVA");
+      await checkClassLayout();
       await activate('input[name="speed-class"][value="3"]');
       await expect(option).toBeChecked();
       await expect(page.locator("#model-name")).toHaveText("SUPERNOVA");
@@ -121,7 +168,7 @@ try {
       ).toEqual(["race", "c4", 5]);
       expect(errors).toEqual([]);
       console.log(
-        `SUPERNOVA ${mobile ? "320px touch + test mode" : "desktop + saved victories"} PASS`,
+        `SUPERNOVA ${viewport.width}×${viewport.height} ${mobile ? "touch + test mode" : "desktop + saved victories"} PASS`,
       );
     } finally {
       await page.close();
