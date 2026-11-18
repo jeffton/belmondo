@@ -39,6 +39,26 @@ export const soundtrack = [
     url: "/music/eleven-v2.5/ceramic-phase.mp3",
     sha256: "b1ba08794e2541ad7ad7afd1b1881b6625814c5e8bf166cd777851549f8eb344",
   },
+  {
+    name: "BELMONDO — Blackbus Relay",
+    url: "/music/eleven-v2.5/blackbus-relay.mp3",
+    sha256: "3036d3c83fd36fd9553dce26369faf68e01e88548e0bf1bcacfb9cd021a84450",
+  },
+  {
+    name: "BELMONDO — Shear Vault",
+    url: "/music/eleven-v2.5/shear-vault.mp3",
+    sha256: "fe2cb3f03db12d5d851a87973b1fc81ee673bb2f94ea0fe6a164caac04ac2483",
+  },
+  {
+    name: "BELMONDO — Carbon Meridian",
+    url: "/music/eleven-v2.5/carbon-meridian.mp3",
+    sha256: "d39ebe478902396831886e11f04fec4828aedc4680ffe0a6063a4b84673377a8",
+  },
+  {
+    name: "BELMONDO — Stator Rush",
+    url: "/music/eleven-v2.5/stator-rush.mp3",
+    sha256: "92e1f93c3a4a69a8e28a202f9a553a2f543076bfeeb0043511ed0bb3570289fa",
+  },
 ];
 
 // Fisher–Yates bags: every track once, with no repeat at the seam.

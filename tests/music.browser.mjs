@@ -67,7 +67,9 @@ try {
   const dialog = page.locator("#music-dialog");
   await expect(dialog).toBeVisible();
   await expect(page.locator("#music-status")).toContainText("BELMONDO");
-  await expect(page.locator("#music-status")).toContainText("8 TRACKS");
+  await expect(page.locator("#music-status")).toContainText(
+    `${soundtrack.length} TRACKS`,
+  );
   await expect(page.locator("#music-default")).toBeVisible();
   await page.locator("#effects-volume").evaluate((element) => {
     element.value = "0.22";
@@ -272,7 +274,9 @@ try {
       window.musicAudioElements.at(-1)?.currentSrc.includes("/music/") &&
       !window.musicAudioElements.at(-1).paused,
   );
-  await expect(page.locator("#music-status")).toContainText("8 TRACKS");
+  await expect(page.locator("#music-status")).toContainText(
+    `${soundtrack.length} TRACKS`,
+  );
 
   // Music and effects volume are independent; zero effects does not pause music.
   await page.locator("#music-dialog .close").click();

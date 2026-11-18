@@ -44,7 +44,7 @@ try {
     }
     return results;
   }, soundtrack);
-  assert.equal(decoded.length, 8);
+  assert.equal(decoded.length, soundtrack.length);
   assert(
     decoded.every(({ duration }) => Number.isFinite(duration) && duration > 30),
   );
@@ -72,7 +72,7 @@ try {
       assert.notEqual(current, previous, "Bag boundary must not repeat");
     }
   }
-  assert.equal(seen.size, 8);
+  assert.equal(seen.size, soundtrack.length);
 
   await page.evaluate(async (url) => {
     const bytes = await (await fetch(url)).arrayBuffer();
@@ -100,7 +100,7 @@ try {
     await player.play();
   });
   await page.waitForFunction(() => player.audio.currentTime > 0.05);
-  assert.equal(await page.evaluate(() => musicState.count), 8);
+  assert.equal(await page.evaluate(() => musicState.count), soundtrack.length);
   assert.equal(
     await page.evaluate(() => player.audio.src.includes("/music/")),
     true,
@@ -136,7 +136,7 @@ try {
         checks: [
           "native playback",
           "native ended advancement",
-          "8 unique tracks per bag",
+          `${soundtrack.length} unique tracks per bag`,
           "no seam repeat",
           "ordered local override",
           "OST restore",

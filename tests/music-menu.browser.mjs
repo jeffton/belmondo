@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { soundtrack } from "../src/soundtrack.ts";
 
 // Audio-only scene transitions; the full game fixture checks the main.js hooks.
 const url = process.env.GAME_URL || "http://127.0.0.1:5196";
@@ -193,7 +194,7 @@ try {
   await page.locator("#ost").click();
   await page.waitForFunction(() => player.audio.currentTime > 0.05);
   const seen = new Set([await page.evaluate(() => player.audio.src)]);
-  for (let i = 1; i < 8; i++) {
+  for (let i = 1; i < soundtrack.length; i++) {
     await page.locator("#race").click();
     await page.locator("#menu").click();
     const previous = await page.evaluate(() => player.audio.src);
@@ -207,7 +208,7 @@ try {
     assert(!seen.has(src), "Menu navigation must not reset the shuffle bag");
     seen.add(src);
   }
-  assert.equal(seen.size, 8);
+  assert.equal(seen.size, soundtrack.length);
   await page.evaluate(() => player.dispose());
   assert.equal(await page.evaluate(() => initialContext.state), "closed");
   assert.deepEqual(errors, []);

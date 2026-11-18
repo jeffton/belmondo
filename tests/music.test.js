@@ -12,7 +12,7 @@ function seededRandom(seed) {
 }
 
 test("soundtrack bags play every track exactly once without seam repeats", () => {
-  for (const count of [2, 3, 8]) {
+  for (const count of [2, 3, soundtrack.length]) {
     for (const random of [() => 0, () => 0.999999, seededRandom(123)]) {
       const bag = createShuffleBag(count, random);
       let previous = -1;
@@ -33,8 +33,14 @@ test("empty and single-track playlists terminate or repeat naturally", () => {
   assert.deepEqual([single.next().value, single.next().value], [0, 0]);
 });
 
+test("the built-in catalog has twelve individually addressable masters", () => {
+  assert.equal(soundtrack.length, 12);
+  for (const field of ["name", "url", "sha256"]) {
+    assert.equal(new Set(soundtrack.map((track) => track[field])).size, 12);
+  }
+});
+
 test("replacing the soundtrack preserves the archived approved Lyria masters", async () => {
-  assert.equal(soundtrack.length, 8);
   const hashes = await Promise.all(
     ["phase-index", "glass-current", "ion-drift"].map(async (name) => {
       const bytes = await readFile(
