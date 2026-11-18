@@ -258,7 +258,8 @@
   margin-top: 5px;
 }
 #weapon,
-#touch-fire {
+#touch-fire,
+#touch-scrap {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,7 +272,7 @@
   background: none;
   text-align: center;
 }
-:is(#weapon, #touch-fire, #view, #pause)::before {
+:is(#weapon, #touch-fire, #touch-scrap, #view, #pause)::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -279,7 +280,7 @@
   background: var(--hud-face);
   clip-path: var(--hud-cut);
 }
-:is(#weapon, #touch-fire, #view, #pause):active::before,
+:is(#weapon, #touch-fire, #touch-scrap, #view, #pause):active::before,
 #view[aria-pressed="true"]::before {
   background: var(--hud-signal);
 }
@@ -459,16 +460,35 @@ body.touch #speed {
 .touch-actions {
   width: var(--air-width);
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
   gap: var(--control-gap);
 }
-#touch-fire {
+#air-pad {
+  grid-column: 1 / -1;
+}
+#touch-fire,
+#touch-scrap {
   height: var(--fire-height);
   touch-action: none;
 }
-#touch-fire:disabled {
+#touch-fire {
+  gap: 3px;
+  padding-inline: 4px;
+}
+#touch-fire .weapon-name {
+  font-size: 11px;
+}
+#touch-scrap svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+#hud :is(#touch-fire, #touch-scrap):disabled {
   color: var(--hud-face);
 }
-#touch-fire:disabled::before {
+:is(#touch-fire, #touch-scrap):disabled::before {
   background: #181715aa;
 }
 .weapon-empty {

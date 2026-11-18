@@ -30,6 +30,7 @@ import {
 import { railBounds, respondToRail, RAIL_PROFILE } from "./rail-profile.ts";
 import { SPEED_CLASSES } from "./speed-classes.ts";
 import { racingLine, followingBrake } from "./ai-racing-line.ts";
+import { WEAPON_HIT_DURATION } from "./weapon-hit.ts";
 
 export { SPEED_CLASSES } from "./speed-classes.ts";
 
@@ -395,12 +396,19 @@ export class Race {
   damage(r: Racer, amount: number, weapon: Weapon | null = null) {
     if (r.eliminated || r.finished || r.protect > 0) return;
     if (weapon === "PULSE") r.pulseHit = 0.65;
-    if (weapon === "PULSE" || weapon === "MISSILE" || weapon === "MINE")
-      r.weaponHit = 0.42;
+    const armedHit =
+      weapon === "PULSE" || weapon === "MISSILE" || weapon === "MINE";
     r.shield -= amount / CRAFT[r.craft].armor;
-    r.velocity.multiplyScalar(0.78);
+    if (armedHit) {
+      r.weaponHit = WEAPON_HIT_DURATION;
+      // Preserve flight height, heading and pilot authority; only lose planar speed.
+      r.velocity.x *= 0.64;
+      r.velocity.z *= 0.64;
+    } else {
+      r.velocity.multiplyScalar(0.78);
+      r.stun = 0.6;
+    }
     r.speed = Math.hypot(r.velocity.x, r.velocity.z);
-    r.stun = 0.6;
     if (r.id === 0) this.emit("hit", "IMPACT");
     if (r.shield <= 0) this.eliminate(r);
     this.updateCriticalShield();
@@ -462,6 +470,25 @@ export class Race {
         return false;
     }
     return !this.terrain?.sweepSurface(source.position, target.position, 0);
+  }
+  scrapWeapon(r = this.player) {
+    if (
+      !r.weapon ||
+      r.eliminated ||
+      r.finished ||
+      this.countdown > 0 ||
+      this.complete
+    )
+      return;
+    r.weapon = null;
+    const before = r.shield;
+    r.shield = Math.min(100, r.shield + 5);
+    const gain = r.shield - before;
+    if (r.id === 0)
+      this.emit(
+        "scrap",
+        gain > 0 ? `SHIELD +${Math.ceil(gain)}` : "WEAPON SCRAPPED",
+      );
   }
   fire(r = this.player) {
     if (

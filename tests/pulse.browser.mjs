@@ -200,7 +200,7 @@ try {
           );
           assert.ok(sample.immediate.shield < sample.before.shield);
           assert.ok(
-            Math.abs(sample.immediate.speed - sample.before.speed * 0.78) <
+            Math.abs(sample.immediate.speed - sample.before.speed * 0.64) <
               1e-8,
           );
           assert.ok(sample.first.arcs && sample.after.arcs);

@@ -949,8 +949,7 @@ export class World {
         const ship = this.ships[r.id];
         if (ship?.visible) shakeHitShip(ship, r.weaponHit);
       }
-      if (this.view === "first-person" && approach === 0)
-        shakeHitCockpit(this.camera, player.weaponHit);
+      if (approach === 0) shakeHitCockpit(this.camera, player.weaponHit);
     }
     this.weaponEffects.update(race, dt, this.time);
     this.impactSparks.update(dt);

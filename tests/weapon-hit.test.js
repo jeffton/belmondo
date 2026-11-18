@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { Race } from "../src/race.ts";
 import { makeTrack, TRACK_INDEX } from "../src/track.ts";
-import { shakeHitShip, shakeHitCockpit } from "../src/weapon-hit.ts";
+import {
+  shakeHitShip,
+  shakeHitCockpit,
+  WEAPON_HIT_DURATION,
+} from "../src/weapon-hit.ts";
 
 const track = makeTrack(TRACK_INDEX.COAST);
 const input = { throttle: false, steer: 0, air: 0 };
@@ -46,7 +50,7 @@ for (const weapon of ["PULSE", "MISSILE", "MINE"]) {
       );
       race.shots = [];
       race.mines = [];
-      for (let i = 0; i < 60; i++) race.update(1 / 120, input);
+      for (let i = 0; i < 61; i++) race.update(1 / 120, input);
       assert.equal(target.weaponHit, 0);
     });
   }
@@ -66,6 +70,21 @@ for (const weapon of ["PULSE", "MISSILE", "MINE"]) {
   });
 }
 
+test("weapon damage scales planar speed without altering vertical speed or steering state", () => {
+  for (const weapon of ["PULSE", "MISSILE", "MINE"]) {
+    const { race, target } = setup(weapon);
+    target.velocity.set(60, -24, 80);
+    target.yawRate = 0.62;
+    target.pitchRate = -0.23;
+    race.damage(target, 5, weapon);
+    assert.equal(target.speed, 64);
+    assert.equal(target.velocity.y, -24);
+    assert.equal(target.yawRate, 0.62);
+    assert.equal(target.pitchRate, -0.23);
+    assert.equal(target.stun, 0);
+  }
+});
+
 test("visual recoil is pose-local, finite, and never changes simulation or camera transport", () => {
   const { race, target } = setup("PULSE");
   const original = JSON.stringify(target);
@@ -77,11 +96,13 @@ test("visual recoil is pose-local, finite, and never changes simulation or camer
     ship.position.copy(target.position);
     ship.rotation.set(target.pitch, target.yaw, 0, "YXZ");
     camera.rotation.set(0, 0, 0);
-    const remaining = Math.max(0, 0.42 - frame / 60);
+    const remaining = Math.max(0, WEAPON_HIT_DURATION - frame / 60);
     shakeHitShip(ship, remaining);
     shakeHitCockpit(camera, remaining);
     assert.ok(camera.position.equals(cameraPosition));
-    assert.ok(ship.position.distanceTo(target.position) <= 0.220001);
+    const shift = ship.position.distanceTo(target.position);
+    assert.ok(shift <= 0.650001);
+    if (frame === 0) assert.ok(shift > 0.6 && camera.rotation.z > 0.025);
     if (!remaining) {
       assert.ok(ship.position.equals(target.position));
       assert.equal(camera.rotation.z, 0);

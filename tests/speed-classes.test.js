@@ -153,7 +153,8 @@ test("missiles catch moving targets with class-independent reach, damage and nor
       race.update(1 / 120 / pace, neutral);
     assert.equal(race.shots.length, 0);
     assert(target.shield < 100, "missile must hit, not merely expire");
-    assert(target.stun > 0);
+    assert(target.weaponHit > 0);
+    assert.equal(target.stun, 0, "missiles must not suppress steering");
     return {
       time: race.time * pace,
       shield: target.shield,

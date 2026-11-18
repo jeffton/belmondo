@@ -316,6 +316,18 @@
           >
             <span class="weapon-empty" aria-hidden="true">EMPTY</span>
           </button>
+          <button
+            id="touch-scrap"
+            type="button"
+            aria-label="Scrap weapon for shield"
+            disabled
+          >
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+              <path
+                d="M16 3 26 7v9c0 6-6 10-10 13C12 26 6 22 6 16V7zM16 10v11M11 15.5h10"
+              />
+            </svg>
+          </button>
           <div
             id="air-pad"
             aria-label="Airbrake stick: left/right airbrake, pull down to release thrust"
@@ -414,6 +426,7 @@
           </div>
           <div class="utility-keys">
             <div><kbd>SPACE</kbd><span>Fire</span></div>
+            <div><kbd>X</kbd><span>Scrap for shield</span></div>
             <div><kbd>V</kbd><span>View</span></div>
             <div><kbd>ESC</kbd><span>Pause</span></div>
           </div>
@@ -430,7 +443,7 @@
             <desc id="pad-map-desc">
               Left stick steers and pitches: up nose down, down nose up. L2 left
               airbrake, R2 right airbrake. Hold A for thrust; release to coast.
-              X fire, Y view. Start pauses.
+              B fire, X scraps the weapon for shield, Y view. Start pauses.
             </desc>
             <path
               class="pad-shell"
@@ -440,7 +453,7 @@
               <path d="M143 136 V72 H22 M297 136 V72 H418" />
               <path d="M139 206 H90 V343 H22 M220 178 V101 H196" />
               <path
-                d="M305 171 V92 H360 M277 199 H250 V319 H228 M305 227 V285 H418"
+                d="M305 171 V92 H360 M277 199 H220 V285 H105 M333 199 H380 V245 H418 M305 227 V285 H418"
               />
             </g>
             <g class="pad-labels">
@@ -448,7 +461,8 @@
               <text x="418" y="61" text-anchor="end">RIGHT AIRBRAKE</text>
               <text x="196" y="93" text-anchor="end">PAUSE</text>
               <text x="365" y="94">VIEW</text>
-              <text x="230" y="335">FIRE</text>
+              <text x="105" y="305">SCRAP</text>
+              <text x="418" y="265" text-anchor="end">FIRE</text>
               <text x="418" y="305" text-anchor="end">HOLD: THRUST</text>
               <text class="pad-note" x="418" y="324" text-anchor="end">
                 Release: coast

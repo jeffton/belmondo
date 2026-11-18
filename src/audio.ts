@@ -25,6 +25,7 @@ type CrowdVoice = {
 import { SFX_CUES } from "./generated-sfx.ts";
 import { MENU_SOUNDS } from "./menu-sound.ts";
 import { createEngineBed, updateEngineSound } from "./engine-sound.ts";
+import { synthesizeScrapCue } from "./scrap-sound.ts";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -151,7 +152,8 @@ export class AudioEngine {
       ),
       this.loadBuffer("/audio/sfx/crowd-grandstands.wav"),
     ]);
-    this.sampleBuffers = new Map(buffers);
+    for (const [key, variants] of buffers)
+      this.sampleBuffers.set(key, variants);
     this.crowdBuffer = crowd;
   }
 
@@ -192,7 +194,7 @@ export class AudioEngine {
     const source = this.context!.createBufferSource();
     source.buffer = variants[index];
     const gain = this.context!.createGain();
-    gain.gain.value = SFX_CUES[key].gain;
+    gain.gain.value = key === "scrap" ? 0.6 : SFX_CUES[key].gain;
     source.connect(gain);
     gain.connect(this.master!);
     const voice: SampleVoice = { key, source, gain };
@@ -236,6 +238,10 @@ export class AudioEngine {
     this.compressor.attack.value = 0.003;
     this.compressor.release.value = 0.16;
     this.master.connect(this.compressor);
+    const scrap = synthesizeScrapCue(ctx.sampleRate);
+    const scrapBuffer = ctx.createBuffer(1, scrap.length, ctx.sampleRate);
+    scrapBuffer.getChannelData(0).set(scrap);
+    this.sampleBuffers.set("scrap", [scrapBuffer]);
     // Menu feedback remains audible while race effects are paused.
     this.menuBus = ctx.createGain();
     this.menuBus.connect(this.compressor);
@@ -429,7 +435,7 @@ export class AudioEngine {
     }
     const key =
       kind === "fire" ? `fire:${(weapon as string).toUpperCase()}` : kind;
-    if (Object.hasOwn(SFX_CUES, key)) {
+    if (key === "scrap" || Object.hasOwn(SFX_CUES, key)) {
       this.playSample(key);
       return;
     }

@@ -149,7 +149,7 @@ try {
               .map((slot) => slot.root.visible),
           };
           let cameraAngle = 0;
-          if (world.view === "first-person") {
+          if (race.player.weaponHit > 0) {
             const baseCamera = world.camera.quaternion.clone();
             const hit = race.player.weaponHit;
             race.player.weaponHit = 0;
@@ -170,7 +170,7 @@ try {
           { weapon, view },
         );
         const frames = [];
-        for (let frame = 0; frame <= 42; frame++) {
+        for (let frame = 0; frame <= 54; frame++) {
           // Continuous sequences for NPC and cockpit motion; keyframes elsewhere.
           const capture =
             [0, 2, 5, 9, 15, 24, 42].includes(frame) ||
@@ -204,8 +204,9 @@ try {
           expect(frames.at(-1).vfx.blasts).toBe(0);
         }
         if (view !== "first-person")
-          expect(targetFrames.some((f) => f.angle > 0.04)).toBe(true);
-        else expect(frames.some((f) => f.cameraAngle > 0.01)).toBe(true);
+          expect(targetFrames.some((f) => f.angle > 0.15)).toBe(true);
+        if (view !== "npc")
+          expect(frames.some((f) => f.cameraAngle > 0.02)).toBe(true);
         expect(
           frames.every((f) =>
             f.states

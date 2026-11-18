@@ -128,7 +128,7 @@ try {
   await controls(page, { throttle: 0, launchIntent: false });
   await expect(page.locator("body")).toHaveAttribute(
     "data-input-mode",
-    "keyboard",
+    "gamepad",
   );
   await page.evaluate(() => {
     window.inputPad.buttons = [0, 1];
@@ -210,7 +210,10 @@ try {
     const airBox = await box("#air-pad");
     const fireBox = await box("#touch-fire");
     expect(fireBox.y + fireBox.height).toBeLessThan(airBox.y);
-    expect(fireBox.width).toBe(airBox.width);
+    const scrapBox = await box("#touch-scrap");
+    expect(fireBox.width).toBeGreaterThanOrEqual(44);
+    expect(scrapBox.width).toBeGreaterThanOrEqual(44);
+    expect(fireBox.x + fireBox.width).toBeLessThan(scrapBox.x);
     expect(airBox.width).toBe(144);
     const radius = airBox.width * 0.375;
     const air = (x, y) => ({

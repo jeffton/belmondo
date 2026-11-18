@@ -39,7 +39,11 @@ import { frameDelta } from "./frame-clock.ts";
 import { toKilometresPerHour } from "./units.ts";
 import { halfstickPosition } from "./touch-halfstick.ts";
 import { CoursePreparation } from "./course-preparation.ts";
-import { gamepadFlightControls } from "./gamepad-controls.ts";
+import {
+  FIRE_BUTTON,
+  SCRAP_BUTTON,
+  gamepadFlightControls,
+} from "./gamepad-controls.ts";
 import { GamepadRumble } from "./gamepad-rumble.ts";
 
 const rumble = new GamepadRumble();
@@ -96,11 +100,15 @@ function $(id: string): HTMLElement;
 function $(id: string) {
   return document.getElementById(id)!;
 }
-const updateWeaponHUD = createWeaponHUD(
+const renderWeaponHUD = createWeaponHUD(
   $("weapon"),
   $("touch-fire"),
   $("weapon-roster"),
 );
+function updateWeaponHUD(weapon: Parameters<typeof renderWeaponHUD>[0]) {
+  renderWeaponHUD(weapon);
+  ($("touch-scrap") as HTMLButtonElement).disabled = !weapon;
+}
 updateWeaponHUD(null);
 const sound = new AudioEngine();
 const crowdRight = new Vector3();
@@ -845,6 +853,9 @@ $("touch-fire").addEventListener("pointerdown", (e) => {
 $("touch-fire").onclick = (e) => {
   if (e.detail === 0 && !paused) race.fire();
 };
+$("touch-scrap").onclick = () => {
+  if (state === "race" && !paused) race.scrapWeapon();
+};
 function navigationRoot() {
   const dialogs = document.querySelectorAll<HTMLDialogElement>("dialog[open]");
   if (dialogs.length) return dialogs[dialogs.length - 1];
@@ -925,8 +936,19 @@ menuNavigator = new MenuNavigation({
     menuNavigator.sync();
   },
 });
+let padFire = false,
+  padScrap = false;
 function readMenuGamepad(pad: Gamepad | null, now = performance.now()) {
   const menuActive = Boolean(navigationRoot());
+  const fire = Boolean(pad?.buttons[FIRE_BUTTON]?.pressed);
+  const scrap = Boolean(pad?.buttons[SCRAP_BUTTON]?.pressed);
+  if (!menuActive && state === "race" && !paused) {
+    if (fire && !padFire) race.fire();
+    else if (scrap && !padScrap) race.scrapWeapon();
+  }
+  // Consume held menu buttons before processing Back/resume.
+  padFire = fire;
+  padScrap = scrap;
   const x = pad?.axes?.[0] || 0;
   const y = pad?.axes?.[1] || 0;
   if (menuActive && (Math.abs(x) > 0.12 || Math.abs(y) > 0.12))
@@ -992,6 +1014,7 @@ window.addEventListener("keydown", (e) => {
       "KeyK",
       "KeyL",
       "Space",
+      "KeyX",
       "KeyV",
       "Escape",
     ].includes(e.code)
@@ -1013,6 +1036,7 @@ window.addEventListener("keydown", (e) => {
   }
   keys.add(e.code);
   if (e.code === "Space") race.fire();
+  if (e.code === "KeyX") race.scrapWeapon();
 });
 window.addEventListener("keyup", (e) => keys.delete(e.code));
 window.addEventListener("blur", () => {
@@ -1106,7 +1130,6 @@ for (const event of [
 let lastControls: RaceInput = {};
 let steeringKind: "digital" | "analog" = "digital";
 let padPause = false,
-  padFire = false,
   padView = false,
   padAConsumed = false,
   padAxesConsumed = false,
@@ -1126,9 +1149,7 @@ function input() {
           ? button.value > 0.1
             ? button.value
             : 0
-          : index === 1
-            ? 0
-            : Number(button.pressed),
+          : Number(button.pressed),
       ),
     ];
     const active = values.some((value) => value !== 0);
@@ -1165,8 +1186,6 @@ function input() {
     throttle = Math.max(Number(down("ArrowUp", "KeyW")), flight.throttle);
     launchIntent = down("ArrowUp", "KeyW") || flight.throttle > 0;
     if (state === "race") {
-      if (pad.buttons[2]?.pressed && !padFire && !paused) race.fire();
-      padFire = pad.buttons[2]?.pressed;
       if (pad.buttons[3]?.pressed && !padView && !paused) toggleView();
       padView = pad.buttons[3]?.pressed;
       if (
@@ -1178,7 +1197,6 @@ function input() {
         togglePauseFromInput();
       padPause = pad.buttons[9]?.pressed;
     } else {
-      padFire = pad.buttons[2]?.pressed;
       padView = pad.buttons[3]?.pressed;
       padPause = pad.buttons[9]?.pressed;
     }
@@ -1415,6 +1433,7 @@ function animate(now: number) {
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
           world.burst(race.player, event.kind, event.text);
+        if (event.kind === "scrap" && event.text) showMessage(event.text, 1);
         sound.raceEvent(event, race, race.lapCount);
       }
       rumble.events(race.events, now);

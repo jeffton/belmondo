@@ -1,4 +1,6 @@
-// Standard Gamepad mapping: A thrust, X fire, Y view, L2/R2 airbrakes.
+// Standard Gamepad mapping: A thrust, B fire, X scrap, Y view, L2/R2 airbrakes.
+export const FIRE_BUTTON = 1;
+export const SCRAP_BUTTON = 2;
 export function gamepadFlightControls(
   pad: Pick<Gamepad, "buttons">,
   aConsumed = false,

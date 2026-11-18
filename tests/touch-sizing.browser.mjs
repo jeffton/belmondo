@@ -64,6 +64,7 @@ try {
           "#steer-pad",
           "#air-pad",
           "#touch-fire",
+          "#touch-scrap",
           ".shield",
           ".velocity",
           ".race-position",
@@ -97,8 +98,12 @@ try {
           `${name}: ${selector} overlaps ${other}`,
         );
     }
-    assert.equal(geometry["#touch-fire"].width, geometry["#air-pad"].width);
-    for (const control of ["#pause", "#view", "#touch-fire"]) {
+    assert.equal(geometry["#touch-fire"].x, geometry["#air-pad"].x);
+    assert.equal(
+      geometry["#touch-scrap"].x + geometry["#touch-scrap"].width,
+      geometry["#air-pad"].x + geometry["#air-pad"].width,
+    );
+    for (const control of ["#pause", "#view", "#touch-fire", "#touch-scrap"]) {
       assert(geometry[control].width >= 44);
       assert(geometry[control].height >= 44);
     }
