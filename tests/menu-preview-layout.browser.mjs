@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 import { createServer } from "vite";
+import { TRACKS } from "../src/track.ts";
 
 // Real menu DOM/CSS and preview renderer; main World is deliberately not started.
 const output =
@@ -31,6 +32,7 @@ try {
     await page.setViewportSize({ width, height });
     await page.goto(server.resolvedUrls.local[0]);
     await page.addStyleTag({ url: "/src/style.css" });
+    await page.addStyleTag({ url: "/src/console-menu.css" });
     await page.evaluate(async () => {
       await document.fonts.ready;
       const THREE = await import("/node_modules/.vite/deps/three.js");
@@ -100,12 +102,11 @@ try {
         choice.getBoundingClientRect(),
       );
       if (second.top < first.bottom) throw new Error("mode choices must stack");
-      if (
-        choices.some(
-          (choice) => getComputedStyle(choice).borderTopStyle !== "solid",
-        )
-      )
-        throw new Error("mode choices must have individual card borders");
+      const fills = choices.map(
+        (choice) => getComputedStyle(choice.lastElementChild).backgroundColor,
+      );
+      if (fills[0] !== "rgb(251, 77, 43)" || fills[1] !== "rgba(0, 0, 0, 0)")
+        throw new Error("mode must show exactly one vermilion selection strip");
       const body = document.querySelector(".menu-body").getBoundingClientRect();
       const header = document
         .querySelector(".masthead")
@@ -121,7 +122,7 @@ try {
     for (const [stage, count] of [
       ["craft", 3],
       ["class", 4],
-      ["track", 7],
+      ["track", TRACKS.length],
     ]) {
       for (let index = 0; index < count; index++) {
         const result = await page.evaluate(
@@ -225,11 +226,19 @@ try {
             const rects = choices.map((choice) =>
               choice.getBoundingClientRect(),
             );
-            const stacked = !(innerWidth < innerHeight && innerHeight <= 690);
-            if (stage !== "track" && stacked && rects[1].top < rects[0].bottom)
+            const courseList =
+              stage === "track" && innerWidth >= 701 && innerHeight >= 551;
+            if (
+              (stage === "craft" || courseList) &&
+              rects[1].top < rects[0].bottom
+            )
               throw new Error(`${stage}/${index}: choices should stack`);
-            if (stage === "track" && rects[1].top !== rects[0].top)
-              throw new Error("tracks must retain their grid");
+            if (
+              stage === "track" &&
+              !courseList &&
+              rects[1].top !== rects[0].top
+            )
+              throw new Error("compact courses must retain their grid");
             const bottom = Math.max(
               element.bottom,
               stats.hidden ? 0 : stats.getBoundingClientRect().bottom,
@@ -298,7 +307,9 @@ try {
     );
   }
   assert.ok(
-    Object.values(measurements).every((entries) => entries.length === 13),
+    Object.values(measurements).every(
+      (entries) => entries.length === 7 + TRACKS.length,
+    ),
   );
   await writeFile(
     `${output}/measurements.json`,

@@ -1,4 +1,5 @@
 import "./style.css";
+import "./console-menu.css";
 import "./league-team.css";
 import { LEAGUE_TEAMS, teamEmblem } from "./league-teams.ts";
 import { Vector3 } from "three";

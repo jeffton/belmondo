@@ -41,21 +41,27 @@
     <div class="scanlines" aria-hidden="true"></div>
     <main id="menu" data-stage="mode">
       <header class="masthead">
-        <span class="brand-symbol" aria-hidden="true">B<span>/</span></span
-        ><span>INDEPENDENT<br />ANTI-GRAVITY LEAGUE</span
-        ><span class="edition"
-          ><img
-            class="lab-mascot"
-            src="/art/pip-lab-mark.svg"
-            width="36"
-            height="36"
-            alt=""
-          /><span>EST. 2146<br />SEASON / 01</span></span
-        >
+        <img
+          class="menu-brand"
+          draggable="false"
+          src="/art/belmondo-wordmark.svg"
+          alt="BELMONDO"
+          width="340"
+          height="38"
+        />
       </header>
       <div class="menu-layout">
         <div class="menu-body">
-          <h1 class="wordmark">BELMONDO</h1>
+          <h1 class="wordmark">
+            <span class="sr-only">BELMONDO</span
+            ><img
+              src="/art/belmondo-wordmark.svg"
+              draggable="false"
+              alt=""
+              width="340"
+              height="38"
+            />
+          </h1>
           <section
             class="setup-stage"
             data-panel="mode"
@@ -124,7 +130,7 @@
             hidden
           >
             <div class="selection-label">
-              <span>CIRCUIT</span>
+              <span>COURSE SELECT</span>
             </div>
             <div id="tracks" class="choices"></div>
           </section>
@@ -135,42 +141,52 @@
             hidden
           >
             <div class="selection-label">
-              <span id="craft-circuit"></span>
+              <span>CRAFT SELECT</span><span id="craft-circuit"></span>
             </div>
             <div id="crafts" class="choices crafts"></div>
           </section>
-          <div class="setup-navigation">
-            <button
-              id="setup-back"
-              class="line-button"
-              data-keyboard-hint="ESC"
-              data-gamepad-hint="Ⓑ"
-              hidden
-            >
-              BACK
-            </button>
-            <button
-              id="setup-next"
-              class="start"
-              data-keyboard-hint="ENTER"
-              data-gamepad-hint="Ⓐ"
-            >
-              SELECT
-            </button>
-            <button
-              id="start"
-              class="start"
-              data-keyboard-hint="ENTER"
-              data-gamepad-hint="Ⓐ"
-              hidden
-            >
-              START
-            </button>
-            <p id="start-status" role="status"></p>
-          </div>
+        </div>
+        <div
+          id="menu-model"
+          hidden
+          role="group"
+          aria-label="Rotating circuit model"
+        >
+          <strong id="model-name"></strong>
+          <small id="model-subtitle" hidden></small>
+          <dl id="craft-stats" aria-label="Craft specifications" hidden></dl>
         </div>
       </div>
       <footer class="menu-footer">
+        <div class="setup-navigation" aria-label="Setup commands">
+          <button
+            id="setup-back"
+            class="line-button"
+            data-keyboard-hint="ESC"
+            data-gamepad-hint="Ⓑ"
+            hidden
+          >
+            BACK
+          </button>
+          <button
+            id="setup-next"
+            class="start"
+            data-keyboard-hint="ENTER"
+            data-gamepad-hint="Ⓐ"
+          >
+            SELECT
+          </button>
+          <button
+            id="start"
+            class="start"
+            data-keyboard-hint="ENTER"
+            data-gamepad-hint="Ⓐ"
+            hidden
+          >
+            START
+          </button>
+          <p id="start-status" role="status"></p>
+        </div>
         <nav class="menu-links" aria-label="Menu tools">
           <button id="help-open" aria-label="Pilot briefing">
             <span class="footer-long">PILOT </span>BRIEFING
@@ -202,16 +218,6 @@
           </label>
         </nav>
       </footer>
-      <div
-        id="menu-model"
-        hidden
-        role="group"
-        aria-label="Rotating circuit model"
-      >
-        <strong id="model-name"></strong>
-        <small id="model-subtitle" hidden></small>
-        <dl id="craft-stats" aria-label="Craft specifications" hidden></dl>
-      </div>
       <div class="world-caption">
         <strong id="circuit-name">KAISEKI COAST</strong
         ><small>35° N / 139° E — RECLAIMED ZONE</small>

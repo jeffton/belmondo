@@ -24,10 +24,10 @@ try {
     const elements = [
       document.documentElement,
       document.body,
-      document.querySelector("#menu .masthead > span:nth-child(2)"),
+      document.querySelector("#mode .binary-options span"),
       document.querySelector("#menu button"),
       document.querySelector("#hud"),
-      document.querySelector("#menu .brand-symbol"),
+      document.querySelector("#menu .wordmark img"),
       document.querySelector("#menu h1.wordmark"),
     ];
     return elements.map((element) => {
@@ -37,7 +37,7 @@ try {
   });
   expect(styles).toEqual(Array.from({ length: 7 }, () => ["none", "none"]));
 
-  const paragraph = page.locator("#menu .masthead > span:nth-child(2)");
+  const paragraph = page.locator("#mode .binary-options span").first();
   await paragraph.scrollIntoViewIfNeeded();
   const paragraphBox = await paragraph.boundingBox();
   await page.mouse.move(paragraphBox.x + 5, paragraphBox.y + 5);
@@ -54,7 +54,7 @@ try {
   expect(await page.evaluate(() => getSelection().toString())).toBe("");
 
   for (const logo of [
-    page.locator("#menu .brand-symbol"),
+    page.locator("#menu .wordmark img"),
     page.locator("#menu h1.wordmark"),
   ]) {
     const box = await logo.boundingBox();
@@ -87,7 +87,8 @@ try {
   );
   expect(
     await touch
-      .locator("#menu .masthead > span:nth-child(2)")
+      .locator("#mode .binary-options span")
+      .first()
       .evaluate((element) => getComputedStyle(element).webkitUserSelect),
   ).toBe("none");
   expect(
@@ -99,7 +100,7 @@ try {
   const cdp = await touch.context().newCDPSession(touch);
   const touchPoint = (x, y) => ({ x: Math.round(x), y: Math.round(y), id: 1 });
   for (const logo of [
-    touch.locator("#menu .brand-symbol"),
+    touch.locator("#menu .wordmark img"),
     touch.locator("#menu h1.wordmark"),
   ]) {
     const box = await logo.boundingBox();
