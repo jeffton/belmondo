@@ -42,10 +42,13 @@ export class MenuFeedback {
         const item = (event.target as Element).closest<
           HTMLButtonElement | HTMLInputElement
         >("button, input, label");
-        // Labels produce a second click on their input; handle that click only.
+        // The visible picker buttons already own confirmation, not the
+        // hidden file input they activate.
         if (
           !item ||
-          item.matches('label, input[type="radio"], input[type="range"]') ||
+          item.matches(
+            'label, input[type="radio"], input[type="range"], input[type="file"][hidden]',
+          ) ||
           item.disabled
         )
           return;

@@ -482,77 +482,129 @@
       </div>
       <div id="weapon-roster" class="arsenal"></div>
     </dialog>
-    <dialog id="music-dialog">
-      <button
-        class="close"
-        data-keyboard-hint="ESC"
-        data-gamepad-hint="Ⓑ"
-        aria-label="Close sound system"
-      >
-        ×
-      </button>
-      <p class="eyebrow">AUDIO / BELMONDO</p>
-      <h2>SOUND SYSTEM</h2>
-      <div class="file-buttons">
-        <button id="music-default" class="line-button">BELMONDO OST</button>
-        <label class="line-button"
-          >CHOOSE FOLDER<input
-            id="folder"
-            type="file"
-            webkitdirectory
-            multiple
-            accept="audio/*,.mp3" /></label
-        ><label class="line-button"
-          >CHOOSE TRACKS<input
-            id="files"
-            type="file"
-            multiple
-            accept="audio/*,.mp3"
-        /></label>
+    <dialog id="music-dialog" aria-labelledby="music-title">
+      <header class="console-dialog-heading">
+        <h2 id="music-title">SOUND SYSTEM</h2>
+        <button
+          class="close console-command"
+          data-keyboard-hint="ESC"
+          data-gamepad-hint="Ⓑ"
+          aria-label="Close sound system"
+        >
+          BACK
+        </button>
+      </header>
+      <div class="sound-deck">
+        <section class="sound-player" aria-label="Playback">
+          <div id="music-status" role="status">
+            <span id="music-playback">PAUSED</span>
+            <strong id="music-track">BELMONDO</strong>
+            <span id="music-count"></span>
+          </div>
+          <div class="music-transport">
+            <button id="music-play" class="console-command">
+              PLAY / PAUSE
+            </button>
+            <button id="music-next" class="console-command">
+              NEXT&nbsp; →
+            </button>
+          </div>
+        </section>
+        <section class="sound-mixer" aria-label="Volume">
+          <label class="volume-label">
+            <span>MUSIC VOLUME</span
+            ><span
+              id="volume-level"
+              class="volume-level"
+              aria-hidden="true"
+            ></span>
+            <input
+              id="volume"
+              type="range"
+              min="0"
+              max="1"
+              step=".01"
+              value=".65"
+            />
+          </label>
+          <label class="volume-label">
+            <span>EFFECTS VOLUME</span
+            ><span
+              id="effects-volume-level"
+              class="volume-level"
+              aria-hidden="true"
+            ></span>
+            <input
+              id="effects-volume"
+              type="range"
+              min="0"
+              max="1"
+              step=".01"
+              value=".8"
+            />
+          </label>
+        </section>
       </div>
-      <p id="music-status" role="status">BELMONDO — Phase Index · 3 TRACKS</p>
-      <div class="music-transport">
-        <button id="music-play">PLAY / PAUSE</button
-        ><button id="music-next">NEXT →</button>
-      </div>
-      <label class="volume-label"
-        >MUSIC VOLUME<input
-          id="volume"
-          type="range"
-          min="0"
-          max="1"
-          step=".01"
-          value=".65" /></label
-      ><label class="volume-label"
-        >EFFECTS VOLUME<input
-          id="effects-volume"
-          type="range"
-          min="0"
-          max="1"
-          step=".01"
-          value=".8"
-      /></label>
+      <section class="sound-library" aria-labelledby="sound-library-title">
+        <h3 id="sound-library-title">MUSIC LIBRARY</h3>
+        <div class="file-buttons">
+          <button id="music-default" class="console-command">
+            BELMONDO OST
+          </button>
+          <button id="music-folder" class="console-command">
+            CHOOSE FOLDER
+          </button>
+          <button id="music-files" class="console-command">
+            CHOOSE TRACKS
+          </button>
+        </div>
+        <input
+          id="folder"
+          type="file"
+          webkitdirectory
+          multiple
+          accept="audio/*,.mp3"
+          hidden
+        />
+        <input id="files" type="file" multiple accept="audio/*,.mp3" hidden />
+      </section>
     </dialog>
-    <dialog id="art-dialog">
-      <button
-        class="close"
-        data-keyboard-hint="ESC"
-        data-gamepad-hint="Ⓑ"
-        aria-label="Close design study"
-      >
-        ×
-      </button>
-      <p class="eyebrow">VISUAL DEVELOPMENT / OPENAI IMAGE</p>
-      <h2>BELMONDO</h2>
-      <img
-        id="concept"
-        alt="Original BELMONDO design study: Japanese waterfront architecture, white sculptural bridges, glass rails, neon signs and racing craft"
-      />
-      <p class="help-small">
-        Original art direction generated with OpenAI Image, translated into
-        procedural 3D geometry. This is a design study, not a gameplay
-        screenshot.
-      </p>
+    <dialog id="art-dialog" aria-labelledby="art-title-heading">
+      <header class="console-dialog-heading">
+        <h2 id="art-title-heading">DESIGN STUDY</h2>
+        <button
+          class="close console-command"
+          data-keyboard-hint="ESC"
+          data-gamepad-hint="Ⓑ"
+          aria-label="Close design study"
+        >
+          BACK
+        </button>
+      </header>
+      <figure class="study-board">
+        <img id="concept" draggable="false" alt="" />
+      </figure>
+      <div class="study-footer" role="group" aria-label="Study pages">
+        <button
+          id="art-prev"
+          class="console-command"
+          aria-label="Previous design study"
+        >
+          ←
+        </button>
+        <div class="study-caption" role="status">
+          <span id="art-title" class="help-small"></span>
+          <span id="art-page"></span>
+        </div>
+        <button
+          id="art-next"
+          class="console-command"
+          aria-label="Next design study"
+          autofocus
+        >
+          →
+        </button>
+      </div>
     </dialog>
     <div id="drop-zone" hidden>
       DROP AUDIO FILES<span>LOCAL AUDIO / NOTHING UPLOADED</span>

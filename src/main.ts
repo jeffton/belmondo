@@ -1,5 +1,7 @@
 import "./style.css";
 import "./console-menu.css";
+import "./console-dialogs.css";
+import { designBoards } from "./design-study.ts";
 import "./race-hud.css";
 import "./league-team.css";
 import { LEAGUE_TEAMS, teamEmblem } from "./league-teams.ts";
@@ -102,12 +104,19 @@ const updateWeaponHUD = createWeaponHUD(
 updateWeaponHUD(null);
 const sound = new AudioEngine();
 const crowdRight = new Vector3();
+function renderMusicStatus(playback: string, track: string, count: string) {
+  $("music-playback").textContent = playback;
+  $("music-track").textContent = track;
+  $("music-count").textContent = count;
+}
 const music = new MusicPlayer((state) => {
-  $("music-status").textContent =
-    state.error ||
-    (state.count
-      ? `${state.playing ? "PLAYING" : "PAUSED"} / ${state.name} · ${state.count} TRACKS`
-      : "NO LOCAL TRACKS LOADED");
+  renderMusicStatus(
+    state.error ? "FILE ERROR" : state.playing ? "PLAYING" : "PAUSED",
+    state.error || state.name || "NO LOCAL TRACKS LOADED",
+    state.error || !state.count
+      ? ""
+      : `${state.count} ${state.count === 1 ? "TRACK" : "TRACKS"}`,
+  );
 });
 music.volume = 0.65;
 music.setMenu(true);
@@ -773,6 +782,7 @@ function openAuxiliaryDialog(
   id: "help-dialog" | "music-dialog" | "art-dialog",
 ) {
   cancelStart();
+  if (id === "art-dialog") renderDesignBoard();
   $(id).showModal();
   menuNavigator?.sync();
 }
@@ -782,12 +792,22 @@ for (const [button, dialog] of [
   ["pause-music", "music-dialog"],
   ["art-open", "art-dialog"],
 ] as const)
-  $(button).onclick = () => {
-    if (dialog === "art-dialog")
-      $("concept").src =
-        "/art/openai-image-2026-11-11T14-07-30-783Z-ig_04b9a94398de6a94016af4763e4cec87d2b31fcfefd192931f.png";
-    openAuxiliaryDialog(dialog);
-  };
+  $(button).onclick = () => openAuxiliaryDialog(dialog);
+let designPage = 0;
+function renderDesignBoard() {
+  const board = designBoards[designPage];
+  $("concept").alt = board.alt;
+  if ($("concept").getAttribute("src") !== board.src)
+    $("concept").src = board.src;
+  $("art-title").textContent = board.title;
+  $("art-page").textContent = `${designPage + 1} / ${designBoards.length}`;
+}
+function turnDesignBoard(delta: number) {
+  designPage = mod(designPage + delta, designBoards.length);
+  renderDesignBoard();
+}
+$("art-prev").onclick = () => turnDesignBoard(-1);
+$("art-next").onclick = () => turnDesignBoard(1);
 for (const b of document.querySelectorAll<HTMLButtonElement>("dialog .close"))
   b.onclick = () => b.closest("dialog")!.close();
 for (const dialog of document.querySelectorAll("dialog"))
@@ -835,6 +855,7 @@ const menuFeedback = new MenuFeedback({
       paused,
       menuStage,
       navigationRoot()?.id,
+      designPage,
       menuNavigator?.cursor?.outerHTML,
       selectedTrack,
       selectedCraft,
@@ -853,6 +874,15 @@ menuNavigator = new MenuNavigation({
   feedback: menuFeedback,
   root: navigationRoot,
   onInput: setInputMode,
+  onDirection: (direction) => {
+    if (
+      navigationRoot()?.id !== "art-dialog" ||
+      (direction !== "left" && direction !== "right")
+    )
+      return false;
+    turnDesignBoard(direction === "left" ? -1 : 1);
+    return true;
+  },
   onActivate: (cursor) => {
     if (state !== "menu") return false;
     if (menuStage === "mode" && cursor.closest("#mode")) {
@@ -1445,8 +1475,16 @@ async function loadFiles(files: FileList | File[]) {
     await music.play();
   }
 }
-$("folder").onchange = (e) => loadFiles((e.target as HTMLInputElement).files!);
-$("files").onchange = (e) => loadFiles((e.target as HTMLInputElement).files!);
+for (const [button, input] of [
+  ["music-folder", "folder"],
+  ["music-files", "files"],
+] as const) {
+  const picker = $(input);
+  $(button).onclick = () => picker.click();
+  // Only the visible command bubbles to the menu's feedback handler.
+  picker.onclick = (event) => event.stopPropagation();
+  picker.onchange = () => loadFiles(picker.files!);
+}
 $("music-play").onclick = () => {
   musicEnabled = music.audio.paused;
   musicInterrupted = false;
@@ -1471,9 +1509,15 @@ for (const [id, applyVolume] of [
   const slider = $(id);
   const saved = localStorage.getItem(`nv-${id}`);
   if (saved !== null) slider.value = saved;
-  applyVolume(Number(slider.value));
+  function updateVolume() {
+    const value = Number(slider.value);
+    applyVolume(value);
+    $(`${id}-level`).textContent = `${Math.round(value * 100)}%`;
+    slider.style.setProperty("--sound-level", `${value * 100}%`);
+  }
+  updateVolume();
   slider.oninput = () => {
-    applyVolume(Number(slider.value));
+    updateVolume();
     localStorage.setItem(`nv-${id}`, slider.value);
   };
 }
@@ -1524,7 +1568,7 @@ window.addEventListener("drop", async (e) => {
       : [...e.dataTransfer!.files];
     await loadFiles(files);
   } catch (error) {
-    $("music-status").textContent = `FILE ERROR / ${(error as Error).message}`;
+    renderMusicStatus("FILE ERROR", (error as Error).message, "");
   } finally {
     if (state === "race") setPaused(true);
     openAuxiliaryDialog("music-dialog");

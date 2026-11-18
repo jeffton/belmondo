@@ -112,11 +112,22 @@ try {
   await selection("mode", "trial");
   await page.locator("#render-quality").tap();
   await selection("mode", "trial");
-  expect(
-    await page
-      .locator("#render-quality")
-      .evaluate((node) => getComputedStyle(node).backgroundColor),
-  ).not.toBe("rgb(251, 77, 43)");
+  const footerStyle = (node) => {
+    const style = getComputedStyle(node);
+    return [
+      style.backgroundColor,
+      style.color,
+      style.outlineStyle,
+      style.borderTopWidth,
+    ];
+  };
+  const footerAccent = ["rgb(24, 23, 21)", "rgb(251, 77, 43)", "none", "0px"];
+  const quality = page.locator("#render-quality");
+  expect(await quality.evaluate(footerStyle)).toEqual(footerAccent);
+  await expect(quality.locator("#quality-state")).toHaveCSS(
+    "color",
+    "rgb(251, 77, 43)",
+  );
   // Keyboard restarts from the committed choice after a touch footer cursor.
   await page.keyboard.press("ArrowUp");
   await selection("mode", "race");
@@ -124,11 +135,12 @@ try {
   await page.keyboard.press("ArrowDown");
   const footerCursor = page.locator(".menu-footer .menu-cursor");
   await expect(footerCursor).toHaveCount(1);
-  expect(
-    await footerCursor.evaluate(
-      (node) => getComputedStyle(node).backgroundColor,
-    ),
-  ).not.toBe("rgb(251, 77, 43)");
+  expect(await footerCursor.evaluate(footerStyle)).toEqual(footerAccent);
+  await selection("mode", "trial");
+  await pad(15);
+  await pad(-1);
+  await expect(footerCursor).toHaveCount(1);
+  expect(await footerCursor.evaluate(footerStyle)).toEqual(footerAccent);
   await selection("mode", "trial");
   await trial.tap();
   await selection("mode", "trial");
@@ -149,6 +161,20 @@ try {
   await selection("class");
   await page.locator("#setup-back").tap();
   await selection("mode", "trial");
+  await page.locator("#art-open").tap();
+  const artPage = page.locator("#art-page");
+  await expect(artPage).toHaveText(/^1 \/ /);
+  await pad(15);
+  await expect(artPage).toHaveText(/^2 \/ /);
+  await pad(-1);
+  await pad(14);
+  await expect(artPage).toHaveText(/^1 \/ /);
+  await pad(-1);
+  await pad(0);
+  await expect(artPage).toHaveText(/^2 \/ /);
+  await pad(-1);
+  await pad(1);
+  await expect(page.locator("#art-dialog")).toBeHidden();
   expect(errors).toEqual([]);
   console.log(
     `${webKit ? "WebKit" : "Chromium"}: fresh Combat, non-commit, single selection on all stages, input switch, and retained choice PASS`,

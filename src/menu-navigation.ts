@@ -6,6 +6,7 @@ export interface MenuNavigationOptions {
   root: () => HTMLElement | null;
   onEscape: () => void;
   onInput: (source: "keyboard" | "gamepad") => void;
+  onDirection?: (direction: MenuDirection) => boolean;
   onActivate?: (element: HTMLElement) => boolean | void;
   feedback?: MenuFeedback;
 }
@@ -33,6 +34,7 @@ export class MenuNavigation {
   declare root: MenuNavigationOptions["root"];
   declare onEscape: MenuNavigationOptions["onEscape"];
   declare onInput: MenuNavigationOptions["onInput"];
+  declare onDirection: MenuNavigationOptions["onDirection"];
   declare onActivate: MenuNavigationOptions["onActivate"];
   declare feedback: MenuFeedback | undefined;
   declare cursor: HTMLElement | null;
@@ -49,6 +51,7 @@ export class MenuNavigation {
     root,
     onEscape,
     onInput,
+    onDirection,
     onActivate,
     feedback,
   }: MenuNavigationOptions) {
@@ -56,6 +59,7 @@ export class MenuNavigation {
     this.root = root;
     this.onEscape = onEscape;
     this.onInput = onInput;
+    this.onDirection = onDirection;
     this.onActivate = onActivate;
     this.feedback = feedback;
     this.cursor = null;
@@ -72,6 +76,17 @@ export class MenuNavigation {
       if (!item) return;
       this.cursor = item;
       this.sync();
+    });
+    document.addEventListener("focusin", (event) => {
+      const id = this.root()?.id;
+      if (id !== "music-dialog" && id !== "art-dialog") return;
+      const item = this.items().find((element) =>
+        element.contains(event.target as Node),
+      );
+      if (item) {
+        this.cursor = item;
+        this.sync();
+      }
     });
   }
 
@@ -131,6 +146,7 @@ export class MenuNavigation {
     if (!this.cursor) return;
     if (repeated && now < this.repeatAt) return;
     this.repeatAt = now + (repeated ? 130 : 280);
+    if (this.onDirection?.(direction)) return;
 
     const input = this.cursor.matches("label")
       ? this.cursor.querySelector("input")
@@ -206,6 +222,9 @@ export class MenuNavigation {
       )
         nextInput!.click();
       this.cursor = next;
+      if (this.root()?.id === "music-dialog") {
+        next.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
     }
     this.sync();
   }

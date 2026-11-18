@@ -82,8 +82,7 @@ button:hover {
   box-shadow: none;
   text-shadow: none;
 }
-:is(#menu, dialog, #results)
-  :is(button, a, .file-buttons label).menu-cursor:not(.choice) {
+:is(#menu, dialog, #results) :is(button, a).menu-cursor:not(.choice) {
   color: var(--ink);
   background: var(--orange);
   border-color: var(--orange);
@@ -753,58 +752,11 @@ kbd,
   width: 27px;
   height: 27px;
 }
-.file-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 20px 0;
-}
-.file-buttons label {
-  cursor: pointer;
-}
-.file-buttons input {
-  display: none;
-}
-.music-transport {
-  display: flex;
-  gap: 10px;
-}
-.music-transport button {
-  background: var(--orange);
-  color: var(--ink);
-  padding: 12px 20px;
-  font-weight: 600;
-}
-.volume-label {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  margin: 25px 0;
-  font-size: 10px;
-}
-.volume-label input {
-  flex: 1;
-  accent-color: var(--orange);
-}
 .check {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 10px;
-}
-#music-status {
-  background: #223744;
-  padding: 15px;
-  overflow-wrap: anywhere;
-  font-size: 10px;
-  min-height: 50px;
-}
-#concept {
-  width: 100%;
-  display: block;
-}
-#art-dialog {
-  max-width: 1150px;
 }
 #drop-zone {
   position: fixed;

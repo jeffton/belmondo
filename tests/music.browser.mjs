@@ -2,7 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { soundtrack } from "../src/soundtrack.ts";
-import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
+import { goToSetupStage, prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -30,6 +30,17 @@ try {
       return audio;
     };
     window.Audio.prototype = NativeAudio.prototype;
+    const nativeConnect = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function (destination, ...args) {
+      // The effects master is the first gain feeding the effects compressor.
+      // An early music gesture can create the music graph before the effects.
+      if (
+        this instanceof GainNode &&
+        destination instanceof DynamicsCompressorNode
+      )
+        window.effectMasterGain ??= this;
+      return nativeConnect.call(this, destination, ...args);
+    };
     const NativeContext = window.AudioContext;
     window.AudioContext = class extends NativeContext {
       createMediaElementSource(audio) {
@@ -38,7 +49,6 @@ try {
       }
       createGain() {
         const gain = super.createGain();
-        if (!window.effectMasterGain) window.effectMasterGain = gain;
         if (this === window.musicContext) {
           if (!window.musicOutputGain) window.musicOutputGain = gain;
           else if (!window.musicSceneGain) window.musicSceneGain = gain;
@@ -335,11 +345,9 @@ try {
     await page.evaluate(() => window.musicAudioElements.at(-1).src),
     beforeHidden.src,
   );
-  assert(
-    Math.abs(
-      (await page.evaluate(() => window.musicOutputGain.gain.value)) - 0.31,
-    ) < 0.0001,
-  );
+  await expect
+    .poll(() => page.evaluate(() => window.musicOutputGain.gain.value))
+    .toBe(0);
   await page.evaluate(() => {
     Object.defineProperty(document, "hidden", {
       configurable: true,
@@ -351,6 +359,9 @@ try {
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
     .toBeCloseTo(0.35, 5);
+  await expect
+    .poll(() => page.evaluate(() => window.musicOutputGain.gain.value))
+    .toBeCloseTo(0.31, 4);
   await page.waitForTimeout(250);
   assert(
     (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
@@ -410,6 +421,7 @@ try {
     (await page.evaluate(() => window.musicAudioElements.at(-1).currentTime)) >
       beforeQuit.time,
   );
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await expect
     .poll(() => page.evaluate(() => window.musicSceneGain.gain.value))
@@ -471,6 +483,7 @@ try {
     await page.evaluate(() => window.musicAudioElements.at(-1).currentTime),
     menuManualPause.time,
   );
+  await goToSetupStage(page, "craft");
   await page.locator("#start").click();
   await page.keyboard.press("Escape");
   await page.locator("#restart").click();

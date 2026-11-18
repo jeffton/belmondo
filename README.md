@@ -59,6 +59,8 @@ npm run build
 
 Node 26 or later runs the JavaScript test harnesses and erases imported TypeScript directly. `npm run typecheck` checks browser and worker entrypoints separately with strict types; `npm run build` includes this check. Vite strips types without changing its browser target. Three.js and its matching `@types/three` package stay on the same release.
 
+Design Study pages through original OpenAI Image concept boards (world, league, console menus, HUD/weapons and trackside campaigns). The boards live in `public/art/design-study/` except the original waterfront study, which remains at its original path. Use arrow buttons, keyboard left/right or the controller D-pad to turn pages.
+
 `GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, app icon sizes, selection retention, live 3D previews and race/return lifecycle. Use `MENU_ENGINE=webkit` against a built site for WebKit with simulated iPhone insets.
 
 `GAME_URL=http://127.0.0.1:5187 node tests/menu-audio.browser.mjs` verifies real Web Audio output, autoplay locking, keyboard/gamepad/touch navigation, paused dialogs, zero effects volume and unchanged records.

@@ -1,6 +1,6 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
-import { prepareRaceSetup } from "./helpers/setup-menu.mjs";
+import { goToSetupStage, prepareRaceSetup } from "./helpers/setup-menu.mjs";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5178";
 const browser = await chromium.launch({
@@ -21,8 +21,10 @@ async function ready(page) {
   );
   await prepareRaceSetup(page, { mode: "trial", quality: true });
 }
-async function start(page) {
-  await page.locator("#start").click();
+async function start(page, touch = false) {
+  await goToSetupStage(page, "craft");
+  if (touch) await page.locator("#start").tap();
+  else await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.time > 0.1,
     {},
@@ -142,8 +144,8 @@ try {
     await reset(g);
   }
   for (const [button, direction] of [
-    [4, -1],
-    [5, 1],
+    [6, -1],
+    [7, 1],
   ]) {
     const before = await start(g);
     await g.evaluate((b) => {
@@ -167,7 +169,7 @@ try {
   await ready(t);
   const cdp = await touch.newCDPSession(t);
   for (const direction of [-1, 1]) {
-    const before = await start(t),
+    const before = await start(t, true),
       pad = await t.locator("#steer-pad").boundingBox();
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchStart",
@@ -193,7 +195,7 @@ try {
     ["left airbrake", -1],
     ["right airbrake", 1],
   ]) {
-    const before = await start(t),
+    const before = await start(t, true),
       airPad = await t.locator("#air-pad").boundingBox(),
       airRadius = airPad.width * 0.375;
     await cdp.send("Input.dispatchTouchEvent", {
@@ -223,7 +225,7 @@ try {
   ).toBe("none");
   await t.locator("#music-open").click();
   const chooser = t.waitForEvent("filechooser");
-  await t.locator("label:has(#files)").click();
+  await t.locator("#music-files").click();
   expect((await chooser).isMultiple()).toBe(true);
   await touch.close();
   expect(errors).toEqual([]);

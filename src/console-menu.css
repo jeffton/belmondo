@@ -301,13 +301,11 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 #menu .menu-footer :is(button, a, label).menu-cursor:not(.choice),
 #menu .menu-footer #render-quality.menu-cursor {
   background: var(--console-black);
-  color: var(--console-cream);
+  color: var(--console-red);
   border-color: transparent;
-  outline: 1px solid var(--console-cream);
-  outline-offset: -2px;
 }
 #menu .menu-footer #render-quality.menu-cursor #quality-state {
-  color: var(--console-cream);
+  color: inherit;
 }
 #menu #start-status {
   position: absolute;
@@ -600,12 +598,10 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   box-shadow: inset 0 7px var(--console-red);
 }
 :is(#help-dialog, #music-dialog, #art-dialog)
-  :is(button, a, .file-buttons label).menu-cursor:not(.choice) {
+  :is(button, a).menu-cursor:not(.choice) {
   color: var(--console-black);
 }
-#help-dialog :is(h3, .key-action span, .utility-keys span),
-#art-dialog .help-small,
-#music-dialog .line-button {
+#help-dialog :is(h3, .key-action span, .utility-keys span) {
   color: var(--console-black);
 }
 #help-dialog :is(.keyboard-diagram, .controller-map) {
@@ -628,12 +624,6 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   color: var(--weapon-color);
   background: var(--console-black);
 }
-#music-dialog #music-status {
-  background: #18171514;
-}
-#music-dialog .music-transport button {
-  color: var(--console-black);
-}
 :is(#help-dialog, #music-dialog, #art-dialog)::backdrop {
   background: #18171585;
   backdrop-filter: none;
@@ -644,8 +634,15 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 :is(#help-dialog, #music-dialog, #art-dialog) .eyebrow {
   display: none;
 }
-:is(#music-dialog, #help-dialog) .close {
+#help-dialog .close {
   top: 15px;
+}
+@media (pointer: fine) {
+  #help-dialog,
+  #help-dialog :is(p, h2, h3, .arsenal span) {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
 
 @media (orientation: landscape) {

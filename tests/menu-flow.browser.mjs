@@ -202,8 +202,60 @@ try {
       await expect(dialog).toBeHidden();
     };
     await checkDialog("#help-open", "#help-dialog", ".arsenal span:last-child");
-    await checkDialog("#music-open", "#music-dialog", "#effects-volume");
+    await checkDialog("#music-open", "#music-dialog", "#music-files");
     await checkDialog("#art-open", "#art-dialog", ".help-small");
+
+    const activate = async (selector) => {
+      if (width < 900) await page.locator(selector).tap();
+      else await page.locator(selector).click();
+    };
+    await activate("#art-open");
+    const artwork = page.locator("#concept");
+    const study = page.locator("#art-dialog");
+    const pageCount = Number(
+      (await page.locator("#art-page").textContent()).split("/")[1],
+    );
+    expect(pageCount).toBeGreaterThanOrEqual(4);
+    const seenBoards = new Set();
+    for (let current = 1; current <= pageCount; current++) {
+      await expect(page.locator("#art-page")).toHaveText(
+        `${current} / ${pageCount}`,
+      );
+      await artwork.evaluate((image) => image.decode());
+      seenBoards.add(await artwork.getAttribute("src"));
+      const layout = await study.evaluate((dialog) => {
+        const board = dialog.querySelector("#concept").getBoundingClientRect();
+        const footer = dialog
+          .querySelector(".study-footer")
+          .getBoundingClientRect();
+        return {
+          overflow: dialog.scrollHeight - dialog.clientHeight,
+          boardHeight: board.height,
+          boardEnd: board.bottom,
+          footerStart: footer.top,
+        };
+      });
+      expect(layout.overflow).toBeLessThanOrEqual(1);
+      expect(layout.boardHeight).toBeGreaterThan(100);
+      expect(layout.boardEnd).toBeLessThanOrEqual(layout.footerStart);
+      if (current === 3)
+        await page.screenshot({
+          path: `${output}/${width}-${height}-study.png`,
+        });
+      if (width < 900) await activate("#art-next");
+      else await page.keyboard.press("ArrowRight");
+    }
+    expect(seenBoards.size).toBe(pageCount);
+    await expect(page.locator("#art-page")).toHaveText(`1 / ${pageCount}`);
+    await activate("#art-prev");
+    await expect(page.locator("#art-page")).toHaveText(
+      `${pageCount} / ${pageCount}`,
+    );
+    await page.keyboard.press("Escape");
+    await expect(study).toBeHidden();
+    await activate("#music-open");
+    await page.screenshot({ path: `${output}/${width}-${height}-sound.png` });
+    await activate("#music-dialog .close");
     if (width === viewports[0][0] && height === viewports[0][1]) {
       const icons = await page.evaluate(async () => {
         const manifest = await (
