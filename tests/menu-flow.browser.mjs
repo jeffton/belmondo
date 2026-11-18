@@ -1,17 +1,22 @@
-import { chromium, expect } from "@playwright/test";
+import { chromium, webkit, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { TRACKS } from "../src/track.ts";
 
 const url = process.env.GAME_URL || "http://127.0.0.1:5196";
 const output = process.env.MENU_ARTIFACTS || "/var/tmp/belmondo-menu-flow";
 await mkdir(output, { recursive: true });
-const browser = await chromium.launch({
-  args: [
-    "--no-sandbox",
-    "--use-angle=swiftshader",
-    "--enable-unsafe-swiftshader",
-  ],
-});
+const useWebKit = process.env.MENU_ENGINE === "webkit";
+const browser = await (useWebKit ? webkit : chromium).launch(
+  useWebKit
+    ? { executablePath: process.env.WEBKIT_EXECUTABLE_PATH }
+    : {
+        args: [
+          "--no-sandbox",
+          "--use-angle=swiftshader",
+          "--enable-unsafe-swiftshader",
+        ],
+      },
+);
 const errors = [];
 const faultlineIndex = TRACKS.findIndex((track) => track.name === "FAULTLINE");
 try {
@@ -54,9 +59,22 @@ try {
         : height > width
           ? { top: 59, right: 0, bottom: 34, left: 0 }
           : { top: 0, right: 47, bottom: 21, left: 47 };
-    await (
-      await context.newCDPSession(page)
-    ).send("Emulation.setSafeAreaInsetsOverride", { insets });
+    if (useWebKit) {
+      // Playwright's Linux WebKit has no iPhone screen cutout. Substitute
+      // measured iPhone env() values into the built stylesheet, not the DOM.
+      await page.route("**/assets/*.css", async (route) => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace(
+          /env\(safe-area-inset-(top|right|bottom|left)\)/g,
+          (_, side) => `${insets[side]}px`,
+        );
+        await route.fulfill({ response, body });
+      });
+    } else {
+      await (
+        await context.newCDPSession(page)
+      ).send("Emulation.setSafeAreaInsetsOverride", { insets });
+    }
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(url);
     await page.waitForFunction(
@@ -67,6 +85,45 @@ try {
     );
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
     await expect(page.locator("#menu h1")).toHaveText("BELMONDO");
+    if (width === viewports[0][0] && height === viewports[0][1]) {
+      const icons = await page.evaluate(async () => {
+        const manifest = await (
+          await fetch(document.querySelector('link[rel="manifest"]').href)
+        ).json();
+        const resources = [
+          ...manifest.icons.map(({ src, sizes }) => [src, sizes]),
+          ...[
+            ...document.querySelectorAll(
+              'link[rel="icon"], link[rel="apple-touch-icon"]',
+            ),
+          ].map(({ href, sizes }) => [href, sizes.value]),
+        ];
+        const dimensions = await Promise.all(
+          resources.map(async ([url, size]) => {
+            const image = new Image();
+            image.src = url;
+            await image.decode();
+            return [size, `${image.naturalWidth}x${image.naturalHeight}`];
+          }),
+        );
+        return {
+          id: manifest.id,
+          start: manifest.start_url,
+          scope: manifest.scope,
+          dimensions,
+        };
+      });
+      expect([icons.id, icons.start, icons.scope]).toEqual(["/", "/", "/"]);
+      expect(icons.dimensions.map(([size]) => size).sort()).toEqual([
+        "180x180",
+        "192x192",
+        "512x512",
+        "64x64",
+        "any",
+      ]);
+      for (const [declared, natural] of icons.dimensions)
+        if (declared !== "any") expect(natural).toBe(declared);
+    }
     await expect(page.locator("#menu .masthead")).not.toContainText(
       /cir[cq]uit/i,
     );
@@ -117,6 +174,10 @@ try {
               () => window.nullVector.telemetry.previewResources.geometries,
             ),
           ).toBeGreaterThan(0);
+          if (index === 0)
+            await page.screenshot({
+              path: `${output}/${width}-${height}-whiteout.png`,
+            });
         }
         await page.locator("#tracks button").nth(faultlineIndex).click();
       } else {
@@ -130,6 +191,10 @@ try {
           marks.add(await emblem.innerHTML());
           await choice.click();
           await expect(choice).toHaveAttribute("aria-pressed", "true");
+          const row = await choice.boundingBox();
+          const mark = await emblem.boundingBox();
+          // The clipped red selection can begin nine pixels inside the row.
+          expect(mark.x - row.x).toBeGreaterThanOrEqual(16);
         }
         expect(marks.size).toBe(3);
       }
@@ -306,6 +371,37 @@ try {
     );
     await page.keyboard.press("Escape");
     await expect(page.locator("#pause-panel")).toBeVisible();
+    if (width > height) {
+      const pause = await page.locator("#pause-panel").evaluate((dialog) => {
+        const { right, width } = dialog.getBoundingClientRect();
+        const panel = dialog.querySelector(".panel");
+        const bounds = panel.getBoundingClientRect();
+        const bevel = Number.parseFloat(
+          getComputedStyle(panel).clipPath.match(/polygon\(([\d.]+)px/)[1],
+        );
+        const controls = [...dialog.querySelectorAll("h2, button")].map(
+          (element) => element.getBoundingClientRect().toJSON(),
+        );
+        return {
+          right,
+          width,
+          panelRight: bounds.right,
+          bevelX: bounds.left + bevel,
+          controls,
+        };
+      });
+      expect(pause.width).toBeGreaterThanOrEqual(width * 0.9);
+      expect(pause.right).toBeGreaterThanOrEqual(width - 1);
+      expect(pause.panelRight).toBeGreaterThanOrEqual(width - 1);
+      expect(pause.controls[0].left - pause.bevelX).toBeGreaterThanOrEqual(11);
+      for (const { left, right, top, bottom } of pause.controls) {
+        expect(left).toBeGreaterThanOrEqual(insets.left);
+        expect(right).toBeLessThanOrEqual(width - insets.right);
+        expect(top).toBeGreaterThanOrEqual(insets.top);
+        expect(bottom).toBeLessThanOrEqual(height - insets.bottom);
+      }
+    }
+    await page.screenshot({ path: `${output}/${width}-${height}-pause.png` });
     await page.locator("#quit").click();
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
     await expect(

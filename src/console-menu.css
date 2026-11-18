@@ -209,6 +209,7 @@
 }
 #menu .crafts .choice {
   gap: 10px;
+  padding-inline-start: clamp(16px, 2.4vw, 24px);
 }
 #menu .crafts .choice small {
   margin-top: 3px;
@@ -219,6 +220,10 @@
   right: max(4%, env(safe-area-inset-right));
   top: 7%;
   bottom: 24%;
+}
+/* Follow the preview's alpha silhouette without shading the live course feed. */
+#menu .menu-preview-canvas {
+  filter: drop-shadow(0 2px 2px #131a22a6);
 }
 #menu #model-name {
   bottom: 2px;
@@ -627,6 +632,21 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 }
 :is(#music-dialog, #help-dialog) .close {
   top: 15px;
+}
+
+@media (orientation: landscape) {
+  #pause-panel {
+    padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
+  }
+  #pause-panel .panel {
+    --pause-width: min(540px, 54vw);
+    --pause-bevel: calc(var(--pause-width) * 0.18);
+    width: calc(var(--pause-width) + env(safe-area-inset-right));
+    margin-right: 0;
+    padding-left: calc(var(--pause-bevel) + 12px);
+    padding-right: calc(clamp(14px, 5vw, 64px) + env(safe-area-inset-right));
+    clip-path: polygon(var(--pause-bevel) 0, 100% 0, 100% 100%, 0 100%);
+  }
 }
 
 @media (max-height: 550px) and (orientation: landscape) {

@@ -422,9 +422,11 @@ export class MenuPreview {
     // material instances until final disposal to keep their compiled programs.
     this.trackMaterials ??= {
       deck: new THREE.MeshStandardMaterial({
-        color: 0xaac3cc,
-        metalness: 0.35,
-        roughness: 0.55,
+        // Warm graphite stays distinct against cool skies; the edge keeps
+        // the course's own color, even where the feed behind it is dark.
+        color: 0x59524e,
+        metalness: 0.18,
+        roughness: 0.68,
         side: THREE.DoubleSide,
         flatShading: true,
       }),

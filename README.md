@@ -59,7 +59,7 @@ npm run build
 
 Node 26 or later runs the JavaScript test harnesses and erases imported TypeScript directly. `npm run typecheck` checks browser and worker entrypoints separately with strict types; `npm run build` includes this check. Vite strips types without changing its browser target. Three.js and its matching `@types/three` package stay on the same release.
 
-`GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, selection retention, live 3D previews and race/return lifecycle.
+`GAME_URL=http://127.0.0.1:5178 node tests/menu-flow.browser.mjs` checks the setup menu, desktop/portrait/landscape bounds, app icon sizes, selection retention, live 3D previews and race/return lifecycle. Use `MENU_ENGINE=webkit` against a built site for WebKit with simulated iPhone insets.
 
 `GAME_URL=http://127.0.0.1:5187 node tests/menu-audio.browser.mjs` verifies real Web Audio output, autoplay locking, keyboard/gamepad/touch navigation, paused dialogs, zero effects volume and unchanged records.
 
@@ -84,6 +84,8 @@ Kaiseki Coast is an authored waterfront: close shopping galleries and balconies,
 OpenAI Image design boards are in `public/art/`; **Design study** opens the Japanese waterfront reference. Layered shopfronts, warm glazing, balconies, neon signage, ceramic/glass towers and moving sky-transit shape the actual city. White Y-supports with vermilion trusses, cyan glass rails and precise inlaid road graphics frame the circuit. Coastal, desert and harbor terrain provide grounded foundations and distant landmarks. No WipEout assets, marks, music or circuit layouts are included. Fonts are self-hosted under their included OFL licenses.
 
 ## Deployment
+
+`bash scripts/build-app-icons.sh` regenerates all raster app icons from `public/icon.svg` with `rsvg-convert`.
 
 `scripts/deploy.sh` builds and atomically points `/var/www/belmondo/current` at a new static release. Existing releases are retained. Nginx serves only this domain; no application service or database is required. See `deploy/nginx.conf` for HTTPS configuration. The retired `antigrav.roybot.se` hostname returns HTTP 410 without redirecting. Both TLS vhosts enable HTTP/2 so browsers can reuse a connection established with Batty's shared wildcard certificate.
 

@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#14232d"/><path d="M8 52 22 12h11l5 21 8-21h11L42 52H31l-5-22-8 22Z" fill="#ff6a20"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#fff0d1"/>
+  <!-- The B from belmondo-wordmark.svg, sized to read at favicon scale. -->
+  <path transform="translate(9 4) scale(.71)" fill="#181715" fill-rule="evenodd" d="M40,8 56,9 56,10 59,12 59,16 58,16 57,20 56,20 54,23 52,23 51,25 49,25 49,26 51,27 51,32 50,32 49,36 48,36 46,39 44,39 43,41 34,42 34,43 6,42 6,40 7,40 7,38 8,38 8,36 9,36 9,34 10,34 12,28 14,27 14,25 15,25 15,23 16,23 16,21 17,21 17,19 18,19 18,17 19,17 19,15 20,15 22,9 23,9 23,8Z M40,21 43,19 42,17 32,17 31,20 30,20 30,22 40,22Z M25,34 34,34 37,30 36,30 36,29 26,29 26,30 24,31 24,33 23,33 23,34Z"/>
+  <path d="M16 43h34l-3 7H13z" fill="#fb4d2b"/>
+</svg>
