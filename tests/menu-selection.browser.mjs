@@ -120,6 +120,16 @@ try {
   // Keyboard restarts from the committed choice after a touch footer cursor.
   await page.keyboard.press("ArrowUp");
   await selection("mode", "race");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  const footerCursor = page.locator(".menu-footer .menu-cursor");
+  await expect(footerCursor).toHaveCount(1);
+  expect(
+    await footerCursor.evaluate(
+      (node) => getComputedStyle(node).backgroundColor,
+    ),
+  ).not.toBe("rgb(251, 77, 43)");
+  await selection("mode", "trial");
   await trial.tap();
   await selection("mode", "trial");
   await pad(12);

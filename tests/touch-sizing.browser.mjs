@@ -67,7 +67,7 @@ try {
           ".shield",
           ".velocity",
           ".race-position",
-          ".lap",
+          "#lap",
           "#timer",
           "#lap-times",
           "#view",

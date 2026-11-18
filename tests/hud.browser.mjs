@@ -51,6 +51,9 @@ try {
       document.querySelector("#hud-track").textContent = "NOCTILUCENT DOCKS";
       await document.fonts.ready;
     }, touch);
+    await expect(page.locator(".lap #timer")).toHaveText("03:59.99");
+    await expect(page.locator(".lap #lap")).toBeVisible();
+    await expect(page.locator(".lap #lap-times")).toBeVisible();
     const glyphs = new Set(),
       colors = new Set();
     const active = touch ? "#touch-fire" : "#weapon";
