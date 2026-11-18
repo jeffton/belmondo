@@ -107,6 +107,12 @@ try {
     place,
   });
   await expect(page.locator("#results")).toBeVisible();
+  await expect(page.locator("#result-data .team-plate")).toHaveText(
+    "PHASE / 44",
+  );
+  await expect(
+    page.locator("#result-data .team-plate .team-emblem"),
+  ).toBeVisible();
   const first = await page.evaluate(() => window.finishSnapshot());
   expect(first.position).toBe(
     eliminated ? (mode === "trial" ? 1 : 8) : mode === "trial" ? 1 : place,

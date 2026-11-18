@@ -113,7 +113,23 @@ try {
           ).toBeGreaterThan(0);
         }
         await page.locator("#tracks button").nth(faultlineIndex).click();
-      } else await page.locator('#crafts button[data-craft-index="2"]').click();
+      } else {
+        for (const [craft, team] of [
+          [0, "VEX / 01"],
+          [1, "LUX / 27"],
+          [2, "PHASE / 44"],
+        ]) {
+          await page
+            .locator(`#crafts button[data-craft-index="${craft}"]`)
+            .click();
+          await expect(page.locator("#menu-model .team-plate")).toHaveText(
+            team,
+          );
+        }
+        await expect(page.locator("#crafts .choice .team-emblem")).toHaveCount(
+          3,
+        );
+      }
       await expect(page.locator("#menu")).toHaveAttribute("data-stage", stage);
       await expect(page.locator("#menu-model")).toBeVisible();
       const rotation = await page.evaluate(
