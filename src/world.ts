@@ -285,7 +285,7 @@ export class World {
     const cfg = track.config;
     const flagship = isCoastLayout(cfg.layoutId);
     const faultline = cfg.name === "FAULTLINE";
-    const fogColor = flagship ? 0x788391 : cfg.fog;
+    const fogColor = cfg.fog;
     const textures: ReturnType<typeof circuitTextures> & {
       rail?: THREE.Texture;
     } = circuitTextures("#" + new THREE.Color(cfg.color).getHexString());
@@ -298,13 +298,6 @@ export class World {
       faultline ? 3600 : 1100,
     );
     this.lighting = buildTrackLighting(this.scene, track);
-    const sea = new THREE.Mesh(
-      createOceanGeometry(),
-      mat(cfg.sea, { map: textures.water }),
-    );
-    sea.rotation.x = -Math.PI / 2;
-    sea.position.y = faultline ? -200 : -16;
-    this.scene.add(sea);
     yield;
     const environment = buildEnvironment(
       this.scene,
@@ -313,6 +306,16 @@ export class World {
       prepared?.terrain,
     );
     this.environment = environment;
+    const sea = new THREE.Mesh(
+      createOceanGeometry(flagship ? environment.heightAt : undefined),
+      mat(flagship ? 0xffffff : cfg.sea, {
+        map: textures.water,
+        vertexColors: flagship,
+      }),
+    );
+    sea.rotation.x = -Math.PI / 2;
+    sea.position.y = faultline ? -200 : -16;
+    this.scene.add(sea);
     yield;
     buildRacingInfrastructure(this.scene, track, textures, environment);
     yield;

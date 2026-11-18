@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { createAdvertising } from "./advertising.ts";
 import { getWaterfrontDistricts } from "./course-geography.ts";
 import { retainsCoastGallery } from "./coast-solar-landform.ts";
+import { vegetationGeometry } from "./vegetation.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -45,11 +46,11 @@ export function buildFlagship(
       flatShading: true,
       side: THREE.DoubleSide,
     });
-  const ceramic = surface(0xe4e8dd, textures.concrete);
-  const dark = surface(0x223a50, textures.paint);
-  const metal = surface(0x587080);
-  const glass = surface(0x285771);
-  const vermilion = surface(0xb8424c, textures.paint);
+  const ceramic = surface(0xffdfba, textures.concrete);
+  const dark = surface(0x526867, textures.paint);
+  const metal = surface(0x499c98);
+  const glass = surface(0x315f68);
+  const vermilion = surface(0xd97261, textures.paint);
   const light = (color: THREE.ColorRepresentation) =>
     new THREE.MeshBasicMaterial({ color });
   const cyan = light(0x53eee5);
@@ -256,7 +257,40 @@ export function buildFlagship(
             point(b, side * (b.width + x2), y2),
             point(a, side * (a.width + x2), y2),
           ],
-          ceramic,
+          j === 2 || j === 3 ? vermilion : ceramic,
+        );
+      }
+      // The corner radius is actual geometry; the turquoise soffit still
+      // reads on a steep angle, rather than becoming a painted strip.
+      const edge = [
+        [-half, 5.4],
+        [-half * 0.88, 3.6],
+        [-half * 0.68, 2.9],
+        [half * 0.68, 2.9],
+        [half * 0.88, 3.6],
+        [half, 5.4],
+      ];
+      for (let j = 1; j < edge.length; j++) {
+        const [[za, xa], [zb, xb]] = [edge[j - 1], edge[j]];
+        const eyebrow = (y: number, x: number, z: number) =>
+          point(f, side * (w + x), y, z);
+        sheet(
+          [
+            eyebrow(9.2, xa, za),
+            eyebrow(9.2, xb, zb),
+            eyebrow(10.1, xb, zb),
+            eyebrow(10.1, xa, za),
+          ],
+          vermilion,
+        );
+        sheet(
+          [
+            eyebrow(9.2, 6.5, za),
+            eyebrow(9.2, 6.5, zb),
+            eyebrow(9.2, xb, zb),
+            eyebrow(9.2, xa, za),
+          ],
+          metal,
         );
       }
       sheet(
@@ -654,8 +688,59 @@ export function buildFlagship(
     mark,
   );
 
-  // The receiving mole is part of the shipyard geography, not a freestanding
-  // decorative landing arch. The complete flight corridor remains open.
+  // The existing promenade quay gets planted islands and a wide enamel sign.
+  // Keep the landing corridor open; the airport is a separate structure.
+  const palmGeometry = vegetationGeometry("palm");
+  const promenadePalms = new THREE.InstancedMesh(
+    palmGeometry,
+    new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      side: THREE.DoubleSide,
+    }),
+    5,
+  );
+  for (const [i, z] of [-66, -48, 30, 51, 70].entries()) {
+    const planter = terminalPoint(-30.6, 0, z);
+    beam(vermilion, planter, planter.clone().addScaledVector(UP, 1.5), 4, 5.1);
+    beam(
+      foliage,
+      planter.clone().addScaledVector(UP, 1.5),
+      planter.clone().addScaledVector(UP, 1.7),
+      3.5,
+      4.6,
+    );
+    transform.position.copy(planter).addScaledVector(UP, 1.65);
+    transform.scale.setScalar(1.3 + (i % 3) * 0.14);
+    transform.rotation.set(0, i * 1.33, 0);
+    transform.updateMatrix();
+    promenadePalms.setMatrixAt(i, transform.matrix);
+  }
+  promenadePalms.computeBoundingSphere();
+  group.add(promenadePalms);
+  const enamel = document.createElement("canvas");
+  enamel.width = 512;
+  enamel.height = 128;
+  const ctx = enamel.getContext("2d")!;
+  ctx.fillStyle = "#f4e1b7";
+  ctx.fillRect(0, 0, 512, 128);
+  ctx.fillStyle = "#db715b";
+  ctx.fillRect(0, 96, 512, 32);
+  ctx.fillStyle = "#275758";
+  ctx.font = "italic 900 65px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("PALM MARINA", 256, 79);
+  const enamelMap = new THREE.CanvasTexture(enamel);
+  enamelMap.colorSpace = THREE.SRGBColorSpace;
+  enamelMap.magFilter = THREE.NearestFilter;
+  sheet(
+    [
+      terminalPoint(-28.25, 10, -13),
+      terminalPoint(-28.25, 10, 26),
+      terminalPoint(-28.25, 19, 26),
+      terminalPoint(-28.25, 19, -13),
+    ],
+    new THREE.MeshBasicMaterial({ map: enamelMap, side: THREE.DoubleSide }),
+  );
 
   for (const [material, chunks] of sheets) {
     for (const faces of chunks.values()) {

@@ -7,11 +7,11 @@ const TAU = Math.PI * 2;
 const stories: Record<string, import("./expansion-skies.ts").SkyStory> = {
   ...EXPANSION_SKIES,
   "PALM BREAKER": {
-    dusk: 0xb6ccd0,
-    cloud: 0xe0e5d5,
-    ridge: 0x779cac,
-    foreground: 0x507d8a,
-    skyline: 0x648b92,
+    dusk: 0x9dd5ef,
+    cloud: 0xfff4dc,
+    ridge: 0x7dbbc4,
+    foreground: 0x4f99a4,
+    skyline: 0x75aab4,
     far: [
       [0, 0.035],
       [0.06, 0.055],

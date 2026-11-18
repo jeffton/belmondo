@@ -252,11 +252,11 @@ export const TRACKS: TrackConfig[] = [
   {
     name: "PALM BREAKER",
     curveType: "centripetal",
-    subtitle: "03 / Coastal megastructure",
+    subtitle: "03 / Sunshine air coast",
     color: 0x13d9e7,
-    sky: 0x245580,
-    fog: 0x739fb2,
-    sea: 0x086b83,
+    sky: 0x428ce8,
+    fog: 0xa7dbe4,
+    sea: 0x289aad,
     width: 18,
     branchWidths: [18, 18],
     // A broad common apron gives the two very different approaches room to

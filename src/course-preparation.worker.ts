@@ -1,4 +1,4 @@
-import { isCoastLayout, makeTrack } from "./track.ts";
+import { makeTrack } from "./track.ts";
 import { createTerrain } from "./terrain.ts";
 import { paintSky } from "./sky.ts";
 import type { PreparedCourse } from "./course-preparation.ts";
@@ -9,10 +9,7 @@ self.onmessage = ({ data: index }: MessageEvent<number>) => {
   const start = performance.now();
   const track = makeTrack(index);
   const terrain = createTerrain(track).prepared;
-  const fog = isCoastLayout(track.config.layoutId)
-    ? 0x788391
-    : track.config.fog;
-  const sky = paintSky(track.config, fog, 2048, 1024);
+  const sky = paintSky(track.config, track.config.fog, 2048, 1024);
   const buffers = new Set<ArrayBuffer>([
     terrain.heights.buffer as ArrayBuffer,
     sky.data.buffer as ArrayBuffer,

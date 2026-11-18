@@ -1,4 +1,4 @@
-import type { Track, TrackFrame } from "./track.ts";
+import { isCoastLayout, type Track, type TrackFrame } from "./track.ts";
 import * as THREE from "three";
 import { createNearestPointIndex } from "./nearest-point-index.ts";
 import { createFaultlineWorkingCut } from "./faultline-processing.ts";
@@ -84,6 +84,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
   const floodedCut = faultline ? faultlineFloodedCut(track) : null;
   const desert = track.config.name === "SOLAR ARRAY";
   const harbor = track.config.name === "NOCTILUCENT";
+  const limestoneCoast = isCoastLayout(track.config.layoutId);
   const harborBasin = harbor ? createNightHarborBasin(track) : null;
   const volcanic = recipe?.biome === "volcanic";
   const cinderRidge = volcanic ? createCinderRidgeLandform(track) : null;
@@ -91,6 +92,7 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
   const workingCut = faultline ? createFaultlineWorkingCut(track) : null;
   const slopeColored =
     faultline ||
+    limestoneCoast ||
     ["polar", "hydraulic", "volcanic"].includes(recipe?.biome ?? "");
   const samples: (TrackFrame & { branch: number })[] = [];
   const count = Math.ceil(track.length / 7);
@@ -661,8 +663,13 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
             } else if (desert)
               tint.setHSL(0.052, 0.54, 0.47 + h * 0.0006 + variation);
             else if (harbor) tint.setHSL(0.61, 0.32, 0.3 + variation);
-            else if (h < 0) tint.setHSL(0.1, 0.29, 0.57 + variation);
-            else tint.setHSL(0.36, 0.46, 0.34 + h * 0.0005 + variation);
+            else if (limestoneCoast) {
+              tint.setHSL(0.235, 0.42, 0.4 + variation);
+              mineralTint.setHSL(0.114, 0.34, 0.66 + variation);
+              const cliff = smooth(0.24, 0.76, slope);
+              const strand = 1 - smooth(-8, 23, h);
+              tint.lerp(mineralTint, Math.max(cliff, strand));
+            } else tint.setHSL(0.36, 0.46, 0.34 + h * 0.0005 + variation);
             colors.push(tint.r, tint.g, tint.b);
           }
         geometry.setAttribute(

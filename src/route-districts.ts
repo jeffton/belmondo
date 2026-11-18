@@ -8,21 +8,21 @@ import { rockStrataTexture } from "./course-geography.ts";
 export const ROUTE_DISTRICTS = [
   [
     {
-      name: "TIDAL GARDENS",
+      name: "LIDO GARDENS",
       start: 0.112,
       end: 0.198,
       side: -1,
       style: "terraces",
     },
     {
-      name: "MARINE INSTITUTE",
+      name: "PALM MARINA",
       start: 0.234,
       end: 0.278,
       side: 1,
       style: "berth",
     },
     {
-      name: "COASTAL STEPS",
+      name: "BREAKWATER PROMENADE",
       start: 0.905,
       end: 0.942,
       side: 1,
@@ -65,12 +65,12 @@ export function buildRouteDistricts(
   const districts = ROUTE_DISTRICTS[course];
   const palette = [
     {
-      wall: 0xd4d8c5,
-      dark: 0x354955,
-      accent: 0xb45c4e,
-      glass: 0x315e69,
-      ground: 0x65755b,
-      rock: 0x768277,
+      wall: 0xffdfb2,
+      dark: 0x536c67,
+      accent: 0xda715e,
+      glass: 0x346b74,
+      ground: 0x78834c,
+      rock: 0xc0b18d,
       light: 0xb6ded1,
     },
     {

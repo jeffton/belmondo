@@ -26,12 +26,12 @@ export function buildCoastSolarPlaces(
   parent.add(root);
   const colors = coast
     ? {
-        wall: 0xeee3c9,
-        base: 0x667d7e,
-        roof: 0x314d50,
-        glass: 0x56939d,
-        accent: 0x9c4636,
-        panel: 0x254451,
+        wall: 0xffe4bd,
+        base: 0x7e8a78,
+        roof: 0x76b5a8,
+        glass: 0x378d98,
+        accent: 0xdf7965,
+        panel: 0x345b62,
       }
     : {
         wall: 0xd0bc9a,
@@ -58,9 +58,11 @@ export function buildCoastSolarPlaces(
       material: keyof typeof materials;
       matrices: THREE.Matrix4[];
       colors: THREE.Color[];
+      geometry: THREE.BufferGeometry;
     }
   >();
   const cube = new THREE.BoxGeometry(1, 1, 1);
+  const drum = coast ? new THREE.CylinderGeometry(0.5, 0.5, 1, 14) : cube;
   const transform = new THREE.Object3D();
   const sites: {
     name: string;
@@ -145,6 +147,7 @@ export function buildCoastSolarPlaces(
       h: number,
       d: number,
       material: Material,
+      geometry: THREE.BufferGeometry = cube,
     ) => {
       transform.position
         .copy(center)
@@ -155,9 +158,14 @@ export function buildCoastSolarPlaces(
       transform.scale.set(w, h, d);
       transform.updateMatrix();
       const family = material === "base" ? "concrete" : "paint";
-      const key = `${family}:${Math.floor(transform.position.x / 256)}:${Math.floor(transform.position.z / 256)}`;
+      const key = `${geometry.id}:${family}:${Math.floor(transform.position.x / 256)}:${Math.floor(transform.position.z / 256)}`;
       if (!batches.has(key))
-        batches.set(key, { material: family, matrices: [], colors: [] });
+        batches.set(key, {
+          material: family,
+          matrices: [],
+          colors: [],
+          geometry,
+        });
       batches.get(key)!.matrices.push(transform.matrix.clone());
       batches.get(key)!.colors.push(new THREE.Color(colors[material]));
     };
@@ -204,8 +212,19 @@ export function buildCoastSolarPlaces(
             "base",
           );
           box(-43, 18, 0, 50, 36, 82, "wall");
-          box(-43, 37, 0, 56, 2, 88, "roof");
-          box(-17.5, 20, 0, 1, 12, 70, "glass");
+          // A terraced hotel with a rounded dining prow and ribbon brows.
+          box(-24, 16, 0, 24, 24, 73, "wall", drum);
+          for (const y of [9, 19, 29]) {
+            box(-23.8, y, 0, 26, 4.2, 76, "glass", drum);
+            box(-23.2, y + 3, 0, 31, 1.45, 81, "accent", drum);
+            box(-23, y + 4, 0, 31.5, 0.65, 81.5, "wall", drum);
+          }
+          box(-43, 37, 0, 54, 2, 86, "roof");
+          if (i % 2 === 0) {
+            box(-53, 48, 0, 31, 22, 30, "wall");
+            box(-54, 61, 0, 21, 6, 21, "wall");
+            for (const z of [-7, 0, 7]) box(-37, 47, z, 1, 17, 2.5, "glass");
+          }
           box(-9, 9, 0, 18, 2, 86, "accent");
           for (const z of [-33, 0, 33]) box(-1, 4, z, 3, 8, 4, "wall");
         }
@@ -334,9 +353,9 @@ export function buildCoastSolarPlaces(
       }
     }
   }
-  for (const { material, matrices, colors } of batches.values()) {
+  for (const { material, matrices, colors, geometry } of batches.values()) {
     const mesh = new THREE.InstancedMesh(
-      cube,
+      geometry,
       materials[material],
       matrices.length,
     );
@@ -349,6 +368,8 @@ export function buildCoastSolarPlaces(
     root.add(mesh);
   }
   cube.dispose();
+  if (coast && ![...batches.values()].some((batch) => batch.geometry === drum))
+    drum.dispose();
   root.userData.sites = sites;
   root.userData.rejectedSites = rejected;
   return root;

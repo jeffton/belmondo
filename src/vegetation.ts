@@ -19,16 +19,18 @@ interface VegetationProfile {
 export const VEGETATION_PROFILES: Record<string, VegetationProfile> = {
   "PALM BREAKER": {
     ranges: [
-      [0.06, 0.19],
-      [0.4, 0.59],
-      [0.72, 0.91],
+      [0.058, 0.19],
+      [0.213, 0.285],
+      [0.395, 0.67],
+      [0.7, 0.786],
+      [0.905, 0.948],
     ],
-    species: ["palm", "palm", "tree", "bush"],
-    spacing: 95,
+    species: ["palm", "palm", "palm", "bush"],
+    spacing: 75,
     cluster: [5, 10],
-    setback: [68, 155],
-    waterline: -14,
-    tint: 0xb4c995,
+    setback: [51, 135],
+    waterline: -13,
+    tint: 0xcae0a1,
   },
   MONSOON: {
     ranges: [
