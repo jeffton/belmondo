@@ -465,7 +465,6 @@ body.touch #speed {
 }
 #touch-fire:disabled {
   color: var(--hud-face);
-  pointer-events: none;
 }
 #touch-fire:disabled::before {
   background: #181715aa;
