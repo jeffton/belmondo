@@ -103,20 +103,20 @@ async function open(device, heldFromMenu = false, viewport, label) {
     isMobile: touch,
   });
   if (device === "controller")
-    await context.addInitScript((held) => {
-      window.launchPad = { thrust: held ? 1 : 0 };
+    await context.addInitScript(() => {
+      window.launchPad = { thrust: 0 };
       Object.defineProperty(navigator, "getGamepads", {
         value: () => [
           {
             axes: [0, 0, 0, 0],
             buttons: Array.from({ length: 17 }, (_, i) => ({
-              pressed: i === 7 && window.launchPad.thrust > 0.1,
-              value: i === 7 ? window.launchPad.thrust : 0,
+              pressed: i === 0 && window.launchPad.thrust > 0.5,
+              value: i === 0 ? window.launchPad.thrust : 0,
             })),
           },
         ],
       });
-    }, heldFromMenu);
+    });
   await context.addInitScript(() => {
     window.launchEvents = [];
     const sampleSpeed = () => {
@@ -157,7 +157,12 @@ async function open(device, heldFromMenu = false, viewport, label) {
         ? `test-artifacts/launch-visual-${label}-menu.png`
         : "test-artifacts/launch-menu.png",
     });
-  await page.locator("#start").click();
+  if (device === "controller" && heldFromMenu) {
+    await page.locator("#start").focus();
+    await page.evaluate(() => (window.launchPad.thrust = 1));
+  } else {
+    await page.locator("#start").click();
+  }
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "race",
   );
@@ -373,10 +378,10 @@ try {
       { name: "keyboard-early", device: "keyboard", when: 1.2, success: false },
       { name: "keyboard-late", device: "keyboard", when: 0.15, success: false },
       {
-        name: "controller-analog-timed",
+        name: "controller-a-timed",
         device: "controller",
-        when: 0.725,
-        amount: 0.8,
+        when: 0.58,
+        amount: 1,
         success: true,
       },
       { name: "touch-idle", device: "touch", success: false },
@@ -623,7 +628,7 @@ try {
     }
     for (const [success, control] of [
       ["keyboard-timed", "keyboard-early"],
-      ["controller-analog-timed", "keyboard-early"],
+      ["controller-a-timed", "keyboard-early"],
       ["touch-coast-timed", "touch-coast-early"],
     ]) {
       const successCase = report.cases.find((c) => c.name === success);
