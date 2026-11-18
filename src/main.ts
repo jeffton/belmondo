@@ -56,13 +56,12 @@ function updateStandaloneHeight() {
     standalonePortrait.matches && visualViewport?.scale === 1
       ? `${visualViewport.height}px`
       : "";
-  if (height === standaloneVisibleHeight) return false;
+  if (height === standaloneVisibleHeight) return;
   standaloneVisibleHeight = height;
   document.documentElement.style.setProperty(
     "--standalone-visible-height",
     height,
   );
-  return true;
 }
 updateStandaloneHeight();
 await document.fonts.load('700 16px "Noto Sans JP"');
@@ -613,17 +612,18 @@ $("render-quality").onchange = () => {
   applyQuality();
   localStorage.setItem("nv-render", world.quality);
 };
-window.addEventListener("resize", () => {
-  updateStandaloneHeight();
-  world.resize();
-});
-function resizeStandaloneViewport() {
-  if (updateStandaloneHeight()) world.resize();
-}
-visualViewport?.addEventListener("resize", resizeStandaloneViewport);
-standalonePortrait.addEventListener("change", resizeStandaloneViewport);
-window.addEventListener("pageshow", resizeStandaloneViewport);
-resizeStandaloneViewport();
+// CSS can settle after World starts, without a window resize (notably WebKit).
+// Watch the actual game box, not the browser viewport.
+const gameCanvas = $("game");
+new ResizeObserver(() => {
+  // Until the stylesheet fixes the box, buffer size is also its layout size.
+  if (getComputedStyle(gameCanvas).position === "fixed") world.resize();
+}).observe(gameCanvas);
+window.addEventListener("resize", updateStandaloneHeight);
+visualViewport?.addEventListener("resize", updateStandaloneHeight);
+standalonePortrait.addEventListener("change", updateStandaloneHeight);
+window.addEventListener("pageshow", updateStandaloneHeight);
+updateStandaloneHeight();
 function clearInput() {
   rumble.stop();
   keys.clear();

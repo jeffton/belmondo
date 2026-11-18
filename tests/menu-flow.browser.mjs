@@ -109,6 +109,27 @@ try {
     );
     await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
     await expect(page.locator("#menu h1")).toHaveText("BELMONDO");
+    if (emulateStandalone) {
+      // Reproduce CSS settling without a window resize. The CSS box and
+      // LOWRES drawing buffer must both follow the real layout in each state.
+      const checkRenderHeight = async (expected) => {
+        await page.evaluate((height) => {
+          document.documentElement.style.setProperty(
+            "--standalone-visible-height",
+            `${height}px`,
+          );
+        }, expected);
+        const canvas = page.locator("#game");
+        expect(
+          await canvas.evaluate((el) => [el.clientWidth, el.clientHeight]),
+        ).toEqual([width, expected]);
+        await expect
+          .poll(() => canvas.evaluate((el) => [el.width, el.height]))
+          .toEqual([Math.round(width * 0.55), Math.round(expected * 0.55)]);
+      };
+      await checkRenderHeight(visibleHeight - insets.bottom);
+      await checkRenderHeight(visibleHeight);
+    }
     const checkFooter = async () => {
       const footer = await page
         .locator("#menu .menu-footer")
