@@ -18,6 +18,10 @@ try {
   const errors = [];
   const navigationBoxes = [];
   const captureNavigation = async (stage) => {
+    const cream = await page
+      .locator(".menu-body")
+      .evaluate((body) => getComputedStyle(body, "::before").backgroundColor);
+    expect(cream, `${stage} surface`).toBe("rgb(255, 240, 209)");
     const boxes = await page
       .locator(".setup-navigation button:visible")
       .evaluateAll((buttons) =>
@@ -123,6 +127,13 @@ try {
   for (const dialog of ["help", "music", "art"]) {
     await page.locator(`#${dialog}-open`).click();
     await expect(page.locator(`#${dialog}-dialog`)).toBeVisible();
+    await expect(page.locator(`#${dialog}-dialog`)).toHaveCSS(
+      "background-color",
+      "rgb(255, 240, 209)",
+    );
+    await page.screenshot({
+      path: `${output}/${viewport.join("x")}-${dialog}.png`,
+    });
     await page.keyboard.press("Escape");
     await expect(page.locator(`#${dialog}-dialog`)).not.toBeVisible();
   }
@@ -227,6 +238,10 @@ try {
   );
   await page.keyboard.press("Escape");
   await expect(page.locator("#pause-panel")).toBeVisible();
+  await expect(page.locator("#pause-panel .panel")).toHaveCSS(
+    "background-color",
+    "rgb(255, 240, 209)",
+  );
   await expect(page.locator("#resume")).toHaveClass(/menu-cursor/);
   await page.keyboard.press("ArrowDown");
   await expect(page.locator("#restart")).toHaveClass(/menu-cursor/);

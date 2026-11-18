@@ -107,6 +107,10 @@ try {
     place,
   });
   await expect(page.locator("#results")).toBeVisible();
+  await expect(page.locator("#results .panel")).toHaveCSS(
+    "background-color",
+    "rgb(255, 240, 209)",
+  );
   await expect(page.locator("#result-data .team-plate")).toHaveText(
     "PHASE / 44",
   );
