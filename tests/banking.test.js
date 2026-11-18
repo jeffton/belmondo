@@ -206,7 +206,13 @@ for (const [name, index, reversal] of [
       p.pitch = -Math.asin(f.tangent.y);
       p.pitchRate = 0;
       p.velocity.copy(f.tangent).multiplyScalar(160 * race.classSpec.pace);
-      for (let i = 0; i < 48; i++) {
+      // Coast for the same class-time window as SINGULARITY at higher pace.
+      // This tests the same bank transition, not the next corner without steering.
+      const steps = Math.min(
+        48,
+        Math.ceil((48 * SPEED_CLASSES[2].pace) / race.classSpec.pace),
+      );
+      for (let i = 0; i < steps; i++) {
         race.update(1 / 120, { throttle: false, steer: 0, air: 0 });
         assert(p.grounded, "bank reversal must support a moving racer");
         assert.equal(
