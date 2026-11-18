@@ -45,6 +45,7 @@ export type PreparedWorldScene = Omit<
 import { mod, clamp } from "./track.ts";
 import { steeringBank, updateShipBank } from "./ship-bank.ts";
 import { clearChaseCamera } from "./chase-camera.ts";
+import { aimMenuFlyover } from "./menu-flyover.ts";
 import { RAIL_PROFILE } from "./rail-profile.ts";
 import { railPoint, railBackDepth, railHeight } from "./rail-geometry.ts";
 import { createRailFaceTexture, railFaceUV } from "./rail-face.ts";
@@ -836,44 +837,37 @@ export class World {
     this.finishDistrict.update(this.time);
     const player = race.player,
       track = this.track;
-    const f = track.frame(player.contactS, player.branch);
-    const focus = player.position.clone().addScaledVector(UP, 0.7);
-    const forward = new THREE.Vector3(
-      Math.sin(player.yaw),
-      0,
-      Math.cos(player.yaw),
-    );
-    this.cameraForward ??= forward.clone();
-    this.cameraForward.lerp(forward, 1 - Math.exp(-dt * 5)).normalize();
-    const desired = focus
-      .clone()
-      .addScaledVector(this.cameraForward, -10.5 - player.speed * 0.006)
-      .addScaledVector(UP, 3.8);
     const approach = demo ? 0 : gridApproachBlend(race.countdown);
-    desired
-      .addScaledVector(this.cameraForward, -30 * approach)
-      .addScaledVector(UP, 12 * approach);
-    const ahead = focus.clone().addScaledVector(this.cameraForward, 28);
+    let chase: { focus: THREE.Vector3; desired: THREE.Vector3 } | undefined;
     if (demo) {
-      desired
-        .copy(f.p)
-        .addScaledVector(f.right, 45)
-        .addScaledVector(UP, 24)
-        .addScaledVector(f.tangent, -40);
-      ahead.copy(f.p).addScaledVector(f.tangent, 65);
-    }
-    if (!demo)
-      clearChaseCamera(desired, track, player, this.environment.terrain, 3.8);
-    if (!this.cameraReady) {
-      this.camera.position.copy(desired);
-      this.cameraReady = true;
+      aimMenuFlyover(this.camera, track, player.contactS);
     } else {
-      this.camera.position.add(focus.clone().sub(this.cameraFocus));
-      this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
-    }
-    // Focus transport follows sudden drops immediately; constrain the final
-    // smoothed position too, so it cannot be carried through the deck.
-    if (!demo)
+      const f = track.frame(player.contactS, player.branch);
+      const focus = player.position.clone().addScaledVector(UP, 0.7);
+      const forward = new THREE.Vector3(
+        Math.sin(player.yaw),
+        0,
+        Math.cos(player.yaw),
+      );
+      this.cameraForward ??= forward.clone();
+      this.cameraForward.lerp(forward, 1 - Math.exp(-dt * 5)).normalize();
+      const desired = focus
+        .clone()
+        .addScaledVector(this.cameraForward, -10.5 - player.speed * 0.006)
+        .addScaledVector(UP, 3.8)
+        .addScaledVector(this.cameraForward, -30 * approach)
+        .addScaledVector(UP, 12 * approach);
+      const ahead = focus.clone().addScaledVector(this.cameraForward, 28);
+      clearChaseCamera(desired, track, player, this.environment.terrain, 3.8);
+      if (!this.cameraReady) {
+        this.camera.position.copy(desired);
+        this.cameraReady = true;
+      } else {
+        this.camera.position.add(focus.clone().sub(this.cameraFocus));
+        this.camera.position.lerp(desired, 1 - Math.exp(-dt * 9));
+      }
+      // Focus transport follows sudden drops immediately; constrain the final
+      // smoothed position too, so it cannot be carried through the deck.
       clearChaseCamera(
         this.camera.position,
         track,
@@ -881,9 +875,11 @@ export class World {
         this.environment.terrain,
         1.2,
       );
-    this.cameraFocus = focus;
-    this.camera.up.lerp(f.up, 1 - Math.exp(-dt * 7)).normalize();
-    this.camera.lookAt(ahead);
+      this.cameraFocus = focus;
+      this.camera.up.lerp(f.up, 1 - Math.exp(-dt * 7)).normalize();
+      this.camera.lookAt(ahead);
+      chase = { focus, desired };
+    }
     const fov = 68 + player.speed * 0.085 + player.boost * 5;
     this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 3.5));
     this.camera.updateProjectionMatrix();
@@ -926,7 +922,8 @@ export class World {
         projection.mesh.visible = false;
       }
     }
-    if (!demo && this.view === "first-person") {
+    if (chase && this.view === "first-person") {
+      const { focus, desired } = chase;
       const ship = this.ships[player.id];
       const up = UP.clone().applyQuaternion(ship.quaternion);
       const gaze = new THREE.Vector3(0, 0, 1).applyQuaternion(ship.quaternion);
