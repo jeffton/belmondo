@@ -105,8 +105,29 @@ try {
   }
   await selection("mode", "race");
   await page.keyboard.press("Enter");
-  await selection("class");
-  await page.keyboard.press("Escape");
+  await selection("class", "0");
+  const classRadio = (value) =>
+    page.locator(`input[name="speed-class"][value="${value}"]`);
+  const classChoice = (value) =>
+    page.locator(`.speed-choices label:has(input[value="${value}"])`);
+  // A native focus transfer (e.g. accessibility-driven) must use the same
+  // red plate as console navigation, never a second outline on another row.
+  await classRadio(2).focus();
+  await expect(classChoice(2)).toHaveCSS("outline-style", "none");
+  await selection("class", "2");
+  await expect(classChoice(2)).toHaveClass(/menu-cursor/);
+  await pad(12);
+  await pad(-1);
+  await selection("class", "0");
+  await expect(classRadio(0)).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#setup-back")).toBeFocused();
+  await expect(page.locator("#setup-back")).toHaveClass(/menu-cursor/);
+  await expect(page.locator("#setup-back")).toHaveCSS(
+    "color",
+    "rgb(251, 77, 43)",
+  );
+  await page.keyboard.press("Enter");
   await selection("mode", "race");
   await trial.tap();
   await selection("mode", "trial");

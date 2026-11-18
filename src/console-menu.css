@@ -171,12 +171,6 @@
   background: var(--console-red);
   clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
 }
-body:not([data-input-mode="touch"])
-  #menu
-  :is(button.choice:focus-visible, label:has(input:focus-visible)) {
-  outline: 2px solid var(--console-black);
-  outline-offset: -2px;
-}
 #menu .choice:disabled,
 #menu .speed-choices .choice:has(input:disabled) {
   color: var(--console-muted);
@@ -299,6 +293,7 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   color: var(--console-cream);
 }
 #menu .menu-footer :is(button, a, label).menu-cursor:not(.choice),
+#menu .setup-navigation :is(#setup-back, .start).menu-cursor,
 #menu .menu-footer #render-quality.menu-cursor {
   background: var(--console-black);
   color: var(--console-red);

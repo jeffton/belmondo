@@ -78,19 +78,18 @@ export class MenuNavigation {
       this.sync();
     });
     document.addEventListener("focusin", (event) => {
-      const id = this.root()?.id;
-      if (id !== "music-dialog" && id !== "art-dialog") return;
-      const item = this.items().find((element) =>
+      const item = this.items(true).find((element) =>
         element.contains(event.target as Node),
       );
-      if (item) {
-        this.cursor = item;
-        this.sync();
-      }
+      // Pointer presses already moved the cursor; let their click commit.
+      if (!item || item === this.cursor) return;
+      this.cursor = item;
+      this.selectChoice(item);
+      this.sync();
     });
   }
 
-  items() {
+  items(includeSetupCommands = false) {
     const root = this.root();
     if (!root) return [];
     return [
@@ -103,13 +102,26 @@ export class MenuNavigation {
       (element) =>
         isVisible(element) &&
         !element.matches(":disabled") &&
-        !(root.id === "menu" && element.closest(".setup-navigation")),
+        (includeSetupCommands || !element.closest(".setup-navigation")),
     );
+  }
+
+  selectChoice(item: HTMLElement) {
+    if (
+      item.matches(
+        '#tracks .choice[aria-pressed="false"], #crafts .choice[aria-pressed="false"]',
+      )
+    )
+      item.click();
+    else
+      item
+        .querySelector<HTMLInputElement>('input[type="radio"]:not(:checked)')
+        ?.click();
   }
 
   sync() {
     const root = this.root();
-    const items = this.items();
+    const items = this.items(true);
     if (!items.includes(this.cursor!)) {
       this.cursor =
         items.find(
@@ -213,16 +225,14 @@ export class MenuNavigation {
       (a, b) => a.score - b.score,
     )[0]?.element;
     if (next) {
-      const nextInput = next.matches("label")
-        ? next.querySelector("input")
-        : next;
-      if (
-        next.matches("#tracks .choice, #crafts .choice") ||
-        (nextInput as HTMLInputElement | null)?.type === "radio"
-      )
-        nextInput!.click();
       this.cursor = next;
-      if (this.root()?.id === "music-dialog") {
+      this.selectChoice(next);
+      const root = this.root();
+      if (root?.contains(this.document.activeElement)) {
+        const focusTarget = next.querySelector("input") || next;
+        focusTarget.focus({ preventScroll: true });
+      }
+      if (root?.id === "music-dialog") {
         next.scrollIntoView({ block: "nearest", inline: "nearest" });
       }
     }
@@ -275,6 +285,10 @@ export class MenuNavigation {
       ArrowUp: "up",
       ArrowDown: "down",
     };
+    if (event.key === "Tab") {
+      this.onInput("keyboard");
+      return false;
+    }
     if (directions[event.key]) {
       event.preventDefault();
       this.onInput("keyboard");
