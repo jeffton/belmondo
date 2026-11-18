@@ -104,6 +104,7 @@ let menuStage: MenuStage = "mode";
 const menuStages: MenuStage[] = ["mode", "class", "track", "craft"];
 let menuNavigator: MenuNavigation;
 function setMenuStage(stage: MenuStage) {
+  if (menuStage === "craft" && stage !== "craft") cancelStart();
   menuStage = stage;
   $("menu").dataset.stage = stage;
   for (const panel of document.querySelectorAll<HTMLElement>("[data-panel]"))
@@ -323,6 +324,36 @@ const initialCourseReady = new Promise<void>((resolve) => {
 let trackGeneration = 0;
 let trackLoading = false;
 let loadedTrack = -1;
+let courseLoad: Promise<boolean>;
+let courseError = "";
+let pendingStart: { button: HTMLButtonElement } | null = null;
+function updateStartStatus() {
+  const button = $("start");
+  button.textContent = pendingStart
+    ? trackLoading
+      ? "LOADING…"
+      : "STARTING…"
+    : courseError
+      ? "RETRY"
+      : "START";
+  button.disabled = Boolean(pendingStart);
+  const status = $("start-status");
+  const message =
+    courseError ||
+    (pendingStart
+      ? trackLoading
+        ? `Preparing ${TRACKS[selectedTrack].name}…`
+        : "Starting race…"
+      : "");
+  status.textContent = message;
+  status.classList.toggle("error", Boolean(courseError));
+}
+function cancelStart() {
+  if (!pendingStart) return;
+  pendingStart.button.disabled = false;
+  pendingStart = null;
+  updateStartStatus();
+}
 let trackLoadTiming: {
   totalMs: number;
   buildMs: number;
@@ -340,18 +371,22 @@ function isTrackUnlocked(index: number) {
     )
   );
 }
-async function selectTrack(i: number) {
+function selectTrack(i: number) {
   if (!isTrackUnlocked(i)) return;
   if (i === selectedTrack && (trackLoading || loadedTrack === i)) return;
+  cancelStart();
+  courseLoad = prepareTrack(i);
+}
+async function prepareTrack(i: number) {
   selectedTrack = i;
   const generation = ++trackGeneration;
   const isCurrent = () => generation === trackGeneration;
   const start = performance.now();
   trackLoading = true;
+  courseError = "";
+  updateStartStatus();
   document.body.classList.add("course-loading");
-  $("start").disabled = true;
   $("tracks").setAttribute("aria-busy", "true");
-  $("fatal").hidden = true;
   updateModelName();
   $("circuit-name").textContent = TRACKS[i].name;
   for (const b of $("tracks").children) {
@@ -363,7 +398,7 @@ async function selectTrack(i: number) {
     const nextTrack = makeTrack(i);
     menuPreview.setTrack(nextTrack);
     const prepared = await coursePreparation.load(i);
-    if (!isCurrent()) return;
+    if (!prepared || !isCurrent()) return false;
     const buildStart = performance.now();
     let nextRace!: Race;
     const candidate = await world.prepare(
@@ -381,7 +416,7 @@ async function selectTrack(i: number) {
         scene.setupRacers(nextRace, CRAFT);
       },
     );
-    if (!candidate || !isCurrent()) return;
+    if (!candidate || !isCurrent()) return false;
     world.adopt(candidate);
     track = nextTrack;
     race = nextRace;
@@ -391,14 +426,15 @@ async function selectTrack(i: number) {
     trackLoadTiming = {
       totalMs: performance.now() - start,
       buildMs: performance.now() - buildStart,
-      workerMs: prepared!.workerMs,
+      workerMs: prepared.workerMs,
     };
+    return true;
   } catch (error) {
-    if (!isCurrent()) return;
-    $("fatal").hidden = false;
-    $("fatal").textContent =
-      `Could not prepare circuit: ${(error as Error).message}`;
-    throw error;
+    if (isCurrent()) {
+      courseError = `Could not load ${TRACKS[i].name}: ${(error as Error).message}`;
+      console.error(courseError, error);
+    }
+    return false;
   } finally {
     if (isCurrent()) {
       trackLoading = false;
@@ -406,8 +442,8 @@ async function selectTrack(i: number) {
         "course-loading",
         loadedTrack !== selectedTrack,
       );
-      $("start").disabled = loadedTrack !== selectedTrack;
       $("tracks").setAttribute("aria-busy", "false");
+      updateStartStatus();
     }
   }
 }
@@ -465,6 +501,7 @@ for (const i of [2, 0, 1]) {
   button.dataset.craftIndex = String(i);
   button.innerHTML = `<span><b>${c.name}</b><small>${c.text.split("/")[0].trim().toUpperCase()}</small></span>`;
   button.onclick = () => {
+    if (selectedCraft !== i) cancelStart();
     selectedCraft = i;
     menuPreview.setCraft(i);
     updateCraftStats();
@@ -518,35 +555,39 @@ function clearInput() {
     b.classList.remove("pressed");
   $("steer-pad").querySelector("i")!.style.transform = "";
 }
-let startGeneration = 0;
 async function start(event: MouseEvent) {
-  if (
-    trackLoading ||
-    loadedTrack !== selectedTrack ||
-    !isTrackUnlocked(selectedTrack)
-  )
-    return;
-  const generation = ++startGeneration;
-  const courseGeneration = trackGeneration;
-  const button = event.currentTarget as HTMLButtonElement;
-  button.disabled = true;
+  if (pendingStart || !isTrackUnlocked(selectedTrack)) return;
+  if (!trackLoading && loadedTrack !== selectedTrack)
+    selectTrack(selectedTrack);
+  const attempt = { button: event.currentTarget as HTMLButtonElement };
+  pendingStart = attempt;
+  attempt.button.disabled = true;
+  updateStartStatus();
+
+  // Unlock audio within the original gesture, not after the worker resolves.
   music.setTunnel(false);
-  const audioStart = sound.start();
+  const audioStart = sound.start().then(
+    () => null,
+    (error: Error) => error,
+  );
+  if (musicEnabled) void music.play();
   sound.stopSamples();
-  const musicStart = musicEnabled ? music.play() : Promise.resolve();
-  sound.setPaused(false);
-  try {
-    await Promise.all([audioStart, musicStart]);
-  } catch (error) {
-    if (generation !== startGeneration) return;
-    sound.setPaused(true);
-    window.alert(`Could not load audio: ${(error as Error).message}`);
+
+  // A failed course load must release START even if audio is still pending.
+  const courseReady = await courseLoad;
+  if (pendingStart !== attempt) return;
+  if (!courseReady) {
+    cancelStart();
     return;
-  } finally {
-    button.disabled = trackLoading || loadedTrack !== selectedTrack;
   }
-  if (generation !== startGeneration || courseGeneration !== trackGeneration)
+  const audioError = await audioStart;
+  if (pendingStart !== attempt) return;
+  cancelStart();
+  if (audioError) {
+    window.alert(`Could not load audio: ${audioError.message}`);
     return;
+  }
+  sound.setPaused(false);
   race = new Race(
     track,
     selectedCraft,
@@ -581,6 +622,7 @@ async function start(event: MouseEvent) {
 }
 function setPaused(value: boolean) {
   if (state !== "race" || race.finished || paused === value) return;
+  if (!value) cancelStart();
   paused = value;
   updateAppFocus();
   clearInput();
@@ -594,7 +636,7 @@ function setPaused(value: boolean) {
   menuNavigator?.sync();
 }
 function quit() {
-  ++startGeneration;
+  cancelStart();
   state = "menu";
   paused = false;
   updateAppFocus();
@@ -636,6 +678,13 @@ $("pause-panel").addEventListener("cancel", (e) => {
   e.preventDefault();
   setPaused(false);
 });
+function openAuxiliaryDialog(
+  id: "help-dialog" | "music-dialog" | "art-dialog",
+) {
+  cancelStart();
+  $(id).showModal();
+  menuNavigator?.sync();
+}
 for (const [button, dialog] of [
   ["help-open", "help-dialog"],
   ["music-open", "music-dialog"],
@@ -646,8 +695,7 @@ for (const [button, dialog] of [
     if (dialog === "art-dialog")
       $("concept").src =
         "/art/openai-image-2026-11-11T14-07-30-783Z-ig_04b9a94398de6a94016af4763e4cec87d2b31fcfefd192931f.png";
-    $(dialog).showModal();
-    menuNavigator?.sync();
+    openAuxiliaryDialog(dialog);
   };
 for (const b of document.querySelectorAll<HTMLButtonElement>("dialog .close"))
   b.onclick = () => b.closest("dialog")!.close();
@@ -1182,7 +1230,7 @@ function animate(now: number) {
   last = now;
   pollMenuGamepad();
   menuNavigator?.sync();
-  if (state === "menu") {
+  if (state === "menu" && loadedTrack >= 0) {
     demoDistance += dt * 32;
     race.player.s = demoDistance;
     race.player.speed = 65;
@@ -1207,6 +1255,8 @@ function animate(now: number) {
       r.contactS = r.s;
     }
     world.draw(race, dt, true);
+  }
+  if (state === "menu") {
     menuPreview.draw(dt);
   } else {
     const controls = input();
@@ -1368,6 +1418,7 @@ window.addEventListener("drop", async (e) => {
   e.preventDefault();
   dragDepth = 0;
   $("drop-zone").hidden = true;
+  cancelStart();
   if (state === "race") setPaused(true);
   try {
     const entries = [...e.dataTransfer!.items]
@@ -1377,15 +1428,17 @@ window.addEventListener("drop", async (e) => {
       ? (await Promise.all(entries.map(readEntry))).flat()
       : [...e.dataTransfer!.files];
     await loadFiles(files);
-    $("music-dialog").showModal();
   } catch (error) {
     $("music-status").textContent = `FILE ERROR / ${(error as Error).message}`;
-    $("music-dialog").showModal();
+  } finally {
+    if (state === "race") setPaused(true);
+    openAuxiliaryDialog("music-dialog");
   }
 });
-await selectTrack(selectedTrack);
-await initialCourseReady;
+selectTrack(selectedTrack);
+// Menu input and previews must work even before the first world is adopted.
 requestAnimationFrame(animate);
+await initialCourseReady;
 
 // Read-only telemetry for the pilot and browser smoke tests. No external services.
 const nullVector = {

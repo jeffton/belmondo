@@ -2615,6 +2615,23 @@ body[data-input-mode="keyboard"]
   color: var(--paper);
   filter: none;
 }
+#menu #start:disabled,
+#start-status {
+  color: var(--lime);
+}
+#start-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+  font: 600 10px/1.3 var(--interface);
+  overflow-wrap: anywhere;
+}
+#start-status:empty {
+  position: absolute;
+}
+#start-status.error {
+  color: var(--orange);
+}
 #menu [data-panel="mode"] legend {
   margin-bottom: 12px;
   padding: 0;

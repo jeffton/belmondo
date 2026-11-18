@@ -65,6 +65,8 @@ Node 26 or later runs the JavaScript test harnesses and erases imported TypeScri
 
 The browser test expects Vite at `http://127.0.0.1:5178`; start it with `npm run dev -- --port 5178`. Set `GAME_URL` to test another deployment. `npx playwright install chromium` installs its browser. SwiftShader is enabled for headless Linux without a GPU.
 
+After `npm run build`, run `node tests/race-start-loading.browser.mjs` to hold the real course worker and check queued START, retry and cancellation on desktop keyboard and mobile touch.
+
 Physics uses 120 Hz fixed steps, gravity, momentum, powered hover, finite grip and separate airbrake drag. Ramps and gaps are road geometry, not scripted launch impulses or landing trajectories. The damped hover spring follows nearby road and cushions fast descents above it; physical pitch retains angular inertia. AI supplies ordinary controls to the same body integrator.
 
 Landing contact uses the solid craft geometry and finite road triangles, including other branches and lower decks. Touching a deck never awards a missing sector gate or checkpoint. Terrain impacts and falls below every road return the craft to its earned recovery point; elapsed flight time and height below its previous route are not loss conditions. Gate volumes and checkpoint eligibility remain race-progression rules. Finished craft have a separate visual cooldown path that cannot affect active racers or results.
