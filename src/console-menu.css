@@ -298,12 +298,16 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
 #menu .menu-footer #quality-state {
   color: var(--console-cream);
 }
-#menu .menu-footer :is(button, a, label).menu-cursor {
-  background: var(--console-red);
-  color: var(--console-black);
+#menu .menu-footer :is(button, a, label).menu-cursor,
+#menu .menu-footer #render-quality.menu-cursor {
+  background: var(--console-black);
+  color: var(--console-cream);
+  border-color: transparent;
+  outline: 1px solid var(--console-cream);
+  outline-offset: -2px;
 }
 #menu .menu-footer #render-quality.menu-cursor #quality-state {
-  color: var(--console-black);
+  color: var(--console-cream);
 }
 #menu #start-status {
   position: absolute;

@@ -110,6 +110,18 @@ try {
   await selection("mode", "race");
   await trial.tap();
   await selection("mode", "trial");
+  await page.locator("#render-quality").tap();
+  await selection("mode", "trial");
+  expect(
+    await page
+      .locator("#render-quality")
+      .evaluate((node) => getComputedStyle(node).backgroundColor),
+  ).not.toBe("rgb(251, 77, 43)");
+  // Keyboard restarts from the committed choice after a touch footer cursor.
+  await page.keyboard.press("ArrowUp");
+  await selection("mode", "race");
+  await trial.tap();
+  await selection("mode", "trial");
   await pad(12);
   await selection("mode", "race");
   await pad(-1);
