@@ -65,7 +65,7 @@ try {
           r.checkpoint = {s, branch: 0, gate: r.gate};
         };
         if (eliminated) race.eliminate(race.player);
-        else approach(race.player, 24);
+        else approach(race.player, Math.max(24, (place - 1) * 4 + 10));
         for (let i = 1; i < place && race.racers[i]; i++) {
           approach(race.racers[i], i * 4);
           const r = race.racers[i];
@@ -121,7 +121,7 @@ try {
   expect(first.position).toBe(
     eliminated ? (mode === "trial" ? 1 : 8) : mode === "trial" ? 1 : place,
   );
-  expect(first.complete).toBe(mode === "trial");
+  expect(first.complete).toBe(mode === "trial" || (!eliminated && place === 8));
   const moved = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
   await page.waitForFunction(
     ({ first, eliminated, mode }) => {
@@ -239,6 +239,25 @@ try {
       path: `test-artifacts/podium/${viewport.width}x${viewport.height}-${mode}-${eliminated ? "dnf" : place}-${stage}.png`,
     });
   };
+  await page.evaluate(() => document.fonts.ready);
+  for (const selector of ["#result-title", "#again", "#result-quit"]) {
+    const text = await page.locator(selector).evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const box = el.getBoundingClientRect();
+      const padding = parseFloat(getComputedStyle(el).paddingRight);
+      return {
+        lines: range.getClientRects().length,
+        rightOverhang:
+          range.getBoundingClientRect().right - (box.right - padding),
+      };
+    });
+    expect(text.lines, `${selector} wraps`).toBe(1);
+    expect(
+      text.rightOverhang,
+      `${selector} enters the bevel`,
+    ).toBeLessThanOrEqual(0.5);
+  }
   await capture("results");
   await page.keyboard.press("ArrowDown");
   await expect(page.locator("#result-quit")).toHaveCSS(

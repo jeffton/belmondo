@@ -534,6 +534,8 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
 }
 #results .panel {
+  container-type: inline-size;
+  width: min(540px, max(54vw, min(320px, 94vw)));
   justify-self: start;
   margin-left: env(safe-area-inset-left);
   padding-right: clamp(36px, 8vw, 102px);
@@ -551,8 +553,16 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   margin: 0 0 8px;
   padding: 0;
 }
+#results .result-title-frame {
+  flex: 1;
+  min-width: 0;
+  container-type: inline-size;
+}
 #results .result-heading h2 {
+  /* Size against the space left beside the trophy, inside the bevel. */
   margin: 0;
+  font-size: min(60px, 11.8cqi);
+  white-space: nowrap;
 }
 #results :is(#result-data, .result-line) {
   border-color: #18171538;
@@ -574,6 +584,10 @@ body[data-input-mode="touch"] #menu .setup-navigation :is(#setup-back, .start) {
   color: var(--console-type);
   font: italic 900 clamp(13px, 1.6vw, 26px)/1.12 var(--console-heading);
   filter: none;
+}
+#results .panel.panel > button {
+  font-size: clamp(10px, 4.8cqi, 24px);
+  white-space: nowrap;
 }
 :is(#pause-panel, #results) .panel.panel > button::after {
   display: none;
