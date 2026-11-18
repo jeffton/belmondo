@@ -51,8 +51,15 @@ export function projectRoad(
     undefined,
     undefined,
   ];
-  for (let s = anchor - ROAD_LOOK_BEHIND; s < anchor + ROAD_LOOK_AHEAD;) {
-    const lap = Math.floor(s / track.length);
+  const from = anchor - ROAD_LOOK_BEHIND;
+  const to = anchor + ROAD_LOOK_AHEAD;
+  const origin = Math.floor(from / track.length) * track.length;
+  const epsilon = 1e-7;
+  // The search window limits eligible stations without moving their chords.
+  // Repeat the same grid each lap so clearance doesn't change at lap wrap.
+  for (let s = origin + Math.floor((from - origin) / step) * step; s < to;) {
+    const lap = Math.floor((s + epsilon) / track.length);
+    const lapStart = lap * track.length;
     const launch =
       track.config.jump === null
         ? null
@@ -65,16 +72,19 @@ export function projectRoad(
       ].map((u) => (lap + u) * track.length);
       boundaryLap = lap;
     }
-    nextCandidates[0] = s + step;
+    nextCandidates[0] = Math.min(
+      (lap + 1) * track.length,
+      lapStart + (Math.floor((s - lapStart + epsilon) / step) + 1) * step,
+    );
     for (const boundary of boundaries) {
-      if (boundary > s + 1e-7) nextCandidates.push(boundary);
+      if (boundary > s + epsilon) nextCandidates.push(boundary);
     }
     const next = Math.min(...nextCandidates);
     nextCandidates.length = 1;
     // Never construct a sloping contact segment across the vertical lip into empty space.
     const sampleEnd =
-      launch !== null && Math.abs(next - launch) < 1e-7 ? next - 1e-6 : next;
-    if (sampleEnd <= s) {
+      launch !== null && Math.abs(next - launch) < epsilon ? next - 1e-6 : next;
+    if (sampleEnd <= s || sampleEnd < from) {
       s = next;
       continue;
     }
@@ -98,8 +108,8 @@ export function projectRoad(
       const t = clamp(
         ((position.x - a.p.x) * dx + (position.z - a.p.z) * dz) /
           (dx * dx + dz * dz),
-        0,
-        1,
+        Math.max(0, (from - s) / (sampleEnd - s)),
+        Math.min(1, (to - s) / (sampleEnd - s)),
       );
       const point = a.p.clone().lerp(b.p, t);
       const distance =

@@ -684,6 +684,9 @@ export class Race {
     );
     const previousYaw = new Map(active.map((r) => [r, r.yaw]));
     const previousPitch = new Map(active.map((r) => [r, r.pitch]));
+    const previousRoute = new Map(
+      active.map((r) => [r, { s: r.contactS, branch: r.branch }]),
+    );
     for (const r of active) {
       if (r.eliminated) continue;
       r.wallTouched = r.contactMoved = false;
@@ -1059,6 +1062,28 @@ export class Race {
         x <= previous.wallMax - extent + 0.05
       );
     };
+    const previousRoads = new Map<Racer, RoadProjection>();
+    const startedInsideRails = (r: Racer, next: RoadProjection) => {
+      const position = previousPositions.get(r)!;
+      let road = previousRoads.get(r);
+      if (!road) {
+        const { s, branch } = previousRoute.get(r)!;
+        road = projectRoad(track, position, s, branch);
+        previousRoads.set(r, road);
+      }
+      const offset = next.s - road.s;
+      // Use the previous station on the same connected road. A wall on an
+      // unrelated landing deck still requires approach from its inside face.
+      if (
+        offset < -ROAD_LOOK_BEHIND ||
+        offset >= ROAD_LOOK_AHEAD ||
+        (next.branch !== road.branch && !next.connected && !road.connected)
+      )
+        road = next;
+      const bounds = railBounds({ yaw: previousYaw.get(r)! }, road, position);
+      const x = position.clone().sub(road.point).dot(road.wallAxis);
+      return x >= bounds.min - 0.05 && x <= bounds.max + 0.05;
+    };
     const constrainWall = (r: Racer) => {
       if (terrainImpacts.has(r)) return;
       r.contactMoved = true;
@@ -1068,24 +1093,12 @@ export class Race {
         road,
         r.position,
       );
-      const previousBounds = railBounds(
-        { yaw: previousYaw.get(r)! },
-        road,
-        previousPositions.get(r)!,
-      );
       const x = r.position.clone().sub(road.point).dot(road.wallAxis);
-      const oldX = previousPositions
-        .get(r)!
-        .clone()
-        .sub(road.point)
-        .dot(road.wallAxis);
       if (
+        (x >= min && x <= max) ||
         track.gap(mod(road.s, track.length) / track.length) ||
         (x < min ? !intersectsMin : !intersectsMax) ||
-        (!crossesSplitter(r, road) &&
-          (oldX < previousBounds.min - 0.05 ||
-            oldX > previousBounds.max + 0.05)) ||
-        (x >= min && x <= max)
+        (!crossesSplitter(r, road) && !startedInsideRails(r, road))
       )
         return;
       const sign = x < min ? -1 : 1;
@@ -1279,22 +1292,11 @@ export class Race {
         );
       }
       // Resolve a crossing from inside the barrier, never pull a remote body back to it.
-      const previousBounds = railBounds(
-        { yaw: previousYaw.get(r)! },
-        railRoad,
-        previous,
-      );
-      const previousX =
-        railRoad.x -
-        (r.position.x - previous.x) * railRoad.wallAxis.x -
-        (r.position.z - previous.z) * railRoad.wallAxis.z;
       if (
         r.wallTouched ||
         (!gap &&
           (railRoad.x < min || railRoad.x > max) &&
-          (splitterEntry ||
-            (previousX >= previousBounds.min - 0.05 &&
-              previousX <= previousBounds.max + 0.05)) &&
+          (splitterEntry || startedInsideRails(r, railRoad)) &&
           (railRoad.x < min
             ? railBounds(r, railRoad, r.position).intersectsMin
             : railBounds(r, railRoad, r.position).intersectsMax))
