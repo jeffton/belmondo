@@ -140,7 +140,7 @@ try {
   throw error;
 }
 const menuPreview = new MenuPreview($("menu-model"));
-const podiumTrophy = new PodiumTrophy();
+const podiumTrophy = new PodiumTrophy($("result-heading"));
 let menuStage: MenuStage = "mode";
 const menuStages: MenuStage[] = ["mode", "class", "track", "craft"];
 let menuNavigator: MenuNavigation;
@@ -759,7 +759,7 @@ function quit() {
   $("hud").hidden = true;
   $("pause-panel").close();
   $("results").hidden = true;
-  podiumTrophy.mount($("menu").querySelector<HTMLElement>(".menu-layout")!);
+  podiumTrophy.clear();
   sound.setPaused(true);
   sound.stopCrowd();
   music.setMenu(true);
@@ -1269,7 +1269,6 @@ function showResults() {
   $("results").hidden = false;
   podiumTrophy.setResult(race);
   $("results").classList.toggle("has-podium", Boolean(podiumTrophy.place));
-  podiumTrophy.mount($("result-heading"));
   const key = recordKey(race.mode, race.speedClass);
   const isRecord =
     !race.testAccess &&
@@ -1479,7 +1478,7 @@ function animate(now: number) {
     }
     world.draw(race, paused ? 0 : dt, false, controls.steeringKind);
   }
-  if (state === "menu" || state === "results") podiumTrophy.draw(dt);
+  if (state === "results") podiumTrophy.draw(dt);
   // Downshift expensive clean rendering only after sustained slow frame timing.
   if (state === "race" && !paused) {
     renderFrames++;

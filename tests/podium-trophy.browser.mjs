@@ -170,7 +170,8 @@ try {
     expect(mark.sameLine).toBe(true);
   }
   const podium = mode === "race" && !eliminated && place <= 3;
-  const trophy = page.locator(".podium-trophy");
+  const trophy = page.locator("#results .podium-trophy");
+  const menuCup = page.locator("#menu .podium-trophy");
   await expect(page.locator("#results .eyebrow")).toHaveCount(0);
   if (podium) {
     await expect(trophy).toBeVisible();
@@ -205,12 +206,12 @@ try {
   } else await expect(trophy).toBeHidden();
   await mkdir("test-artifacts/podium", { recursive: true });
   const capture = async (stage) => {
-    if (podium) {
+    if (podium && stage === "results") {
       const bounds = await trophy.evaluate((el) => {
         const a = el.getBoundingClientRect();
         const overlaps = [
           ...document.querySelectorAll(
-            "#results h2, #result-data, #results button, #menu button, #menu .choice, #model-name, #model-subtitle, #craft-stats",
+            "#results h2, #result-data, #results button",
           ),
         ]
           .filter((e) => e.getClientRects().length && !e.hidden)
@@ -311,15 +312,24 @@ try {
   const returned = await page.evaluate(() => window.finishSnapshot());
   expect(returned.selected).toEqual(first.selected);
   expect(returned.persisted).toEqual(first.persisted);
+  await expect(menuCup).toHaveCount(0);
+  await expect(trophy).toBeHidden();
   if (podium) {
-    await expect(trophy).toBeVisible();
-    await expect(trophy).toHaveAttribute("data-place", String(place));
+    const frames = (await page.evaluate(() => window.podiumSnapshot())).frames;
+    const trackTrophy = page.locator(
+      `#tracks .choice[data-index="${returned.selected[0]}"] .track-trophy`,
+    );
+    await expect(trackTrophy).toBeVisible();
+    await expect(trackTrophy).toHaveAttribute("data-place", String(place));
     await capture("menu");
-    // Stage changes and an unrelated format selection cannot invent a new result.
+    // Menu navigation neither mounts nor draws the results-only trophy.
     await page.locator("#setup-back").click();
     await page.locator("#setup-back").click();
     await page.locator('input[name="mode"][value="trial"]').check();
-    await expect(trophy).toHaveAttribute("data-place", String(place));
+    await expect(menuCup).toHaveCount(0);
+    expect((await page.evaluate(() => window.podiumSnapshot())).frames).toBe(
+      frames,
+    );
     await page.locator("#setup-next").click();
     await page.locator("#setup-next").click();
     await page.locator("#setup-next").click();
@@ -339,7 +349,8 @@ try {
       () => window.nullVector?.telemetry.state === "menu",
     );
     await expect(trophy).toBeHidden();
-  } else await expect(trophy).toBeHidden();
+    await expect(menuCup).toHaveCount(0);
+  }
   expect(errors).toEqual([]);
   console.log(
     JSON.stringify({

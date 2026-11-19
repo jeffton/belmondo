@@ -100,30 +100,26 @@ export class PodiumTrophy {
   declare width: number;
   declare height: number;
   declare ratio: number;
-  constructor() {
+  constructor(private readonly heading: HTMLElement) {
     this.element = document.createElement("div");
     this.element.className = "podium-trophy";
-    this.element.hidden = true;
     this.element.setAttribute("role", "img");
     this.place = null;
     this.angle = -0.3;
     this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   }
 
-  setResult(race: Pick<ProgressionRace, "mode" | "player" | "position">) {
-    this.place = podiumPlace(race);
-    this.angle = -0.3;
-  }
-
   clear() {
     this.place = null;
-    this.element.hidden = true;
+    this.element.remove();
   }
 
-  mount(parent: HTMLElement) {
-    this.element.hidden = !this.place;
+  setResult(race: Pick<ProgressionRace, "mode" | "player" | "position">) {
+    this.clear();
+    this.place = podiumPlace(race);
     if (!this.place) return;
-    parent.append(this.element);
+    this.angle = -0.3;
+    this.heading.append(this.element);
     this.element.dataset.place = String(this.place);
     this.element.setAttribute(
       "aria-label",
@@ -132,7 +128,7 @@ export class PodiumTrophy {
   }
 
   draw(dt: number) {
-    if (!this.place || this.element.hidden || document.hidden) return;
+    if (!this.place || document.hidden) return;
     if (!this.renderer) {
       this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       this.renderer.setClearColor(0, 0);
