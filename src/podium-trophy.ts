@@ -100,7 +100,10 @@ export class PodiumTrophy {
   declare width: number;
   declare height: number;
   declare ratio: number;
-  constructor(private readonly heading: HTMLElement) {
+  private readonly heading: HTMLElement;
+
+  constructor(heading: HTMLElement) {
+    this.heading = heading;
     this.element = document.createElement("div");
     this.element.className = "podium-trophy";
     this.element.setAttribute("role", "img");
