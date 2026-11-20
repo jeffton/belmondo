@@ -24,7 +24,10 @@ function fly(gate) {
     assert(!r.recoveredThisStep, "the descent never teleports the craft");
     if (!r.grounded) {
       airborne++;
-      if (r.contactS > gateS(26) && Math.abs(r.x) > track.frame(r.contactS).width)
+      if (
+        r.contactS > gateS(26) &&
+        Math.abs(r.x) > track.frame(r.contactS).width
+      )
         passedOutside = true;
       assert.equal(r.gate, gate, "no missing sectors are awarded in flight");
     } else if (airborne > 0) {
@@ -47,14 +50,25 @@ test("NOCTILUCENT: a real off-edge descent landing validates two sectors and bec
 
   // Keep driving uninterrupted until the next lap's runway. Miss that gap
   // on purpose through pilot inputs rather than by teleporting off the road.
-  for (let step = 0; r.contactS < 1.469 * track.length && step < 90 * 120; step++) {
+  for (
+    let step = 0;
+    r.contactS < 1.469 * track.length && step < 90 * 120;
+    step++
+  ) {
     advanceNightDescent(race);
     assert(!r.recoveredThisStep);
     race.events.length = 0;
   }
-  assert.equal(r.lap, 2, "the actual finish plane still awards exactly one lap");
+  assert.equal(
+    r.lap,
+    2,
+    "the actual finish plane still awards exactly one lap",
+  );
   assert.equal(race.laps.length, 1);
-  assert(r.contactS >= 1.469 * track.length, `end station ${r.contactS / track.length}, shield ${r.shield}`);
+  assert(
+    r.contactS >= 1.469 * track.length,
+    `end station ${r.contactS / track.length}, shield ${r.shield}`,
+  );
   const checkpoint = { ...r.checkpoint };
   for (let step = 0; step < 720; step++) {
     race.update(descentStep, { throttle: false, airLeft: 1, airRight: 1 });
