@@ -213,7 +213,7 @@ try {
     window.inputPad.buttons = [1];
   });
   await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
-  expect((await read(page)).shield).toBe(76);
+  expect((await read(page)).shield).toBe(64);
   await controls(page, { throttle: false, launchIntent: false });
   await page.evaluate(() => {
     window.inputPad.buttons = [];
@@ -225,7 +225,7 @@ try {
     window.inputPad.buttons = [0, 2];
   });
   await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
-  expect((await read(page)).shield).toBe(69);
+  expect((await read(page)).shield).toBe(74);
   await controls(page, { throttle: true, launchIntent: true });
   await page.evaluate(() => {
     window.inputPad.buttons = [];
@@ -235,7 +235,7 @@ try {
   await waitArmed();
   await page.keyboard.press("x");
   await page.waitForFunction(() => window.nullVector.telemetry.weapon === null);
-  expect((await read(page)).shield).toBe(69);
+  expect((await read(page)).shield).toBe(74);
   await context.close();
 
   for (const viewport of [
@@ -402,7 +402,7 @@ try {
       await page.waitForFunction(
         () => window.nullVector.telemetry.weapon === null,
       );
-      expect((await read(page)).shield).toBe(69);
+      expect((await read(page)).shield).toBe(74);
       await controls(page, { throttle: 0.5, airLeft: 0.4, steer: -0.5 });
       await send("touchCancel", []);
       await expect(page.locator("#touch-scrap")).toBeDisabled();

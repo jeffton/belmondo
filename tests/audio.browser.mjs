@@ -325,7 +325,10 @@ try {
     ];
     const results = [];
     for (const [name, run] of cases) {
-      const context = new OfflineAudioContext(1, 48000, 48000);
+      // Compare these short cues after the race gain has settled, not while
+      // it is fading in. Suspend on a Web Audio render-quantum boundary.
+      const offset = name === "pickup" || name === "scrap" ? 6144 : 0;
+      const context = new OfflineAudioContext(1, 48000 + offset, 48000);
       // Offline contexts render via startRendering(), not realtime resume().
       context.resume = () => Promise.resolve();
       window.AudioContext = function () {
@@ -333,9 +336,19 @@ try {
       };
       const audio = new window.AudioEngineUnderTest();
       await audio.start();
-      run(audio);
-      const buffer = await context.startRendering();
-      const pcm = buffer.getChannelData(0);
+      let rendering;
+      if (offset) {
+        const ready = context.suspend(offset / context.sampleRate);
+        rendering = context.startRendering();
+        await ready;
+        run(audio);
+        await OfflineAudioContext.prototype.resume.call(context);
+      } else {
+        run(audio);
+        rendering = context.startRendering();
+      }
+      const buffer = await rendering;
+      const pcm = buffer.getChannelData(0).subarray(offset);
       let sum = 0,
         peak = 0;
       for (const sample of pcm) {
@@ -365,6 +378,15 @@ try {
     "Speed must audibly increase the engine",
   );
   assert(rendered[2].rms > rendered[1].rms, "Airbrake must add audible energy");
+  const onsetEnergy = (name) =>
+    rendered
+      .find((effect) => effect.name === name)
+      .pcm.slice(0, 0.4 * 48000)
+      .reduce((sum, sample) => sum + sample ** 2, 0);
+  assert(
+    onsetEnergy("scrap") > onsetEnergy("pickup") / 2,
+    "The short ejector strike must not fall more than 3 dB below pickup",
+  );
   const metrics = {
     url,
     live,
