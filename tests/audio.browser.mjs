@@ -103,8 +103,17 @@ try {
     new URL("../src/menu-sound.ts", import.meta.url),
     "utf8",
   );
+  const scrapSource = await readFile(
+    new URL("../src/scrap-sound.ts", import.meta.url),
+    "utf8",
+  );
   await synthesis.addScriptTag({
     content:
+      stripTypeScriptTypes(scrapSource).replace(
+        "export function ",
+        "function ",
+      ) +
+      "\n" +
       stripTypeScriptTypes(menuSource).replaceAll("export const ", "const ") +
       "\n" +
       `const SFX_CUES = ${JSON.stringify(SFX_CUES)};\n` +
@@ -280,6 +289,7 @@ try {
         "countdown",
         "go",
         "pickup",
+        "scrap",
         "hit",
         "scrape",
         "boost",

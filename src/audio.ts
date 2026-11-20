@@ -194,7 +194,7 @@ export class AudioEngine {
     const source = this.context!.createBufferSource();
     source.buffer = variants[index];
     const gain = this.context!.createGain();
-    gain.gain.value = key === "scrap" ? 0.6 : SFX_CUES[key].gain;
+    gain.gain.value = key === "scrap" ? 0.78 : SFX_CUES[key].gain;
     source.connect(gain);
     gain.connect(this.master!);
     const voice: SampleVoice = { key, source, gain };

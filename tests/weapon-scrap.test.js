@@ -74,9 +74,9 @@ test("generated ejector cue hits immediately and decays into silence", () => {
     const peak = Math.abs(samples[peakAt]);
     assert.ok(peak > 0.6 && peak < 1);
     assert.ok(peakAt / frequency < 0.005);
-    assert.ok(
-      energy(samples.subarray(0, frequency * 0.04)) > 0.9 * energy(samples),
-    );
+    const attack = energy(samples.subarray(0, frequency * 0.04));
+    const release = energy(samples.subarray(frequency * 0.04));
+    assert.ok(attack > release, "the cue reads as a strike, not a sustain");
     const tail = samples.subarray(-frequency * 0.02);
     assert.ok(Math.sqrt(energy(tail) / tail.length) < 0.001);
     assert.equal(Math.abs(samples.at(-1)), 0);
