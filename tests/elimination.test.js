@@ -257,6 +257,10 @@ test("critical shield entry is inclusive, persistent, player-only and resets aft
   race.player.weapon = "SHIELD";
   race.fire();
   race.update(1 / 120, {});
+  assert.equal(race.criticalShield, true, "protection does not repair damage");
+  race.player.weapon = "PULSE";
+  race.scrapWeapon();
+  race.update(1 / 120, {});
   assert.equal(race.criticalShield, false);
   assert.equal(
     race.events.filter((e) => e.kind === "critical-clear").length,
