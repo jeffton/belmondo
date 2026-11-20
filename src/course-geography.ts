@@ -2,6 +2,7 @@ import type { Track, TrackFrame } from "./track.ts";
 import type { CircuitTextures } from "./environment.ts";
 import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
+import { buildNightViaduct, nightViaductSpan } from "./night-viaduct.ts";
 
 /** Waterfront frontage leaves the entire authored finish straight to spectators. */
 export function getWaterfrontDistricts(track: Track) {
@@ -224,9 +225,12 @@ export function buildCourseGeography(
       points[points.length - 5],
     ]);
   }
+  const viaductSpan = nightViaductSpan(track);
+  if (viaductSpan) root.add(buildNightViaduct(track, environment, viaductSpan));
+
   const bridges = [
     {
-      range: track.config.sections.upperBridge,
+      range: viaductSpan ? undefined : track.config.sections.upperBridge,
       branch: 0,
       name: "upper-crossing-truss",
     },

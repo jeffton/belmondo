@@ -65,6 +65,13 @@ test("Night's overpass leaves the lower route open and rejects columns through i
   const { track, terrain, root } = geography(TRACK_INDEX.NOCTILUCENT);
   const truss = root.getObjectByName("upper-crossing-truss");
   assert(truss);
+  const foundations = truss.userData.groundingContacts;
+  assert(foundations.length > 0);
+  for (const foot of foundations)
+    assert(
+      foot.y < terrain.heightAt(foot.x, foot.z),
+      "caissons embed in the seabed",
+    );
   const crossing = track.config.sections.crossings[0];
   const upper = track.frame(crossing.upperU * track.length);
   const lower = track.frame(crossing.lowerU * track.length);
@@ -77,15 +84,16 @@ test("Night's overpass leaves the lower route open and rejects columns through i
     "upper bridge columns cannot pass through lower track",
   );
   const ray = new THREE.Raycaster();
-  ray.far = 8;
-  for (let offset = -65; offset <= 65; offset += 5) {
+  ray.far = 18;
+  for (let offset = -160; offset <= 160; offset += 3) {
     const f = track.frame(crossing.lowerU * track.length + offset);
-    for (const x of [-f.width, 0, f.width]) {
+    for (const x of [-f.width, -f.width / 2, 0, f.width / 2, f.width]) {
       const point = f.p.clone().addScaledVector(f.right, x);
-      assert(
-        terrain.heightAt(point.x, point.z) < point.y - 3.5,
-        "upper-course earthworks cannot bury the lower crossing",
-      );
+      if (Math.abs(offset) <= 65)
+        assert(
+          terrain.heightAt(point.x, point.z) < point.y - 3.5,
+          "upper-course earthworks cannot bury the lower crossing",
+        );
       ray.set(
         point.clone().add(new THREE.Vector3(0, 0.2, 0)),
         new THREE.Vector3(0, 1, 0),

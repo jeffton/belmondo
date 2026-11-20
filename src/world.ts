@@ -71,6 +71,7 @@ import { circuitTextures } from "./materials.ts";
 import { buildTrackLighting } from "./track-lighting.ts";
 import { createSky } from "./sky.ts";
 import { buildEnvironment } from "./environment.ts";
+import { nightViaductSpan } from "./night-viaduct.ts";
 import { buildSceneryActivity } from "./scenery-activity.ts";
 import { buildRacingInfrastructure } from "./racing-infrastructure.ts";
 import { buildCity } from "./city.ts";
@@ -675,10 +676,13 @@ export class World {
         foundationMaterial,
       ),
     );
+    const viaductSpan = nightViaductSpan(track);
     const supportFrames = Array.from(
       { length: Math.ceil(track.length / 38) },
       (_, i) => {
         const u = i / Math.ceil(track.length / 38);
+        if (viaductSpan && u >= viaductSpan[0] && u <= viaductSpan[1])
+          return [];
         if (cfg.jump !== null && u > cfg.jump - 0.025 && u < cfg.jump + 0.04)
           return [];
         return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0])
