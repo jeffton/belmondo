@@ -301,9 +301,7 @@ try {
       await page.screenshot({
         path: `test-artifacts/launch-visual-${label}-countdown.png`,
       });
-      expect(
-        (await page.locator("#race-message").textContent()).trim(),
-      ).not.toMatch(/^[1-3]$/);
+      await expect(page.locator("#race-message")).toBeHidden();
       if (device === "touch") await page.locator("#pause").tap();
       else await page.keyboard.press("Escape");
       await expect(page.locator("#pause-panel")).toBeVisible();

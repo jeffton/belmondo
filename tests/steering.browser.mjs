@@ -90,7 +90,7 @@ try {
     {},
     { timeout: 30000 },
   );
-  await expect(page.locator("#race-message")).toHaveText("");
+  await expect(page.locator("#race-message")).toBeHidden();
   expect(
     (await page.evaluate(() => window.nullVector.telemetry)).speed,
   ).toBeGreaterThan(40);

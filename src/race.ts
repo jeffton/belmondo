@@ -483,11 +483,8 @@ export class Race {
     )
       return;
     r.weapon = null;
-    const before = r.shield;
-    r.shield = Math.min(100, r.shield + 5);
-    const gain = Math.ceil(r.shield) - Math.ceil(before);
-    if (r.id === 0)
-      this.emit("scrap", gain > 0 ? `SHIELD +${gain}` : "WEAPON SCRAPPED");
+    r.shield = Math.min(100, r.shield + 10);
+    if (r.id === 0) this.events.push({ kind: "scrap" });
   }
   fire(r = this.player) {
     if (
@@ -502,10 +499,8 @@ export class Race {
     r.weapon = null;
     if (r.id === 0) this.emit("fire", weapon);
     if (weapon === "TURBO") r.surge = 2.4;
-    else if (weapon === "SHIELD") {
-      r.protect = 5;
-      r.shield = Math.min(100, r.shield + 12);
-    } else if (weapon === "MINE") {
+    else if (weapon === "SHIELD") r.protect = 5;
+    else if (weapon === "MINE") {
       const forward = new THREE.Vector3(Math.sin(r.yaw), 0, Math.cos(r.yaw));
       this.mines.push({
         s: r.s,
@@ -1416,14 +1411,16 @@ export class Race {
           if (pad.type === "boost") {
             r.surge = 1.15;
             if (!ai) this.emit("boost", "BOOST");
-          } else if (!r.weapon && this.mode !== "trial") {
+          } else if (this.mode === "trial") {
+            r.shield = Math.min(100, r.shield + 10);
+          } else if (!r.weapon) {
             r.weapon =
               WEAPONS[
                 (Math.floor(this.time * pace * 13) + r.id + index) %
                   WEAPONS.length
               ];
             if (!ai) this.emit("pickup", r.weapon);
-          } else r.shield = Math.min(100, r.shield + 8);
+          }
         }
       }
       r.shield = clamp(r.shield, 0, 100);

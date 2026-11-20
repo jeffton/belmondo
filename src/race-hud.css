@@ -245,15 +245,6 @@
 .thrust.launch .launch-band {
   display: block;
 }
-#race-message {
-  position: absolute;
-  inset: 28% 12px auto;
-  text-align: center;
-  font: italic 900 clamp(18px, 4vw, 40px)/1 var(--console-heading);
-  text-shadow:
-    0 2px 3px var(--hud-ink),
-    0 0 8px var(--hud-ink);
-}
 .weapon {
   margin-top: 5px;
 }

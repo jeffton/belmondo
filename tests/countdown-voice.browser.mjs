@@ -91,7 +91,7 @@ try {
       [3, 2, 1, 0],
     );
     assert(first.every((entry) => entry.contextState === "running"));
-    assert.equal(await page.locator("#race-message").textContent(), "");
+    assert(!(await page.locator("#race-message").isVisible()));
     if (mobile) await page.locator("#pause").tap();
     else await page.keyboard.press("Escape");
     await page.locator("#restart").click();

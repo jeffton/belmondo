@@ -201,10 +201,60 @@ test("Race grants the aimed pickup once per earned lap, preserving miss and bran
       50,
       "remaining on a collected weapon cannot repeatedly refill shields",
     );
+    const weapon = r.weapon;
+    race.events.length = 0;
     place(0, 2);
     race.update(1 / 120, {});
     assert.equal(r.collectedPickups.size, 2);
+    assert.equal(r.shield, 50, "Combat pickups do not refill shields");
+    if (type === "weapon") {
+      assert.equal(r.weapon, weapon, "armed craft keeps its weapon");
+      assert(!race.events.some((event) => event.kind === "pickup"));
+    }
   }
+});
+
+test("Time Attack weapon pads refill shield once per pad per lap without arming the player", () => {
+  const track = makeTrack(TRACK_INDEX.COAST);
+  const race = new Race(track, 0, "trial");
+  race.countdown = 0;
+  const r = race.player;
+  assert.equal(r.shield, 100);
+  assert.equal(r.weapon, null);
+  const weaponPads = race.pickups.filter(
+    (pad) => pad.type === "weapon" && pad.branch === 0,
+  );
+  const boostPad = race.pickups.find(
+    (pad) => pad.type === "boost" && pad.branch === 0,
+  );
+  const cross = (pad, lap) => {
+    const f = track.frame(pad.s);
+    r.position.copy(hoverPoint(track, pad, 0, -pad.length * 0.6));
+    r.velocity.copy(f.tangent).multiplyScalar(180);
+    r.s = r.contactS = pad.s - pad.length * 0.6 + (lap - 1) * track.length;
+    r.lap = lap;
+    r.gate = Math.floor((r.s / track.length) * 32) + 1;
+    r.yaw = Math.atan2(f.tangent.x, f.tangent.z);
+    r.branch = 0;
+    r.grounded = true;
+    for (let i = 0; i < 6; i++) race.update(1 / 120, {});
+    assert(r.collectedPickups.has(`${lap}:${pad.id}`));
+    assert.equal(r.weapon, null);
+  };
+
+  r.shield = 73;
+  cross(boostPad, 1);
+  assert(r.surge > 0);
+  assert.equal(r.shield, 73);
+  cross(weaponPads[0], 1);
+  assert.equal(r.shield, 83);
+  cross(weaponPads[0], 1);
+  assert.equal(r.shield, 83);
+  cross(weaponPads[1], 1);
+  assert.equal(r.shield, 93);
+  cross(weaponPads[0], 2);
+  assert.equal(r.shield, 100);
+  assert(!race.events.some((event) => event.kind === "pickup"));
 });
 
 test("AI inventory pickups never emit player weapon announcements", () => {

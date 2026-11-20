@@ -6,7 +6,7 @@ import { synthesizeScrapCue } from "../src/scrap-sound.ts";
 
 const track = makeTrack(TRACK_INDEX.COAST);
 
-test("each inventory item buys up to five shield without firing, boost or protection", () => {
+test("each inventory item restores up to ten shield, with audio but no message or weapon effect", () => {
   const race = new Race(track);
   const p = race.player;
   race.countdown = 0;
@@ -17,17 +17,30 @@ test("each inventory item buys up to five shield without firing, boost or protec
     race.scrapWeapon();
     race.scrapWeapon();
     assert.equal(p.weapon, null);
-    assert.equal(p.shield, 59);
+    assert.equal(p.shield, 64);
     assert.equal(p.protect, 0);
     assert.equal(p.surge, 0);
     assert.equal(race.mines.length + race.shots.length, 0);
-    assert.deepEqual(race.events, [{ kind: "scrap", text: "SHIELD +5" }]);
+    assert.deepEqual(race.events, [{ kind: "scrap" }]);
   }
   p.weapon = "SHIELD";
   p.shield = 98.4;
   race.scrapWeapon();
   assert.equal(p.shield, 100);
-  assert.equal(race.events.at(-1).text, "SHIELD +1");
+  assert.deepEqual(race.events.at(-1), { kind: "scrap" });
+});
+
+test("firing SHIELD protects the craft without refilling its meter", () => {
+  const race = new Race(track);
+  const p = race.player;
+  race.countdown = 0;
+  p.weapon = "SHIELD";
+  p.shield = 54;
+  race.fire();
+  assert.equal(p.weapon, null);
+  assert.equal(p.shield, 54);
+  assert.equal(p.protect, 5);
+  assert.deepEqual(race.events, [{ kind: "fire", text: "SHIELD" }]);
 });
 
 test("scrap cannot activate during countdown or after finish", () => {

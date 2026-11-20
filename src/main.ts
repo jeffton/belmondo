@@ -233,7 +233,6 @@ let state: "menu" | "race" | "results" = "menu",
   paused = false,
   accumulator = 0,
   last: number | null = null,
-  messageUntil = 0,
   previousCount: ReturnType<typeof countdownBoardStage> = "armed";
 let musicInterrupted = false;
 function startMenuMusic(event?: Event) {
@@ -361,10 +360,6 @@ function formatTime(t: number | null | undefined) {
   if (!Number.isFinite(t)) return "—";
   const m = Math.floor(t! / 60);
   return `${String(m).padStart(2, "0")}:${(t! % 60).toFixed(2).padStart(5, "0")}`;
-}
-function showMessage(text: string, seconds = 1.7) {
-  $("race-message").textContent = text;
-  messageUntil = performance.now() + seconds * 1000;
 }
 function selectedMode() {
   return document.querySelector<HTMLInputElement>('input[name="mode"]:checked')!
@@ -721,7 +716,6 @@ async function start(event: MouseEvent) {
   updateAppFocus();
   accumulator = 0;
   previousCount = "armed";
-  messageUntil = 0;
   clearInput();
   $("menu").hidden = true;
   $("results").hidden = true;
@@ -1334,7 +1328,7 @@ function showResults() {
   }
   menuNavigator?.sync();
 }
-function updateHUD(now: number) {
+function updateHUD() {
   const p = race.player;
   $("position").innerHTML =
     `${race.position}<small>/${race.racers.length}</small>`;
@@ -1367,13 +1361,6 @@ function updateHUD(now: number) {
     race.criticalShield,
   );
   updateWeaponHUD(p.weapon);
-  if (race.countdown > 0) {
-    $("race-message").className = "";
-    $("race-message").textContent = "";
-  } else {
-    $("race-message").className = "";
-    if (now > messageUntil) $("race-message").textContent = "";
-  }
   drawMap();
 }
 let hudTick = 0;
@@ -1436,7 +1423,6 @@ function animate(now: number) {
       for (const event of race.events) {
         if (["hit", "scrape", "land"].includes(event.kind))
           world.burst(race.player, event.kind, event.text);
-        if (event.kind === "scrap" && event.text) showMessage(event.text, 1);
         sound.raceEvent(event, race, race.lapCount);
       }
       rumble.events(race.events, now);
@@ -1461,11 +1447,11 @@ function animate(now: number) {
       );
       hudTick += dt;
       if (hudTick > 0.05) {
-        updateHUD(now);
+        updateHUD();
         hudTick = 0;
       }
       if (race.finished) {
-        updateHUD(now);
+        updateHUD();
         showResults();
       }
     } else if (state === "results") {
