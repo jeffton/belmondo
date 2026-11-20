@@ -12,6 +12,10 @@ export function createAdvertising(
   rows = 2,
   region = [0, 0, 1, 1],
   freestanding = false,
+  railColors = [
+    0xee4e42, 0xf2a53a, 0xa1f3ef, 0xc4aaf3, 0xf171bc, 0x93ebd7, 0xf3e5c4,
+    0xef4c47,
+  ],
 ) {
   const root = new THREE.Group();
   root.name = "district-advertising";
@@ -21,10 +25,9 @@ export function createAdvertising(
   texture.magFilter = THREE.NearestFilter;
   const panelMaterial = new THREE.MeshBasicMaterial({ map: texture });
   const housingMaterial = new THREE.MeshLambertMaterial({ color: 0x221b1c });
-  const neonMaterials = [
-    0xee4e42, 0xf2a53a, 0xa1f3ef, 0xc4aaf3, 0xf171bc, 0x93ebd7, 0xf3e5c4,
-    0xef4c47,
-  ].map((color) => new THREE.MeshBasicMaterial({ color }));
+  const neonMaterials = railColors.map(
+    (color) => new THREE.MeshBasicMaterial({ color }),
+  );
   const box = new THREE.BoxGeometry(1, 1, 1);
   const chunks = new Map<
     string,

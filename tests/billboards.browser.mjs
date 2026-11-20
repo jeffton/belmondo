@@ -77,6 +77,11 @@ try {
     };
     window.runBillboardPass = ({ track, world, draw }) => {
       world.resize();
+      const render = world.renderer.render;
+      // Advance the production chase camera and test scene visibility without
+      // rasterizing each rejected frame in software. Capture only the winner.
+      const updateCamera = (_scene, camera) => camera.updateMatrixWorld();
+      world.renderer.render = updateCamera;
       const rows = [];
       const municipal = [];
       const occluders = [];
@@ -131,8 +136,7 @@ try {
         const faceCenter = spec.center
           .clone()
           .addScaledVector(normal, spec.kind ? 0 : 0.86);
-        // Warm the moving chase camera at regular 5 m increments (150 m/s).
-        for (let d = 230; d >= 190; d -= 5) {
+        function approach(d) {
           const s = spec.u * track.length - d;
           draw(
             s,
@@ -141,16 +145,12 @@ try {
               : 0,
           );
         }
+        // Warm the moving chase camera at regular 5 m increments (150 m/s).
+        for (let d = 230; d >= 190; d -= 5) approach(d);
         let best = null;
         let frames = 0;
         for (let d = 185; d >= 50; d -= 5) {
-          const s = spec.u * track.length - d;
-          draw(
-            s,
-            s / track.length > sides[0] && s / track.length < sides[1]
-              ? spec.side
-              : 0,
-          );
+          approach(d);
           const pts = spec.corners.map((p) => p.clone().project(world.camera));
           const [x0, x1] = [
             Math.min(...pts.map((p) => p.x)),
@@ -195,11 +195,20 @@ try {
             height: h,
             score,
             facing,
-            draws: world.renderer.info.render.calls,
-            screenshot: world.renderer.domElement
-              .toDataURL("image/png")
-              .split(",")[1],
           };
+        }
+        if (best) {
+          world.setView("chase");
+          world.camera.fov = 68 + 150 * 0.085;
+          world.camera.up.set(0, 1, 0);
+          for (let d = 230; d > best.distance; d -= 5) approach(d);
+          world.renderer.render = render;
+          approach(best.distance);
+          world.renderer.render = updateCamera;
+          best.draws = world.renderer.info.render.calls;
+          best.screenshot = world.renderer.domElement
+            .toDataURL("image/png")
+            .split(",")[1];
         }
         rows.push({
           kind: spec.kind ?? "billboard",
@@ -208,13 +217,17 @@ try {
           best,
         });
       }
+      world.renderer.render = render;
       return rows;
     };
     window.buildIndex = async (index) => {
       window.course = await window.buildCourse(index);
       return window.course.track.config.name;
     };
-    window.runPass = () => window.runBillboardPass(window.course);
+    window.runPass = (quality) => {
+      window.course.world.quality = quality;
+      return window.runBillboardPass(window.course);
+    };
     window.disposePass = () => {
       world.disposeScene();
       world.renderer.dispose();
@@ -222,17 +235,22 @@ try {
     return TRACKS.length;
   });
   const viewports = [
-    ["desktop", { width: 1000, height: 625 }],
-    ["portrait", { width: 390, height: 844 }],
+    ["desktop", { width: 1000, height: 625 }, "retro"],
+    ["portrait", { width: 390, height: 844 }, "retro"],
+    ["desktop-high", { width: 1000, height: 625 }, "high"],
+    ["portrait-high", { width: 390, height: 844 }, "high"],
   ];
   const indexes = process.env.COURSE
     ? process.env.COURSE.split(",").map(Number)
     : Array.from({ length: count }, (_, i) => i);
   for (const index of indexes) {
     const course = await page.evaluate((i) => window.buildIndex(i), index);
-    for (const [mode, size] of viewports) {
+    for (const [mode, size, quality] of viewports) {
       await page.setViewportSize(size);
-      const rows = await page.evaluate(() => window.runPass());
+      const rows = await page.evaluate(
+        (windowQuality) => window.runPass(windowQuality),
+        quality,
+      );
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         if (!row.best) continue;

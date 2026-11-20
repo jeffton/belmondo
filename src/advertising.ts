@@ -2,7 +2,7 @@ import type { Track, TrackFrame } from "./track.ts";
 import type { EnvironmentSurface, TerrainSurface } from "./environment.ts";
 import * as THREE from "three";
 import { createPierreAdvertising } from "./pierre-advertising.ts";
-import { ROADSIDE_ART } from "./advertising-art.ts";
+import { courseAdvertisingArt } from "./advertising-art.ts";
 import { toMetres } from "./units.ts";
 import { createAdvertising } from "./advertising-panels.ts";
 
@@ -167,51 +167,51 @@ export function getTrackAdvertisingLayout(track: Track) {
   // one full-size Pierre panel. Nothing is tiled along the running rail.
   const campaigns: Record<string, BillboardPlacement[]> = {
     WHITEOUT: [
-      [0.142, 1, 4, 41, 6, -10, 120],
-      [0.285, -1, 0, 45, 6, -10, 120],
-      [0.587, 1, 3, 39, 0, -10, 75],
+      [0.142, 1, 0, 41, 6, -10, 120],
+      [0.285, -1, 1, 45, 6, -10, 120],
+      [0.587, 1, 2, 39, 0, -10, 75],
       [0.958, -1, -1, 37, 6, -10, 120],
     ],
     MONSOON: [
-      [0.117, 1, 1, 44, 6, -10, 120],
-      [0.32, -1, 6, 43, 6, -10, 120],
-      [0.635, -1, 4, 39, 6, -12, 100],
+      [0.117, 1, 0, 44, 6, -10, 120],
+      [0.32, -1, 1, 43, 6, -10, 120],
+      [0.635, -1, 2, 39, 6, -12, 100],
       [0.89, 1, -1, 37, 0, -10, 120],
     ],
     "PALM BREAKER": [
       [0.222, 1, 0, 44, 6, -10, 120],
-      [0.458, 1, 2, 39, 20, -10, 75],
-      [0.668, 1, 6, 47, 6, -10, 120],
+      [0.458, 1, 1, 39, 16, -10, 75],
+      [0.668, 1, 2, 47, 6, -10, 120],
       [0.915, 1, -1, 37, 6, -10, 120],
     ],
     "SOLAR ARRAY": [
-      [0.18, 1, 1, 44, 6, -12, 100],
-      [0.347, 1, 2, 39, 6, -10, 120],
-      [0.827, 1, 7, 47, 28, -10, 120],
+      [0.18, 1, 0, 44, 6, -12, 100],
+      [0.347, 1, 1, 39, 6, -10, 120],
+      [0.827, 1, 2, 47, 28, -10, 120],
       [0.902, 1, -1, 37, 6, -10, 120],
     ],
     FAULTLINE: [
-      [0.17, -1, 7, 44, 0, -10, 120],
-      [0.515, -1, 2, 42, 6, -10, 120],
-      [0.77, -1, 5, 47, 6, -10, 120],
+      [0.17, -1, 0, 44, 0, -10, 120],
+      [0.515, -1, 1, 42, 6, -10, 120],
+      [0.77, -1, 2, 47, 6, -10, 120],
       [0.815, -1, -1, 37, 6, -10, 120],
     ],
     CINDERLINE: [
-      [0.3, -1, 5, 44, 6, -10, 120],
-      [0.46, 1, 2, 41, 0, -10, 120],
-      [0.662, 1, 7, 47, 6, -10, 120],
+      [0.3, -1, 0, 44, 6, -10, 120],
+      [0.46, 1, 1, 41, 0, -10, 120],
+      [0.662, 1, 2, 47, 6, -10, 120],
       [0.955, 1, -1, 37, 6, -10, 120],
     ],
     NOCTILUCENT: [
       [0.17, 1, 0, 44, 6, -10, 120],
-      [0.35, 1, 3, 41, 6, -10, 120],
-      [0.6, 1, 4, 47, 0, -10, 120],
+      [0.35, 1, 1, 41, 6, -10, 120],
+      [0.6, 1, 2, 47, 0, -10, 120],
       [0.948, -1, -1, 37, 6, -10, 120],
     ],
     "VESPER CIRCUIT": [
-      [0.13, 1, 3, 42, 0, -10, 120],
-      [0.36, 1, 4, 47, 6, -10, 120],
-      [0.64, 1, 5, 41, 0, -10, 120],
+      [0.13, 1, 0, 42, 0, -10, 120],
+      [0.36, 1, 1, 47, 6, -10, 120],
+      [0.64, 1, 2, 41, 0, -10, 120],
       [0.947, -1, -1, 39, 6, -10, 120],
     ],
   };
@@ -286,13 +286,15 @@ export function buildTrackAdvertising(
   track: Track,
   environment: EnvironmentSurface,
 ) {
+  const art = courseAdvertisingArt(track.config.name);
   const advertising = createAdvertising(
     scene,
-    ROADSIDE_ART.url,
-    ROADSIDE_ART.columns,
-    ROADSIDE_ART.rows,
-    ROADSIDE_ART.region,
+    art.url,
+    art.columns,
+    art.rows,
+    art.region,
     true,
+    art.rails,
   );
   const pierre = createPierreAdvertising(scene);
   const layout = getTrackAdvertisingLayout(track);

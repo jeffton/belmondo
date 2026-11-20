@@ -1,0 +1,13 @@
+{
+  "source": "scripts/build-course-billboards.py",
+  "outputs": {
+    "palm-breaker.webp": "d9dcef636258e2e833d7e4386605651092e61f5863c78a9a8b9a4e50ac98837c",
+    "monsoon.webp": "a6e3157a0f2146aabc980c1101216967d051d1cefa3860b3da7853472a2a44e6",
+    "whiteout.webp": "6dc541f3be7ccd2701218017022c64d7f444e03cc06467a3802af53b1ab9bda9",
+    "solar-array.webp": "ccdd2cead5b72ee4c47a0dc8a55744ffacad4b6dae9738ca15616501b233eae7",
+    "faultline.webp": "6d660a244fe5d37ec9dfd9b710b0ad6864045a11692dfc0a7bb339fe99680478",
+    "cinderline.webp": "6a9859091914415cf0a4acb4ab9be79df3578e09c37d9afa75094aa1a004bc88",
+    "noctilucent.webp": "d18741bd66f87288d44bbab9268281a2276b22c209b96cb44a21e9c5e2feec5b",
+    "vesper-circuit.webp": "0fce3d19f276e38243b9d6bc2b05daf23b2a728b5d58a4eea37698d0d1e888a1"
+  }
+}
