@@ -61,14 +61,24 @@ test("scrap cannot activate during countdown or after finish", () => {
   }
 });
 
-test("generated capacitor sound is bounded and decays without a hard tail", () => {
+test("generated ejector cue hits immediately and decays into silence", () => {
+  const energy = (samples) =>
+    samples.reduce((total, sample) => total + sample ** 2, 0);
   for (const frequency of [44_100, 48_000]) {
     const samples = synthesizeScrapCue(frequency);
-    const peak = samples.reduce(
-      (max, sample) => Math.max(max, Math.abs(sample)),
+    const peakAt = samples.reduce(
+      (index, sample, i) =>
+        Math.abs(sample) > Math.abs(samples[index]) ? i : index,
       0,
     );
-    assert.ok(peak > 0.25 && peak < 0.8);
-    assert.ok(Math.abs(samples.at(-1)) < 0.001);
+    const peak = Math.abs(samples[peakAt]);
+    assert.ok(peak > 0.6 && peak < 1);
+    assert.ok(peakAt / frequency < 0.005);
+    assert.ok(
+      energy(samples.subarray(0, frequency * 0.04)) > 0.9 * energy(samples),
+    );
+    const tail = samples.subarray(-frequency * 0.02);
+    assert.ok(Math.sqrt(energy(tail) / tail.length) < 0.001);
+    assert.equal(Math.abs(samples.at(-1)), 0);
   }
 });
