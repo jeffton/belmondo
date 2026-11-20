@@ -72,6 +72,10 @@ import { buildTrackLighting } from "./track-lighting.ts";
 import { createSky } from "./sky.ts";
 import { buildEnvironment } from "./environment.ts";
 import { nightViaductSpan } from "./night-viaduct.ts";
+import {
+  buildElevatedStructure,
+  elevatedDesign,
+} from "./elevated-structures.ts";
 import { buildSceneryActivity } from "./scenery-activity.ts";
 import { buildRacingInfrastructure } from "./racing-infrastructure.ts";
 import { buildCity } from "./city.ts";
@@ -677,6 +681,9 @@ export class World {
       ),
     );
     const viaductSpan = nightViaductSpan(track);
+    const elevated = elevatedDesign(track);
+    const structure = buildElevatedStructure(track, environment);
+    if (structure) this.scene.add(structure);
     const supportFrames = Array.from(
       { length: Math.ceil(track.length / 38) },
       (_, i) => {
@@ -688,6 +695,12 @@ export class World {
         return (u > cfg.split[0] && u < cfg.split[1] ? [-1, 1] : [0])
           .filter(
             (branch) =>
+              !(
+                elevated &&
+                branch === elevated.branch &&
+                u >= elevated.range[0] &&
+                u <= elevated.range[1]
+              ) &&
               environment.bridgeAt(u, branch) &&
               environment.supportClearAt(u, branch),
           )
