@@ -131,10 +131,24 @@ export class AudioEngine {
   async loadMenuSamples() {
     const buffers = await Promise.all(
       Object.entries(MENU_SOUNDS).map(
-        async ([kind, cue]): Promise<[string, AudioBuffer]> => [
-          kind,
-          await this.loadBuffer(cue.url),
-        ],
+        async ([kind, cue]): Promise<[string, AudioBuffer]> => {
+          const decoded = await this.loadBuffer(cue.url);
+          if (kind !== "back") return [kind, decoded];
+
+          // The approved back master is strongly left-weighted. Fold both
+          // channels into a centered cue without the level drop of averaging.
+          const left = decoded.getChannelData(0);
+          const right = decoded.getChannelData(1);
+          const centered = this.context!.createBuffer(
+            1,
+            decoded.length,
+            decoded.sampleRate,
+          );
+          const pcm = centered.getChannelData(0);
+          for (let i = 0; i < pcm.length; i++)
+            pcm[i] = (left[i] + right[i]) * Math.SQRT1_2;
+          return [kind, centered];
+        },
       ),
     );
     this.menuBuffers = new Map(buffers);

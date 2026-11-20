@@ -6,7 +6,7 @@ Three original **ElevenLabs Sound Effects V3** stereo samples serve the menus:
 - **Confirmation:** a fuller harmonic electronic acknowledgement, 256 ms.
 - **Back:** an inward-building air/resonance gesture, 312 ms.
 
-The approved back file has SHA-256 `d00740d3d46791ab8108a79fdef37fafa5cefca8a30c07363c4e82938b61732b`. All three files are byte-identical to their selected masters. Menu feedback has a fixed 0.5 gain (−6.02 dB) before the shared compressor, in addition to the user's effects-volume setting. Music, gameplay effects, saved settings, autoplay and navigation are unaffected.
+The approved back file has SHA-256 `d00740d3d46791ab8108a79fdef37fafa5cefca8a30c07363c4e82938b61732b`. All three files are byte-identical to their selected masters. On decode, the strongly left-weighted back cue is folded to mono with equal-power coefficients for centered playback. Navigation and confirmation retain their stereo mixes. Menu feedback has a fixed 0.5 gain (−6.02 dB) before the shared compressor, in addition to the user's effects-volume setting. Music, gameplay effects, saved settings, autoplay and navigation are unaffected.
 
 ## Generation and selection
 
@@ -20,6 +20,6 @@ No trustworthy subjective audition is claimed. Audio-understanding services fail
 
 Samples decode once. Context resume remains synchronous in the original gesture. Only the newest pending action survives initial decoding; suspended controller events are never queued. Muted, hidden and zero-volume actions cannot reappear later. Fetch/decode errors remain explicit; there is no synthetic replacement.
 
-Realtime default-gain peaks are approximately .11/.19/.24 for navigation/confirmation/back. Warmed-compressor stereo measurements with all eight actual soundtrack excerpts give active-window RMS .027/.044/.030 and maximum combined peak .305. Navigation at 20 cues/second with music peaks at .201. Comparative PCM renders measure approximately −6 dB versus the untrimmed menu bus; gameplay-engine PCM remains unchanged within renderer float precision. These are short-window measurements, not integrated LUFS or whole-track worst-case guarantees.
+Realtime default-gain peaks are approximately .11/.19/.17 for navigation/confirmation/back. Warmed-compressor stereo measurements across the soundtrack give active-window RMS .027/.044/.030 and maximum combined peak .244. Navigation at 20 cues/second with music peaks at .201. Comparative PCM renders measure approximately −6 dB versus the untrimmed menu bus; gameplay-engine PCM remains unchanged within renderer float precision. These are short-window measurements, not integrated LUFS or whole-track worst-case guarantees.
 
-Browser tests cover keyboard/controller/touch, autoplay, a cold first touch, no-op/hover silence, pause/dialog transitions, volume zero and unchanged records. Unit tests also lock the approved back hash. Each test invocation is bounded to 55 seconds or less.
+Browser tests cover keyboard/controller/touch, autoplay, a cold first touch, no-op/hover silence, pause/dialog transitions, volume zero and unchanged records. A stereo PCM tap after the compressor verifies that Back is centered and that Move and Confirm remain audible in both channels. Unit tests lock the approved back hash.

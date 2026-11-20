@@ -56,8 +56,20 @@ class Context {
     };
     return panner;
   }
+  createBuffer(numberOfChannels, length, sampleRate) {
+    const channels = Array.from(
+      { length: numberOfChannels },
+      () => new Float32Array(length),
+    );
+    return {
+      length,
+      sampleRate,
+      duration: length / sampleRate,
+      getChannelData: (channel) => channels[channel],
+    };
+  }
   async decodeAudioData(bytes) {
-    return { bytes, duration: 1 };
+    return { ...this.createBuffer(2, 48000, 48000), bytes };
   }
   createBufferSource() {
     const source = new Node();

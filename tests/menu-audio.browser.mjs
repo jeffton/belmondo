@@ -30,8 +30,7 @@ try {
       return window.pad ? [window.pad] : [];
     };
     window.cues = [];
-    window.timing = [];
-    window.peaks = [];
+    window.stereoBlocks = [];
     const NativeContext = window.AudioContext;
     window.AudioContext = class extends NativeContext {
       createBufferSource() {
@@ -44,10 +43,7 @@ try {
             [312, "back"],
           ]);
           const kind = cues.get(Math.round(source.buffer?.duration * 1000));
-          if (kind) {
-            window.cues.push(kind);
-            window.timing.push([args[0] ?? this.currentTime, this.currentTime]);
-          }
+          if (kind) window.cues.push(kind);
           return original(...args);
         };
         return source;
@@ -63,8 +59,18 @@ try {
                   `
             registerProcessor('peak-tap', class extends AudioWorkletProcessor {
               process(inputs) {
-                const pcm = inputs[0]?.[0];
-                if (pcm) this.port.postMessage(Math.max(...pcm.map(Math.abs)));
+                const channels = inputs[0];
+                if (channels.length === 2) {
+                  const [left, right] = channels;
+                  this.port.postMessage({
+                    stereo: channels.map((pcm) => ({
+                      peak: Math.max(...pcm.map(Math.abs)),
+                      energy: pcm.reduce((sum, sample) => sum + sample * sample, 0),
+                      frames: pcm.length,
+                    })),
+                    differencePeak: Math.max(...left.map((sample, i) => Math.abs(sample - right[i]))),
+                  });
+                }
                 return true;
               }
             });
@@ -75,10 +81,13 @@ try {
             ),
           )
           .then(() => {
-            const tap = new AudioWorkletNode(this, "peak-tap");
+            const tap = new AudioWorkletNode(this, "peak-tap", {
+              channelCount: 2,
+              channelCountMode: "explicit",
+            });
             compressor.connect(tap);
             tap.connect(this.destination);
-            tap.port.onmessage = ({ data }) => window.peaks.push(data);
+            tap.port.onmessage = ({ data }) => window.stereoBlocks.push(data);
           });
         return compressor;
       }
@@ -117,26 +126,49 @@ try {
     await page.waitForTimeout(450);
     await page.evaluate(() => {
       window.cues = [];
-      window.peaks = [];
+      window.stereoBlocks = [];
     });
     await run();
     await page.waitForTimeout(450);
-    const result = await page.evaluate(() => ({
-      cues: window.cues,
-      peak: Math.max(0, ...window.peaks),
-      contextState: window.effectsContext?.state,
-      samples: window.peaks.length,
-      timing: window.timing,
-    }));
-    assert.deepEqual(result.cues, expected);
-    levels.push({ cues: result.cues, peak: result.peak });
-    if (audible === null) return result;
-    if (audible)
-      assert(
-        result.peak > 0.0001 && result.peak < 0.65,
-        JSON.stringify(result),
+    const result = await page.evaluate(() => {
+      const stereo = [0, 1].map((channel) => {
+        let peak = 0,
+          energy = 0,
+          frames = 0;
+        for (const block of window.stereoBlocks) {
+          const pcm = block.stereo[channel];
+          peak = Math.max(peak, pcm.peak);
+          energy += pcm.energy;
+          frames += pcm.frames;
+        }
+        return { peak, rms: frames ? Math.sqrt(energy / frames) : 0 };
+      });
+      const differencePeak = Math.max(
+        0,
+        ...window.stereoBlocks.map((block) => block.differencePeak),
       );
-    else assert(result.peak < 0.0001, JSON.stringify(result));
+      return { cues: window.cues, stereo, differencePeak };
+    });
+    assert.deepEqual(result.cues, expected);
+    const [left, right] = result.stereo;
+    const balanceDb = audible ? 20 * Math.log10(left.rms / right.rms) : null;
+    levels.push({ ...result, balanceDb });
+    if (audible === null) return result;
+    for (const { peak } of result.stereo) {
+      if (audible) assert(peak > 0.0001 && peak < 0.65, JSON.stringify(result));
+      else assert(peak < 0.0001, JSON.stringify(result));
+    }
+    if (audible) {
+      // Preserve the move/confirm stereo image; back should sit in the center.
+      const toleranceDb = expected[0] === "back" ? 0.1 : 3;
+      assert(
+        Math.abs(balanceDb) < toleranceDb,
+        `${expected[0]}: ${balanceDb.toFixed(2)} dB L/R, ${JSON.stringify(result.stereo)}`,
+      );
+      const hasStereoSeparation =
+        result.differencePeak > Math.max(left.peak, right.peak) * 0.01;
+      assert.equal(hasStereoSeparation, expected[0] !== "back", expected[0]);
+    }
     return result;
   }
   // Polling a controller before activation must not queue stale audio.
@@ -187,20 +219,20 @@ try {
     window.pad = null;
     return window.tapReady;
   });
+  const modeOption = (mode) =>
+    page.locator(`label:has(input[name="mode"][value="${mode}"])`);
   // First real gesture must unlock actual output, without replaying controller cues.
   await action(["move"], () =>
     page.locator('input[name="mode"][value="trial"]').check(),
   );
   await page.evaluate(() => window.tapReady);
   await action([], () => page.locator("#music-open").hover());
-  await action([], () =>
-    page.locator('input[name="mode"][value="trial"]').click(),
-  );
+  await action([], () => modeOption("trial").click());
   await action(["confirm"], () => page.locator("#setup-next").tap());
   await action(["back"], () => page.keyboard.press("Escape"));
-  await page.locator('input[name="mode"][value="race"]').click();
+  await modeOption("race").click();
   await action(["move"], () => page.keyboard.press("ArrowRight"));
-  await page.locator('input[name="mode"][value="trial"]').click();
+  await modeOption("trial").click();
   await action([], () => page.keyboard.press("Escape"));
   await action(["confirm"], () => page.keyboard.press("Enter"));
   await action(["confirm"], () => page.locator("#music-open").tap());
@@ -216,15 +248,20 @@ try {
       id: "test",
     };
   });
-  await page.waitForTimeout(80);
+  await page.waitForFunction(
+    () => document.body.dataset.gamepadConnected === "true",
+  );
   async function pad(button) {
-    await page.evaluate((index) => {
-      window.pad.buttons[index] = { pressed: true, value: 1 };
-    }, button);
-    await page.waitForTimeout(180);
-    await page.evaluate((index) => {
-      window.pad.buttons[index] = { pressed: false, value: 0 };
-    }, button);
+    for (const pressed of [true, false]) {
+      const reads = await page.evaluate(
+        ({ index, pressed }) => {
+          window.pad.buttons[index] = { pressed, value: Number(pressed) };
+          return window.padReads;
+        },
+        { index: button, pressed },
+      );
+      await page.waitForFunction((prior) => window.padReads > prior, reads);
+    }
   }
   await action(["move"], () => pad(15));
   await action(["confirm"], () => pad(0));
@@ -259,7 +296,7 @@ try {
     storage,
   );
   assert.deepEqual(errors, []);
-  console.log("Realtime menu peaks:", levels);
+  console.log("Realtime menu stereo PCM:", JSON.stringify(levels));
   console.log(
     "Menu audio PASS: gesture-unlocked PCM; keyboard/gamepad/touch; no-op/hover; transitions/dialog/pause; zero volume; records unchanged",
   );
