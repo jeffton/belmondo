@@ -1,6 +1,6 @@
 # BELMONDO league graphics
 
-Three team emblems connect craft selection, the timing board, airframes and results. Registration numbers appear on the timing board and in the results. PIP is the starter. The three teams retain the existing ship names, craft IDs, NPC colours and performance:
+Three team emblems connect craft selection, the timing board, airframes and results. The timing board displays registration numbers; results pair the emblem with the same craft name used in selection. PIP is the starter. The three teams retain the existing ship names, craft IDs, NPC colours and performance:
 
 | Airframe | Entry      | Chase read                                                         |
 | -------- | ---------- | ------------------------------------------------------------------ |

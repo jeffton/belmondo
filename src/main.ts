@@ -202,11 +202,6 @@ function setTeamPalette(element: HTMLElement, index: number) {
   element.style.setProperty("--team-color", team.color);
   element.style.setProperty("--team-ink", team.ink);
 }
-function setTeamPlate(element: HTMLElement, index: number) {
-  const team = LEAGUE_TEAMS[index];
-  setTeamPalette(element, index);
-  element.innerHTML = `${teamEmblem(index)}<span>${team.name} / ${team.number}</span>`;
-}
 function updateModelName() {
   $("craft-circuit").textContent = TRACKS[selectedTrack].name;
   $("model-subtitle").textContent = TRACKS[selectedTrack].subtitle
@@ -1283,10 +1278,12 @@ function showResults() {
         ? "YOU LOST"
         : `${race.position}${({ 2: "ND", 3: "RD" } as Record<number, string>)[race.position] || "TH"} PLACE`;
   $("result-data").replaceChildren();
-  const classifiedTeam = document.createElement("div");
-  classifiedTeam.className = "team-plate";
-  setTeamPlate(classifiedTeam, race.player.craft);
-  $("result-data").append(classifiedTeam);
+  const craft = race.player.craft;
+  const craftPlate = document.createElement("div");
+  craftPlate.className = "team-plate";
+  setTeamPalette(craftPlate, craft);
+  craftPlate.innerHTML = `${teamEmblem(craft)}<span>${CRAFT[craft].name}</span>`;
+  $("result-data").append(craftPlate);
   const lines: [string, string, boolean?, boolean?][] = [
     ["CLASS", race.classSpec.name],
     [

@@ -12,6 +12,7 @@ const mobile = viewport.width < 900;
 const place = Number(process.env.PODIUM_PLACE || 1);
 const speedClass = Number(process.env.FINISH_CLASS || 0);
 const mode = process.env.FINISH_MODE || "race";
+const craft = Number(process.env.FINISH_CRAFT ?? 2);
 const exit = process.env.FINISH_EXIT || (mobile ? "touch" : "keyboard");
 const eliminated = process.env.FINISH_ELIMINATED === "1";
 const server = await createServer({
@@ -98,6 +99,12 @@ try {
     .check();
   await page.locator("#setup-next").click();
   await page.locator("#setup-next").click();
+  const craftChoice = page.locator(`#crafts [data-craft-index="${craft}"]`);
+  const craftName = await craftChoice.locator("b").innerText();
+  const emblem = await craftChoice.locator(".team-emblem").innerHTML();
+  if (mobile) await craftChoice.tap();
+  else await craftChoice.click();
+  await expect(craftChoice).toHaveAttribute("aria-pressed", "true");
   await page.locator("#start").click();
   await page.waitForFunction(
     () => window.nullVector.telemetry.state === "race",
@@ -111,12 +118,10 @@ try {
     "background-color",
     "rgb(255, 240, 209)",
   );
-  await expect(page.locator("#result-data .team-plate")).toHaveText(
-    "PHASE / 44",
-  );
-  await expect(
-    page.locator("#result-data .team-plate .team-emblem"),
-  ).toBeVisible();
+  const plate = page.locator("#result-data .team-plate");
+  await expect(plate).toHaveText(craftName);
+  await expect(plate.locator(".team-emblem")).toBeVisible();
+  expect(await plate.locator(".team-emblem").innerHTML()).toBe(emblem);
   const first = await page.evaluate(() => window.finishSnapshot());
   expect(first.position).toBe(
     eliminated ? (mode === "trial" ? 1 : 8) : mode === "trial" ? 1 : place,
@@ -356,6 +361,7 @@ try {
     JSON.stringify({
       mobile,
       speedClass,
+      craft: craftName,
       mode,
       eliminated,
       exit,
