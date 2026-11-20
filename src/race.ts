@@ -105,6 +105,7 @@ export interface Racer {
   offroad: number;
   contactSound: number;
   flight?: boolean;
+  descentFlight?: { start: number; end: number; branch: number };
   recoveredThisStep?: boolean;
   wallTouched?: boolean;
   contactMoved?: boolean;
@@ -436,6 +437,7 @@ export class Race {
     r.speed = r.x = r.vx = r.h = r.vy = r.offroad = 0;
     r.grounded = true;
     r.flight = false;
+    r.descentFlight = undefined;
     r.boost = r.surge = r.pulseHit = r.weaponHit = 0;
     r.recoveredThisStep = true;
   }
@@ -1136,7 +1138,7 @@ export class Race {
         continue;
       }
       if (terrainImpacts.has(r)) {
-        r.shield = Math.max(10, r.shield - 24);
+        r.shield -= clamp(r.shield - 10, 0, 24);
         this.recover(r);
         if (r.id === 0) this.emit("hit", "GROUND IMPACT");
         // A checkpoint return cannot sweep through gates or pickups.
@@ -1218,7 +1220,47 @@ export class Race {
       r.grounded =
         touchingDeck ||
         (!gap && fieldContact && onDeck && height < HOVER_REACH);
-      if (wasGrounded && !r.grounded) r.flight = true;
+      const gateStation = (gate: number) =>
+        track.finishS + (gate * track.length) / GATES;
+      if (wasGrounded && !r.grounded) {
+        r.flight = true;
+        const from = previousRoute.get(r)!;
+        const descent = track.config.sections?.descent;
+        if (descent) {
+          const lapStart = Math.floor(from.s / track.length) * track.length;
+          const start = lapStart + descent[0] * track.length;
+          const end = lapStart + descent[1] * track.length;
+          // Only a flight from the earned sector can claim a descent landing.
+          if (
+            from.s >= Math.max(start, gateStation(r.gate - 1)) &&
+            from.s < Math.min(end, gateStation(r.gate))
+          )
+            r.descentFlight = { start: from.s, end, branch: from.branch };
+        }
+      }
+      let descentLanding = false;
+      if (r.descentFlight) {
+        const descent = r.descentFlight;
+        const from = previousRoute.get(r)!;
+        const local =
+          descent.branch === r.branch &&
+          road.s >= from.s - ROAD_LOOK_BEHIND &&
+          road.s < from.s + ROAD_LOOK_AHEAD;
+        if (!local || road.s < descent.start || road.s > descent.end) {
+          r.descentFlight = undefined;
+        } else if (r.grounded) {
+          // The road can fall away under the craft and its rails. A forward
+          // landing on the same local descent settles its ordered sectors;
+          // it cannot claim a finish, a fork transfer or an unrelated deck.
+          if ((touchingDeck || onDeck) && !gap && road.s > from.s) {
+            while (r.gate % GATES !== 0 && gateStation(r.gate) <= road.s) {
+              r.gate++;
+              descentLanding = true;
+            }
+          }
+          r.descentFlight = undefined;
+        }
+      }
       if (r.grounded) {
         r.flight = false;
         if (!wasGrounded && r.id === 0) this.emit("land", "TOUCHDOWN");
@@ -1230,12 +1272,16 @@ export class Race {
           road.s >= track.finishS + ((r.gate - 1) * track.length) / GATES &&
           road.s < track.finishS + (r.gate * track.length) / GATES
         )
-          r.checkpoint = { s: r.s, branch: r.branch, gate: r.gate };
+          r.checkpoint = {
+            s: descentLanding ? road.s : r.s,
+            branch: r.branch,
+            gate: r.gate,
+          };
       } else if (gap && wasGrounded && r.id === 0) this.emit("jump", "FLIGHT");
       // Validate the swept crossing itself, not the end-of-step deck contact.
       // A legal airborne crossing can end outside the deck beside a jump.
       if (r.grounded || r.flight) {
-        const gateS = track.finishS + (r.gate * track.length) / GATES;
+        const gateS = gateStation(r.gate);
         const gateFrame = track.frame(gateS, r.branch);
         const before = previous.clone().sub(gateFrame.p).dot(gateFrame.tangent);
         const after = r.position
@@ -1350,7 +1396,7 @@ export class Race {
         r.velocity.y < 0 &&
         r.position.y + craftSupport(r, DOWN) < this.surface.lowestRoadY
       ) {
-        r.shield = Math.max(10, r.shield - 24);
+        r.shield -= clamp(r.shield - 10, 0, 24);
         this.recover(r);
         if (!ai) this.emit("hit", "RESCUE");
         continue;
