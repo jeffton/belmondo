@@ -1,35 +1,30 @@
 import { chromium } from "@playwright/test";
-import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { createServer } from "vite";
 
-// Audio-only fixture: no game world, GPU context, server or autoplay bypass.
-const browser = await chromium.launch({
-  headless: true,
-  args: ["--no-sandbox"],
-});
+// Vite serves the production modules and samples. The page has no game
+// world, GPU context or live autoplay bypass.
+const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+let browser;
 try {
+  await server.listen();
+  browser = await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox"],
+  });
   const page = await browser.newPage();
-  await page.route("http://audio.test/", (route) =>
+  const fixtureUrl = new URL(
+    "__countdown_audio__.html",
+    server.resolvedUrls.local[0],
+  ).href;
+  await page.route(fixtureUrl, (route) =>
     route.fulfill({
       contentType: "text/html",
       body: "<title>Launch audio</title>",
     }),
   );
-  await page.route("http://audio.test/audio/**/*.wav", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    await route.fulfill({
-      contentType: "audio/wav",
-      body: await readFile(new URL(`../public${path}`, import.meta.url)),
-    });
-  });
-  await page.goto("http://audio.test/");
-  await page.route("http://audio.test/src/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    await route.fulfill({
-      contentType: "text/javascript",
-      body: await readFile(new URL(`..${path}`, import.meta.url)),
-    });
-  });
+  await page.goto(fixtureUrl);
   const results = await page.evaluate(async () => {
     const { AudioEngine } = await import("/src/audio.ts");
     const results = [];
@@ -222,5 +217,9 @@ try {
   );
   console.log(metrics);
 } finally {
-  await browser.close();
+  try {
+    await browser?.close();
+  } finally {
+    await server.close();
+  }
 }
