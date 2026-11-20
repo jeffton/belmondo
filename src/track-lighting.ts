@@ -1,4 +1,5 @@
-import type { Track, TrackFrame } from "./track.ts";
+import type { Track } from "./track.ts";
+import { buildNoctilucentLighting } from "./noctilucent-lighting.ts";
 import * as THREE from "three";
 import { Lensflare, LensflareElement } from "three/addons/objects/Lensflare.js";
 import { COURSE_LIGHTING, celestialDirection } from "./course-lighting.ts";
@@ -104,139 +105,15 @@ export function buildTrackLighting(scene: THREE.Object3D, track: Track) {
   }
   scene.add(celestial);
 
-  const pools: {
-    p: THREE.Vector3;
-    right: THREE.Vector3;
-    tangent: THREE.Vector3;
-    up: THREE.Vector3;
-  }[] = [];
-  if (night && track.config.biome !== "metropolis") {
-    const housing = new THREE.MeshLambertMaterial({ color: 0x3b485b });
-    const lamp = new THREE.MeshBasicMaterial({ color: 0xd8eaff });
-    const mastGeometry = new THREE.BoxGeometry(0.55, 1, 0.55);
-    const headGeometry = new THREE.BoxGeometry(5.2, 0.7, 2.2);
-    const beamMaterial = new THREE.MeshBasicMaterial({
-      color: 0x9ecbff,
-      transparent: true,
-      opacity: 0.055,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const poolMaterial = new THREE.MeshBasicMaterial({
-      map: glowMap,
-      color: 0x96bfff,
-      transparent: true,
-      opacity: 0.18,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    for (const u of [0.045, 0.16, 0.255, 0.49, 0.59, 0.735, 0.93]) {
-      const f = track.frame(u * track.length);
-      const side = u < 0.5 ? -1 : 1;
-      const base = f.p.clone().addScaledVector(f.right, side * (f.width + 3));
-      const top = base.clone().addScaledVector(f.up, 17);
-      const mast = new THREE.Mesh(mastGeometry, housing);
-      mast.scale.y = 17;
-      mast.position.copy(base).addScaledVector(f.up, 8.5);
-      mast.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), f.up);
-      const head = new THREE.Mesh(headGeometry, housing);
-      head.position.copy(top);
-      head.lookAt(f.p);
-      const lens = new THREE.Mesh(headGeometry, lamp);
-      lens.scale.set(0.84, 0.72, 0.045);
-      lens.position
-        .copy(top)
-        .add(new THREE.Vector3(0, 0, 1.16).applyQuaternion(head.quaternion));
-      lens.quaternion.copy(head.quaternion);
-      // Each shaft's rim follows the illuminated road, not a tilted cone base.
-      // The actual exposed lens is the apex; every rim point lands on the pool.
-      const apex = lens.position
-        .clone()
-        .add(new THREE.Vector3(0, 0, 0.05).applyQuaternion(head.quaternion));
-      const rim = [];
-      for (let i = 0; i < 32; i++) {
-        const angle = (i / 32) * Math.PI * 2;
-        const section = track.frame(u * track.length + Math.sin(angle) * 30);
-        rim.push(
-          section.p
-            .clone()
-            .addScaledVector(
-              section.right,
-              Math.cos(angle) * section.width * 0.8,
-            )
-            .addScaledVector(section.up, 0.045),
-        );
-      }
-      const shaftPositions = [];
-      for (let i = 0; i < rim.length; i++) {
-        shaftPositions.push(
-          ...apex.toArray(),
-          ...rim[i].toArray(),
-          ...rim[(i + 1) % rim.length].toArray(),
-        );
-      }
-      const beamGeometry = new THREE.BufferGeometry();
-      beamGeometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(shaftPositions, 3),
-      );
-      const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-      beam.name = "projector-shaft";
-      // A road-conforming pool has its own low radiance, so dark asphalt still
-      // catches the projector. It cannot spill beyond the deck onto open water.
-      const positions = [],
-        uvs = [],
-        indices = [];
-      for (let row = 0; row <= 8; row++) {
-        const section = track.frame(u * track.length + (row / 8 - 0.5) * 74);
-        for (let column = 0; column <= 4; column++) {
-          const point = section.p
-            .clone()
-            .addScaledVector(
-              section.right,
-              (column / 4 - 0.5) * section.width * 1.88,
-            )
-            .addScaledVector(section.up, 0.045);
-          positions.push(...point.toArray());
-          uvs.push(column / 4, row / 8);
-          if (row < 8 && column < 4) {
-            const a = row * 5 + column;
-            indices.push(a, a + 5, a + 1, a + 1, a + 5, a + 6);
-          }
-        }
-      }
-      const poolGeometry = new THREE.BufferGeometry();
-      poolGeometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(positions, 3),
-      );
-      poolGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-      poolGeometry.setIndex(indices);
-      const lightPool = new THREE.Mesh(poolGeometry, poolMaterial);
-      scene.add(mast, head, lens, beam, lightPool);
-      pools.push({ p: f.p, right: f.right, tangent: f.tangent, up: f.up });
-    }
-  }
+  const shadeNight = buildNoctilucentLighting(scene, track);
   const shadeColor = new THREE.Color();
-  const poolDelta = new THREE.Vector3();
   return {
     shade(point: THREE.Vector3, color: THREE.ColorRepresentation) {
       const sectional = sectionalValues(point);
-      if (!night || track.config.biome === "metropolis")
-        return shadeColor.set(color).multiplyScalar(sectional).getHex();
-      let strength = 0;
-      for (const pool of pools) {
-        const delta = poolDelta.subVectors(point, pool.p);
-        const radius =
-          (delta.dot(pool.right) / 30) ** 2 +
-          (delta.dot(pool.tangent) / 40) ** 2 +
-          (delta.dot(pool.up) / 12) ** 2;
-        strength = Math.max(strength, Math.max(0, 1 - radius) ** 2);
-      }
-      return shadeColor
-        .set(color)
-        .multiplyScalar(sectional * (0.7 + strength * 1.3))
-        .getHex();
+      shadeColor.set(color);
+      return shadeNight
+        ? shadeNight(point, shadeColor, sectional)
+        : shadeColor.multiplyScalar(sectional).getHex();
     },
     update(camera: THREE.Camera) {
       celestial.position.copy(camera.position).addScaledVector(direction, 950);
