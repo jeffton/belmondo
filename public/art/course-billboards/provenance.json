@@ -1,13 +1,13 @@
 {
   "source": "scripts/build-course-billboards.py",
   "outputs": {
-    "palm-breaker.webp": "d9dcef636258e2e833d7e4386605651092e61f5863c78a9a8b9a4e50ac98837c",
-    "monsoon.webp": "a6e3157a0f2146aabc980c1101216967d051d1cefa3860b3da7853472a2a44e6",
-    "whiteout.webp": "6dc541f3be7ccd2701218017022c64d7f444e03cc06467a3802af53b1ab9bda9",
-    "solar-array.webp": "ccdd2cead5b72ee4c47a0dc8a55744ffacad4b6dae9738ca15616501b233eae7",
-    "faultline.webp": "6d660a244fe5d37ec9dfd9b710b0ad6864045a11692dfc0a7bb339fe99680478",
-    "cinderline.webp": "6a9859091914415cf0a4acb4ab9be79df3578e09c37d9afa75094aa1a004bc88",
-    "noctilucent.webp": "d18741bd66f87288d44bbab9268281a2276b22c209b96cb44a21e9c5e2feec5b",
-    "vesper-circuit.webp": "0fce3d19f276e38243b9d6bc2b05daf23b2a728b5d58a4eea37698d0d1e888a1"
+    "cinderline.webp": "d06cef37d1d986bbd5613a79eddb42c0d4688027671ea1daa668e55c8a07dcd6",
+    "faultline.webp": "43af70e86691e3759ce17ad98f4f0c37f88531e04b5bb5d9507636905754ada0",
+    "monsoon.webp": "be1596ce0ec12e1c140528022b109442bed02cdf0376f72774deb0069ac7ceda",
+    "noctilucent.webp": "5d789e7c5509e28dc51d6303fceb976af2acda3e4868aff60e05681ceb4cd77b",
+    "palm-breaker.webp": "d50618d0abcd74720539515fa37ddd697414738d0e2812d972d348cad226542b",
+    "solar-array.webp": "467e61830c006620ec304e8527c59a3bfcf5533de8ec6dafc7aad7037d584da4",
+    "vesper-circuit.webp": "d5bec36a1ee9303bd58791f745c21f206986739c3637c9359283affa1f946bc7",
+    "whiteout.webp": "59cef61086bf9469edb87a4978def03a3290307833bd82ba571d953f51b0843a"
   }
 }
