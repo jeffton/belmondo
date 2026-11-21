@@ -26,16 +26,23 @@ try {
     const threePath = source.match(
       /from\s+["']([^"']*\/three\.js[^"']*)["']/,
     )[1];
-    const [{ World }, { Race, CRAFT }, { makeTrack }, { playerPilot }, THREE] =
-      await Promise.all([
-        import("/src/world.ts"),
-        import("/src/race.ts"),
-        import("/src/track.ts"),
-        import("/tests/helpers/player-pilot.js"),
-        import(threePath),
-      ]);
+    const [
+      { World },
+      { Race, CRAFT },
+      { makeTrack },
+      { roadFrame, roadPoint },
+      { playerPilot },
+      THREE,
+    ] = await Promise.all([
+      import("/src/world.ts"),
+      import("/src/race.ts"),
+      import("/src/track.ts"),
+      import("/src/road-surface.ts"),
+      import("/tests/helpers/player-pilot.js"),
+      import(threePath),
+    ]);
     const world = new World(document.querySelector("canvas"));
-    let track, race, fork, paintUniform;
+    let track, race, fork, paintOpacity;
     function pixels() {
       const gl = world.renderer.getContext();
       const bytes = new Uint8Array(
@@ -77,7 +84,7 @@ try {
         fork = track.config.split[0] * track.length;
         while (track.bounds(fork, -1).connected) fork += 0.5;
         world.build(track);
-        paintUniform = undefined;
+        paintOpacity = undefined;
         const road = world.scene.children.find((child) =>
           child.geometry?.hasAttribute("forkCueDistance"),
         );
@@ -87,7 +94,7 @@ try {
           road.material.customProgramCacheKey = () => key;
           road.material.onBeforeCompile = (shader, renderer) => {
             compile(shader, renderer);
-            paintUniform = shader.uniforms.forkCueWindow;
+            paintOpacity = shader.uniforms.forkCueOpacity;
           };
         }
         race = new Race(track, 1, "trial", 1, world.environment.terrain);
@@ -107,7 +114,12 @@ try {
         const { player } = race;
         world.setView("chase");
         race.countdown = 0;
-        place(player, fork + offset, branch, 155, lateral);
+        const station = fork + offset;
+        if (branch) {
+          const { innerSide, clipMin, clipMax } = track.bounds(station, branch);
+          lateral = (innerSide < 0 ? clipMin : clipMax) * 0.7;
+        }
+        place(player, station, branch, 155, lateral);
         world.camera.fov = 68 + player.speed * 0.085;
         world.camera.updateProjectionMatrix();
         world.draw(race, 1 / 60);
@@ -116,17 +128,39 @@ try {
           calls: world.renderer.info.render.calls,
         };
       },
-      visiblePaint() {
+      visiblePaint(branch = 0) {
         world.renderer.render(world.scene, world.camera);
-        const original = paintUniform.value;
+        const original = paintOpacity.value;
         const enabled = pixels();
-        paintUniform.value = new THREE.Vector3(-2, -1, 0);
+        paintOpacity.value = 0;
         world.renderer.render(world.scene, world.camera);
         const disabled = pixels();
-        paintUniform.value = original;
-        return enabled.some(
-          (channel, i) => Math.abs(channel - disabled[i]) > 2,
-        );
+        paintOpacity.value = original;
+        const changed = (channel, index) =>
+          Math.abs(channel - disabled[index]) > 2;
+        if (!branch) return enabled.some(changed);
+
+        // Both routes can be in frame. Project only the selected route's
+        // near-side asphalt, not the paint on the other side of the rail.
+        const { drawingBufferWidth: width, drawingBufferHeight: height } =
+          world.renderer.getContext();
+        for (let metres = 20; metres <= 54; metres += 2) {
+          const frame = roadFrame(track, fork + metres, branch);
+          const side = frame.innerSide;
+          const edge = side < 0 ? frame.clipMin : frame.clipMax;
+          for (const inset of [0.7, 1.1, 1.6, 2.1]) {
+            const pixel = roadPoint(frame, edge - side * inset, 0).project(
+              world.camera,
+            );
+            const x = Math.floor((pixel.x + 1) * width * 0.5);
+            const y = Math.floor((pixel.y + 1) * height * 0.5);
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+            const i = (y * width + x) * 4;
+            if (enabled.subarray(i, i + 3).some((v, c) => changed(v, i + c)))
+              return true;
+          }
+        }
+        return false;
       },
       drive(quality, branch) {
         world.quality = quality;
@@ -147,7 +181,7 @@ try {
         let contact = false,
           rescue = false;
         let mark = -190;
-        for (let step = 0; step < 840 && player.contactS < fork + 54; step++) {
+        for (let step = 0; step < 840 && player.contactS < fork + 86; step++) {
           trial.update(1 / 120, playerPilot(track, player, branch, 1));
           contact ||= player.wallTouched;
           rescue ||= player.recoveredThisStep;
@@ -188,8 +222,10 @@ try {
         ["approach", -125, 0, 0],
         ["decision", -55, 0, 0],
         ["nose", -23, 0, -7],
-        ["negative", 24, -1, 0],
-        ["positive", 24, 1, 0],
+        ["negative", 15, -1, 0],
+        ["positive", 15, 1, 0],
+        ["past-negative", 110, -1, 0],
+        ["past-positive", 110, 1, 0],
       ]) {
         const sample = await page.evaluate(
           (args) => window.fixture.render(...args),
@@ -202,12 +238,16 @@ try {
             path: `${process.env.FORK_CAPTURES}/${index}-${quality}-${view}.png`,
           });
         if (
-          (view === "decision" || (index === 0 && view === "point")) &&
-          !process.env.FORK_BASELINE
+          !process.env.FORK_BASELINE &&
+          (view === "decision" || (index === 0 && view === "point") || branch)
         )
-          assert.ok(
-            await page.evaluate(() => window.fixture.visiblePaint()),
-            `${course.name}: visible ${quality} paint`,
+          assert.equal(
+            await page.evaluate(
+              (branch) => window.fixture.visiblePaint(branch),
+              view.startsWith("past-") ? 0 : branch,
+            ),
+            !view.startsWith("past-"),
+            `${course.name}: ${quality} paint at ${view}`,
           );
       }
     }
@@ -232,7 +272,7 @@ try {
             { contact: false, rescue: false, branch },
             course.name,
           );
-          assert.ok(result.advance >= 54, course.name);
+          assert.ok(result.advance >= 86, course.name);
         }
       }
     }

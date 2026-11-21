@@ -8,7 +8,7 @@
 
 Earthwork cells are constrained against every active deck's actual banked plane, including both split routes. Each affected mesh corner follows the deck normal rather than a flat centreline ceiling. Waterfront basement reservations protect existing shop and ferry-terminal floors. Bridge piers occur where the course crosses water or separated elevated routes; the jump corridor has no piers. Upper-bridge sections do not raise earth through the lower road. `supportClearAt(u, branch)` rejects any pier/outrigger envelope crossing a lower deck. Terrain extent follows actual route bounds while retaining 23-metre cells; road and scenery sampling use physical distances. Finish architecture consumes the terrain surface without modifying it.
 
-The racing surface is a worn industrial induction guideway: broad streaked plates, recessed service shoulders and cast impact blocks outside the physical wall. Longitudinal highway stripes and car-racing curbs are absent. Directional chevrons are reserved for functional boost pads. At a fork, a single red asphalt wedge follows the road centre into the divider.
+The racing surface is a worn industrial induction guideway: broad streaked plates, recessed service shoulders and cast impact blocks outside the physical wall. Longitudinal highway stripes and car-racing curbs are absent. Directional chevrons are reserved for functional boost pads. At a fork, a red asphalt wedge widens into the divider and tapers along each inner edge.
 
 The OpenAI-image reference in [art/terrain-geography-reference.png](art/terrain-geography-reference.png) guides landform and foundation design; it is not a gameplay screenshot. Generated with `gpt-image-2.5-flare` on 11 November 2026.
 

@@ -15,7 +15,12 @@ export function forkCueLayout(track: Track, stations: readonly number[]) {
         u < end &&
         !roadFrame(track, stations[i + 1] * track.length, -1).connected,
     )! * track.length;
-  return { tip, approach: offsetAlongDeck(track, tip, -190), halfWidth: 4.2 };
+  return {
+    approach: offsetAlongDeck(track, tip, -190),
+    tip,
+    runout: tip + 62,
+    halfWidth: 4.9,
+  };
 }
 
 /** Signed distance from the real join, or from each carriageway's inner edge. */
@@ -33,15 +38,20 @@ export function forkCueDistance(frame: RoadSurfaceFrame, point: THREE.Vector3) {
 /** One tapered wedge, composited into the banked road’s own draw. */
 export function applyForkCues(
   material: THREE.Material,
-  { approach, tip, halfWidth }: NonNullable<ReturnType<typeof forkCueLayout>>,
+  {
+    approach,
+    tip,
+    runout,
+    halfWidth,
+  }: NonNullable<ReturnType<typeof forkCueLayout>>,
 ) {
   const previous = material.onBeforeCompile.bind(material);
   const cacheKey = material.customProgramCacheKey();
-  material.customProgramCacheKey = () => `${cacheKey}:split-red-wedge`;
+  material.customProgramCacheKey = () => `${cacheKey}:split-red-wedge-runout`;
   material.onBeforeCompile = (shader, renderer) => {
     previous(shader, renderer);
     shader.uniforms.forkCueWindow = {
-      value: new THREE.Vector3(approach, tip, halfWidth),
+      value: new THREE.Vector4(approach, tip, runout, halfWidth),
     };
     shader.uniforms.forkCuePaint = {
       value: new THREE.Color(RED_ASPHALT.color),
@@ -56,23 +66,25 @@ export function applyForkCues(
     );
     shader.fragmentShader = `
       varying vec2 vForkCue;
-      uniform vec3 forkCueWindow;
+      uniform vec4 forkCueWindow;
       uniform vec3 forkCuePaint;
       uniform float forkCueOpacity;
       ${shader.fragmentShader}`.replace(
       "#include <color_fragment>",
       `
         // Integrate across both sloped edges for the LOWRES pixel grid.
-        vec2 footprint = max(fwidth(vForkCue), vec2(0.00001));
-        if (vForkCue.y + footprint.y * 0.5 >= forkCueWindow.x &&
-            vForkCue.y - footprint.y * 0.5 <= forkCueWindow.y) {
-          float slope = forkCueWindow.z / (forkCueWindow.y - forkCueWindow.x);
-          float width = max((vForkCue.y - forkCueWindow.x) * slope, 0.0);
-          float across = footprint.x + slope * footprint.y;
-          float sides = clamp((width - vForkCue.x) / across + 0.5, 0.0, 1.0)
-                      - clamp((-width - vForkCue.x) / across + 0.5, 0.0, 1.0);
-          float end = clamp((forkCueWindow.y - vForkCue.y) / footprint.y + 0.5, 0.0, 1.0);
-          diffuseColor.rgb = mix(diffuseColor.rgb, forkCuePaint, sides * end * forkCueOpacity);
+        float approachSlope = forkCueWindow.w / (forkCueWindow.y - forkCueWindow.x);
+        float runoutSlope = forkCueWindow.w / (forkCueWindow.z - forkCueWindow.y);
+        // Beyond the seam, zero lateral distance follows each route's inner edge.
+        // The pigment stays constant while the painted area narrows to a point.
+        float width = min((vForkCue.y - forkCueWindow.x) * approachSlope,
+                          (forkCueWindow.z - vForkCue.y) * runoutSlope);
+        vec2 footprint = max(fwidth(vec2(vForkCue.x, width)), vec2(0.00001));
+        if (width > 0.0) {
+          float across = footprint.x + footprint.y;
+          float ink = clamp((width - vForkCue.x) / across + 0.5, 0.0, 1.0)
+                    - clamp((-width - vForkCue.x) / across + 0.5, 0.0, 1.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, forkCuePaint, ink * forkCueOpacity);
         }
         #include <color_fragment>
       `,

@@ -20,7 +20,7 @@ AI branch preference remains racer-ID parity. Body integration, AI controls, shi
 
 ## Approach cues
 
-A single tapered wedge of red asphalt widens along the road centre and ends at the physical divider. It uses the same pigment as the jump zones and follows the banked road surface.
+A single tapered wedge of red asphalt widens along the road centre into the physical divider, then tapers to nothing along each inside edge. It uses the same pigment as the jump zones and follows the banked road surface.
 
 ## Verification
 
