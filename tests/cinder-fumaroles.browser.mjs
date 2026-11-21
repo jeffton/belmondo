@@ -108,7 +108,7 @@ try {
       clip: { x: 310, y: 36, width: 90, height: 110 },
     },
   ];
-  for (const quality of ["retro", "high"]) {
+  for (const quality of ["retro", "clean"]) {
     for (const { u, name, clip } of views) {
       for (const demo of [false, true]) {
         const key = `${quality}-${name}-${demo ? "flyover" : "chase"}`;
