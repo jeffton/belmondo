@@ -19,6 +19,7 @@ interface SurfaceQuad {
   kind?: string;
   uv?: number[][];
   indices?: number[];
+  forkDistance?: number[];
 }
 interface SparkParticle {
   life: number;
@@ -53,6 +54,7 @@ import { buildTrackPads } from "./track-pads.ts";
 import { tunnelSegment } from "./tunnel-architecture.ts";
 import { applyJumpMarkings } from "./jump-markings.ts";
 import { createRoadFinish } from "./road-finish.ts";
+import { applyForkCues, forkCueDistance, forkCueLayout } from "./fork-cues.ts";
 import { createOceanGeometry } from "./water-surfaces.ts";
 import {
   roadFrame,
@@ -82,7 +84,7 @@ import { buildCity } from "./city.ts";
 import { buildNightHarbor } from "./night-harbor.ts";
 import { buildCinderWorks } from "./cinder-works.ts";
 import { buildVegetation } from "./vegetation.ts";
-import { buildSplitMarkers, buildTrackAdvertising } from "./advertising.ts";
+import { buildTrackAdvertising } from "./advertising.ts";
 import {
   createCraft,
   collectCraftResources,
@@ -115,7 +117,8 @@ function quadGeometry(
 ) {
   const vertices = [],
     c = [],
-    uv: number[] = [];
+    uv: number[] = [],
+    forkDistance: number[] = [];
   for (const q of quads) {
     const cornerColors = q.p.map(
       (point) => new THREE.Color(lighting.shade(point, q.color)),
@@ -124,6 +127,7 @@ function quadGeometry(
       const color = cornerColors[i];
       vertices.push(...q.p[i].toArray());
       c.push(color.r, color.g, color.b);
+      if (q.forkDistance) forkDistance.push(q.forkDistance[i]);
       uv.push(
         ...(q.uv || [
           [0, 0],
@@ -138,6 +142,11 @@ function quadGeometry(
   g.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
   g.setAttribute("color", new THREE.Float32BufferAttribute(c, 3));
   g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  if (forkDistance.length)
+    g.setAttribute(
+      "forkCueDistance",
+      new THREE.Float32BufferAttribute(forkDistance, 1),
+    );
   g.computeVertexNormals();
   return g;
 }
@@ -326,6 +335,8 @@ export class World {
     buildRacingInfrastructure(this.scene, track, textures, environment);
     yield;
     const quads: SurfaceQuad[] = [];
+    const stations = roadStations(track);
+    const forkCue = forkCueLayout(track, stations);
     const addStrip = (
       a: RoadFrame,
       b: RoadFrame,
@@ -364,24 +375,30 @@ export class World {
           strip === 0
             ? leftB
             : THREE.MathUtils.lerp(leftB, rightB, strip / divisions);
+        const stripGeometry = roadStrip(
+          track,
+          a,
+          b,
+          [x0, x1, x2, x3],
+          y,
+          [strip / divisions, (strip + 1) / divisions],
+          (kind === "road" || kind === "concrete") &&
+            left === -a.width &&
+            right === a.width,
+        );
         quads.push({
-          ...roadStrip(
-            track,
-            a,
-            b,
-            [x0, x1, x2, x3],
-            y,
-            [strip / divisions, (strip + 1) / divisions],
-            (kind === "road" || kind === "concrete") &&
-              left === -a.width &&
-              right === a.width,
-          ),
+          ...stripGeometry,
           color,
           kind,
+          forkDistance:
+            forkCue && kind === "road"
+              ? stripGeometry.p.map((point, i) =>
+                  forkCueDistance(stripGeometry.ends[i] ? b : a, point),
+                )
+              : undefined,
         });
       }
     };
-    const stations = roadStations(track);
     for (let i = 0; i < stations.length - 1; i++) {
       const u = stations[i];
       const split = u >= cfg.split[0] && u < cfg.split[1];
@@ -429,6 +446,14 @@ export class World {
           const lowerA = roadPoint(a, edgeA, -2);
           const lowerB = roadPoint(b, edgeB, -2);
           const nose = split && side === a.innerSide && u < cfg.split[0] + 0.07;
+          const tipPaint =
+            forkCue &&
+            side === a.innerSide &&
+            split &&
+            u * track.length >= forkCue.tip &&
+            u * track.length < forkCue.tip + 38
+              ? 0xffca80
+              : 0xffffff;
           quads.push({
             p: [lowerA, lowerB, roadPoint(b, edgeB, 0), roadPoint(a, edgeA, 0)],
             color: 0xbac0b0,
@@ -506,7 +531,7 @@ export class World {
           // there is no added banner, curb or luminous strip.
           face(0, 0.38, 0xffffff, 0, "rail");
           face(0.38, H - 0.25, 0xffffff, 0, "rail");
-          face(H - 0.25, H, 0xffffff, 0, "rail");
+          face(H - 0.25, H, tipPaint, 0, "rail");
           face(0, H, 0x737e84, back);
           quads.push({
             p: [
@@ -515,7 +540,7 @@ export class World {
               wallPoint(b, edgeB, H, backB),
               wallPoint(a, edgeA, H, backA),
             ],
-            color: 0xffffff,
+            color: tipPaint,
             kind: "rail",
             uv: [
               railFaceUV(a.u, railHeight(a, side), track.length),
@@ -597,7 +622,10 @@ export class World {
                 side: THREE.DoubleSide,
                 flatShading: true,
               });
-      if (kind === "road") applyJumpMarkings(material, track);
+      if (kind === "road") {
+        applyJumpMarkings(material, track);
+        if (forkCue) applyForkCues(material, forkCue);
+      }
       const chunks = new Map<string, SurfaceQuad[]>();
       for (const q of quads.filter((q) => q.kind === kind)) {
         const key = `${Math.floor(q.p[0].x / roadChunkSize)}:${Math.floor(q.p[0].z / roadChunkSize)}`;
@@ -766,7 +794,6 @@ export class World {
       environment,
     );
     yield;
-    buildSplitMarkers(this.scene, track, environment.terrain);
     buildTrackAdvertising(this.scene, track, environment);
     yield;
     buildVegetation(this.scene, track, environment);

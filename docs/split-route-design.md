@@ -18,6 +18,10 @@ Routes share a base station and 32 ordered physical timing gates. There is one s
 
 AI branch preference remains racer-ID parity. Body integration, AI controls, ship contacts, jump physics, recovery and progression are unchanged. Layout IDs and on-device records remain intact. Historical Whiteout/Coast/Cinderline times were set on different fork geometry and are not directly comparable with fresh laps.
 
+## Approach cues
+
+Two pairs of warm, outward-swept inlays announce a fork. A short painted median connects to the actual inner rail nose, which carries an amber cap. The cues are road pigment and rail tint, not signs, obstacles or additional light sources.
+
 ## Verification
 
 `tests/creative-split-racing.test.js` checks 54 pickup-free grid-start traversals across Whiteout, Coast and Cinderline: all three craft, classes and branches. It checks legal route choice, sequential physical gates, merge completion, contacts, recoveries and stalls. The explicit 4% sector-time tolerance is a design-regression target, not a gameplay speed limit or a claim about optimal human laps.
@@ -30,5 +34,7 @@ INDUCTION stock-driver sector seconds, lower/inner versus upper/outer for Coast 
 | Cinderline   |   7.928 / 8.014 |   7.430 / 7.369 |   9.411 / 9.705 |
 
 `tests/fork-diagnostics.mjs` writes reproducible road-only measurements; `tests/fork-pack-diagnostics.mjs` measures natural grid traffic. `tests/coast-player-input.test.js` separately checks an ordinary-input pilot without assigning NPC identity or changing body state. Geometry/environment tests cover real route divergence, joined noses, full road-envelope clearance, roofs, terrain, equal rewards and independent projection. Accepted physical hashes protect the six circuits outside Coast.
+
+`FORK_CAPTURES=/path/to/captures node tests/fork-cues.browser.mjs` renders all eight forks in desktop LOWRES and high-resolution portrait. Its feedback pilot drives both routes through each entrance at speed and checks for wall touches and rescues.
 
 Before/after renderer captures use actual production physics from a labelled stationary pre-fork fixture. They cover desktop and portrait approaches, decisions, both branches and merges; captured gates are checked against the actual finish station. Course-specific reports describe their measurements and evidence limits. Headless SwiftShader is not a physical-phone GPU benchmark, and stock-driver tests do not establish human-optimal times or complete armed-race balance.
