@@ -5,11 +5,12 @@ import { createServer } from "vite";
 const output = process.env.FUMAROLE_CAPTURES;
 if (output) await mkdir(output, { recursive: true });
 const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
-await server.listen();
-const browser = await chromium.launch({
-  args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
-});
+let browser;
 try {
+  await server.listen();
+  browser = await chromium.launch({
+    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+  });
   const page = await browser.newPage({
     viewport: { width: 1000, height: 625 },
   });
@@ -153,6 +154,9 @@ try {
   });
   expect(errors).toEqual([]);
 } finally {
-  await browser.close();
-  await server.close();
+  try {
+    await browser?.close();
+  } finally {
+    await server.close();
+  }
 }
