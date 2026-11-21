@@ -174,6 +174,10 @@ try {
         window.nullVector.telemetry.menuStage === "track",
     );
     expect(await cues()).toEqual(["confirm"]);
+    const circuit = page.locator(`#tracks button:nth-child(${trackIndex + 1})`);
+    await expect(circuit).toHaveAttribute("aria-pressed", "true");
+    await expect(circuit).toHaveClass(/menu-cursor/);
+    await expect(circuit).toBeFocused();
   };
   const startFromTrack = async () => {
     await tap("#setup-next");

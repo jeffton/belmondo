@@ -759,6 +759,7 @@ function returnToPaddock() {
   quit();
   refreshTrackProgression();
   setMenuStage("track");
+  menuNavigator.focusCursor();
 }
 $("start").onclick = start;
 $("again").onclick = start;

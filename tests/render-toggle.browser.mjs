@@ -73,7 +73,8 @@ try {
     await expect(toggle).toBeChecked();
     await rendered(true);
     await goToSetupStage(page, "track");
-    await page.locator("#tracks button").nth(1).click();
+    const circuit = page.getByRole("button", { name: "MONSOON", exact: true });
+    await circuit.click();
     await expect(toggle).toBeChecked();
     await rendered(true);
     await page.screenshot({
@@ -139,10 +140,14 @@ try {
     );
     await page.keyboard.press("Escape");
     await expect(pauseDialog).toBeVisible();
-    await page.locator("#quit").click();
+    if (mobile) await page.locator("#quit").tap();
+    else await page.locator("#quit").click();
     await expect(pauseDialog).not.toBeVisible();
-    await expect(page.locator("#start")).toBeFocused();
     await ready();
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "track");
+    await expect(page.locator("#start")).toBeHidden();
+    await expect(circuit).toHaveAttribute("aria-pressed", "true");
+    await expect(circuit).toBeFocused();
     if (mobile) await toggle.tap();
     else await toggle.uncheck();
     await expect(toggle).not.toBeChecked();
