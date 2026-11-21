@@ -58,8 +58,10 @@ export function buildNewCourseDistricts(
   scene.add(root);
   if (recipe.biome === "hydraulic")
     buildHydraulicLock(root, track, textures, environment);
-  if (recipe.biome === "volcanic")
-    buildCinderVolcanoes(root, track, environment);
+  const updateFumaroles =
+    recipe.biome === "volcanic"
+      ? buildCinderVolcanoes(root, track, environment)
+      : undefined;
   if (track.config.name === "WHITEOUT") {
     buildWhiteoutFork(root, track, environment);
     buildWhiteoutObservatory(root, track, textures, environment);
@@ -493,5 +495,9 @@ export function buildNewCourseDistricts(
   root.userData.footprints = footprints;
   root.userData.parts = parts;
   root.userData.sceneryInstances = parts.length;
-  return { update() {} };
+  return {
+    update(time: number) {
+      updateFumaroles?.(time);
+    },
+  };
 }

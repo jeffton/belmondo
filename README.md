@@ -89,6 +89,8 @@ Palm Breaker imagines a future Florida through an 80s lens. Rounded coral brows 
 
 OpenAI Image design boards are in `public/art/`; **Design study** opens the Japanese waterfront reference. Layered shopfronts, warm glazing, balconies, neon signage, ceramic/glass towers and moving sky-transit shape the actual city. White Y-supports with vermilion trusses, cyan glass rails and precise inlaid road graphics frame the circuit. Coastal, desert and harbor terrain provide grounded foundations and distant landmarks. No WipEout assets, marks, music or circuit layouts are included. Fonts are self-hosted under their included OFL licenses.
 
+Run `node tests/cinder-fumaroles.browser.mjs` to verify animated ash at CINDERLINE's three volcanoes in both graphics modes, from the chase camera and menu flyover. Set `FUMAROLE_CAPTURES` to save the animation frames.
+
 ## Deployment
 
 `bash scripts/build-app-icons.sh` regenerates all raster app icons from `public/icon.svg` with `rsvg-convert`.

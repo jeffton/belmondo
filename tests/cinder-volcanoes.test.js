@@ -9,7 +9,9 @@ test("volcano triangles stay outside both racing branches and root in the actual
   const track = makeTrack(TRACK_INDEX.CINDERLINE);
   const terrain = createTerrain(track);
   const root = new THREE.Group();
-  buildCinderVolcanoes(root, track, { heightAt: terrain.heightAt });
+  const update = buildCinderVolcanoes(root, track, {
+    heightAt: terrain.heightAt,
+  });
   try {
     const samples = [];
     for (let s = 0; s < track.length; s += 4)
@@ -48,10 +50,26 @@ test("volcano triangles stay outside both racing branches and root in the actual
           "whole mountain clears road and flight corridor",
         );
     }
-    assert(
-      root.children.every((mesh) => !mesh.material.transparent),
-      "no transparent overdraw passes",
+    const smoke = root.getObjectByName("cinder-volcano-fumaroles");
+    assert.deepEqual(
+      root.children.filter((mesh) => mesh.material.transparent),
+      [smoke],
+      "only the batched ash uses blending",
     );
+    assert.equal(smoke.material.depthWrite, false);
+    assert.equal(smoke.material.depthTest, true);
+    assert.equal(smoke.geometry.attributes.position.count, 18);
+    const { vent } = smoke.geometry.attributes;
+    for (const [index, volcano] of root.userData.volcanoes.entries()) {
+      const v = new THREE.Vector3().fromBufferAttribute(vent, index * 6);
+      assert(
+        Math.hypot(v.x - volcano.center.x, v.z - volcano.center.z) < 0.001,
+      );
+      assert(v.y < Math.min(...volcano.rings[4].map((p) => p.y)));
+      assert(v.y > volcano.center.y + volcano.height * 0.68);
+    }
+    update(8.5);
+    assert.equal(smoke.material.uniforms.time.value, 8.5);
     assert.equal(
       root.children.length,
       3,

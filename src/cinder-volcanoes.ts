@@ -1,6 +1,7 @@
-import type { Track, TrackFrame } from "./track.ts";
+import type { Track } from "./track.ts";
 import type { EnvironmentSurface } from "./environment.ts";
 import * as THREE from "three";
+import { buildCinderFumaroles } from "./cinder-fumaroles.ts";
 
 // Three grounded landmarks: the opening approach, the ballistic caldera and
 // the split's southern rim. Nothing crosses the road or changes its physics.
@@ -42,9 +43,8 @@ export function buildCinderVolcanoes(
   const stone: number[] = [],
     stoneColors: number[] = [],
     lava: number[] = [],
-    lavaColors: number[] = [],
-    smoke: number[] = [],
-    smokeColors: number[] = [];
+    lavaColors: number[] = [];
+  const vents = [];
   const landmarks = [];
   // Preserve distant silhouettes in an ash-haze palette, beyond the short
   // road fog range, without another lighting or rendering pass.
@@ -156,41 +156,11 @@ export function buildCinderVolcanoes(
         triangle(lava, lavaColors, c, b, d, color);
       }
     }
-    // A quiet, wind-shaped fumarole makes the crater readable from low road
-    // angles. One opaque faceted mesh, never a particle storm or racing hazard.
-    const plume = Array.from({ length: 5 }, (_, ring) =>
-      Array.from({ length: 12 }, (_, i) => {
-        const angle = (i / 12) * Math.PI * 2;
-        const radius = [8, 15, 22, 27, 2][ring];
-        return new THREE.Vector3(
-          center.x + ring * 12 + Math.cos(angle) * radius,
-          base + v.height * 0.73 + ring * 33 + Math.sin(angle * 3) * 7,
-          center.z + ring * 4 + Math.sin(angle) * radius,
-        );
-      }),
-    );
-    for (let ring = 0; ring < 4; ring++) {
-      const color = new THREE.Color(0x73646a).lerp(haze, 0.35 + ring * 0.16);
-      for (let i = 0; i < 12; i++) {
-        const next = (i + 1) % 12;
-        triangle(
-          smoke,
-          smokeColors,
-          plume[ring][i],
-          plume[ring + 1][i],
-          plume[ring][next],
-          color,
-        );
-        triangle(
-          smoke,
-          smokeColors,
-          plume[ring][next],
-          plume[ring + 1][i],
-          plume[ring + 1][next],
-          color,
-        );
-      }
-    }
+    vents.push({
+      origin: center.clone().setY(base + v.height * 0.76),
+      height: v.height * 0.74,
+      phase: v.phase,
+    });
     landmarks.push({ ...v, center, rings });
   }
   function mesh(
@@ -231,15 +201,6 @@ export function buildCinderVolcanoes(
       fog: false,
     }),
   );
-  mesh(
-    "cinder-volcano-fumaroles",
-    smoke,
-    smokeColors,
-    new THREE.MeshLambertMaterial({
-      vertexColors: true,
-      flatShading: true,
-      fog: false,
-    }),
-  );
   root.userData.volcanoes = landmarks;
+  return buildCinderFumaroles(root, vents, haze);
 }
