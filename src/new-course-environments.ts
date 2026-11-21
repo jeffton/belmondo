@@ -58,9 +58,10 @@ export function buildNewCourseDistricts(
   scene.add(root);
   if (recipe.biome === "hydraulic")
     buildHydraulicLock(root, track, textures, environment);
+  // Blended ash is a scene effect, not part of the opaque district geometry.
   const updateFumaroles =
     recipe.biome === "volcanic"
-      ? buildCinderVolcanoes(root, track, environment)
+      ? buildCinderVolcanoes(root, track, environment, scene)
       : undefined;
   if (track.config.name === "WHITEOUT") {
     buildWhiteoutFork(root, track, environment);

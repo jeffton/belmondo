@@ -9,9 +9,12 @@ test("volcano triangles stay outside both racing branches and root in the actual
   const track = makeTrack(TRACK_INDEX.CINDERLINE);
   const terrain = createTerrain(track);
   const root = new THREE.Group();
-  const update = buildCinderVolcanoes(root, track, {
-    heightAt: terrain.heightAt,
-  });
+  const update = buildCinderVolcanoes(
+    root,
+    track,
+    { heightAt: terrain.heightAt },
+    root,
+  );
   try {
     const samples = [];
     for (let s = 0; s < track.length; s += 4)

@@ -39,6 +39,7 @@ export function buildCinderVolcanoes(
   root: THREE.Object3D,
   track: Track,
   environment: EnvironmentSurface,
+  atmosphere: THREE.Object3D,
 ) {
   const stone: number[] = [],
     stoneColors: number[] = [],
@@ -202,5 +203,5 @@ export function buildCinderVolcanoes(
     }),
   );
   root.userData.volcanoes = landmarks;
-  return buildCinderFumaroles(root, vents, haze);
+  return buildCinderFumaroles(atmosphere, vents, haze);
 }
