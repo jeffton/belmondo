@@ -29,7 +29,9 @@ def main():
         atlas.save(path, quality=92, method=6)
         outputs[path.name] = sha256(path.read_bytes()).hexdigest()
     manifest = {"source": "scripts/build-course-billboards.py", "outputs": outputs}
-    (OUT / "provenance.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (ROOT / "src/course-billboard-provenance.json").write_text(
+        json.dumps(manifest, indent=2) + "\n"
+    )
 
 
 if __name__ == "__main__":

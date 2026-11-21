@@ -1,3 +1,5 @@
+import billboardProvenance from "./course-billboard-provenance.json" with { type: "json" };
+
 const COURSE_RAILS: Record<string, number[]> = {
   "PALM BREAKER": [0xffb78c, 0xc9f453, 0xf0d390],
   MONSOON: [0x539e8f, 0xb6c385, 0xb5cae2],
@@ -10,8 +12,10 @@ const COURSE_RAILS: Record<string, number[]> = {
 };
 
 export function courseAdvertisingArt(name: string) {
+  const file =
+    `${name.toLowerCase().replaceAll(" ", "-")}.webp` as keyof typeof billboardProvenance.outputs;
   return {
-    url: `/art/course-billboards/${name.toLowerCase().replaceAll(" ", "-")}.webp`,
+    url: `/art/course-billboards/${file}?v=${billboardProvenance.outputs[file]}`,
     width: 512,
     height: 633,
     columns: 1,

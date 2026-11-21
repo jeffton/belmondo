@@ -22,15 +22,19 @@ function assertWebp(path, hash, size) {
 
 test("each course ships a unique local atlas with fewer texels than the former shared atlas", () => {
   const { outputs } = JSON.parse(
-    readFileSync(new URL("course-billboards/provenance.json", artPath)),
+    readFileSync(
+      new URL("../src/course-billboard-provenance.json", import.meta.url),
+    ),
   );
   const courses = TRACKS.map(({ name }) => courseAdvertisingArt(name));
-  const files = courses.map(({ url }) => url.split("/").at(-1));
+  const urls = courses.map(({ url }) => new URL(url, "https://example.test"));
+  const files = urls.map(({ pathname }) => pathname.split("/").at(-1));
   assert.deepEqual(files.toSorted(), Object.keys(outputs).toSorted());
   assert.equal(new Set(Object.values(outputs)).size, courses.length);
   courses.forEach(({ width, height, columns, rows, rails }, index) => {
     const name = files[index];
     assertWebp(`course-billboards/${name}`, outputs[name], [width, height]);
+    assert.equal(urls[index].searchParams.get("v"), outputs[name]);
     assert.equal(rails.length, columns * rows);
     assert(width * height < 1024 * 844);
   });
