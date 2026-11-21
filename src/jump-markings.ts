@@ -1,6 +1,8 @@
 import type { Track } from "./track.ts";
 import * as THREE from "three";
 
+export const RED_ASPHALT = { color: 0xe84228, opacity: 0.6 } as const;
+
 /** Walk real deck metres, including ramp slope, without crossing the missing deck. */
 export function offsetAlongDeck(track: Track, station: number, metres: number) {
   let remaining = Math.abs(metres);
@@ -56,8 +58,8 @@ export function getJumpMarkingLayout(track: Track) {
   }
   // Full-width red asphalt meets each physical gap edge. These short road
   // sections share one pigment, without thresholds, shoulder trim or symbols.
-  patch("approach", launch, -40, -1, 1, 80, 0xe84228);
-  patch("landing", landing, 22, -1, 1, 44, 0xe84228);
+  patch("approach", launch, -40, -1, 1, 80, RED_ASPHALT.color);
+  patch("landing", landing, 22, -1, 1, 44, RED_ASPHALT.color);
   return patches;
 }
 
@@ -87,7 +89,7 @@ export function applyJumpMarkings(material: THREE.Material, track: Track) {
     shader.uniforms.jumpRectangles = { value: rectangles };
     shader.uniforms.jumpColors = { value: colors };
     // Translucent pigment leaves the existing asphalt map visible underneath.
-    shader.uniforms.jumpPaintOpacity = { value: 0.6 };
+    shader.uniforms.jumpPaintOpacity = { value: RED_ASPHALT.opacity };
     shader.uniforms.jumpWindow = { value: window };
     shader.vertexShader =
       `varying vec2 vJumpDeck;\n${shader.vertexShader}`.replace(

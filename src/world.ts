@@ -446,14 +446,6 @@ export class World {
           const lowerA = roadPoint(a, edgeA, -2);
           const lowerB = roadPoint(b, edgeB, -2);
           const nose = split && side === a.innerSide && u < cfg.split[0] + 0.07;
-          const tipPaint =
-            forkCue &&
-            side === a.innerSide &&
-            split &&
-            u * track.length >= forkCue.tip &&
-            u * track.length < forkCue.tip + 38
-              ? 0xffca80
-              : 0xffffff;
           quads.push({
             p: [lowerA, lowerB, roadPoint(b, edgeB, 0), roadPoint(a, edgeA, 0)],
             color: 0xbac0b0,
@@ -531,7 +523,7 @@ export class World {
           // there is no added banner, curb or luminous strip.
           face(0, 0.38, 0xffffff, 0, "rail");
           face(0.38, H - 0.25, 0xffffff, 0, "rail");
-          face(H - 0.25, H, tipPaint, 0, "rail");
+          face(H - 0.25, H, 0xffffff, 0, "rail");
           face(0, H, 0x737e84, back);
           quads.push({
             p: [
@@ -540,7 +532,7 @@ export class World {
               wallPoint(b, edgeB, H, backB),
               wallPoint(a, edgeA, H, backA),
             ],
-            color: tipPaint,
+            color: 0xffffff,
             kind: "rail",
             uv: [
               railFaceUV(a.u, railHeight(a, side), track.length),

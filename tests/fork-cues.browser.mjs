@@ -120,7 +120,7 @@ try {
         world.renderer.render(world.scene, world.camera);
         const original = paintUniform.value;
         const enabled = pixels();
-        paintUniform.value = new THREE.Vector3(1, 0, -1);
+        paintUniform.value = new THREE.Vector3(-2, -1, 0);
         world.renderer.render(world.scene, world.camera);
         const disabled = pixels();
         paintUniform.value = original;
@@ -179,13 +179,15 @@ try {
     for (const quality of ["retro", "high"]) {
       await page.setViewportSize(
         quality === "retro"
-          ? { width: 960, height: 576 }
-          : { width: 430, height: 800 },
+          ? { width: 430, height: 800 }
+          : { width: 960, height: 576 },
       );
       for (const [view, offset, branch, lateral] of [
-        ["early", -210, 0, 0],
+        ["point", -220, 0, -7],
+        ["early", -145, 0, -7],
         ["approach", -125, 0, 0],
         ["decision", -55, 0, 0],
+        ["nose", -23, 0, -7],
         ["negative", 24, -1, 0],
         ["positive", 24, 1, 0],
       ]) {
@@ -193,13 +195,16 @@ try {
           (args) => window.fixture.render(...args),
           [quality, offset, branch, lateral],
         );
-        assert.equal(sample.pixels, quality === "retro" ? 528 : 430);
+        assert.equal(sample.pixels, quality === "retro" ? 237 : 960);
         assert.ok(sample.calls > 0);
         if (process.env.FORK_CAPTURES)
           await page.screenshot({
             path: `${process.env.FORK_CAPTURES}/${index}-${quality}-${view}.png`,
           });
-        if (view === "decision" && !process.env.FORK_BASELINE)
+        if (
+          (view === "decision" || (index === 0 && view === "point")) &&
+          !process.env.FORK_BASELINE
+        )
           assert.ok(
             await page.evaluate(() => window.fixture.visiblePaint()),
             `${course.name}: visible ${quality} paint`,

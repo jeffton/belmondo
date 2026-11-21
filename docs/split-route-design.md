@@ -20,7 +20,7 @@ AI branch preference remains racer-ID parity. Body integration, AI controls, shi
 
 ## Approach cues
 
-Two pairs of warm, outward-swept inlays announce a fork. A short painted median connects to the actual inner rail nose, which carries an amber cap. The cues are road pigment and rail tint, not signs, obstacles or additional light sources.
+A single tapered wedge of red asphalt widens along the road centre and ends at the physical divider. It uses the same pigment as the jump zones and follows the banked road surface.
 
 ## Verification
 
