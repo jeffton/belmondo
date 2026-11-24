@@ -474,7 +474,13 @@ async function hudFourDigits() {
       "</head>",
       (
         await Promise.all(
-          ["style", "console-menu", "race-hud"].map(
+          [
+            "app-base",
+            "app-viewport",
+            "app-responsive-panels",
+            "console-menu",
+            "race-hud",
+          ].map(
             async (sheet) =>
               `<style>${await readFile(new URL(`../src/${sheet}.css`, import.meta.url), "utf8")}</style>`,
           ),

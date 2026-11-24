@@ -83,11 +83,14 @@ test("touch stick and gamepad analog trajectories retain direct yaw-derived hull
 
 test("actual input routing distinguishes keyboard taps from touch/gamepad analog, including release", () => {
   const source = stripTypeScriptTypes(
-    readFileSync(new URL("../src/main.ts", import.meta.url), "utf8"),
+    readFileSync(
+      new URL("../src/app-flight-input.ts", import.meta.url),
+      "utf8",
+    ),
   );
   const inputFunction = source.slice(
     source.search(/function input\(\)\s*\{/),
-    source.indexOf("const mapCtx ="),
+    source.indexOf("function mountWeaponCommands("),
   );
   const connectedGamepadFunction = source.slice(
     source.search(/function connectedGamepad\(\)\s*\{/),
@@ -104,11 +107,11 @@ test("actual input routing distinguishes keyboard taps from touch/gamepad analog
     touchCoast: 0,
     steerPointer: null,
     touch: false,
-    state: "race",
+    isRacing: () => true,
     padAConsumed: false,
     padAxesConsumed: false,
-    race: { countdown: 0 },
-    paused: false,
+    getRace: () => ({ countdown: 0 }),
+    isPaused: () => false,
     padPause: false,
     padFire: false,
     padView: false,

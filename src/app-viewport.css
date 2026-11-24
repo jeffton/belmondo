@@ -1,0 +1,824 @@
+@media (min-height: 850px) and (min-width: 800px) {
+  .menu-body {
+    padding-top: 45px;
+    padding-bottom: 35px;
+  }
+  .tagline {
+    margin-bottom: 40px;
+  }
+  .selection-label {
+    margin-top: 26px;
+  }
+  .choice {
+    padding: 15px 10px;
+  }
+  .start {
+    margin-top: 26px;
+  }
+}
+@media (min-width: 701px) and (min-height: 551px) and (max-height: 740px) {
+  #menu .masthead {
+    padding: 12px 28px;
+  }
+  #menu .brand-symbol {
+    font-size: 29px;
+  }
+  #menu .lab-mascot {
+    font-size: 28px;
+  }
+  #menu .menu-body {
+    padding: 16px 28px;
+  }
+  #menu .eyebrow {
+    margin-bottom: 6px;
+  }
+  #menu h1.wordmark {
+    font-size: clamp(60px, 11vh, 76px);
+    margin: 14px 0 10px;
+  }
+  #menu .tagline {
+    font-size: 14px;
+    margin: 12px 0;
+  }
+  #menu .selection-label {
+    margin: 12px 0 6px;
+  }
+  #menu .choice {
+    padding: 8px;
+  }
+  #menu #speed-class {
+    margin-top: 12px;
+  }
+  #menu .mode-row {
+    margin-top: 12px;
+  }
+  #menu .start {
+    margin-top: 12px;
+    padding: 12px 16px;
+    font-size: 22px;
+  }
+  #menu .menu-links {
+    margin-top: 8px;
+  }
+  #menu .menu-links :is(button, a) {
+    padding: 7px 0;
+  }
+  #menu footer {
+    padding: 12px 28px;
+  }
+}
+@media (max-width: 700px) {
+  .masthead {
+    padding: 16px 20px;
+  }
+  .menu-body {
+    padding: 20px;
+    width: 460px;
+  }
+  .tagline {
+    margin-bottom: 20px;
+  }
+  .world-caption {
+    display: none;
+  }
+  footer {
+    padding: 15px 20px;
+    font-size: 7px;
+  }
+  #menu {
+    background: linear-gradient(90deg, #10202cf2, #10202cd9 70%, #10202c88);
+  }
+  .brief-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  dialog {
+    padding: 24px;
+  }
+  h2 {
+    font-size: 38px;
+  }
+  .mode-row {
+    gap: 6px;
+  }
+  .menu-links {
+    gap: 8px;
+  }
+  .menu-links :is(button, a) {
+    font-size: 10px;
+  }
+  .choice b {
+    font-size: 15px;
+  }
+  .crafts .choice {
+    gap: 6px;
+  }
+}
+@media (max-width: 480px) {
+  #tracks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 360px) {
+  #tracks {
+    grid-template-columns: 1fr;
+  }
+  #tracks .choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #tracks .choice small {
+    margin-top: 0;
+  }
+  .crafts .choice {
+    padding: 9px 6px;
+    gap: 5px;
+  }
+}
+@media (max-height: 550px) and (orientation: landscape) {
+  .masthead {
+    padding: 10px 25px;
+    font-size: 8px;
+  }
+  .brand-symbol {
+    font-size: 25px;
+  }
+  .lab-mascot {
+    font-size: 24px;
+  }
+  .menu-body {
+    width: 530px;
+    padding: 14px 25px;
+  }
+  .eyebrow {
+    font-size: 8px;
+    margin: 0;
+  }
+  h1.wordmark {
+    font-size: 72px;
+    margin: 12px 0 8px;
+    border-bottom-width: 3px;
+  }
+  .tagline {
+    font-size: 13px;
+    margin: 9px 0;
+  }
+  .selection-label {
+    margin: 10px 0 5px;
+    font-size: 8px;
+  }
+  .choice {
+    padding: 7px;
+  }
+  .choice b {
+    font-size: 15px;
+  }
+  .choice small {
+    font-size: 9px;
+    margin-top: 3px;
+  }
+  .mode-row {
+    margin-top: 9px;
+  }
+  .start {
+    padding: 9px 15px;
+    margin-top: 11px;
+    font-size: 22px;
+  }
+  .menu-links {
+    margin-top: 5px;
+  }
+  .menu-links :is(button, a) {
+    font-size: 10px;
+  }
+  footer {
+    padding: 8px 25px;
+    font-size: 7px;
+  }
+  .panel {
+    padding: 20px;
+    width: 380px;
+  }
+  .panel h2 {
+    font-size: 34px;
+    margin: 12px 0;
+    padding-bottom: 10px;
+  }
+  .panel .start {
+    font-size: 20px;
+    padding: 10px 14px;
+    margin-top: 10px;
+  }
+  .panel .line-button {
+    font-size: 14px;
+    padding: 9px 14px;
+    margin-top: 6px;
+  }
+  .panel .help-small {
+    margin-top: 14px;
+  }
+  .world-caption {
+    bottom: 45px;
+    right: 25px;
+  }
+  .world-caption strong {
+    font-size: 30px;
+  }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Chrome belongs to the root viewport, not the composited circuit veil. */
+#menu {
+  display: contents;
+  overflow: clip;
+  padding: 0;
+  --footer-pad: 0px;
+  --footer-height: calc(
+    28px + 2 * var(--footer-pad) + env(safe-area-inset-bottom) + 1px
+  );
+  background: linear-gradient(90deg, #10202cf0, #10202cd9 38%, #10202c14 72%);
+}
+#menu::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  bottom: auto;
+  height: var(--app-height);
+  z-index: 2;
+  background: inherit;
+  pointer-events: none;
+}
+#menu .menu-layout {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+#menu .masthead {
+  --masthead-top: 16px;
+  --masthead-side: 28px;
+  padding: 16px 28px;
+}
+#menu .menu-body {
+  align-self: end;
+  width: min(520px, 46vw);
+  max-width: none;
+  padding: 18px 28px;
+}
+#menu h1.wordmark {
+  display: block;
+  font-size: clamp(44px, 6.4vw, 86px);
+  margin: 0 0 22px;
+}
+#menu:not([data-stage="mode"]) h1.wordmark {
+  display: none;
+}
+#menu .selection-label {
+  margin: 0 0 12px;
+  font-size: 10px;
+}
+#menu #speed-class {
+  margin: 0;
+}
+#menu .crafts {
+  flex-direction: column;
+}
+#menu .speed-choices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+}
+#menu .speed-choices .choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  text-align: left;
+}
+#menu .speed-choices .choice-lock {
+  margin: 0;
+  white-space: nowrap;
+}
+#menu .speed-choices input:disabled {
+  cursor: not-allowed;
+}
+#menu .choice {
+  padding: 14px 9px;
+}
+#menu #mode .binary-options {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  border: 0;
+  background: none;
+}
+#menu #mode .binary-options label {
+  border: 1px solid #68829055;
+  background: #172a35b8;
+}
+#menu #mode .binary-options label:has(input:checked) {
+  border-color: var(--paper);
+}
+#menu #mode .binary-options span {
+  justify-content: flex-start;
+  padding: 14px 9px;
+  font: 700 17px/1.15 var(--display);
+  text-align: left;
+}
+#menu #tracks {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 5px;
+}
+#menu #tracks .choice b {
+  font-size: 16px;
+}
+#menu #tracks .choice small {
+  font-size: 8px;
+  margin-top: 4px;
+}
+#menu .crafts {
+  flex-direction: column;
+}
+#menu .crafts .choice {
+  padding: 15px;
+}
+#menu .mode-row {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 20px;
+}
+.setup-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+#menu .setup-navigation .start {
+  flex: 1;
+  margin: 0;
+  padding: 14px 12px;
+  font-size: 19px;
+}
+#menu #setup-back {
+  margin: 0;
+  padding: 12px;
+  width: auto;
+}
+#menu .menu-links {
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+#menu .menu-links :is(button, a) {
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  padding: 8px 0;
+}
+#menu footer {
+  position: relative;
+  z-index: 3;
+  display: block;
+  padding: var(--footer-pad) calc(28px + env(safe-area-inset-right))
+    calc(var(--footer-pad) + env(safe-area-inset-bottom))
+    calc(28px + env(safe-area-inset-left));
+  background: #10202c;
+}
+#menu footer .menu-links {
+  width: 100%;
+  margin: 0;
+  flex-wrap: nowrap;
+}
+#menu footer .menu-links :is(button, a) {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  font-size: 9px;
+}
+#menu .world-caption {
+  z-index: 2;
+  right: max(28px, env(safe-area-inset-right));
+  bottom: calc(var(--footer-height) + 12px);
+  display: block;
+}
+#menu .world-caption small,
+#menu:is([data-stage="mode"], [data-stage="class"]) .world-caption,
+#menu[data-stage="track"] .world-caption strong {
+  display: none;
+}
+#menu-model {
+  position: absolute;
+  z-index: 2;
+  left: 49%;
+  right: max(4%, env(safe-area-inset-right));
+  top: 19%;
+  bottom: max(23%, calc(var(--footer-height) + 84px));
+  pointer-events: none;
+  border-top: 1px solid #9bffd966;
+  border-bottom: 1px solid #9bffd944;
+}
+/* Craft specifications replace the redundant feed caption below the preview. */
+#menu[data-stage="craft"] .world-caption {
+  display: none;
+}
+/* Specifications sit below, not over, the native-resolution craft preview. */
+#craft-stats {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 24px);
+  margin: 0;
+  padding: 0;
+}
+.craft-stat {
+  min-width: 0;
+}
+.craft-stat dt {
+  color: #b3c8ce;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  line-height: 12px;
+}
+.craft-stat dd {
+  margin: 0;
+}
+.craft-stat-value {
+  display: block;
+  color: var(--paper);
+  font: 700 19px/23px var(--display);
+  text-shadow: 0 2px 5px #10202c;
+}
+.craft-stat-value::after {
+  content: "/100";
+  margin-left: 3px;
+  color: #b3c8ce;
+  font: 600 9px var(--interface);
+}
+.craft-stat-track {
+  display: block;
+  height: 3px;
+  margin-top: 3px;
+  background: #9bffd92b;
+}
+.craft-stat-track i {
+  display: block;
+  height: 100%;
+  background: var(--craft-accent);
+}
+#menu #tracks .choice :is(.track-progress, .track-lock) {
+  display: block;
+}
+#model-subtitle {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  color: #b3c8ce;
+  font: 600 clamp(8px, 1vw, 10px)/1.4 var(--interface);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 5px #10202c;
+}
+#menu:not([data-stage="track"]) #model-subtitle {
+  display: none;
+}
+#model-name {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  font: 700 26px var(--display);
+  text-shadow: 0 2px 5px #10202c;
+}
+@media (max-width: 700px) and (orientation: portrait) {
+  #menu {
+    background: linear-gradient(0deg, #10202cf5, #10202ce8 58%, #10202c00 85%);
+  }
+  #menu .masthead {
+    --masthead-top: 10px;
+    --masthead-side: 16px;
+    padding: 10px 16px;
+    font-size: 7px;
+    gap: 8px;
+  }
+  #menu .brand-symbol {
+    font-size: 25px;
+  }
+  #menu .lab-mascot {
+    font-size: 25px;
+  }
+  #menu .menu-body {
+    width: 100%;
+    padding: 12px 16px;
+    align-self: end;
+  }
+  #menu h1.wordmark {
+    font-size: 44px;
+    margin-bottom: 12px;
+  }
+  #menu .choice {
+    padding: 12px 8px;
+  }
+  #menu #tracks .choice {
+    padding: 9px 8px;
+  }
+  #menu #tracks .choice b {
+    font-size: 14px;
+  }
+  #menu #tracks .choice small {
+    display: none;
+  }
+  #menu .crafts {
+    flex-direction: column;
+  }
+  #menu .crafts .choice {
+    padding: 12px 8px;
+    gap: 5px;
+  }
+  #menu .crafts .choice b,
+  #menu .speed-choices .choice b {
+    font-size: 14px;
+  }
+  #menu #mode .binary-options span {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+  #menu .crafts .choice small {
+    font-size: 8px;
+  }
+  #menu .mode-row {
+    margin-top: 12px;
+  }
+  #menu .binary-options span {
+    min-height: 30px;
+  }
+  #menu .setup-navigation {
+    margin-top: 12px;
+  }
+  #menu .setup-navigation .start {
+    font-size: 17px;
+    padding: 12px;
+  }
+  #menu .menu-links {
+    margin-top: 8px;
+  }
+  #menu footer {
+    padding: var(--footer-pad) calc(16px + env(safe-area-inset-right))
+      calc(var(--footer-pad) + env(safe-area-inset-bottom))
+      calc(16px + env(safe-area-inset-left));
+    font-size: 8px;
+  }
+  #menu .world-caption {
+    top: calc(env(safe-area-inset-top) + 72px);
+    bottom: auto;
+    right: 16px;
+    font-size: 7px;
+  }
+  #menu .world-caption strong {
+    font-size: 20px;
+    margin: 3px 0;
+  }
+  #menu-model {
+    left: 4%;
+    right: 4%;
+    top: calc(env(safe-area-inset-top) + 90px);
+    bottom: auto;
+    height: max(
+      110px,
+      calc(
+        var(--app-height) - 540px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu:is([data-stage="class"], [data-stage="craft"]) #menu-model {
+    height: max(
+      110px,
+      calc(
+        var(--app-height) - 420px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu[data-stage="craft"] #menu-model {
+    height: max(
+      110px,
+      calc(
+        var(--app-height) - 484px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu-model #model-name {
+    font-size: 16px;
+    bottom: 5px;
+  }
+}
+@media (max-height: 700px) and (orientation: landscape) {
+  #menu .masthead {
+    --masthead-top: 7px;
+    --masthead-side: 18px;
+    padding: 7px 18px;
+    font-size: 7px;
+  }
+  #menu .brand-symbol {
+    font-size: 24px;
+  }
+  #menu .lab-mascot {
+    font-size: 24px;
+  }
+  #menu .menu-body {
+    width: 49%;
+    padding: 8px 18px;
+  }
+  #menu h1.wordmark {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
+  #menu .selection-label {
+    margin-bottom: 7px;
+    font-size: 9px;
+  }
+  #menu #tracks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #menu .choice,
+  #menu #tracks .choice {
+    padding: 7px 6px;
+  }
+  #menu #tracks .choice b {
+    font-size: 12px;
+  }
+  #menu #tracks .choice small {
+    display: none;
+  }
+  #menu .crafts {
+    flex-direction: column;
+  }
+  #menu .crafts .choice {
+    padding: 9px 6px;
+  }
+  #menu .crafts .choice b,
+  #menu .speed-choices .choice b {
+    font-size: 13px;
+  }
+  #menu #mode .binary-options span {
+    padding: 9px 6px;
+    font-size: 13px;
+  }
+  #menu .crafts .choice small {
+    font-size: 8px;
+  }
+  #menu .mode-row {
+    margin-top: 9px;
+  }
+  #menu .mode-row legend {
+    margin-bottom: 4px;
+  }
+  #menu .binary-options span {
+    min-height: 26px;
+  }
+  #menu .setup-navigation {
+    margin-top: 9px;
+  }
+  #menu .setup-navigation .start {
+    padding: 9px;
+    font-size: 16px;
+  }
+  #menu #setup-back {
+    padding: 8px;
+  }
+  #menu .menu-links {
+    margin-top: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    padding: 5px 0;
+    font-size: 8px;
+  }
+  #menu footer {
+    padding: var(--footer-pad) calc(18px + env(safe-area-inset-right))
+      calc(var(--footer-pad) + env(safe-area-inset-bottom))
+      calc(18px + env(safe-area-inset-left));
+  }
+  #menu .world-caption strong {
+    font-size: 25px;
+  }
+  #menu-model {
+    top: calc(env(safe-area-inset-top) + 50px);
+    right: max(2%, env(safe-area-inset-right));
+    bottom: calc(var(--footer-height) + 64px);
+  }
+  #menu:is([data-stage="class"], [data-stage="track"]) #menu-model {
+    bottom: calc(var(--footer-height) + 30px);
+  }
+}
+@media (max-height: 360px) and (orientation: landscape) {
+  #menu #tracks .choice {
+    padding: 5px 6px;
+  }
+  #menu .menu-links {
+    gap: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    font-size: 7px;
+    letter-spacing: 0;
+  }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  #menu h1.wordmark {
+    font-size: 40px;
+  }
+}
+@media (max-height: 690px) and (orientation: portrait) {
+  #menu:not([data-stage="mode"]) h1.wordmark {
+    display: none;
+  }
+  #menu .speed-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #menu .crafts {
+    flex-direction: row;
+  }
+  #menu .menu-links {
+    gap: 6px;
+  }
+  #menu .menu-links :is(button, a) {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  #menu .world-caption {
+    top: max(12px, env(safe-area-inset-top));
+  }
+  #menu-model {
+    top: calc(env(safe-area-inset-top) + 32px);
+    height: max(
+      92px,
+      calc(
+        var(--app-height) - 422px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu:is([data-stage="class"], [data-stage="craft"]) #menu-model {
+    height: max(
+      92px,
+      calc(
+        var(--app-height) - 300px - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
+  }
+  #menu h1.wordmark {
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+}
+/* Paint chrome to viewport edges; safe insets belong to its content. */
+#menu .masthead {
+  padding-top: calc(var(--masthead-top) + env(safe-area-inset-top));
+  padding-left: calc(var(--masthead-side) + env(safe-area-inset-left));
+  padding-right: calc(var(--masthead-side) + env(safe-area-inset-right));
+}
+@media (max-height: 360px) and (orientation: landscape),
+  (max-height: 690px) and (orientation: portrait) {
+  /* WebKit's solid edge-color sampling requires a box taller than 10px. */
+  #menu .masthead {
+    height: calc(12px + env(safe-area-inset-top));
+    min-height: 12px;
+    padding: env(safe-area-inset-top) 0 0;
+  }
+  #menu .masthead > * {
+    display: none;
+  }
+}
+#menu,
+#menu .masthead,
+#menu .menu-layout,
+#menu footer {
+  touch-action: none;
+}
+dialog,
+.overlay {
+  touch-action: pan-y;
+}
+#game {
+  touch-action: none;
+}

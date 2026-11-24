@@ -113,8 +113,8 @@ test("first race RAF after start completes and schedules its successor", async (
   const source = stripTypeScriptTypes(
     await readFile(new URL("../src/main.ts", import.meta.url), "utf8"),
   );
-  const start = source.search(/function animate\(now\s*\)\s*\{/);
-  const end = source.indexOf("\nasync function loadFiles(", start);
+  const start = source.indexOf("function drawPaddockRace(");
+  const end = source.indexOf("\nsoundtrack.mountMusicDialog(", start);
   assert.ok(start >= 0 && end > start);
   const animateSource = source.slice(start, end);
   const calls = [];
