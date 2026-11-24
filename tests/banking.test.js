@@ -222,7 +222,7 @@ for (const [name, index, reversal] of [
         );
         assert(!p.wallTouched);
         const road = projectRoad(track, p.position, p.contactS, p.branch);
-        const surface = race.surface.beneath(p.position, 0, Infinity);
+        const surface = race.surface.beneath(p.position, Infinity);
         assert(surface, "the moving hull retains a physical deck beneath it");
         const clearance =
           p.position.clone().sub(surface.point).dot(surface.up) -

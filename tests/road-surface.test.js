@@ -321,10 +321,10 @@ test("stacked decks: the first crossed upper top wins", () => {
 });
 test("suspension capture is explicit and does not glue distant or overhead road", () => {
   const surface = getRoadSurface(flatTrack());
-  assert.equal(surface.beneath(new THREE.Vector3(0, 20, 22), 0, 3), null);
-  assert.equal(surface.beneath(new THREE.Vector3(0, -1, 22), 0, 3), null);
-  assert.equal(surface.beneath(new THREE.Vector3(12, 2.2, 22), 0, 3), null);
-  assert.equal(surface.beneath(new THREE.Vector3(0, 2.2, 22), 0, 3).point.y, 0);
+  assert.equal(surface.beneath(new THREE.Vector3(0, 20, 22), 3), null);
+  assert.equal(surface.beneath(new THREE.Vector3(0, -1, 22), 3), null);
+  assert.equal(surface.beneath(new THREE.Vector3(12, 2.2, 22), 3), null);
+  assert.equal(surface.beneath(new THREE.Vector3(0, 2.2, 22), 3).point.y, 0);
   assert.equal(
     pointSweep(
       surface,
@@ -474,7 +474,7 @@ test("FAULTLINE underside cannot acquire a clear neighboring triangle while alre
 
 test("real gap surfaces are absent even for a fast downward sweep", () => {
   const surface = getRoadSurface(flatTrack({ gap: true }));
-  assert.equal(surface.beneath(new THREE.Vector3(0, 2, 50), 0, 3), null);
+  assert.equal(surface.beneath(new THREE.Vector3(0, 2, 50), 3), null);
   assert.equal(
     pointSweep(
       surface,

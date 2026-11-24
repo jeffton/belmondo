@@ -177,7 +177,6 @@ export class World {
   }
   build(track: Track, prepared?: PreparedCourse | null) {
     for (const _ of this.buildSteps(track, prepared)) {
-      // Synchronous construction remains useful for deterministic CPU fixtures.
     }
   }
   async prepare(

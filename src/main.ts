@@ -201,7 +201,6 @@ const {
   getNavigator: () => menuNavigator,
   navigationRoot,
   resumeMenuCursor: (cursor) => {
-    if (!menuNavigator) return;
     menuNavigator.cursor = cursor;
     menuNavigator.sync();
   },
@@ -811,7 +810,7 @@ function showResults() {
     localStorage.setItem("nv-progression", JSON.stringify(progression));
   refreshTrackProgression();
   renderResultSheet(race, isRecord);
-  menuNavigator?.sync();
+  menuNavigator.sync();
 }
 let hudTick = 0;
 function drawPaddockRace(dt: number) {
@@ -914,7 +913,7 @@ function animate(now: number) {
   const dt = frameDelta(last, now);
   last = now;
   pollMenuGamepad();
-  menuNavigator?.sync();
+  menuNavigator.sync();
   if (state === "menu" && loadedTrack >= 0) {
     drawPaddockRace(dt);
   }

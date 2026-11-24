@@ -129,7 +129,7 @@ function advanceHover(
       y,
       origin.z + r.velocity.z * time,
     );
-    const surface = race.surface.beneath(point, 0, Infinity);
+    const surface = race.surface.beneath(point, Infinity);
     fieldRoad = null;
     captured = false;
     if (!surface) return 0;

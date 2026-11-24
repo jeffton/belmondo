@@ -3,7 +3,6 @@ import type { Race, RaceInput } from "./race.ts";
 import { mod, type Track } from "./track.ts";
 import type { World } from "./world.ts";
 
-// Read-only telemetry for the pilot and browser smoke tests. No external services.
 type TelemetryState = {
   state: "menu" | "race" | "results";
   menuStage: "mode" | "class" | "track" | "craft";

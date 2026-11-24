@@ -261,7 +261,6 @@ export class RoadSurface {
   /** Local suspension support, not permission to acquire another route. */
   beneath(
     position: THREE.Vector3,
-    minHeight: number,
     maxHeight: number,
   ): RoadSurfaceContact | null {
     let best: RoadSurfaceContact | null = null;
@@ -279,7 +278,7 @@ export class RoadSurface {
           triangle.b.y * weights[1] +
           triangle.c.y * weights[2];
         const height = position.y - y;
-        if (height < 0 || height < minHeight || height > maxHeight) return;
+        if (height < 0 || height > maxHeight) return;
         if (best && best.point.y >= y) return;
         best = contact(
           triangle,

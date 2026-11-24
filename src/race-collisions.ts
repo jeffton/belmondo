@@ -229,7 +229,7 @@ export function resolveRaceContacts(
     let railRoad = road;
     const sweptContact = deckContacts.get(r);
     const physicalSurface =
-      sweptContact ?? race.surface.beneath(r.position, 0, HOVER + HOVER_REACH);
+      sweptContact ?? race.surface.beneath(r.position, HOVER + HOVER_REACH);
     let touchingDeck = sweptContact !== undefined;
     let fieldContact = false;
     if (physicalSurface) {

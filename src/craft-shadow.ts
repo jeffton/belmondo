@@ -18,7 +18,6 @@ export interface ShadowTriangle {
 export interface ShadowSurface {
   beneath(
     position: THREE.Vector3,
-    minHeight: number,
     maxHeight: number,
   ): { s: number; point: THREE.Vector3Like } | null;
   forEachTriangle(
@@ -178,7 +177,7 @@ export class CraftShadow {
     const { mesh } = this;
     mesh.visible = false;
     mesh.geometry.setDrawRange(0, 0);
-    const contact = surface.beneath(position, 0, Infinity);
+    const contact = surface.beneath(position, Infinity);
     if (!contact) return;
     const height = position.y - contact.point.y;
     // Gaussian penumbra attenuation: continuous at every physical height.

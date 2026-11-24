@@ -147,7 +147,7 @@ test("fast descending hulls land on their selected crossing level, not through t
         assert.equal(r.shield, 100);
       }
       assert(r.grounded, "the fixed-step descent acquires real hover support");
-      const surface = race.surface.beneath(r.position, 0, Infinity);
+      const surface = race.surface.beneath(r.position, Infinity);
       assert(surface);
       assert(Math.abs(surface.s - s) < 8, "the selected deck owns the landing");
       const clearance =

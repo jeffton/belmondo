@@ -488,8 +488,7 @@ function bankBranches(
   }
   // A full left/right reversal spans 0.36 radians. Spread its triangular
   // smoothing kernel over at least 0.36 / 0.008 = 45 track-station metres
-  // on each side. Banking tests also check the final composed fade envelope.
-  // The former 12-sample radius (~36 m) let saturated S-bends roll too fast.
+  // on each side to limit roll speed through an S-bend.
   const bankSmoothingRadius = Math.ceil(0.36 / 0.008 / (length / count));
   for (const frames of Object.values(routes)) {
     const bank = frames.slice(0, count).map((f) => f.bank);

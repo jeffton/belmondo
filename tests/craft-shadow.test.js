@@ -24,7 +24,7 @@ for (let index = 0; index < TRACKS.length; index++) {
       for (const branch of [-1, 1]) {
         const frame = track.frame(u * track.length, branch);
         const position = frame.p.clone().add(new THREE.Vector3(0, 5, 0));
-        const contact = road.beneath(position, 0, Infinity);
+        const contact = road.beneath(position, Infinity);
         assert(contact, `${u}/${branch}: actual surface absent`);
         const yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
         shadow.update(road, position, yaw, track.length);
@@ -48,7 +48,6 @@ for (let index = 0; index < TRACKS.length; index++) {
             .divideScalar(3);
           const support = road.beneath(
             p.clone().add(new THREE.Vector3(0, 0.01, 0)),
-            0,
             0.02,
           );
           assert(
@@ -66,7 +65,7 @@ for (let index = 0; index < TRACKS.length; index++) {
       const u = track.config.jump + track.config.gapLength / 2;
       const frame = track.frame(u * track.length);
       const position = frame.p.clone().add(new THREE.Vector3(0, 5, 0));
-      const contact = road.beneath(position, 0, Infinity);
+      const contact = road.beneath(position, Infinity);
       shadow.update(road, position, 0, track.length);
       assert.equal(shadow.mesh.visible, contact !== null);
     }

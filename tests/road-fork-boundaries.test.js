@@ -138,7 +138,7 @@ test("Monsoon exact TURBO split-entry ray lies on shared solid geometry", () => 
     114.87016736230116,
     -1001.228298990406,
   );
-  const contact = surface.beneath(position, 0, Infinity);
+  const contact = surface.beneath(position, Infinity);
   assert.ok(
     contact,
     "the real millimetre-scale joint crack is closed, not covered by a grounding grace period",
