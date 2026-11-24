@@ -1,0 +1,12 @@
+{
+  "checked": "2026-11-11",
+  "endpoint": "fal-ai/lyria3/pro",
+  "source": "https://fal.ai/models/fal-ai/lyria3/pro",
+  "modelPageObserved": {
+    "commercialUseBadge": true,
+    "partner": true,
+    "priceUsdPerAudio": 0.08
+  },
+  "termsUrl": "https://fal.ai/legal/terms-of-service",
+  "note": "Generated instrumental outputs for use as fixed prerecorded BELMONDO game soundtrack. No artist/song prompts or third-party audio inputs. Commercial-use eligibility observed on model page; no claim of exclusive copyright or indemnity. Google SynthID provenance is not intentionally removed. Actual billing account charge unavailable; advertised price recorded."
+}

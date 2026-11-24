@@ -1,6 +1,6 @@
 # Lyria soundtrack archive
 
-The twelve original Lyria masters are retained here, outside the game build.
+The twelve Lyria listening masters are stored alongside this README. [`originals/`](originals/) contains the byte-identical generator outputs, accepted prompts, and available audio measurements. The source archive is not included in the game build or deployment.
 
 ## Soundtrack credits
 
@@ -27,7 +27,7 @@ Total duration is 34:51. Musical labels describe the generation briefs, not inde
 
 Google Lyria 3 Pro (`fal-ai/lyria3/pro`) generated these original instrumentals through fal.ai on 11 November 2026. Prompts use musical genre, arrangement and instrumentation descriptions; no artist/song names, uploaded samples or third-party audio inputs were used. Nine additional successful outputs expanded the approved three-track soundtrack to twelve. Five expansion requests were rejected without audio. No generation is performed by the game, and no API credentials are distributed.
 
-The [model page](https://fal.ai/models/fal-ai/lyria3/pro) displayed **Commercial use** and **$0.08 per output** when checked on 11 November 2026; nine successful expansion outputs therefore have an advertised cost of $0.72. Actual account charges were not available. Use is subject to [fal terms](https://fal.ai/legal/terms-of-service); the commercial-use label is not an exclusive-copyright or indemnity guarantee. SynthID provenance was not intentionally removed. Source outputs, prompts, request metadata and measured masters are retained in the private generation archive `/var/tmp/belmondo-soundtrack-lyria/`; published files are level-adjusted 44.1 kHz stereo, 320 kbps MP3s.
+The [model page](https://fal.ai/models/fal-ai/lyria3/pro) displayed **Commercial use** and **$0.08 per output** when checked on 11 November 2026; nine successful expansion outputs therefore have an advertised cost of $0.72. Actual account charges were not available. Use is subject to [fal terms](https://fal.ai/legal/terms-of-service); the commercial-use label is not an exclusive-copyright or indemnity guarantee. SynthID provenance was not intentionally removed. Provider request records and result URLs are kept out of Git. The listening masters are level-adjusted 44.1 kHz stereo, 320 kbps MP3s. Verify the generator outputs with `cd originals && sha256sum -c SHA256SUMS`.
 
 Published MP3 SHA-256:
 

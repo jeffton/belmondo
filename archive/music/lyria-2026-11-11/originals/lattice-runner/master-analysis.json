@@ -1,0 +1,30 @@
+{
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "mp3",
+        "sample_rate": "44100",
+        "channels": 2
+      }
+    ],
+    "format": {
+      "duration": "167.784490",
+      "size": "6713713",
+      "bit_rate": "320111"
+    }
+  },
+  "loudness": {
+    "input_i": "-16.60",
+    "input_tp": "-3.17",
+    "input_lra": "11.50",
+    "input_thresh": "-27.23",
+    "output_i": "-16.23",
+    "output_tp": "-2.24",
+    "output_lra": "8.10",
+    "output_thresh": "-26.55",
+    "normalization_type": "dynamic",
+    "target_offset": "-0.37"
+  }
+}
