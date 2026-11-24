@@ -6,8 +6,8 @@
 node --test tests/creative-split-racing.test.js
 node tests/fork-diagnostics.mjs --source . --track 0 --output /var/tmp/forks
 node tests/fork-diagnostics.mjs --source . --track 2 --output /var/tmp/forks
-node tests/fork-diagnostics.mjs --source . --track 4 --output /var/tmp/forks --compare /var/tmp/belmondo-split-baseline-99a4feb/results/track-4.json
-node tests/fork-pack-diagnostics.mjs --source . --track 2 --output /var/tmp/fork-pack
+node tests/fork-diagnostics.mjs --source . --track 5 --output /var/tmp/forks --compare tests/fixtures/cinderline-fork-99a4feb.json
+node tests/fork-pack-diagnostics.mjs --source . --track 0 --output /var/tmp/fork-pack
 ```
 
 Each command completes in under 60 seconds on the development server. Run tracks separately; the CLI deliberately measures one track per invocation.
@@ -21,15 +21,9 @@ Each command completes in under 60 seconds on the development server. Run tracks
 - Rail-contact episodes/steps, recoveries, one-second progress stalls, backward steps, airborne time, physically observed separated branches and earned gate transitions are recorded. Gate tests require sequential awards and sufficient earned gates at the actual merge.
 - Pack mode runs the unchanged seven NPCs with a neutral human player, no pickups, and no forced branch/id changes. `pairDisplacementSteps` is the contact solver's displaced-racer-step proxy, not a count of distinct collisions or damaging impacts. Contact metrics cover the first approach/merge only.
 
-## Saved audit data
+## Cinderline baseline
 
-Baseline source snapshot: `/var/tmp/belmondo-split-baseline-99a4feb/src`.
-
-Baseline JSON: `/var/tmp/belmondo-split-baseline-99a4feb/results/track-0.json` through `track-6.json` (126 traversals). All complete with the requested branch, zero rail contacts, recoveries and stalls. Reports include source hashes.
-
-Coast independent-route baseline (`d377354`): `/var/tmp/coast-divergent-baseline/track-2.json`. Current independently verified Coast metrics and traffic: `/var/tmp/coast-divergent-qa/v5/track-2.json` and `track-2-pack.json`; ordinary player reports `v5-player.json` and `v5-player-fullgrid.json` are alongside that directory. Cinderline: `/var/tmp/belmondo-fork-verified-final/track-4.json`.
-
-Natural packs: `/var/tmp/belmondo-fork-pack/track-{2,4}-pack.json`. All 42 NPC traversals merge on their natural branch, with zero rails/recoveries. Coast has ship-pair contact displacement; Cinderline has none. Coast baseline pack comparison is saved alongside baseline JSON.
+The comparison fixture records 18 Cinderline runs from commit `99a4feb`. It includes the source hashes and the fields used by `--compare`. Each run completed without rail contact or recovery. Generate other solo and pack reports with the commands above.
 
 ## Interpretation
 

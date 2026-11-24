@@ -1,0 +1,177 @@
+{
+  "commit": "99a4febee35e820bf03f19d09f8a381d2088332d",
+  "trackIndex": 4,
+  "trackName": "CINDERLINE",
+  "sourceHashes": {
+    "track.js": "ebfc649d75ccc93646e84345fef99bb8dbec7271dbc2de79df8e4bf8100a4677",
+    "course-layouts.js": "2403994981e66f0d1c64ab3d1438e9f5768e1afa151e0cf3057abeea203bdef2",
+    "race.js": "f684948d0b9d84e971650227357f8609157dbcd85e2b32d58fa92c4bc39b330f",
+    "contacts.js": "309980226f45499ff2cb67b6cda3fe71959d6e13f74d6a322ee1013fe0724971",
+    "road-projection.js": "e36317380d93328be8e1105ec923a0d6c1a5f745ee2ee5a59741f0cc9a91daf9",
+    "terrain.js": "faab01f2cf96597dc3c461db2cd060646e7f7983ab9e8e214938663ea1f59173"
+  },
+  "traversals": [
+    {
+      "branch": -1,
+      "speedClass": 0,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 7.595138734471526,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 0,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 8.31344113315501,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 1,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 6.510828550971468,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 1,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 7.124999999999595,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 2,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 5.69676189002525,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 2,
+      "craftIndex": 0,
+      "elapsedSplitSeconds": 6.235778629292078,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 0,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 6.958802593322432,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 0,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 7.770658004025748,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 1,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 5.963775168960559,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 1,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 6.661405506894681,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 2,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 5.218664342309864,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 2,
+      "craftIndex": 1,
+      "elapsedSplitSeconds": 5.8238431356307245,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 0,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 9.202388558414768,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 0,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 10.008333333332764,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 1,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 7.889155312324924,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 1,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 8.579748645234048,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": -1,
+      "speedClass": 2,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 6.9025743557450525,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    },
+    {
+      "branch": 1,
+      "speedClass": 2,
+      "craftIndex": 2,
+      "elapsedSplitSeconds": 7.506486271580442,
+      "contacts": 0,
+      "recoveries": 0,
+      "completed": true
+    }
+  ]
+}
