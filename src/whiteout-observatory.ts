@@ -105,6 +105,12 @@ export function buildWhiteoutObservatory(
         -18.3,
       );
     site.box("glazing", front.setY(p.y + 8.5), [0.6, 7, depth], yaw);
+    const jamb = front
+      .clone()
+      .addScaledVector(d.clone().setY(0).normalize(), depth / 3);
+    site.box("shell", jamb.clone(), [1.2, 10, 1.8], yaw);
+    if (i < count * 0.58)
+      site.box("instrument", front.clone().setY(p.y + 4), [0.9, 2, depth], yaw);
     for (let k = 0; k < 12; k++) {
       triangle(profiles[i][k], profiles[i + 1][k + 1], profiles[i + 1][k]);
       triangle(profiles[i][k], profiles[i][k + 1], profiles[i + 1][k + 1]);

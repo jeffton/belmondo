@@ -16,7 +16,8 @@ export function buildWhiteoutOpticalWing(
   const site = courseArchitecture(parent, "whiteout-optical-wing", textures, {
     shell: { color: 0xe0f4f4, map: "paint" },
     structure: { color: 0x416378, map: "paint" },
-    glazing: { color: 0x235d83, map: null },
+    glazing: { color: 0x153852, map: null },
+    seal: { color: 0xf58e43, map: "paint" },
   });
   const f = track.frame(0.336 * track.length);
   const forward = new THREE.Vector3(f.tangent.x, 0, f.tangent.z).normalize();
@@ -58,7 +59,22 @@ export function buildWhiteoutOpticalWing(
     [44, floor - footing.bottom, 128],
     yaw,
   );
-  for (const z of [-57, 57]) box("structure", -10, floor - 2, z, 124, 4, 7);
+  for (const z of [-56, -18, 20, 58]) {
+    box("structure", -7, floor - 2, z, 118, 4, 8);
+    box("shell", -33, floor - 5, z, 50, 2, 7);
+    box("seal", -55, floor - 5.8, z, 6, 0.8, 7);
+  }
+  box("structure", -43, floor - 1, 0, 12, 4, 149);
+  box("seal", -50.5, floor + 3.6, 0, 4, 3, 151);
+  for (const z of [-56, -18, 20, 58]) {
+    const edge = local(-51, floor + 9, z);
+    const flange = new THREE.CylinderGeometry(3, 7, 12, 4, 1);
+    site.add(
+      "shell",
+      flange,
+      new THREE.Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(edge),
+    );
+  }
   box("shell", 0, floor + 1, 0, 104, 2, 160);
   box("shell", 0, floor + 15, 0, 104, 2, 160);
   for (const x of [-50, 50]) box("shell", x, floor + 8, 0, 4, 12, 160);
@@ -66,7 +82,12 @@ export function buildWhiteoutOpticalWing(
   // The approaching pilot sees a broad recessed instrument window before
   // entering the high undercroft; this is a building facade, not a road portal.
   box("glazing", 0, floor + 8, -77.5, 94, 9, 0.6);
-  for (const x of [-48, -16, 16, 48]) box("shell", x, floor + 8, -79, 2, 12, 3);
+  for (const x of [-48, -16, 16, 48]) box("shell", x, floor + 8, -79, 3, 12, 3);
+  box("seal", 0, floor + 3.4, -79.5, 97, 3, 2);
+  for (const z of [-72, 72]) {
+    box("seal", 0, floor + 15, z, 104, 3, 5);
+    box("structure", -51.5, floor + 9.5, z, 3, 9, 5);
+  }
   const vertices: number[] = [];
   const triangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) =>
     vertices.push(...a.toArray(), ...b.toArray(), ...c.toArray());

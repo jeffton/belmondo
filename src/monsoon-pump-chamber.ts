@@ -141,22 +141,90 @@ export function buildMonsoonPumpChamber(
     site.box("gate", p.clone().setY(43), [3, 2, 28], yaw);
   }
   // One curved, connected structural volume rather than unrelated pump props.
-  for (const s of segment(0.325, 0.485, 18)) {
+  const hall = segment(0.325, 0.485, 18);
+  for (const [i, s] of hall.entries()) {
     const right = new THREE.Vector3(Math.cos(s.yaw), 0, -Math.sin(s.yaw));
     const p = s.p.clone().addScaledVector(right, -(s.width + 47));
     const foot = architecturalFooting(environment, p, 58, s.length, s.yaw);
     const top = Math.max(foot.top + 8, s.p.y + 66);
     foundations.push(foot);
+    const tide = s.p.y + 9;
+    site.box(
+      "wet",
+      p.clone().setY((foot.bottom + tide) / 2),
+      [58, tide - foot.bottom, s.length],
+      s.yaw,
+    );
     site.box(
       "concrete",
-      p.clone().setY((foot.bottom + top) / 2),
-      [58, top - foot.bottom, s.length],
+      p.clone().setY((tide + top) / 2),
+      [58, top - tide, s.length],
       s.yaw,
     );
     site.box("cap", p.clone().setY(top + 1), [62, 2, s.length], s.yaw);
     // The continuous intake grille gives the hall a function and a readable base.
     const front = s.p.clone().addScaledVector(right, -(s.width + 17.5));
     site.box("machinery", front.setY(s.p.y + 25), [1, 18, s.length], s.yaw);
+    if (i % 4 === 0)
+      site.box(
+        "concrete",
+        front.clone().addScaledVector(right, 1.8),
+        [4, 28, 3],
+        s.yaw,
+      );
+  }
+
+  for (const u of [0.355, 0.377, 0.41, 0.433]) {
+    const f = track.frame(u * track.length);
+    const yaw = Math.atan2(f.tangent.x, f.tangent.z);
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const face = f.p.clone().addScaledVector(right, -(f.width + 18));
+    const mount = (offset: number, height: number, axis: "cylinder" | "ring") =>
+      new THREE.Matrix4()
+        .makeRotationY(yaw)
+        .multiply(
+          axis === "cylinder"
+            ? new THREE.Matrix4().makeRotationZ(-Math.PI / 2)
+            : new THREE.Matrix4().makeRotationY(Math.PI / 2),
+        )
+        .setPosition(
+          face
+            .clone()
+            .addScaledVector(right, offset)
+            .setY(f.p.y + height),
+        );
+    site.add(
+      "wet",
+      new THREE.CylinderGeometry(15, 17, 9, 12),
+      mount(1.5, 29, "cylinder"),
+    );
+    site.add(
+      "cap",
+      new THREE.TorusGeometry(12.5, 2.1, 4, 12),
+      mount(6, 29, "ring"),
+    );
+    site.add(
+      "machinery",
+      new THREE.CylinderGeometry(12, 12, 1, 12),
+      mount(6.1, 29, "cylinder"),
+    );
+    site.add(
+      "gate",
+      new THREE.CylinderGeometry(3.1, 4.1, 3, 8),
+      mount(6.7, 29, "cylinder"),
+    );
+    for (const angle of [0.3, Math.PI / 3 + 0.3, (Math.PI * 2) / 3 + 0.3]) {
+      const matrix = new THREE.Matrix4()
+        .makeRotationY(yaw)
+        .multiply(new THREE.Matrix4().makeRotationX(angle))
+        .setPosition(
+          face
+            .clone()
+            .addScaledVector(right, 7)
+            .setY(f.p.y + 29),
+        );
+      site.add("concrete", new THREE.BoxGeometry(1.1, 2.1, 22), matrix);
+    }
   }
   // The inlet gatehouse has a transverse quay face across the low race. Its
   // waterline is seen head-on on the bend approach, not only in a side trench.
@@ -229,7 +297,16 @@ export function buildMonsoonPumpChamber(
         [12, top - foot.bottom, 22],
         yaw,
       );
+      site.box("wet", p.clone().setY(f.p.y + 19), [12.5, 6, 23], yaw);
       site.box("gate", p.clone().setY(f.p.y + 48), [12.6, 4, 22.6], yaw);
+      const drive = new THREE.Matrix4().setPosition(p.clone().setY(f.p.y + 70));
+      site.add("machinery", new THREE.CylinderGeometry(8, 9, 15, 10), drive);
+      site.add(
+        "gate",
+        new THREE.CylinderGeometry(5, 5, 8, 10),
+        drive.clone().setPosition(p.clone().setY(f.p.y + 80)),
+      );
+      site.box("wet", p.clone().setY(f.p.y + 60), [19, 8, 23], yaw);
     }
     site.box(
       "machinery",
@@ -237,9 +314,18 @@ export function buildMonsoonPumpChamber(
         .clone()
         .addScaledVector(right, 51)
         .setY(f.p.y + 52),
-      [2 * (f.width + 76), 10, 17],
+      [2 * (f.width + 76), 14, 17],
       yaw,
     );
+    const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    for (const offset of [-(f.width + 1), -8, 8, f.width + 1]) {
+      const plate = f.p
+        .clone()
+        .addScaledVector(right, offset)
+        .addScaledVector(forward, -9)
+        .setY(f.p.y + 50);
+      site.box("gate", plate, [5, 5, 1.4], yaw);
+    }
     site.box(
       "cap",
       f.p
