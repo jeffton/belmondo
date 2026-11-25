@@ -63,13 +63,13 @@ try {
   const records = await page.evaluate(() => localStorage.getItem("nv-records"));
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "mode");
   await page.keyboard.press("Enter");
-  await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
-  await expect(page.locator(".menu-footer #render-quality")).toBeVisible();
-  await expect(page.locator(".menu-footer .menu-links > *")).toHaveCount(5);
-  await page.locator('input[name="speed-class"][value="2"]').check();
-  await page.locator("#setup-next").click();
-  await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
   for (const index of indices) {
+    await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
+    await expect(page.locator(".menu-footer #render-quality")).toBeVisible();
+    await expect(page.locator(".menu-footer .menu-links > *")).toHaveCount(5);
+    await page.locator('input[name="speed-class"][value="2"]').check();
+    await page.locator("#setup-next").click();
+    await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
     await page.locator(`#tracks button[data-index="${index}"]`).click();
     await page.waitForFunction((index) => {
       const t = window.nullVector.telemetry;

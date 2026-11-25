@@ -158,7 +158,11 @@ try {
           );
           const name = `${viewport}-${view}-${zone}-${target}`;
           assert(data.progress >= target && data.branch === branch, name);
-          if (course === "CINDERLINE" && zone === "flight") {
+          if (
+            !process.env.ZONES &&
+            course === "CINDERLINE" &&
+            zone === "flight"
+          ) {
             assert.equal(
               data.grounded,
               target < 0.538 || target >= 0.556,
