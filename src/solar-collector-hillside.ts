@@ -58,9 +58,12 @@ export function buildSolarCollectorHillside(
   >();
   const panels: THREE.Vector3[][] = [];
   const feet: THREE.Vector3[] = [];
-  function sheet(points: THREE.Vector3[], kind: keyof typeof materials) {
-    const middle = points[0].clone().lerp(points[2], 0.5);
-    const key = `${kind}:${Math.floor(middle.x / 256)}:${Math.floor(middle.z / 256)}`;
+  function sheet(
+    points: THREE.Vector3[],
+    kind: keyof typeof materials,
+    anchor = points[0].clone().lerp(points[2], 0.5),
+  ) {
+    const key = `${kind}:${Math.floor(anchor.x / 256)}:${Math.floor(anchor.z / 256)}`;
     if (!batches.has(key)) batches.set(key, { kind, positions: [], uv: [] });
     const batch = batches.get(key)!;
     const length = kind === "panel" ? 1 : points[0].distanceTo(points[1]) / 24;
@@ -78,11 +81,21 @@ export function buildSolarCollectorHillside(
   for (const range of [
     { start: 0.055, end: 0.19, branch: 0, rows: 3, setback: 52 },
     { start: 0.285, end: 0.46, branch: 1, rows: 3, setback: 52 },
-    { start: 0.669, end: 0.719, branch: 0, rows: 2, setback: 39 },
+    {
+      start: 0.669,
+      end: 0.719,
+      branch: 0,
+      rows: 2,
+      setback: 39,
+      continuous: true,
+    },
   ]) {
     const frames = placeStations(range.start, range.end, 0.004).map((u) =>
       track.frame(u * track.length, range.branch),
     );
+    const anchor = range.continuous
+      ? frames[Math.floor(frames.length / 2)].p
+      : undefined;
     for (let row = 0; row < range.rows; row++) {
       const sections = frames.map((f) => {
         const forward = new THREE.Vector3(
@@ -112,13 +125,13 @@ export function buildSolarCollectorHillside(
         const a = sections[i],
           b = sections[i + 1];
         const panel = [a.near, b.near, b.far, a.far];
-        sheet(panel, "panel");
+        sheet(panel, "panel", anchor);
         panels.push(panel);
-        sheet([a.near, b.near, b.nearFoot, a.nearFoot], "edge");
-        sheet([a.far, a.farFoot, b.farFoot, b.far], "edge");
+        sheet([a.near, b.near, b.nearFoot, a.nearFoot], "edge", anchor);
+        sheet([a.far, a.farFoot, b.farFoot, b.far], "edge", anchor);
       }
       for (const end of [sections[0], sections.at(-1)!])
-        sheet([end.near, end.nearFoot, end.farFoot, end.far], "edge");
+        sheet([end.near, end.nearFoot, end.farFoot, end.far], "edge", anchor);
     }
   }
   for (const { kind, positions, uv } of batches.values()) {

@@ -14,7 +14,9 @@ if (process.env.GAME_ROOT) {
 }
 if (!url) throw new Error("Set GAME_URL or GAME_ROOT to the built game.");
 const viewport = JSON.parse(process.env.MENU_VIEWPORT || "[960,600]");
-const indices = JSON.parse(process.env.MENU_TRACKS || "[0,1,2,3,4,5,6]");
+const indices = process.env.MENU_TRACKS
+  ? JSON.parse(process.env.MENU_TRACKS)
+  : TRACKS.map((_, index) => index);
 const output = process.env.MENU_ARTIFACTS;
 if (output) await mkdir(output, { recursive: true });
 const browser = await chromium.launch({
@@ -63,10 +65,10 @@ try {
   await page.keyboard.press("Enter");
   await expect(page.locator("#menu")).toHaveAttribute("data-stage", "class");
   await expect(page.locator(".menu-footer #render-quality")).toBeVisible();
-  await expect(page.locator(".menu-footer .menu-links > *")).toHaveCount(4);
+  await expect(page.locator(".menu-footer .menu-links > *")).toHaveCount(5);
   await page.locator('input[name="speed-class"][value="2"]').check();
   await page.locator("#setup-next").click();
-  await expect(page.locator("#tracks button")).toHaveCount(7);
+  await expect(page.locator("#tracks button")).toHaveCount(TRACKS.length);
   for (const index of indices) {
     await page.locator(`#tracks button[data-index="${index}"]`).click();
     await page.waitForFunction((index) => {

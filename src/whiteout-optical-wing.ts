@@ -62,7 +62,7 @@ export function buildWhiteoutOpticalWing(
   for (const z of [-56, -18, 20, 58]) {
     box("structure", -7, floor - 2, z, 118, 4, 8);
     box("shell", -33, floor - 5, z, 50, 2, 7);
-    box("seal", -55, floor - 5.8, z, 6, 0.8, 7);
+    box("seal", -55.2, floor - 5.8, z, 6.6, 0.8, 7.5);
   }
   box("structure", -43, floor - 1, 0, 12, 4, 149);
   box("seal", -50.5, floor + 3.6, 0, 4, 3, 151);
@@ -83,10 +83,10 @@ export function buildWhiteoutOpticalWing(
   // entering the high undercroft; this is a building facade, not a road portal.
   box("glazing", 0, floor + 8, -77.5, 94, 9, 0.6);
   for (const x of [-48, -16, 16, 48]) box("shell", x, floor + 8, -79, 3, 12, 3);
-  box("seal", 0, floor + 3.4, -79.5, 97, 3, 2);
+  box("seal", 0, floor + 3.4, -79.8, 97, 3, 2);
   for (const z of [-72, 72]) {
-    box("seal", 0, floor + 15, z, 104, 3, 5);
-    box("structure", -51.5, floor + 9.5, z, 3, 9, 5);
+    box("seal", 0, floor + 15, z, 105.2, 3, 5);
+    box("structure", -51.5, floor + 9.5, z, 3, 9, 4.4);
   }
   const vertices: number[] = [];
   const triangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3) =>

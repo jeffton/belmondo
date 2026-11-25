@@ -198,7 +198,8 @@ export function buildCoastSolarPlaces(
       transform.scale.set(w, h, d);
       transform.updateMatrix();
       const family = material === "base" ? "concrete" : "paint";
-      const key = `${geometry.id}:${family}:${Math.floor(transform.position.x / 256)}:${Math.floor(transform.position.z / 256)}`;
+      const anchor = coast ? transform.position : center;
+      const key = `${geometry.id}:${family}:${Math.floor(anchor.x / 256)}:${Math.floor(anchor.z / 256)}`;
       if (!batches.has(key))
         batches.set(key, {
           material: family,

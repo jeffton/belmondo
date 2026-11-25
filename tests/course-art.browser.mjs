@@ -3,12 +3,35 @@ import { chromium } from "@playwright/test";
 import { createServer } from "vite";
 import { mkdir, writeFile } from "node:fs/promises";
 
+const zones = {
+  COAST: [
+    ["skyway", 1, 0.37, [0.38, 0.39, 0.407]],
+    ["bore", -1, 0.37, [0.38, 0.39, 0.407]],
+    ["institute", 0, 0.545, [0.55, 0.565, 0.58]],
+  ],
+  MONSOON: [
+    ["chamber", 0, 0.292, [0.301, 0.333]],
+    ["works", 0, 0.39, [0.399, 0.465]],
+  ],
+  WHITEOUT: [["optical-wing", 0, 0.299, [0.309, 0.329, 0.351]]],
+  SOLAR: [["receiver", 0, 0.649, [0.662, 0.681]]],
+  FAULTLINE: [["processing", 0, 0.569, [0.585, 0.635]]],
+  CINDERLINE: [
+    ["flight", 0, 0.51, [0.53, 0.545, 0.556, 0.565]],
+    ["gorge", -1, 0.803, [0.815, 0.83]],
+    ["rim", 1, 0.803, [0.815, 0.83]],
+  ],
+  NOCTILUCENT: [["harbor", 0, 0.73, [0.74, 0.75, 0.76]]],
+  VESPER: [["freight", 0, 0.806, [0.82, 0.88]]],
+};
+const course = process.env.COURSE || "COAST";
+const marks = process.env.ZONES ? JSON.parse(process.env.ZONES) : zones[course];
 const root = process.env.SOURCE_ROOT || process.cwd();
-const out = process.env.ARTIFACT_DIR || "test-artifacts/palm-breaker-art";
+const out = process.env.ARTIFACT_DIR || `test-artifacts/course-art/${course}`;
 await mkdir(out, { recursive: true });
 const server = await createServer({
   root,
-  server: { host: "127.0.0.1", port: 0 },
+  server: { host: "127.0.0.1", port: 0, hmr: false },
 });
 await server.listen();
 const browser = await chromium.launch({
@@ -61,16 +84,12 @@ try {
       world.build(track);
       await loaded;
       window.fixture = { world, track, Race, CRAFT, playerPilot };
-    }, process.env.COURSE || "CINDERLINE");
-    const targets = (start, end) =>
-      process.env.DENSE
-        ? Array.from(
-            { length: 13 },
-            (_, i) => +(start + ((end - start) * i) / 12).toFixed(5),
-          )
-        : [start, +(start + (end - start) / 2).toFixed(5), end];
-    for (const view of ["chase", "first-person"])
-      for (const [zone, branch, start, marks] of JSON.parse(process.env.ZONES || '[["ridge",1,0.805,[0.815,0.83,0.845]]]')) {
+    }, course);
+    const views = process.env.COMPACT
+      ? [viewport === "desktop" ? "chase" : "first-person"]
+      : ["chase", "first-person"];
+    for (const view of views)
+      for (const [zone, branch, start, targets] of marks) {
         await page.evaluate(
           ({ view, branch, start }) => {
             const f = window.fixture,
@@ -103,7 +122,7 @@ try {
           },
           { view, branch, start },
         );
-        for (const target of marks) {
+        for (const target of targets) {
           const data = await page.evaluate(
             ({ target, branch }) => {
               const { world, track, race, playerPilot } = window.fixture,
@@ -139,6 +158,14 @@ try {
           );
           const name = `${viewport}-${view}-${zone}-${target}`;
           assert(data.progress >= target && data.branch === branch, name);
+          if (course === "CINDERLINE" && zone === "flight") {
+            assert.equal(
+              data.grounded,
+              target < 0.538 || target >= 0.556,
+              name,
+            );
+            assert.equal(data.shield, 100, name);
+          }
           assert.deepEqual(
             data.canvas,
             [Math.round(width * 0.55), Math.round(height * 0.55)],
