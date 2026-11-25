@@ -6,6 +6,7 @@ import { createAdvertising } from "./advertising.ts";
 import { getWaterfrontDistricts } from "./course-geography.ts";
 import { retainsCoastGallery } from "./coast-solar-landform.ts";
 import { vegetationGeometry } from "./vegetation.ts";
+import { buildCoastSkywayQuay } from "./coast-skyway-quay.ts";
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -521,6 +522,16 @@ export function buildFlagship(
     if (!retainsCoastGallery(spec[0])) continue;
     district(...(spec as [number, number, number, number, number]));
   }
+  const quayMaterials = {
+    concrete: ceramic,
+    deck: glass,
+    lining: dark,
+    steel: metal,
+    signal: vermilion,
+  };
+  buildCoastSkywayQuay(track, environment.heightAt, (points, kind, uv) =>
+    sheet(points, quayMaterials[kind], uv),
+  );
   for (let u = 0.113; u < 0.187; u += 0.006) {
     const f = frame(u);
     const w = f.width;

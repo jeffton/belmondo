@@ -11,6 +11,46 @@ import { buildCoastInstituteSlipway } from "./coast-institute-slipway.ts";
 import type { Track } from "./track.ts";
 import type { CircuitTextures, EnvironmentSurface } from "./environment.ts";
 
+type InstituteBox = (
+  x: number,
+  y: number,
+  z: number,
+  width: number,
+  height: number,
+  depth: number,
+  material: "base" | "wall" | "roof" | "panel" | "glass" | "accent",
+) => void;
+
+function buildInstituteFront(box: InstituteBox, bottom: number) {
+  box(-10, bottom / 2, 0, 100, -bottom, 83, "base");
+  box(-27, 9, 4, 68, 18, 70, "wall");
+  box(9, 7.5, -6, 3, 15, 54, "panel");
+  box(-9, 7.5, -32, 38, 14, 2, "panel");
+  // Ceramic overhang shades a recessed entrance that turns the end wall.
+  box(4, 17.5, -2, 59, 4, 77, "panel");
+  box(4, 20, -2, 60, 2, 78, "wall");
+  box(4, 21.4, -40, 60, 1.2, 2, "accent");
+  for (const z of [-37, 29]) box(30, 8.5, z, 4, 17, 4, "wall");
+  box(-17, 32, 10, 67, 22, 54, "wall");
+  box(17, 32, 7, 1, 9, 46, "glass");
+  box(-13, 32, -17.3, 58, 9, 0.7, "glass");
+  box(-18, 44, 12, 72, 2, 62, "roof");
+}
+
+function buildInstituteAnnex(box: InstituteBox, bottom: number) {
+  box(-20, bottom / 2, 0, 92, -bottom, 88, "base");
+  box(-18, 11, 4, 84, 22, 70, "wall");
+  box(-11, 10, -32, 66, 14, 1.5, "panel");
+  box(24.5, 10, -11, 1, 14, 41, "panel");
+  for (const x of [-41, -19, 3, 25]) box(x, 10.5, -38, 3, 21, 3.5, "wall");
+  box(-9, 22, -18, 82, 4, 52, "panel");
+  box(-9, 24.8, -18, 82, 1.6, 52, "accent");
+  box(-30, 34, 12, 60, 19, 56, "wall");
+  box(-25, 34, -16.4, 48, 8, 0.8, "glass");
+  box(0.4, 34, 6, 0.8, 8, 45, "glass");
+  box(-30, 44, 12, 62, 1.5, 58, "roof");
+}
+
 /** Buildings are grounded in the existing landform. Nothing here changes a race surface. */
 export function buildCoastSolarPlaces(
   parent: THREE.Object3D,
@@ -201,7 +241,12 @@ export function buildCoastSolarPlaces(
       if (!s) continue;
       const { box } = s;
       if (precinct) {
-        if (u > 0.57 && u < 0.61) {
+        if (i === 10) {
+          buildInstituteFront(box, s.bottom - s.floor);
+        }
+        if (i === 13) {
+          buildInstituteAnnex(box, s.bottom - s.floor);
+        } else if (u > 0.57 && u < 0.61) {
           box(
             -43,
             (s.bottom - s.floor) / 2,

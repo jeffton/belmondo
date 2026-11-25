@@ -40,6 +40,23 @@ test("Coast's open precinct and marine railway occupy the same grounded landscap
       );
     }
   }
+  const walls = root.getObjectByName("coast-retaining").geometry.attributes;
+  for (let i = 0; i < walls.position.count; i += 3) {
+    const a = new THREE.Vector3().fromBufferAttribute(walls.position, i);
+    const b = new THREE.Vector3().fromBufferAttribute(walls.position, i + 1);
+    const c = new THREE.Vector3().fromBufferAttribute(walls.position, i + 2);
+    const normal = b.sub(a).cross(c.sub(a));
+    if (Math.hypot(normal.x, normal.z) <= Math.abs(normal.y)) continue;
+    const base = new THREE.Vector2().fromBufferAttribute(walls.uv, i);
+    const along = new THREE.Vector2()
+      .fromBufferAttribute(walls.uv, i + 1)
+      .sub(base);
+    const rise = new THREE.Vector2()
+      .fromBufferAttribute(walls.uv, i + 2)
+      .sub(base);
+    assert(Math.abs(along.cross(rise)) > 1e-6, "vertical wall loses a UV axis");
+    assert(Math.abs(base.y - a.y / 25) < 1e-6);
+  }
   const slip = root.getObjectByName("coast-slip");
   const positions = slip.geometry.attributes.position;
   let low = Infinity,

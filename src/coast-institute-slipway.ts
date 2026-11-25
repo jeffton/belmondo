@@ -21,6 +21,12 @@ export function buildCoastInstituteSlipway(
     slip: [],
     rail: [],
   };
+  const uv: Record<keyof typeof faces, number[]> = {
+    court: [],
+    retaining: [],
+    slip: [],
+    rail: [],
+  };
   const colors = {
     court: 0x929d8a,
     retaining: 0x687471,
@@ -30,8 +36,18 @@ export function buildCoastInstituteSlipway(
   const feet: THREE.Vector3[] = [];
   const gantryPierFootprints: THREE.Vector3[][] = [];
   function sheet(points: THREE.Vector3[], kind: keyof typeof colors) {
-    for (const i of [0, 1, 2, 0, 2, 3])
-      faces[kind].push(...points[i].toArray());
+    const [a, b, , d] = points;
+    const normal = b.clone().sub(a).cross(d.clone().sub(a));
+    const wall = Math.hypot(normal.x, normal.z) > Math.abs(normal.y);
+    const along = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
+    for (const i of [0, 1, 2, 0, 2, 3]) {
+      const p = points[i];
+      faces[kind].push(...p.toArray());
+      uv[kind].push(
+        wall ? along.dot(p) / 25 : p.x / 25,
+        (wall ? p.y : p.z) / 25,
+      );
+    }
   }
   function foot(p: THREE.Vector3) {
     const f = p.clone().setY(environment.heightAt(p.x, p.z) - 1);
@@ -163,10 +179,7 @@ export function buildCoastInstituteSlipway(
       "position",
       new THREE.Float32BufferAttribute(faces[kind], 3),
     );
-    const uv = [];
-    for (let i = 0; i < faces[kind].length; i += 3)
-      uv.push(faces[kind][i] / 25, faces[kind][i + 2] / 25);
-    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv[kind], 2));
     geometry.computeVertexNormals();
     geometry.computeBoundingSphere();
     const mesh = new THREE.Mesh(

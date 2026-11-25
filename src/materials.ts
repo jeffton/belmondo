@@ -48,7 +48,46 @@ function raster(
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   return texture;
 }
-export function circuitTextures(accent: string) {
+function inductionDeck(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = "#a1a5a3";
+  ctx.fillRect(0, 0, 256, 256);
+
+  for (const [x, y, w, h, face, edge] of [
+    [7, 14, 131, 83, "#98a2a6", "#a6afad"],
+    [153, 3, 88, 61, "#a9a8a1", "#b0afa6"],
+    [25, 116, 78, 113, "#a8a69e", "#b0ada2"],
+    [119, 91, 99, 78, "#9ba5a8", "#a6aeb0"],
+    [137, 181, 108, 64, "#a2a6a5", "#aaaead"],
+  ] as const) {
+    const round = 7;
+    const panel = new Path2D();
+    panel.moveTo(x + round, y);
+    panel.lineTo(x + w - round, y);
+    panel.lineTo(x + w, y + round);
+    panel.lineTo(x + w, y + h - round);
+    panel.lineTo(x + w - round, y + h);
+    panel.lineTo(x + round, y + h);
+    panel.lineTo(x, y + h - round);
+    panel.lineTo(x, y + round);
+    panel.closePath();
+
+    ctx.fillStyle = face;
+    ctx.fill(panel);
+    ctx.fillStyle = "#929fa1";
+    ctx.fillRect(x + round, y, w * 0.52, 3);
+    ctx.fillStyle = edge;
+    ctx.fillRect(x + round + 5, y + 3, w * 0.48, 3);
+    ctx.fillStyle = "#939f9f";
+    ctx.fillRect(x + 10, y + h - 13, 7, 4);
+    ctx.fillRect(x + 22, y + h - 13, 7, 4);
+  }
+  ctx.fillStyle = "#98a2a2";
+  ctx.fillRect(175, 207, 49, 28);
+  ctx.fillStyle = "#afb2ac";
+  ctx.fillRect(175, 207, 49, 3);
+}
+
+export function circuitTextures(accent: string, palmBreaker = false) {
   const concrete = raster(128, 256, (ctx) => {
     // Cast ceramic cassettes: repeated structural bays survive stretched faces.
     // Broad glaze/relief carries the material; no granular weathering overlay.
@@ -117,6 +156,10 @@ export function circuitTextures(accent: string) {
     ridge(187, 32, "#c4c6bd");
   });
   const road = raster(256, 256, (ctx) => {
+    if (palmBreaker) {
+      inductionDeck(ctx);
+      return;
+    }
     // Satin induction alloy: broad, non-directional finish, not painted lanes.
     // Periodic fields meet at the world-UV tile boundaries without a hard seam.
     for (let y = 0; y < 256; y++)

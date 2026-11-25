@@ -233,7 +233,10 @@ export class World {
     const fogColor = cfg.fog;
     const textures: ReturnType<typeof circuitTextures> & {
       rail?: THREE.Texture;
-    } = circuitTextures("#" + new THREE.Color(cfg.color).getHexString());
+    } = circuitTextures(
+      "#" + new THREE.Color(cfg.color).getHexString(),
+      flagship,
+    );
     textures.rail = createRailFaceTexture(cfg.name);
     this.textures = textures;
     this.scene.background = createSky(cfg, fogColor, prepared?.sky);

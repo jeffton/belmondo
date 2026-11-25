@@ -11,10 +11,7 @@ export function getWaterfrontDistricts(track: Track) {
   return [
     [departure, 0.102, 0, 1, 0],
     [departure, 0.088, 0, -1, 1],
-    // Quayside frontage stops before the headland bore; the flyover stays
-    // completely exposed until it reaches the shoreward merge approach.
     [0.306, 0.326, -1, -1, 2],
-    [0.405, 0.411, 1, 1, 3],
     [0.555, 0.604, 0, -1, 3],
     [0.704, 0.745, 0, 1, 2],
     [0.925, start - 0.015, 0, -1, 1],
