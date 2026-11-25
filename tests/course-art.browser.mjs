@@ -124,6 +124,8 @@ try {
                 steps: window.fixture.steps,
                 position: p.position.toArray(),
                 speed: p.speed,
+                grounded: p.grounded,
+                shield: p.shield,
                 branch: p.branch,
                 calls: world.renderer.info.render.calls,
                 triangles: world.renderer.info.render.triangles,
