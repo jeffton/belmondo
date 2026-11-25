@@ -64,15 +64,15 @@ export function buildFaultlineProcessing(
 ) {
   const arch = courseArchitecture(scene, "faultline-processing", textures, {
     ceramic: { color: 0xd4cbb0, map: "concrete" },
-    steel: { color: 0x334745, map: "paint" },
-    teal: { color: 0x397f7b, map: "paint" },
-    glass: { color: 0x8bb1ad, map: "facade" },
-    signal: { color: 0xc9d472, map: "paint" },
+    steel: { color: 0x2e4549, map: "paint" },
+    teal: { color: 0x527f7e, map: "paint" },
+    glass: { color: 0x829f9d, map: "facade" },
+    signal: { color: 0xd2944c, map: "paint" },
   });
   const sites = faultlineProcessingSites(track);
   const heads: THREE.Vector3[] = [];
   const footings = [];
-  for (const site of sites) {
+  for (const [stage, site] of sites.entries()) {
     const footing = architecturalFooting(
       environment,
       site.center,
@@ -107,29 +107,56 @@ export function buildFaultlineProcessing(
       174,
     );
     box("steel", 0, 0.5, 0, 74, 1, 174);
-    box("ceramic", 0, 14, -15, 62, 28, 112);
-    box("steel", -site.side * 31.1, 10, -15, 0.8, 20, 74);
-    for (const z of [-63, -15, 33])
-      box("ceramic", -site.side * 33, 14, z, 4, 28, 4);
-    box("glass", -site.side * 31.6, 24, -15, 0.9, 4, 91);
-    box("teal", 0, 29.5, -15, 66, 3, 116);
-    for (const x of [-18, 18]) {
-      for (const z of [43, 68]) box("steel", x, 16, z, 3, 32, 3);
-      const matrix = new THREE.Matrix4().compose(
-        at(x, 32, 55),
-        new THREE.Quaternion().setFromAxisAngle(
-          new THREE.Vector3(0, 1, 0),
-          site.yaw + Math.PI / 4,
-        ),
-        new THREE.Vector3(1, 1, 1),
+    const vessel = (
+      kind: string,
+      x: number,
+      y: number,
+      z: number,
+      rim: number,
+      base: number,
+      height: number,
+      sides: number,
+    ) => {
+      arch.add(
+        kind,
+        new THREE.CylinderGeometry(rim, base, height, sides),
+        new THREE.Matrix4()
+          .makeRotationY(site.yaw + Math.PI / sides)
+          .setPosition(at(x, y, z)),
       );
-      arch.add("teal", new THREE.CylinderGeometry(15, 6, 20, 4), matrix);
-      box("ceramic", x, 43, 55, 23, 2, 23);
+    };
+    if (stage === 0) {
+      box("ceramic", 0, 7, 16, 62, 14, 124);
+      for (const z of [-35, 3, 41, 68]) box("steel", -31.7, 7, z, 1.5, 10, 15);
+      for (const z of [-24, 20, 60]) {
+        for (const x of [-12, 12]) box("steel", x, 24, z, 4, 20, 4);
+        vessel("teal", 0, 33, z, 23, 10, 20, 4);
+        vessel("signal", 0, 44, z, 24, 24, 2, 4);
+      }
+      box("steel", 0, 46.5, 11, 12, 3, 118);
+      for (const x of [-11, 11])
+        for (const z of [-78, -57]) box("steel", x, 27, z, 4, 54, 4);
+      vessel("teal", 0, 44, -67, 19, 9, 20, 4);
+      box("signal", 0, 55.5, -67, 28, 3, 29);
+    } else {
+      box("ceramic", 0, 9, -1, 61, 18, 156);
+      box("steel", -31, 8, 6, 1, 12, 132);
+      for (const z of [-62, -21, 20]) {
+        box("ceramic", -32, 9, z, 2, 18, 4);
+        box("signal", -31, 17, z, 1, 2, 25);
+      }
+      for (const [z, height] of [
+        [-62, 56],
+        [-21, 49],
+        [20, 41],
+      ]) {
+        vessel("teal", 0, (height + 18) / 2, z, 18, 18, height - 18, 8);
+        vessel("signal", 0, height, z, 19, 19, 3, 8);
+      }
+      box("glass", -31.7, 15, 39, 1.1, 4, 32);
+      box("steel", 0, 7.5, 77.3, 29, 12, 1);
+      for (const x of [-17, 17]) box("signal", x, 8, 78, 2, 14, 1);
     }
-    for (const x of [-11, 11])
-      for (const z of [-78, -57]) box("steel", x, 27, z, 3.5, 54, 3.5);
-    box("teal", 0, 51, -67, 26, 9, 29);
-    box("signal", 0, 56.5, -67, 29, 2, 32);
     heads.push(at(0, 58, -67));
   }
   const beam = (

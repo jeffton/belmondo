@@ -184,6 +184,9 @@ export function buildVesperDistricts(
         );
         const bottom =
           Math.min(...feet.map((p) => environment.heightAt(p.x, p.z))) - 2;
+        const transferTower =
+          district.name === "freight-ward" &&
+          (i + (side > 0 ? 3 : 0)) % 7 === 1;
         const roofHeight =
           district.name === "civic-canyon"
             ? 80 + variant * 9
@@ -192,7 +195,7 @@ export function buildVesperDistricts(
               : district.name === "night-market"
                 ? 26 + variant * 4
                 : district.name === "freight-ward"
-                  ? 18 + variant * 3
+                  ? (transferTower ? 48 : 18) + variant * 3
                   : 24 + variant * 5;
         const top = Math.max(ground + 44, f.p.y + roofHeight);
         const volume = {
@@ -547,54 +550,57 @@ export function buildVesperDistricts(
             0x7195a1,
           );
         } else {
-          const roof = top - 23;
-          mass(0, bottom, roof, 0, width, depth, 0x4c4e57);
-          // Freight sheds, exhaust exchangers and stacked sealed cargo modules.
-          for (const z of [-0.24, 0.24]) {
+          const roof = top - (transferTower ? 37 : 17);
+          mass(0, bottom, roof, 0, width, depth, 0x575c6c);
+          const cladding = transferTower ? 0xd49a64 : 0x8096a2;
+          const fascia = (y: number, h: number, color: number) => {
+            part(face, y, 0, 0.8, h, depth * 0.92, color);
+            for (const z of [-0.5, 0.5])
+              part(0, y, z * (depth - 2), width * 0.92, h, 0.75, color);
+          };
+          fascia(roof - 4, 6, cladding);
+          for (const z of [-0.34, 0, 0.34])
             part(
-              side * width * 0.15,
-              roof + 7,
+              face + side * 0.25,
+              roof - 12,
               z * depth,
-              width * 0.38,
-              14,
-              width * 0.38,
-              0x646572,
-              "facade",
-              "drum",
+              0.8,
+              10,
+              depth * 0.27,
+              0x313b4b,
             );
-            part(
-              side * width * 0.15,
-              roof + 14.5,
-              z * depth,
-              width * 0.4,
-              1.2,
-              width * 0.4,
-              0x91806a,
-              "facade",
-              "drum",
+          occupied(roof - 11, depth * 0.52, true);
+          if (transferTower) {
+            const shaft = side * width * 0.09;
+            mass(shaft, roof, top - 5, 0, width * 0.58, depth * 0.52, 0x677889);
+            part(shaft, top - 3, 0, width * 0.69, 6, depth * 0.62, cladding);
+            const cab = shaft - side * width * 0.3;
+            part(cab, top - 10, 0, 0.8, 5, depth * 0.4, 0x92b8b5, "neon");
+            for (const z of [-0.27, 0.27]) {
+              part(shaft, top - 10, z * depth, width * 0.48, 5, 0.8, 0x9dabae);
+              part(
+                cab + side * 0.5,
+                roof + 10,
+                z * depth * 0.8,
+                2.2,
+                20,
+                3.2,
+                cladding,
+              );
+            }
+          } else {
+            const setback = side * width * 0.12;
+            mass(
+              setback,
+              roof,
+              top - 5,
+              0,
+              width * 0.61,
+              depth * 0.76,
+              0x606f7b,
             );
+            part(setback, top - 3, 0, width * 0.69, 4, depth * 0.82, 0x8999a0);
           }
-          part(
-            -side * width * 0.28,
-            roof + 4,
-            0,
-            width * 0.26,
-            8,
-            depth * 0.78,
-            variant % 2 ? 0x785c57 : 0x566b77,
-          );
-          part(
-            -side * width * 0.28,
-            roof + 11,
-            depth * 0.12,
-            width * 0.24,
-            6,
-            depth * 0.48,
-            0x8b7161,
-          );
-          occupied(roof - 7, depth * 0.65, true);
-          for (const z of [-0.42, 0.42])
-            part(face, roof - 3, z * depth, 1, 2, 3, light, "neon");
         }
       }
     }
