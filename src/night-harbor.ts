@@ -468,79 +468,93 @@ export function buildNightHarbor(
   root.add(hoists);
   const haze = new THREE.Color(track.config.fog);
   const colors = Object.fromEntries(
-    Object.entries({ pier: 0xb3ceca, frame: 0x2b475d, cap: 0x986b70 }).map(
-      ([name, color]) => [
-        name,
-        new THREE.Color(color).lerp(haze, 0.45).getHex(),
-      ],
-    ),
+    Object.entries({
+      pier: 0x476875,
+      frame: 0x152538,
+      cap: 0x925b55,
+      glass: 0xdba76a,
+    }).map(([name, color]) => [
+      name,
+      new THREE.Color(color).lerp(haze, 0.29).getHex(),
+    ]),
   );
   const crane = industrialMeshes(hoists, textures, colors, false);
   const quay = sites[2];
   for (const [z, height] of [
-    [-500, 500],
-    [350, 560],
+    [-500, 490],
+    [290, 530],
   ]) {
-    for (const x of [-55, 55])
-      for (const dz of [-18, 18]) {
-        crane.box(
-          "hoist-leg",
-          "frame",
-          quay,
-          x,
-          quay.deck,
-          z + dz,
-          14,
-          height,
-          14,
-        );
-        crane.box(
-          "hoist-pier",
-          "pier",
-          quay,
-          x,
-          quay.bottom,
-          z + dz,
-          24,
-          quay.deck - quay.bottom,
-          24,
-        );
-      }
+    const crown = quay.deck + height;
+    for (const x of [-58, 58]) {
+      crane.box("hoist-leg", "frame", quay, x, quay.deck, z, 23, height, 44);
+      crane.box("hoist-foot", "pier", quay, x, quay.deck, z, 41, 46, 68);
+    }
     crane.box(
-      "hoist-crosshead",
-      "pier",
+      "portal-head",
+      "frame",
       quay,
-      0,
-      quay.deck + height - 12,
-      z,
-      126,
-      20,
-      54,
+      -9,
+      crown - 18,
+      z + 15,
+      154,
+      41,
+      82,
     );
     crane.box(
-      "cargo-carriage",
+      "loader-boom",
+      "frame",
+      quay,
+      -19,
+      crown + 7,
+      z - 71,
+      36,
+      24,
+      213,
+    );
+    crane.box(
+      "counterweight",
       "cap",
       quay,
-      -55,
-      quay.deck + height * 0.58,
-      z,
-      28,
-      48,
-      50,
+      -19,
+      crown + 30,
+      z + 45,
+      55,
+      31,
+      57,
     );
     crane.box(
-      "hoist-machinery",
+      "lift-cable",
+      "frame",
+      quay,
+      -19,
+      crown - 100,
+      z - 153,
+      5,
+      110,
+      5,
+    );
+    crane.box(
+      "cargo-spreader",
       "pier",
       quay,
-      0,
-      quay.deck + height + 8,
-      z,
-      38,
-      14,
+      -19,
+      crown - 111,
+      z - 153,
       48,
+      11,
+      23,
     );
+    crane.box("operator-cab", "pier", quay, 44, crown - 64, z - 11, 49, 42, 68);
+    crane.box("cab-glazing", "glass", quay, 44, crown - 52, z - 11, 50, 18, 69);
   }
+  crane.box("quay-coping", "pier", quay, 86, quay.deck, 0, 8, 4, 1490);
   crane.finish();
+  for (const mesh of hoists.children as THREE.InstancedMesh<
+    THREE.BufferGeometry,
+    THREE.MeshLambertMaterial
+  >[]) {
+    if (mesh.name.startsWith("glass:")) mesh.material.emissive.setHex(0x684321);
+  }
   root.userData.bodies.push(...hoists.userData.bodies);
   return root;
 }

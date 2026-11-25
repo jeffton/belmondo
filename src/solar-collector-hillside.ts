@@ -76,13 +76,14 @@ export function buildSolarCollectorHillside(
     }
   }
   for (const range of [
-    { start: 0.055, end: 0.19, branch: 0 },
-    { start: 0.285, end: 0.46, branch: 1 },
+    { start: 0.055, end: 0.19, branch: 0, rows: 3, setback: 52 },
+    { start: 0.285, end: 0.46, branch: 1, rows: 3, setback: 52 },
+    { start: 0.669, end: 0.719, branch: 0, rows: 2, setback: 39 },
   ]) {
     const frames = placeStations(range.start, range.end, 0.004).map((u) =>
       track.frame(u * track.length, range.branch),
     );
-    for (let row = 0; row < 3; row++) {
+    for (let row = 0; row < range.rows; row++) {
       const sections = frames.map((f) => {
         const forward = new THREE.Vector3(
           f.tangent.x,
@@ -92,11 +93,11 @@ export function buildSolarCollectorHillside(
         const right = new THREE.Vector3(forward.z, 0, -forward.x);
         const near = f.p
           .clone()
-          .addScaledVector(right, f.width + 52 + row * 50)
+          .addScaledVector(right, f.width + range.setback + row * 50)
           .setY(f.p.y + 3 + row * 21);
         const far = f.p
           .clone()
-          .addScaledVector(right, f.width + 97 + row * 50)
+          .addScaledVector(right, f.width + range.setback + 45 + row * 50)
           .setY(f.p.y + 27 + row * 21);
         const nearFoot = near
           .clone()

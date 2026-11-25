@@ -347,6 +347,34 @@ export function buildCoastSolarPlaces(
     });
   } else {
     buildSolarCollectorHillside(root, track, textures, environment);
+    const landing = site("RECEIVING STATION", 0.698, -1, 30, 145, 135);
+    if (landing) {
+      const { box } = landing;
+      box(0, 3, 0, 145, 6, 135, "roof");
+      box(-15, 28, 12, 112, 44, 106, "wall");
+      box(-15, 52, 12, 116, 5, 112, "roof");
+      box(3, 23, -42, 90, 29, 4, "panel");
+      box(25, 38, -48, 78, 5, 19, "accent");
+      box(25, 41, -48, 78, 1, 19, "wall");
+      box(42, 19, -46, 4, 31, 5, "wall");
+      box(42, 32, 16, 2, 11, 101, "panel");
+      box(46, 40, 16, 8, 4, 106, "accent");
+      for (const z of [-29, 0, 29, 58]) {
+        box(44, 25, z, 6, 37, 3, "wall");
+      }
+      box(-37, 61, 24, 50, 16, 51, "roof");
+      box(-37, 70, 24, 54, 3, 55, "wall");
+    }
+    const receivingYard = site("ARRAY FEEDERS", 0.715, -1, 30, 104, 115);
+    if (receivingYard) {
+      const { box } = receivingYard;
+      box(0, 2, 0, 104, 4, 115, "roof");
+      box(-22, 12, 0, 44, 16, 111, "wall");
+      for (const z of [-38, 0, 38]) {
+        box(18, 13, z, 32, 18, 23, "panel");
+        box(18, 24, z, 34, 4, 25, "accent");
+      }
+    }
     // Readable connected process volumes: low exchanger plinth, tall pressure
     // house, transfer gallery and grounded transmission shoulders.
     const processStations = [
