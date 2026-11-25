@@ -17,9 +17,9 @@ export const CINDER_VOLCANOES = [
   },
   {
     name: "CALDERA FURNACE",
-    u: 0.62,
+    u: 0.665,
     side: 1,
-    setback: 560,
+    setback: 450,
     radius: 365,
     height: 420,
     phase: 1.7,
@@ -78,6 +78,7 @@ export function buildCinderVolcanoes(
     const base = environment.heightAt(center.x, center.z);
     center.y = base;
     const segments = 36;
+    const furnace = v.name === "CALDERA FURNACE";
     // Broad, asymmetric shoulders and a torn OPEN crater, not a pointed cone.
     const profile = [
       [1, 0],
@@ -92,7 +93,10 @@ export function buildCinderVolcanoes(
       Array.from({ length: segments }, (_, i) => {
         const angle = (i / segments) * Math.PI * 2;
         const ridge =
-          1 + 0.08 * Math.sin(angle * 5 + v.phase) + 0.04 * Math.cos(angle * 9);
+          1 +
+          0.08 * Math.sin(angle * 5 + v.phase) +
+          0.04 * Math.cos(angle * 9) +
+          (furnace && ring > 0 ? 0.11 * Math.cos(angle - ring * 0.47) : 0);
         const x = center.x + Math.cos(angle) * v.radius * radius * ridge;
         const z = center.z + Math.sin(angle) * v.radius * radius * ridge;
         const ground = environment.heightAt(x, z);
@@ -112,7 +116,10 @@ export function buildCinderVolcanoes(
           .clone()
           .lerp(
             ash,
-            0.16 + (0.5 * ring) / 6 + 0.11 * Math.sin(i * 2.3 + v.phase),
+            0.16 +
+              (0.5 * ring) / 6 +
+              0.11 * Math.sin(i * 2.3 + v.phase) +
+              (furnace ? [0, -0.05, 0.29, -0.14, 0.14, 0][ring] : 0),
           );
         triangle(
           stone,

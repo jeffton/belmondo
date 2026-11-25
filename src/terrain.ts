@@ -14,6 +14,7 @@ import {
 import {
   createCinderRidgeLandform,
   cinderRidgeBaseHeight,
+  cinderRidgeExposure,
   createCinderWorksLandform,
   cinderWorksLandHeight,
 } from "./cinder-works.ts";
@@ -658,6 +659,11 @@ export function createTerrain(track: Track, prepared?: PreparedTerrain) {
                 tint.lerp(
                   mineralTint,
                   smooth(0.88, 1.12, sulfur) * (1 - smooth(0.65, 1.2, slope)),
+                );
+                mineralTint.setHSL(0.59, 0.16, 0.54);
+                tint.lerp(
+                  mineralTint,
+                  cinderRidgeExposure(cinderRidge!, x, h, z, slope) * 0.72,
                 );
               } else tint.setHSL(hue, saturation, lightness + variation);
             } else if (desert)
